@@ -1,0 +1,47 @@
+{
+  "id": "coconut-baby",
+  "slug": "coconut-baby",
+  "name": "Coconut Baby",
+  "shortName": "Coconut",
+  "role": "The Comforting Helper",
+  "type": "fruit-baby",
+  "status": "active",
+  "tagline": "Take a deep breath — we can do this together!",
+  "shortDescription": "Coconut Baby is the calm and caring heart of the Fruit Baby Universe! Gentle, dependable, and full of cozy warmth, Coconut Baby loves helping friends feel safe, happy, and included. With a peaceful spirit and a nurturing heart, Coconut Baby reminds everyone that kindness, patience, and love make every day better.",
+  "personality": [
+    "Calm — stays peaceful even when things feel busy",
+    "Caring — loves helping friends and sharing comfort",
+    "Dependable — always there when someone needs support",
+    "Gentle — kind, soft-spoken, and thoughtful",
+    "Grounded — brings balance and calm to the group"
+  ],
+  "visualIdentity": {
+    "primaryColors": ["#8A6E3B", "#5C3A1E"],
+    "accentColors": ["#FFF4D6", "#7AC943", "#FFB8C8"],
+    "styleNotes": "Round warm coconut-brown body with a natural textured look. Tall green leafy palm crown on top. Large soft brown eyes, pink blush cheeks, and a gentle calm expression. Cozy, grounded, and full of tropical warmth."
+  },
+  "storyRole": "The group's anchor and emotional support. When things get chaotic or feelings run high, Coconut Baby is the one who helps everyone breathe, slow down, and find a kind solution.",
+  "characterRules": {
+    "always": [
+      "Stay calm and grounded in every situation",
+      "Offer comfort and support to friends in need",
+      "Speak gently and thoughtfully",
+      "Be dependable — show up for friends every time"
+    ],
+    "never": [
+      "Panic or add to group stress",
+      "Leave a friend feeling alone or unsupported",
+      "Rush others or dismiss their feelings"
+    ]
+  },
+  "catchphrases": [
+    "Take a deep breath — we can do this together!",
+    "I'm right here. You're not alone.",
+    "Everything's going to be okay."
+  ],
+  "image": {
+    "main": "",
+    "alt": "Coconut Baby — a round warm brown coconut character with a tall green palm leaf crown, gentle eyes, and a calm comforting smile"
+  },
+  "merchPotential": ["plush", "squish", "sticker", "comfort toy", "collectible figure"]
+}

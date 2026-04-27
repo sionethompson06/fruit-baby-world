@@ -1,0 +1,47 @@
+{
+  "id": "mango-baby",
+  "slug": "mango-baby",
+  "name": "Mango Baby",
+  "shortName": "Mango",
+  "role": "The Playful Spark",
+  "type": "fruit-baby",
+  "status": "active",
+  "tagline": "Let's make today super fun!",
+  "shortDescription": "Mango Baby is the playful spark of the Fruit Baby Universe! Full of laughter, energy, and big ideas, Mango Baby loves adventures, jokes, and making every day brighter. With a joyful heart and a silly spirit, Mango Baby reminds everyone that fun and kindness go hand in hand!",
+  "personality": [
+    "Playful — loves to play, joke, and have fun",
+    "Energetic — always on the move and ready for adventure",
+    "Optimistic — sees the bright side of every situation",
+    "Sociable — makes friends easily and brings people together",
+    "Creative — has lots of silly ideas and imaginative games"
+  ],
+  "visualIdentity": {
+    "primaryColors": ["#FFB347", "#FFD84D"],
+    "accentColors": ["#7AC943", "#5C3A1E", "#FFB8C8"],
+    "styleNotes": "Warm mango yellow-orange body with a rich gradient. Green leaf top, bright brown eyes, and pink blush cheeks. Radiates tropical warmth and cheerful energy."
+  },
+  "storyRole": "The comic spark and adventure instigator. Mango Baby gets the gang into fun (and occasionally chaotic) situations, bringing joy and laughter to every episode.",
+  "characterRules": {
+    "always": [
+      "Be enthusiastic and full of energy",
+      "Find the fun in every situation",
+      "Make friends laugh and feel included",
+      "Bounce back quickly from setbacks"
+    ],
+    "never": [
+      "Be mean or intentionally hurtful",
+      "Stay sad or mopey for long",
+      "Leave a friend feeling left out"
+    ]
+  },
+  "catchphrases": [
+    "Let's make today super fun!",
+    "Ha ha ha! Did you see that?!",
+    "Adventure time — let's GO!"
+  ],
+  "image": {
+    "main": "",
+    "alt": "Mango Baby — a bright mango-orange character with a green leaf top, big warm eyes, and an excited grin"
+  },
+  "merchPotential": ["plush", "squish", "sticker", "activity book", "collectible figure"]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "kiwi-baby",
+  "slug": "kiwi-baby",
+  "name": "Kiwi Baby",
+  "shortName": "Kiwi",
+  "role": "Gentle Nature Pal",
+  "type": "fruit-baby",
+  "status": "active",
+  "tagline": "Every little thing is worth exploring!",
+  "shortDescription": "Kiwi Baby is a gentle, fresh, and cheerful character who embodies the sweetness of nature and the joy of curiosity. With a heart full of kindness and a love for simple moments, Kiwi Baby brings calm, happiness, and a sense of wonder to the Fruit Baby Universe.",
+  "personality": [
+    "Fresh & Natural — inspired by real kiwi fruit, wholesome and full of life",
+    "Kind & Cheerful — spreads positivity, happiness, and gentle friendship",
+    "Curious & Playful — loves exploring new things and making new friends",
+    "Gentle & Caring — a sweet companion who brings comfort and joy"
+  ],
+  "visualIdentity": {
+    "primaryColors": ["#7CC64A", "#8A6E3B"],
+    "accentColors": ["#B8E46A", "#FFB1C1", "#FFF6E0", "#FFD56A"],
+    "styleNotes": "Fuzzy kiwi-brown body with a subtle green undertone. Sliced kiwi top showing vibrant green flesh with black seeds. Leaf crown with a white kiwi blossom accent. Large warm brown eyes and pink blush cheeks."
+  },
+  "storyRole": "The gentle peacemaker and nature guide. Kiwi Baby helps the group stay grounded, notice small beautiful things, and find calm during busy adventures.",
+  "characterRules": {
+    "always": [
+      "Approach everything with gentle curiosity",
+      "Notice and appreciate the small things",
+      "Spread positivity and cheerfulness",
+      "Comfort friends who feel overwhelmed"
+    ],
+    "never": [
+      "Rush or stress others",
+      "Overlook a friend who needs support",
+      "Act unkindly or dismissively"
+    ]
+  },
+  "catchphrases": [
+    "Every little thing is worth exploring!",
+    "Look how beautiful this is!",
+    "We can figure it out together — slowly and sweetly."
+  ],
+  "image": {
+    "main": "",
+    "alt": "Kiwi Baby — a fuzzy kiwi-brown round character with a green kiwi top, leaf crown, white blossom, and warm friendly eyes"
+  },
+  "merchPotential": ["plush", "squish", "sticker", "garden toy set", "collectible figure"]
+}

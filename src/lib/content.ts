@@ -1,5 +1,8 @@
 import pineappleBaby from "@/content/characters/pineapple-baby.json";
 import ubeBaby from "@/content/characters/ube-baby.json";
+import mangoBaby from "@/content/characters/mango-baby.json";
+import kiwiBaby from "@/content/characters/kiwi-baby.json";
+import coconutBaby from "@/content/characters/coconut-baby.json";
 import tiki from "@/content/characters/tiki.json";
 import sampleEpisode from "@/content/episodes/sample-episode.json";
 import sampleProduct from "@/content/products/sample-product.json";
@@ -100,6 +103,9 @@ export type EpisodePackageTemplate = {
 const characters: Character[] = [
   pineappleBaby as Character,
   ubeBaby as Character,
+  mangoBaby as Character,
+  kiwiBaby as Character,
+  coconutBaby as Character,
   tiki as Character,
 ];
 
