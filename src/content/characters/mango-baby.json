@@ -4,10 +4,14 @@
   "name": "Mango Baby",
   "shortName": "Mango",
   "role": "The Playful Spark",
+  "fruitType": "Mango",
+  "home": "Tropical Grove",
+  "birthday": "June 22",
   "type": "fruit-baby",
   "status": "active",
   "tagline": "Let's make today super fun!",
-  "shortDescription": "Mango Baby is the playful spark of the Fruit Baby Universe! Full of laughter, energy, and big ideas, Mango Baby loves adventures, jokes, and making every day brighter. With a joyful heart and a silly spirit, Mango Baby reminds everyone that fun and kindness go hand in hand!",
+  "shortDescription": "Mango Baby is the playful spark of Fruit Baby Universe! Full of laughter, energy, and big ideas, Mango Baby loves adventures, jokes, and making every day brighter. With a joyful heart and a silly spirit, Mango Baby reminds everyone that fun and kindness go hand in hand!",
+  "about": "Mango Baby is the playful spark of Fruit Baby Universe. Full of laughter, energy, and big ideas, Mango Baby loves adventures, jokes, and making every day brighter. With a joyful heart and a silly spirit, Mango Baby reminds everyone that fun and kindness go hand in hand.",
   "personality": [
     "Playful — loves to play, joke, and have fun",
     "Energetic — always on the move and ready for adventure",
@@ -15,11 +19,54 @@
     "Sociable — makes friends easily and brings people together",
     "Creative — has lots of silly ideas and imaginative games"
   ],
+  "likes": [
+    "Playing games",
+    "Silly jokes",
+    "Dancing and singing",
+    "Tropical fruits",
+    "Making friends laugh"
+  ],
+  "dislikes": [
+    "Being bored",
+    "Mean words",
+    "Missing out on fun",
+    "Sad faces",
+    "Seeing friends upset"
+  ],
+  "favoriteQuote": "Let's make today super fun!",
   "visualIdentity": {
     "primaryColors": ["#FFB347", "#FFD84D"],
     "accentColors": ["#7AC943", "#5C3A1E", "#FFB8C8"],
+    "palette": [
+      { "name": "Mango Orange", "hex": "#FFB347" },
+      { "name": "Mango Yellow", "hex": "#FFD84D" },
+      { "name": "Tropical Green", "hex": "#7AC943" },
+      { "name": "Warm Brown", "hex": "#5C3A1E" },
+      { "name": "Blush Pink", "hex": "#FFB8C8" }
+    ],
     "styleNotes": "Warm mango yellow-orange body with a rich gradient. Green leaf top, bright brown eyes, and pink blush cheeks. Radiates tropical warmth and cheerful energy."
   },
+  "expressions": [
+    "Happy",
+    "Excited",
+    "Wink",
+    "Laughing",
+    "Thinking"
+  ],
+  "posesAndActions": [
+    "Waving Hello",
+    "Dancing",
+    "Playing",
+    "Telling a Joke",
+    "Adventure Ready"
+  ],
+  "relationships": [
+    { "character": "Pineapple Baby", "description": "Bestie and Adventure Buddy" },
+    { "character": "Coconut Baby", "description": "Big Hug Buddy" },
+    { "character": "Kiwi Baby", "description": "Calm Down Partner" },
+    { "character": "Ube Baby", "description": "Creative Sidekick" },
+    { "character": "Tiki Trouble", "description": "Mischievous Rival" }
+  ],
   "storyRole": "The comic spark and adventure instigator. Mango Baby gets the gang into fun (and occasionally chaotic) situations, bringing joy and laughter to every episode.",
   "characterRules": {
     "always": [
@@ -34,6 +81,8 @@
       "Leave a friend feeling left out"
     ]
   },
+  "signatureStyle": "Bright, cheerful, and full of tropical energy! Mango Baby spreads joy everywhere!",
+  "funFact": "Mango Baby can make any ordinary day feel like a tropical celebration!",
   "catchphrases": [
     "Let's make today super fun!",
     "Ha ha ha! Did you see that?!",

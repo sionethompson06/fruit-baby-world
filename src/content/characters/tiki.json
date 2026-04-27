@@ -3,11 +3,15 @@
   "slug": "tiki",
   "name": "Tiki Trouble",
   "shortName": "Tiki",
+  "subtitle": "Pineapple Baby's Mischievous Rival",
   "role": "Mischievous Rival",
+  "characterType": "Tiki Trickster",
+  "home": "Trouble Island",
   "type": "villain",
   "status": "active",
   "tagline": "I'm gonna find you, Pineapple Baby!",
   "shortDescription": "Tiki Trouble is the sneaky, dramatic, self-proclaimed ruler of Trouble Island! He loves causing chaos, plotting schemes, and bossing his minions around — but deep down, he secretly admires Pineapple Baby's kindness more than he'd ever admit.",
+  "about": "Tiki Trouble is Pineapple Baby's mischievous rival. He has a cheeky grudge against Pineapple Baby and likes to stir up trouble for him — but secretly cannot help admiring Pineapple Baby's kindness. Fiery, sneaky, and always up to trouble, Tiki Trouble stirs up chaos wherever he goes.",
   "personality": [
     "Cheeky — always has a sly grin and a plan",
     "Sneaky — loves spying, hiding, and plotting",
@@ -15,11 +19,48 @@
     "Dramatic — turns every small setback into a huge scene",
     "Secretly soft — can't help admiring Pineapple Baby's kindness"
   ],
+  "likes": [
+    "Playing tricks",
+    "Treasure",
+    "Spying",
+    "Bossing little minions around",
+    "Causing a little chaos"
+  ],
+  "dislikes": [
+    "Losing to Pineapple Baby",
+    "Kindness ruining his plans",
+    "Being ignored",
+    "Sharing treasure",
+    "Getting caught"
+  ],
+  "signatureQuote": "I'm gonna find you, Pineapple Baby!",
+  "rivalry": "Has a cheeky grudge against Pineapple Baby. Likes to stir up trouble for him but secretly cannot help admiring Pineapple Baby's kindness.",
   "visualIdentity": {
     "primaryColors": ["#8B5A2B", "#5C3A1E"],
     "accentColors": ["#FF6B00", "#7AC943", "#FFD84D"],
-    "styleNotes": "Square wooden tiki mask face with angry brows and a wide grin full of teeth. Green leaf crown with tiny flames. Decorated with bones and tribal patterns. Carries a small spear. Fiery and dramatic but still cute and kid-friendly."
+    "palette": [
+      { "name": "Carved Wood Brown", "hex": "#8B5A2B" },
+      { "name": "Deep Wood Brown", "hex": "#5C3A1E" },
+      { "name": "Fire Orange", "hex": "#FF6B00" },
+      { "name": "Leaf Green", "hex": "#7AC943" },
+      { "name": "Torch Yellow", "hex": "#FFD84D" }
+    ],
+    "styleNotes": "Carved wooden tiki mask face with angry brows and a wide grin full of teeth. Green leaf crown with tiny flames. Orange/red tribal-style headband. Skull necklace. Carries a small spear. Fiery and dramatic but still cute and kid-friendly. Treasure chest and Trouble Island setting."
   },
+  "expressions": [
+    "Angry",
+    "Sneaky Grin",
+    "Laughing",
+    "Scheming",
+    "Shocked"
+  ],
+  "posesAndActions": [
+    "Waving His Spear",
+    "Spying Around",
+    "Hiding Behind Rocks",
+    "Stomping Mad",
+    "Plotting Trouble"
+  ],
   "storyRole": "The antagonist. Tiki creates the problem or obstacle in each story — a stolen item, a blocked path, a silly prank gone wrong. He rarely wins, and each episode teaches a lesson about emotions, fairness, or kindness.",
   "characterRules": {
     "always": [
@@ -31,9 +72,11 @@
     "never": [
       "Cause real harm or be genuinely threatening",
       "Scare younger audiences",
-      "Win in a way that feels unfair or mean-spirited"
+      "Win in a way that feels unfair or mean-spirited",
+      "Be violent, horror-like, or mean-spirited beyond playful troublemaking"
     ]
   },
+  "signatureStyle": "Fiery, sneaky, and always up to trouble. Tiki Trouble stirs up chaos wherever he goes!",
   "catchphrases": [
     "I'm gonna find you, Pineapple Baby!",
     "Hehehe! My plan is perfect!",
@@ -41,7 +84,7 @@
   ],
   "image": {
     "main": "",
-    "alt": "Tiki Trouble — a wooden tiki mask character with an angry face, green leaf crown, tiny flames, and a sneaky grin"
+    "alt": "Tiki Trouble — a carved wooden tiki mask character with an angry face, green leaf crown, fire accents, skull necklace, and a sneaky grin"
   },
   "merchPotential": ["vinyl figure", "sticker", "collectible", "mini plush", "antagonist pack"]
 }

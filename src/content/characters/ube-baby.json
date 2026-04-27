@@ -4,10 +4,13 @@
   "name": "Ube Baby",
   "shortName": "Ube",
   "role": "The Sweet Dreamer",
+  "fruitType": "Ube (Purple Yam)",
+  "home": "Starlight Garden",
   "type": "fruit-baby",
   "status": "active",
   "tagline": "Sweet dreams. Share love. Shine softly.",
-  "shortDescription": "Ube Baby is the dreamy, gentle sparkle of the Fruit Baby Universe! Soft, imaginative, and full of cozy magic, Ube Baby loves making friends feel safe, loved, and inspired. Shy at first, but warm and wonderful once you get to know her.",
+  "shortDescription": "Ube Baby is the dreamy, gentle sparkle of Fruit Baby Universe! Soft, imaginative, and full of cozy magic, Ube Baby loves making friends feel safe, loved, and inspired. Though a little shy at first, Ube Baby shines through kindness, wonder, and sweet little wishes.",
+  "about": "Ube Baby is the dreamy, gentle sparkle of Fruit Baby Universe. Soft, imaginative, and full of cozy magic, Ube Baby loves making friends feel safe, loved, and inspired. Though a little shy at first, Ube Baby shines through kindness, wonder, and sweet little wishes.",
   "personality": [
     "Sweet — kind-hearted and caring",
     "Imaginative — sees magic in little things",
@@ -15,11 +18,52 @@
     "Shy — quiet at first, but warm with friends",
     "Encouraging — helps others feel brave"
   ],
+  "likes": [
+    "Stargazing",
+    "Bedtime stories",
+    "Cozy blankets",
+    "Sweet treats",
+    "Warm hugs"
+  ],
+  "dislikes": [
+    "Loud grumpy moods",
+    "Scary surprises",
+    "Being rushed",
+    "Seeing friends sad",
+    "Feeling left out"
+  ],
+  "favoriteQuote": "Let's make a tiny wish!",
   "visualIdentity": {
     "primaryColors": ["#8E44AD", "#6A2E99"],
     "accentColors": ["#FFB8C8", "#7BC943", "#4A8C3C"],
+    "palette": [
+      { "name": "Bright Purple", "hex": "#8E44AD" },
+      { "name": "Deep Purple", "hex": "#6A2E99" },
+      { "name": "Blush Pink", "hex": "#FFB8C8" },
+      { "name": "Leaf Green", "hex": "#7BC943" },
+      { "name": "Dark Green", "hex": "#4A8C3C" }
+    ],
     "styleNotes": "Round, soft purple body with a bright green leafy top. Big sparkly eyes, pink blush cheeks, and a gentle dreamy expression. Radiates cozy, magical warmth."
   },
+  "expressions": [
+    "Happy",
+    "Wink",
+    "Sleepy",
+    "Excited"
+  ],
+  "posesAndActions": [
+    "Waving Hello",
+    "Holding a Heart",
+    "Magic Star",
+    "Sitting Cozy",
+    "Hugging Pineapple Baby"
+  ],
+  "relationships": [
+    { "character": "Pineapple Baby", "description": "Sunshine Bestie" },
+    { "character": "Mango Baby", "description": "Playful Pal" },
+    { "character": "Coconut Baby", "description": "Cozy Comfort Friend" },
+    { "character": "Kiwi Baby", "description": "Gentle Nature Pal" }
+  ],
   "storyRole": "The emotional heart of the group. Ube Baby brings creativity, empathy, and calm to difficult moments. Often the one who finds a gentle solution.",
   "characterRules": {
     "always": [
@@ -34,6 +78,7 @@
       "Act without thinking of others"
     ]
   },
+  "signatureStyle": "Dreamy, cozy, and softly magical. Ube Baby sprinkles comfort, wonder, and sweet sparkle wherever she goes.",
   "catchphrases": [
     "Let's make a tiny wish!",
     "Everything feels better with a little cozy magic.",

@@ -8,18 +8,45 @@
   "status": "active",
   "tagline": "Be kind. Share joy. Grow together.",
   "shortDescription": "Pineapple Baby is the warm, brave heart of the Fruit Baby Universe! Always ready to help a friend, share a smile, or jump into a new adventure — Pineapple Baby leads with kindness and lights up every room.",
+  "about": "Pineapple Baby is a proud member of the Fruit Baby Universe. A gentle leader who naturally leads with kindness and sets a positive example. Always ready to lend a hand and support others. Sensitive, caring, and understands how others feel. Uses cheerful words and actions to help friends believe in themselves.",
   "personality": [
-    "Kind — leads with a big, open heart",
-    "Curious — loves learning and exploring new things",
-    "Nurturing — always looks out for friends",
-    "Brave — faces challenges with a cheerful spirit",
-    "Encouraging — helps others believe in themselves"
+    "Kind",
+    "Curious",
+    "Nurturing",
+    "Brave"
   ],
+  "likes": [
+    "Helping friends",
+    "Sharing",
+    "Learning",
+    "Hugs"
+  ],
+  "teaches": [
+    "Kindness",
+    "Teamwork",
+    "Empathy",
+    "Feelings"
+  ],
+  "signatureQuote": "Kindness makes hearts grow!",
   "visualIdentity": {
     "primaryColors": ["#FFD84D", "#FFB347"],
-    "accentColors": ["#7AC943", "#FFF4D6", "#FFB8C8"],
+    "accentColors": ["#7AC943", "#5C3A1E", "#FFB8C8", "#FFFBE8"],
+    "palette": [
+      { "name": "Sunshine Yellow", "hex": "#FFD84D" },
+      { "name": "Golden Orange", "hex": "#FFB347" },
+      { "name": "Leaf Green", "hex": "#7AC943" },
+      { "name": "Warm Brown", "hex": "#5C3A1E" },
+      { "name": "Blush Pink", "hex": "#FFB8C8" },
+      { "name": "Cream Glow", "hex": "#FFFBE8" }
+    ],
     "styleNotes": "Bright sunshine yellow body with a bold green leafy crown. Warm brown eyes, pink blush cheeks, and a diamond pattern on the front. Soft, rounded, and cheerful."
   },
+  "expressions": [
+    "Happy",
+    "Curious",
+    "Comforting",
+    "Excited"
+  ],
   "storyRole": "Main character. Pineapple Baby drives the adventure, solves problems through kindness, and brings the group together.",
   "characterRules": {
     "always": [
@@ -34,6 +61,7 @@
       "Act selfishly"
     ]
   },
+  "signatureStyle": "Warm, kind, cheerful, helpful, emotionally safe, and welcoming.",
   "catchphrases": [
     "Kindness makes hearts grow!",
     "Let's go on an adventure!",

@@ -7,18 +7,55 @@
   "type": "fruit-baby",
   "status": "active",
   "tagline": "Every little thing is worth exploring!",
-  "shortDescription": "Kiwi Baby is a gentle, fresh, and cheerful character who embodies the sweetness of nature and the joy of curiosity. With a heart full of kindness and a love for simple moments, Kiwi Baby brings calm, happiness, and a sense of wonder to the Fruit Baby Universe.",
+  "shortDescription": "Kiwi Baby is a gentle, fresh, and cheerful character who embodies the sweetness of nature and the joy of curiosity. With a heart full of kindness and a love for simple moments, Kiwi Baby brings calm, happiness, and a sense of wonder to the Fruit Baby Universe, inspiring friendship, positivity, and connection in every adventure.",
+  "about": "Chubby, rounded anthropomorphic kiwi character. Fuzzy kiwi-brown body with a subtle green undertone for a fresh, natural look. Sliced kiwi top showing vibrant green flesh with black seeds. Leaf crown and white kiwi blossom accent. Large warm brown eyes with highlights. Pink blush cheeks and a small smiling mouth. Short rounded arms and feet. Friendly, gentle, and kawaii expression.",
   "personality": [
-    "Fresh & Natural — inspired by real kiwi fruit, wholesome and full of life",
+    "Fresh & Natural — inspired by real kiwi fruit; fresh, wholesome, and full of life",
     "Kind & Cheerful — spreads positivity, happiness, and gentle friendship",
     "Curious & Playful — loves exploring new things and making new friends",
     "Gentle & Caring — a sweet companion who brings comfort and joy"
   ],
   "visualIdentity": {
     "primaryColors": ["#7CC64A", "#8A6E3B"],
-    "accentColors": ["#B8E46A", "#FFB1C1", "#FFF6E0", "#FFD56A"],
-    "styleNotes": "Fuzzy kiwi-brown body with a subtle green undertone. Sliced kiwi top showing vibrant green flesh with black seeds. Leaf crown with a white kiwi blossom accent. Large warm brown eyes and pink blush cheeks."
+    "accentColors": ["#B8E46A", "#6B4A25", "#FFB1C1", "#FFF6E0", "#FFD56A"],
+    "palette": [
+      { "name": "Kiwi Green", "hex": "#7CC64A" },
+      { "name": "Kiwi Flesh Green", "hex": "#B8E46A" },
+      { "name": "Mossy Kiwi Brown", "hex": "#8A6E3B" },
+      { "name": "Deep Kiwi Brown", "hex": "#6B4A25" },
+      { "name": "Seed Brown", "hex": "#3A2A16" },
+      { "name": "Blush Pink", "hex": "#FFB1C1" },
+      { "name": "Blossom Cream", "hex": "#FFF6E0" },
+      { "name": "Blossom Yellow", "hex": "#FFD56A" }
+    ],
+    "styleNotes": "Fuzzy kiwi-brown body with a subtle green undertone for a fresh, natural look. Sliced kiwi top showing vibrant green flesh with black seeds. Leaf crown and white kiwi blossom accent. Large warm brown eyes with highlights. Pink blush cheeks and a small smiling mouth."
   },
+  "expressions": [
+    "Happy",
+    "Wink",
+    "Sleepy",
+    "Excited",
+    "Curious",
+    "Surprised",
+    "Shy",
+    "Laughing",
+    "Thoughtful",
+    "Determined"
+  ],
+  "posesAndActions": [
+    "Waving Hello",
+    "Jumping for Joy",
+    "Sitting Pretty",
+    "Holding a Heart",
+    "Tiptoeing",
+    "Pointing Ahead",
+    "Hugging a Friend",
+    "Walking Along",
+    "Cheerful Run",
+    "Looking Up",
+    "Resting",
+    "Clapping Hands"
+  ],
   "storyRole": "The gentle peacemaker and nature guide. Kiwi Baby helps the group stay grounded, notice small beautiful things, and find calm during busy adventures.",
   "characterRules": {
     "always": [
@@ -33,6 +70,14 @@
       "Act unkindly or dismissively"
     ]
   },
+  "signatureStyle": "Fresh, cheerful, and full of wonder. Kiwi Baby brings calm, happiness, and a sense of wonder to every adventure.",
+  "brandPositioning": "Kiwi Baby is a gentle, fresh, and cheerful character who embodies the sweetness of nature and the joy of curiosity. With a heart full of kindness and a love for simple moments, Kiwi Baby brings calm, happiness, and a sense of wonder to the Fruit Baby Universe, inspiring friendship, positivity, and connection in every adventure.",
+  "trademarkNotes": [
+    "IC 028 — Toys and Plush",
+    "IC 025 — Apparel",
+    "IC 016 — Printed Goods",
+    "IC 009 — Digital Goods"
+  ],
   "catchphrases": [
     "Every little thing is worth exploring!",
     "Look how beautiful this is!",
@@ -42,5 +87,14 @@
     "main": "",
     "alt": "Kiwi Baby — a fuzzy kiwi-brown round character with a green kiwi top, leaf crown, white blossom, and warm friendly eyes"
   },
-  "merchPotential": ["plush", "squish", "sticker", "garden toy set", "collectible figure"]
+  "merchPotential": [
+    "plush",
+    "squish",
+    "sticker",
+    "vinyl figure",
+    "apparel",
+    "printed goods",
+    "digital artwork",
+    "collectible figure"
+  ]
 }

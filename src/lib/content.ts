@@ -10,6 +10,16 @@ import episodePackageTemplate from "@/content/prompt-templates/episode-package-t
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type ColorSwatch = {
+  name: string;
+  hex: string;
+};
+
+export type CharacterRelationship = {
+  character: string;
+  description: string;
+};
+
 export type Character = {
   id: string;
   slug: string;
@@ -20,17 +30,38 @@ export type Character = {
   status: "active" | "draft";
   tagline: string;
   shortDescription: string;
+  // Extended official profile fields
+  about?: string;
+  subtitle?: string;
+  characterType?: string;
+  fruitType?: string;
+  home?: string;
+  birthday?: string;
+  favoriteQuote?: string;
+  signatureQuote?: string;
+  rivalry?: string;
+  teaches?: string[];
   personality: string[];
+  likes?: string[];
+  dislikes?: string[];
   visualIdentity: {
     primaryColors: string[];
     accentColors: string[];
+    palette?: ColorSwatch[];
     styleNotes: string;
   };
+  expressions?: string[];
+  posesAndActions?: string[];
+  relationships?: CharacterRelationship[];
   storyRole: string;
   characterRules: {
     always: string[];
     never: string[];
   };
+  signatureStyle?: string;
+  funFact?: string;
+  brandPositioning?: string;
+  trademarkNotes?: string[];
   catchphrases: string[];
   image: {
     main: string;
