@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Character } from "@/lib/content";
 
 const emojiMap: Record<string, string> = {
@@ -24,8 +25,12 @@ export default function CharacterCard({ character }: { character: Character }) {
   ].slice(0, 6);
 
   return (
+    <Link
+      href={`/characters/${character.slug}`}
+      className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-pineapple-yellow rounded-3xl"
+    >
     <div
-      className={`rounded-3xl overflow-hidden flex flex-col shadow-md transition-shadow hover:shadow-lg ${
+      className={`rounded-3xl overflow-hidden flex flex-col shadow-md transition-all group-hover:shadow-lg group-hover:scale-[1.02] ${
         isVillain
           ? "border-2 border-tiki-brown/50 bg-coconut-cream"
           : "border-2 border-white bg-white"
@@ -114,5 +119,6 @@ export default function CharacterCard({ character }: { character: Character }) {
         </div>
       </div>
     </div>
+    </Link>
   );
 }
