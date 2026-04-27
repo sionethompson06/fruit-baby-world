@@ -68,9 +68,9 @@
     "We can do it together!"
   ],
   "image": {
-    "main": "/characters/pineapple-baby/main.png",
+    "main": "",
     "profileSheet": "/characters/pineapple-baby/profile-sheet.png",
-    "alt": "Pineapple Baby — a cheerful yellow pineapple character with a green leafy crown and big warm eyes"
+    "alt": "Official Pineapple Baby character profile sheet"
   },
   "merchPotential": ["plush", "squish", "sticker", "book", "collectible figure"]
 }

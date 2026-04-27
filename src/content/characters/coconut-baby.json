@@ -89,9 +89,9 @@
     "Everything's going to be okay."
   ],
   "image": {
-    "main": "/characters/coconut-baby/main.png",
+    "main": "",
     "profileSheet": "/characters/coconut-baby/profile-sheet.png",
-    "alt": "Coconut Baby — a round warm brown coconut character with a tall green palm leaf crown, gentle eyes, and a calm comforting smile"
+    "alt": "Official Coconut Baby character profile sheet"
   },
   "merchPotential": ["plush", "squish", "sticker", "comfort toy", "collectible figure"]
 }

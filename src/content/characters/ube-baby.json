@@ -85,9 +85,9 @@
     "I believe in you — and in us."
   ],
   "image": {
-    "main": "/characters/ube-baby/main.png",
+    "main": "",
     "profileSheet": "/characters/ube-baby/profile-sheet.png",
-    "alt": "Ube Baby — a soft round purple character with a green leafy top, dreamy eyes, and a gentle smile"
+    "alt": "Official Ube Baby character profile sheet"
   },
   "merchPotential": ["plush", "squish", "sticker", "nightlight", "collectible figure"]
 }

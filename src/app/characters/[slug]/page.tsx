@@ -184,8 +184,28 @@ export default async function CharacterPage({
         </div>
       </section>
 
+      {/* Official Character Profile Sheet — full-width, natural proportions */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-2">
+        <div className="bg-white rounded-3xl shadow-sm border border-tiki-brown/10 overflow-hidden">
+          <div className="px-5 py-3" style={{ backgroundColor: `${accentColor}22` }}>
+            <h2 className="text-xs font-black text-tiki-brown uppercase tracking-widest">
+              Official Character Profile
+            </h2>
+          </div>
+          <div className="p-5 sm:p-8">
+            <ProfileSheetImage
+              src={char.image.profileSheet}
+              alt={char.image.alt}
+              accentColor={accentColor}
+              characterName={char.name}
+              slug={char.slug}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Main content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* ── Main column ───────────────────────────────────── */}
         <div className="lg:col-span-2 flex flex-col gap-6">
@@ -453,15 +473,6 @@ export default async function CharacterPage({
 
         {/* ── Sidebar ───────────────────────────────────────── */}
         <div className="flex flex-col gap-6">
-
-          {/* Official Profile Sheet */}
-          <SectionCard title="Official Profile Sheet" accentColor={accentColor}>
-            <ProfileSheetImage
-              src={char.image.profileSheet}
-              alt={char.image.alt}
-              accentColor={accentColor}
-            />
-          </SectionCard>
 
           {/* Quick Facts */}
           <SectionCard title="Quick Facts" accentColor={accentColor}>

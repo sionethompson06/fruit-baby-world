@@ -83,9 +83,9 @@
     "This isn't over! TIKI OUT!"
   ],
   "image": {
-    "main": "/characters/tiki/main.png",
+    "main": "",
     "profileSheet": "/characters/tiki/profile-sheet.png",
-    "alt": "Tiki Trouble — a carved wooden tiki mask character with an angry face, green leaf crown, fire accents, skull necklace, and a sneaky grin"
+    "alt": "Official Tiki Trouble character profile sheet"
   },
   "merchPotential": ["vinyl figure", "sticker", "collectible", "mini plush", "antagonist pack"]
 }
