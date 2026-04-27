@@ -1,0 +1,42 @@
+{
+  "id": "sample-episode",
+  "slug": "sample-episode",
+  "title": "The Missing Star Fruit",
+  "status": "draft",
+  "episodeNumber": 1,
+  "featuredCharacters": ["pineapple-baby", "ube-baby", "tiki"],
+  "shortDescription": "When Ube Baby's favorite glowing star fruit goes missing, Pineapple Baby sets out to find it — only to discover that Tiki Trouble has been up to his sneaky tricks again.",
+  "lesson": "It's okay to ask for help when something feels too big to handle alone.",
+  "setting": "Starlight Garden and the edge of Trouble Island",
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "title": "A Missing Treasure",
+      "summary": "Ube Baby wakes up to find her glowing star fruit is gone. She feels sad and worried. Pineapple Baby notices and immediately offers to help find it.",
+      "characters": ["pineapple-baby", "ube-baby"],
+      "visualNotes": "Soft morning light in Starlight Garden. Cozy, dreamy atmosphere. Ube Baby's expression shifts from sleepy to sad."
+    },
+    {
+      "sceneNumber": 2,
+      "title": "Clues on the Beach",
+      "summary": "Pineapple Baby and Ube Baby follow a trail of sparkle dust leading toward Trouble Island. They spot tiny footprints and hear a distant 'Hehehe!'",
+      "characters": ["pineapple-baby", "ube-baby"],
+      "visualNotes": "Sandy tropical beach. Sparkle trail glimmering in the sand. Coconut trees in the background."
+    },
+    {
+      "sceneNumber": 3,
+      "title": "Tiki's Big Mistake",
+      "summary": "Tiki Trouble is discovered trying to use the star fruit as a fancy new hat decoration. He insists it belongs to him now. But when Pineapple Baby explains how much it means to Ube Baby, Tiki pauses — and feels a tiny pang of guilt.",
+      "characters": ["pineapple-baby", "ube-baby", "tiki"],
+      "visualNotes": "Dramatic Trouble Island scene. Tiki is caught in the act. Exaggerated expressions throughout."
+    },
+    {
+      "sceneNumber": 4,
+      "title": "A Surprising Return",
+      "summary": "Tiki grumpily gives back the star fruit, muttering that he didn't even want it anyway. Ube Baby thanks him gently. Tiki stomps off but secretly glances back with a tiny smile.",
+      "characters": ["pineapple-baby", "ube-baby", "tiki"],
+      "visualNotes": "Warm sunset colors. Tiki's retreat is dramatic but hints at a softer side. Ube Baby and Pineapple Baby share a cozy hug."
+    }
+  ],
+  "merchTieIns": ["pineapple-baby-plush", "ube-baby-plush", "tiki-vinyl-figure", "star-fruit-collectible"]
+}

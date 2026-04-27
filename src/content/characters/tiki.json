@@ -1,0 +1,47 @@
+{
+  "id": "tiki",
+  "slug": "tiki",
+  "name": "Tiki Trouble",
+  "shortName": "Tiki",
+  "role": "Mischievous Rival",
+  "type": "villain",
+  "status": "active",
+  "tagline": "I'm gonna find you, Pineapple Baby!",
+  "shortDescription": "Tiki Trouble is the sneaky, dramatic, self-proclaimed ruler of Trouble Island! He loves causing chaos, plotting schemes, and bossing his minions around — but deep down, he secretly admires Pineapple Baby's kindness more than he'd ever admit.",
+  "personality": [
+    "Cheeky — always has a sly grin and a plan",
+    "Sneaky — loves spying, hiding, and plotting",
+    "Boastful — thinks he's the most important character in every story",
+    "Dramatic — turns every small setback into a huge scene",
+    "Secretly soft — can't help admiring Pineapple Baby's kindness"
+  ],
+  "visualIdentity": {
+    "primaryColors": ["#8B5A2B", "#5C3A1E"],
+    "accentColors": ["#FF6B00", "#7AC943", "#FFD84D"],
+    "styleNotes": "Square wooden tiki mask face with angry brows and a wide grin full of teeth. Green leaf crown with tiny flames. Decorated with bones and tribal patterns. Carries a small spear. Fiery and dramatic but still cute and kid-friendly."
+  },
+  "storyRole": "The antagonist. Tiki creates the problem or obstacle in each story — a stolen item, a blocked path, a silly prank gone wrong. He rarely wins, and each episode teaches a lesson about emotions, fairness, or kindness.",
+  "characterRules": {
+    "always": [
+      "Be dramatic and over-the-top about everything",
+      "Plot and scheme but always fail in a funny way",
+      "Stay kid-friendly — mischievous, never truly scary",
+      "React with shocked, exaggerated expressions when plans fail"
+    ],
+    "never": [
+      "Cause real harm or be genuinely threatening",
+      "Scare younger audiences",
+      "Win in a way that feels unfair or mean-spirited"
+    ]
+  },
+  "catchphrases": [
+    "I'm gonna find you, Pineapple Baby!",
+    "Hehehe! My plan is perfect!",
+    "This isn't over! TIKI OUT!"
+  ],
+  "image": {
+    "main": "",
+    "alt": "Tiki Trouble — a wooden tiki mask character with an angry face, green leaf crown, tiny flames, and a sneaky grin"
+  },
+  "merchPotential": ["vinyl figure", "sticker", "collectible", "mini plush", "antagonist pack"]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "episode-package-template",
+  "name": "Episode Package Template",
+  "version": "1.0",
+  "purpose": "Guide future AI episode package generation from written storyboard prompts.",
+  "sections": [
+    "episodeSummary",
+    "characterList",
+    "sceneBreakdown",
+    "dialogueDraft",
+    "voiceoverNotes",
+    "imagePrompts",
+    "animationPrompts",
+    "merchTieIns"
+  ],
+  "rules": [
+    "Keep stories kid-friendly — appropriate for ages 2 to 8.",
+    "Use the official character canon for every character.",
+    "Keep Tiki mischievous and dramatic but never scary or harmful.",
+    "Make each story simple, visual, and easy to animate.",
+    "Every episode should end with a clear lesson or positive message.",
+    "Stories should feel warm, playful, and tropical.",
+    "Keep dialogue short and expressive — these are animated shorts.",
+    "Each scene should be visually distinct and easy to illustrate."
+  ],
+  "sceneTemplate": {
+    "sceneNumber": null,
+    "title": "",
+    "summary": "",
+    "characters": [],
+    "dialogue": [],
+    "voiceoverNote": "",
+    "imagePrompt": "",
+    "animationPrompt": ""
+  }
+}

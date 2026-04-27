@@ -1,0 +1,47 @@
+{
+  "id": "pineapple-baby",
+  "slug": "pineapple-baby",
+  "name": "Pineapple Baby",
+  "shortName": "Pineapple",
+  "role": "Heart of the Fruit Baby Universe",
+  "type": "fruit-baby",
+  "status": "active",
+  "tagline": "Be kind. Share joy. Grow together.",
+  "shortDescription": "Pineapple Baby is the warm, brave heart of the Fruit Baby Universe! Always ready to help a friend, share a smile, or jump into a new adventure — Pineapple Baby leads with kindness and lights up every room.",
+  "personality": [
+    "Kind — leads with a big, open heart",
+    "Curious — loves learning and exploring new things",
+    "Nurturing — always looks out for friends",
+    "Brave — faces challenges with a cheerful spirit",
+    "Encouraging — helps others believe in themselves"
+  ],
+  "visualIdentity": {
+    "primaryColors": ["#FFD84D", "#FFB347"],
+    "accentColors": ["#7AC943", "#FFF4D6", "#FFB8C8"],
+    "styleNotes": "Bright sunshine yellow body with a bold green leafy crown. Warm brown eyes, pink blush cheeks, and a diamond pattern on the front. Soft, rounded, and cheerful."
+  },
+  "storyRole": "Main character. Pineapple Baby drives the adventure, solves problems through kindness, and brings the group together.",
+  "characterRules": {
+    "always": [
+      "Lead with kindness",
+      "Support and encourage friends",
+      "Stay optimistic even when things go wrong",
+      "Be curious and open to learning"
+    ],
+    "never": [
+      "Be mean or dismissive to friends",
+      "Give up on someone who needs help",
+      "Act selfishly"
+    ]
+  },
+  "catchphrases": [
+    "Kindness makes hearts grow!",
+    "Let's go on an adventure!",
+    "We can do it together!"
+  ],
+  "image": {
+    "main": "",
+    "alt": "Pineapple Baby — a cheerful yellow pineapple character with a green leafy crown and big warm eyes"
+  },
+  "merchPotential": ["plush", "squish", "sticker", "book", "collectible figure"]
+}

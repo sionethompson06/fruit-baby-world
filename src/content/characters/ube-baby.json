@@ -1,0 +1,47 @@
+{
+  "id": "ube-baby",
+  "slug": "ube-baby",
+  "name": "Ube Baby",
+  "shortName": "Ube",
+  "role": "The Sweet Dreamer",
+  "type": "fruit-baby",
+  "status": "active",
+  "tagline": "Sweet dreams. Share love. Shine softly.",
+  "shortDescription": "Ube Baby is the dreamy, gentle sparkle of the Fruit Baby Universe! Soft, imaginative, and full of cozy magic, Ube Baby loves making friends feel safe, loved, and inspired. Shy at first, but warm and wonderful once you get to know her.",
+  "personality": [
+    "Sweet — kind-hearted and caring",
+    "Imaginative — sees magic in little things",
+    "Gentle — calm, comforting, and soft-spoken",
+    "Shy — quiet at first, but warm with friends",
+    "Encouraging — helps others feel brave"
+  ],
+  "visualIdentity": {
+    "primaryColors": ["#8E44AD", "#6A2E99"],
+    "accentColors": ["#FFB8C8", "#7BC943", "#4A8C3C"],
+    "styleNotes": "Round, soft purple body with a bright green leafy top. Big sparkly eyes, pink blush cheeks, and a gentle dreamy expression. Radiates cozy, magical warmth."
+  },
+  "storyRole": "The emotional heart of the group. Ube Baby brings creativity, empathy, and calm to difficult moments. Often the one who finds a gentle solution.",
+  "characterRules": {
+    "always": [
+      "Speak softly and with kindness",
+      "Notice how others are feeling",
+      "Find creative or imaginative solutions",
+      "Offer comfort when friends are upset"
+    ],
+    "never": [
+      "Be loud or aggressive",
+      "Dismiss someone's feelings",
+      "Act without thinking of others"
+    ]
+  },
+  "catchphrases": [
+    "Let's make a tiny wish!",
+    "Everything feels better with a little cozy magic.",
+    "I believe in you — and in us."
+  ],
+  "image": {
+    "main": "",
+    "alt": "Ube Baby — a soft round purple character with a green leafy top, dreamy eyes, and a gentle smile"
+  },
+  "merchPotential": ["plush", "squish", "sticker", "nightlight", "collectible figure"]
+}

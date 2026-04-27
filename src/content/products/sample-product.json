@@ -1,0 +1,15 @@
+{
+  "id": "pineapple-baby-plush",
+  "slug": "pineapple-baby-plush",
+  "name": "Pineapple Baby Plush",
+  "status": "concept",
+  "category": "plush",
+  "relatedCharacters": ["pineapple-baby"],
+  "shortDescription": "A soft, squishy Pineapple Baby plush toy. Sunshine yellow with a fluffy green leaf crown — perfect for hugging, collecting, and adventuring together.",
+  "price": null,
+  "image": {
+    "main": "",
+    "alt": "Pineapple Baby plush toy — soft yellow with green leaf crown"
+  },
+  "tags": ["plush", "pineapple-baby", "collectible", "kids", "toy"]
+}
