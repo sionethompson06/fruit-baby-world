@@ -89,7 +89,8 @@
     "Adventure time — let's GO!"
   ],
   "image": {
-    "main": "",
+    "main": "/characters/mango-baby/main.png",
+    "profileSheet": "/characters/mango-baby/profile-sheet.png",
     "alt": "Mango Baby — a bright mango-orange character with a green leaf top, big warm eyes, and an excited grin"
   },
   "merchPotential": ["plush", "squish", "sticker", "activity book", "collectible figure"]

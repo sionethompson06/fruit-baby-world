@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Character } from "@/lib/content";
+import CharacterImage from "./CharacterImage";
 
 const emojiMap: Record<string, string> = {
   "pineapple-baby": "🍍",
@@ -36,13 +37,10 @@ export default function CharacterCard({ character }: { character: Character }) {
           : "border-2 border-white bg-white"
       }`}
     >
-      {/* Card header — character color + emoji */}
-      <div
-        className="relative flex flex-col items-center justify-center pt-8 pb-6"
-        style={{ backgroundColor: headerColor }}
-      >
+      {/* Card header — character artwork or emoji fallback */}
+      <div className="relative" style={{ backgroundColor: headerColor }}>
         {/* Type badge */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 z-10">
           {isVillain ? (
             <span className="bg-tiki-brown text-coconut-cream text-xs font-bold px-2.5 py-1 rounded-full">
               ⚡ Rival
@@ -54,14 +52,13 @@ export default function CharacterCard({ character }: { character: Character }) {
           )}
         </div>
 
-        {/* Emoji avatar */}
-        <div
-          className={`w-24 h-24 rounded-full flex items-center justify-center text-5xl shadow-md ${
-            isVillain ? "bg-tiki-brown/20" : "bg-white/30"
-          }`}
-        >
-          {emoji}
-        </div>
+        <CharacterImage
+          src={character.image.main}
+          alt={character.image.alt}
+          emoji={emoji}
+          bgColor={headerColor}
+          className="w-full aspect-square"
+        />
       </div>
 
       {/* Card body */}

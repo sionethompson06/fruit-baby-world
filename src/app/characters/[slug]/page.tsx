@@ -8,6 +8,8 @@ import {
   type CharacterRelationship,
   type ColorSwatch,
 } from "@/lib/content";
+import CharacterImage from "@/components/CharacterImage";
+import ProfileSheetImage from "@/components/ProfileSheetImage";
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 
@@ -120,13 +122,14 @@ export default async function CharacterPage({
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
           <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
 
-            {/* Emoji avatar / image placeholder */}
-            <div
-              className="w-40 h-40 sm:w-48 sm:h-48 rounded-3xl flex items-center justify-center text-7xl shadow-lg flex-shrink-0 border-4 border-white"
-              style={{ backgroundColor: `${accentColor}40` }}
-            >
-              {emoji}
-            </div>
+            {/* Character artwork or emoji fallback */}
+            <CharacterImage
+              src={char.image.main}
+              alt={char.image.alt}
+              emoji={emoji}
+              bgColor={`${accentColor}40`}
+              className="w-40 h-40 sm:w-48 sm:h-48 rounded-3xl shadow-lg flex-shrink-0 border-4 border-white"
+            />
 
             {/* Hero text */}
             <div className="flex flex-col gap-3 text-center sm:text-left flex-1">
@@ -450,6 +453,15 @@ export default async function CharacterPage({
 
         {/* ── Sidebar ───────────────────────────────────────── */}
         <div className="flex flex-col gap-6">
+
+          {/* Official Profile Sheet */}
+          <SectionCard title="Official Profile Sheet" accentColor={accentColor}>
+            <ProfileSheetImage
+              src={char.image.profileSheet}
+              alt={char.image.alt}
+              accentColor={accentColor}
+            />
+          </SectionCard>
 
           {/* Quick Facts */}
           <SectionCard title="Quick Facts" accentColor={accentColor}>

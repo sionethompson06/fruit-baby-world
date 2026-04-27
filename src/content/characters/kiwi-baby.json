@@ -84,7 +84,8 @@
     "We can figure it out together — slowly and sweetly."
   ],
   "image": {
-    "main": "",
+    "main": "/characters/kiwi-baby/main.png",
+    "profileSheet": "/characters/kiwi-baby/profile-sheet.png",
     "alt": "Kiwi Baby — a fuzzy kiwi-brown round character with a green kiwi top, leaf crown, white blossom, and warm friendly eyes"
   },
   "merchPotential": [

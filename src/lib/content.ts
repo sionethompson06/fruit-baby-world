@@ -65,6 +65,7 @@ export type Character = {
   catchphrases: string[];
   image: {
     main: string;
+    profileSheet?: string;
     alt: string;
   };
   merchPotential: string[];
