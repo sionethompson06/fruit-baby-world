@@ -401,6 +401,366 @@ function EpisodePackagePanel({
   );
 }
 
+// ─── Safe accessors for AI-generated content ─────────────────────────────────
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function getString(obj: Record<string, unknown>, key: string): string {
+  const v = obj[key];
+  return typeof v === "string" ? v : "";
+}
+
+function getList(obj: Record<string, unknown>, key: string): string[] {
+  const v = obj[key];
+  if (!Array.isArray(v)) return [];
+  return v.filter((item): item is string => typeof item === "string");
+}
+
+function getScenes(obj: Record<string, unknown>): Record<string, unknown>[] {
+  const v = obj.sceneBreakdown;
+  if (!Array.isArray(v)) return [];
+  return v.filter(isRecord);
+}
+
+// ─── Generated Package Panel ──────────────────────────────────────────────────
+
+function GeneratedPackagePanel({
+  genResult,
+  genNotes,
+  onClear,
+}: {
+  genResult: Record<string, unknown>;
+  genNotes: string[];
+  onClear: () => void;
+}) {
+  const [showDevJson, setShowDevJson] = useState(false);
+
+  const scenes = getScenes(genResult);
+  const episodeSummary = getString(genResult, "episodeSummary");
+  const approvalNotes = getString(genResult, "approvalNotes");
+  const merchTieIns = getList(genResult, "merchTieIns");
+  const fidelityChecklist = getList(genResult, "characterFidelityChecklist");
+  const dialogueDraftObj = isRecord(genResult.dialogueDraft) ? genResult.dialogueDraft : null;
+  const voiceoverNotesObj = isRecord(genResult.voiceoverNotes) ? genResult.voiceoverNotes : null;
+  const imagePromptsObj = isRecord(genResult.imagePrompts) ? genResult.imagePrompts : null;
+  const animationPromptsObj = isRecord(genResult.animationPrompts) ? genResult.animationPrompts : null;
+
+  const cardCls = "bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3";
+  const headCls = "text-xs font-black text-tiki-brown/50 uppercase tracking-widest";
+  const promptBgCls = "bg-pineapple-yellow/10 rounded-xl px-3 py-2.5 text-xs text-tiki-brown/65 leading-snug";
+  const fidelityHintCls = "text-[10px] text-warm-coral/60 mt-1 leading-snug";
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* Header */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-lg">✅</span>
+        <h2 className="text-base font-black text-tiki-brown">Generated Episode Package Draft</h2>
+        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-tropical-green/20 text-tiki-brown uppercase tracking-wide ml-auto">
+          Draft — not saved
+        </span>
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-xs font-semibold text-tiki-brown/40 hover:text-warm-coral px-3 py-1.5 rounded-full hover:bg-warm-coral/10 transition-all flex-shrink-0"
+        >
+          Clear draft
+        </button>
+      </div>
+
+      {/* Fidelity review reminder */}
+      <div className="flex items-start gap-3 bg-white border border-warm-coral/25 rounded-2xl px-5 py-4 shadow-sm">
+        <span className="text-lg flex-shrink-0">🔒</span>
+        <p className="text-sm text-tiki-brown/70 leading-relaxed">
+          <span className="font-bold text-tiki-brown">Review required.</span>{" "}
+          Generated content must preserve official character canon and visual identity.
+          Image and animation prompts must be reference-anchored to official character assets.
+          Do not publish without human approval.
+        </p>
+      </div>
+
+      {/* Parser notes */}
+      {genNotes.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          {genNotes.map((note, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-2 text-xs text-tiki-brown/55 bg-white rounded-xl px-4 py-2.5 border border-tiki-brown/10"
+            >
+              <span className="flex-shrink-0 text-sm">ℹ️</span>
+              {note}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 1 · Episode Summary */}
+      <div className={cardCls}>
+        <h3 className={headCls}>📋 Episode Summary</h3>
+        {episodeSummary ? (
+          <p className="text-sm text-tiki-brown/80 leading-relaxed">{episodeSummary}</p>
+        ) : (
+          <p className="text-xs text-tiki-brown/35 italic">No episode summary was generated.</p>
+        )}
+      </div>
+
+      {/* 2 · Scene Breakdown */}
+      {scenes.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <h3 className={`${headCls} px-1`}>🎬 Scene Breakdown ({scenes.length})</h3>
+          {scenes.map((scene, idx) => {
+            const sceneNum = typeof scene.sceneNumber === "number" ? scene.sceneNumber : idx + 1;
+            const sceneTitle = getString(scene, "title");
+            const sceneSummary = getString(scene, "summary");
+            const dialogue = getList(scene, "dialogueDraft");
+            const voiceover = getString(scene, "voiceoverNotes");
+            const imagePromptDraft = getString(scene, "imagePromptDraft");
+            const animPromptDraft = getString(scene, "animationPromptDraft");
+            const sceneFidelity = getList(scene, "characterFidelityNotes");
+            const sceneChars = getList(scene, "characters");
+
+            return (
+              <div
+                key={sceneNum}
+                className="bg-white rounded-2xl border border-tiki-brown/10 shadow-sm p-4 flex flex-col gap-3"
+              >
+                {/* Scene header */}
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-pineapple-yellow/40 text-tiki-brown text-[10px] font-black flex items-center justify-center flex-shrink-0">
+                    {sceneNum}
+                  </span>
+                  <p className={`text-xs font-black leading-snug ${
+                    sceneTitle ? "text-tiki-brown" : "text-tiki-brown/30 italic"
+                  }`}>
+                    {sceneTitle || "Untitled Scene"}
+                  </p>
+                </div>
+
+                {/* Characters */}
+                {sceneChars.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {sceneChars.map((id) => (
+                      <span
+                        key={id}
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-tiki-brown/15 text-tiki-brown/70"
+                      >
+                        {id}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Summary */}
+                {sceneSummary && (
+                  <p className="text-xs text-tiki-brown/65 leading-relaxed">{sceneSummary}</p>
+                )}
+
+                {/* Dialogue */}
+                {dialogue.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                      💬 Dialogue Draft
+                    </p>
+                    <div className="flex flex-col gap-1">
+                      {dialogue.map((line, li) => (
+                        <p
+                          key={li}
+                          className="text-xs text-tiki-brown/70 leading-snug bg-sky-blue/20 rounded-lg px-3 py-1.5"
+                        >
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Voiceover */}
+                {voiceover && (
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1">
+                      🎙️ Voiceover Notes
+                    </p>
+                    <p className="text-xs text-tiki-brown/65 leading-snug italic">{voiceover}</p>
+                  </div>
+                )}
+
+                {/* Image prompt */}
+                {imagePromptDraft && (
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1">
+                      🖼️ Image Prompt Draft
+                    </p>
+                    <p className={promptBgCls}>{imagePromptDraft}</p>
+                    <p className={fidelityHintCls}>
+                      ⚠ Must be anchored to official character reference art before use.
+                    </p>
+                  </div>
+                )}
+
+                {/* Animation prompt */}
+                {animPromptDraft && (
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1">
+                      🎬 Animation Prompt Draft
+                    </p>
+                    <p className={promptBgCls}>{animPromptDraft}</p>
+                    <p className={fidelityHintCls}>
+                      ⚠ Must be anchored to official character reference art before use.
+                    </p>
+                  </div>
+                )}
+
+                {/* Character fidelity notes */}
+                {sceneFidelity.length > 0 && (
+                  <div className="pt-2 border-t border-tiki-brown/8">
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                      🔒 Character Fidelity Notes
+                    </p>
+                    <ul className="space-y-1">
+                      {sceneFidelity.map((note, ni) => (
+                        <li
+                          key={ni}
+                          className="flex items-start gap-1.5 text-[10px] text-warm-coral/70 leading-snug"
+                        >
+                          <span className="flex-shrink-0 mt-0.5">⚠</span>
+                          {note}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 3 · Production Notes (dialogue + voiceover overviews) */}
+      {(dialogueDraftObj || voiceoverNotesObj) && (
+        <div className={cardCls}>
+          <h3 className={headCls}>🎭 Production Notes</h3>
+          {dialogueDraftObj && (
+            <div>
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                💬 Dialogue — {getString(dialogueDraftObj, "status") || "draft"}
+              </p>
+              <p className="text-xs text-tiki-brown/65 leading-snug bg-sky-blue/15 rounded-xl px-3 py-2.5">
+                {getString(dialogueDraftObj, "notes") || "No notes."}
+              </p>
+            </div>
+          )}
+          {voiceoverNotesObj && (
+            <div>
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                🎙️ Voiceover — {getString(voiceoverNotesObj, "status") || "draft"}
+              </p>
+              <p className="text-xs text-tiki-brown/65 leading-snug bg-sky-blue/15 rounded-xl px-3 py-2.5">
+                {getString(voiceoverNotesObj, "notes") || "No notes."}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4 · Prompt Drafts Overview (image + animation) */}
+      {(imagePromptsObj || animationPromptsObj) && (
+        <div className={cardCls}>
+          <h3 className={headCls}>🖼️ Prompt Drafts Overview</h3>
+
+          {/* Reference-anchored callout */}
+          <div className="flex items-start gap-2.5 bg-warm-coral/8 border border-warm-coral/20 rounded-xl px-3.5 py-3">
+            <span className="text-sm flex-shrink-0">🔒</span>
+            <p className="text-xs text-tiki-brown/65 leading-snug">
+              <span className="font-bold">Reference-anchored only.</span>{" "}
+              All image and animation prompts must be paired with official character
+              reference art. Do not generate character images without official references.
+            </p>
+          </div>
+
+          {imagePromptsObj && (
+            <div>
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                🖼️ Image Prompts — {getString(imagePromptsObj, "status") || "draft"}
+              </p>
+              <p className="text-xs text-tiki-brown/65 leading-snug bg-pineapple-yellow/10 rounded-xl px-3 py-2.5">
+                {getString(imagePromptsObj, "notes") || "No notes."}
+              </p>
+            </div>
+          )}
+          {animationPromptsObj && (
+            <div>
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                🎬 Animation Prompts — {getString(animationPromptsObj, "status") || "draft"}
+              </p>
+              <p className="text-xs text-tiki-brown/65 leading-snug bg-pineapple-yellow/10 rounded-xl px-3 py-2.5">
+                {getString(animationPromptsObj, "notes") || "No notes."}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 5 · Merch Tie-Ins */}
+      {merchTieIns.length > 0 && (
+        <div className={cardCls}>
+          <h3 className={headCls}>🛍️ Merch Tie-Ins</h3>
+          <ul className="space-y-2">
+            {merchTieIns.map((item, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-xs text-tiki-brown/70 leading-snug">
+                <span className="text-ube-purple flex-shrink-0 mt-0.5">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 6 · Character Fidelity Checklist */}
+      {fidelityChecklist.length > 0 && (
+        <div className="bg-white rounded-3xl border border-warm-coral/20 shadow-sm p-5 flex flex-col gap-2.5">
+          <h3 className={headCls}>🔒 Character Fidelity Checklist</h3>
+          <ul className="space-y-2">
+            {fidelityChecklist.map((rule, i) => (
+              <li key={i} className="flex items-start gap-1.5 text-xs text-tiki-brown/70 leading-snug">
+                <span className="text-warm-coral flex-shrink-0 mt-0.5">•</span>
+                {rule}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 7 · Approval Notes */}
+      {approvalNotes && (
+        <div className={cardCls}>
+          <h3 className={headCls}>✅ Approval Notes</h3>
+          <p className="text-xs text-tiki-brown/70 leading-relaxed">{approvalNotes}</p>
+        </div>
+      )}
+
+      {/* 8 · Developer JSON — secondary collapsible */}
+      <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
+        <button
+          type="button"
+          onClick={() => setShowDevJson((v) => !v)}
+          className="flex items-center justify-between w-full text-xs font-black text-tiki-brown/50 uppercase tracking-widest hover:text-tiki-brown/70 transition-colors"
+        >
+          <span>Developer JSON Preview</span>
+          <span className="text-tiki-brown/30">{showDevJson ? "▲ Hide" : "▼ Show"}</span>
+        </button>
+        {showDevJson && (
+          <pre className="mt-3 text-[10px] text-tiki-brown/65 bg-bg-cream rounded-2xl p-3 overflow-y-auto overflow-x-auto max-h-[50vh] leading-relaxed whitespace-pre-wrap break-words">
+            {JSON.stringify(genResult, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StoryboardBuilder({ characters }: { characters: Character[] }) {
@@ -533,6 +893,13 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
     } finally {
       setGenerating(false);
     }
+  };
+
+  const clearGenResult = () => {
+    setGenResult(null);
+    setGenRawText("");
+    setGenNotes([]);
+    setGenError(null);
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -1146,65 +1513,38 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
             ref={genResultRef}
             className="mt-10 pt-8 border-t border-dashed border-tiki-brown/15"
           >
-            <div className="flex items-center gap-2 mb-5">
-              <span className="text-lg">{genResult ? "✅" : "⚙️"}</span>
-              <h2 className="text-base font-black text-tiki-brown">
-                Generated Episode Package Draft
-              </h2>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-tropical-green/20 text-tiki-brown uppercase tracking-wide ml-auto">
-                Draft — not saved
-              </span>
-            </div>
-
-            {/* Fidelity review reminder */}
-            <div className="flex items-start gap-3 bg-white border border-warm-coral/25 rounded-2xl px-5 py-4 shadow-sm mb-5">
-              <span className="text-lg flex-shrink-0">🔒</span>
-              <p className="text-sm text-tiki-brown/70 leading-relaxed">
-                <span className="font-bold text-tiki-brown">Review required.</span>{" "}
-                Generated episode packages must preserve official character canon and visual
-                identity. Generated image and animation prompts must remain
-                reference-anchored to official character assets. Do not publish without
-                human approval.
-              </p>
-            </div>
-
-            {/* Generation notes */}
-            {genNotes.length > 0 && (
-              <div className="flex flex-col gap-1.5 mb-5">
-                {genNotes.map((note, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start gap-2 text-xs text-tiki-brown/55 bg-white rounded-xl px-4 py-2.5 border border-tiki-brown/10"
-                  >
-                    <span className="flex-shrink-0 text-sm">ℹ️</span>
-                    {note}
+            {genResult ? (
+              <GeneratedPackagePanel
+                genResult={genResult}
+                genNotes={genNotes}
+                onClear={clearGenResult}
+              />
+            ) : (
+              /* Setup required state */
+              <>
+                <div className="flex items-center gap-2 mb-5">
+                  <span className="text-lg">⚙️</span>
+                  <h2 className="text-base font-black text-tiki-brown">
+                    Generated Episode Package Draft
+                  </h2>
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-pineapple-yellow/20 text-tiki-brown uppercase tracking-wide ml-auto">
+                    Setup Required
+                  </span>
+                </div>
+                <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
+                  <span className="text-xl flex-shrink-0">⚙️</span>
+                  <div>
+                    <p className="text-sm font-bold text-tiki-brown mb-0.5">OpenAI not configured</p>
+                    <p className="text-sm text-tiki-brown/65 leading-relaxed">
+                      Add{" "}
+                      <code className="text-xs font-mono bg-tiki-brown/8 px-1.5 py-0.5 rounded">
+                        OPENAI_API_KEY
+                      </code>{" "}
+                      to your Vercel environment variables to enable AI generation.
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Generated package JSON */}
-            {genResult && (
-              <div className="bg-white rounded-3xl border border-tropical-green/25 shadow-sm p-6">
-                <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-3">
-                  Episode Package JSON
-                </p>
-                <pre className="text-xs text-tiki-brown/70 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-words leading-relaxed">
-                  {JSON.stringify(genResult, null, 2)}
-                </pre>
-              </div>
-            )}
-
-            {/* Raw text fallback */}
-            {!genResult && genRawText && (
-              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6">
-                <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-3">
-                  Raw Generated Text
-                </p>
-                <pre className="text-xs text-tiki-brown/70 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-words leading-relaxed">
-                  {genRawText}
-                </pre>
-              </div>
+                </div>
+              </>
             )}
           </div>
         )}
