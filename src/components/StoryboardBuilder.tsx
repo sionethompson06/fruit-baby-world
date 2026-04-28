@@ -100,6 +100,7 @@ function CharPills({
 
 export default function StoryboardBuilder({ characters }: { characters: Character[] }) {
   const idCounter = useRef(2);
+  const [previewMode, setPreviewMode] = useState<"storyboard" | "episode-package">("storyboard");
 
   const [draft, setDraft] = useState<StoryboardDraft>({
     title: "",
@@ -452,40 +453,87 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
           {/* ── RIGHT: Preview + Checklist ─────────────────────────────── */}
           <div className="flex flex-col gap-5 lg:sticky lg:top-20">
 
-            {/* Live JSON Preview */}
-            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm">👁️</span>
-                <h2 className="text-sm font-black text-tiki-brown">Live Preview</h2>
-              </div>
-              <p className="text-xs text-tiki-brown/40 mb-3">
-                Updates as you type — not saved.
-              </p>
-              <pre className="text-xs text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-72 leading-relaxed whitespace-pre-wrap break-words">
-                {JSON.stringify(previewData, null, 2)}
-              </pre>
+            {/* Preview mode tabs */}
+            <div className="flex gap-1 bg-white rounded-2xl border border-tiki-brown/10 shadow-sm p-1.5">
+              {(["storyboard", "episode-package"] as const).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setPreviewMode(mode)}
+                  className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                    previewMode === mode
+                      ? "bg-ube-purple text-white shadow-sm"
+                      : "text-tiki-brown/60 hover:bg-ube-purple/10 hover:text-ube-purple"
+                  }`}
+                >
+                  {mode === "storyboard" ? "📋 Storyboard Draft" : "🎬 Episode Package"}
+                </button>
+              ))}
             </div>
 
-            {/* Character Fidelity Checklist */}
-            <div className="bg-white rounded-3xl border border-warm-coral/20 shadow-sm p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-sm">🔒</span>
-                <h2 className="text-sm font-black text-tiki-brown">
-                  Character Fidelity Checklist
-                </h2>
+            {previewMode === "storyboard" ? (
+              <>
+                {/* Live JSON Preview */}
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm">👁️</span>
+                    <h2 className="text-sm font-black text-tiki-brown">Live Preview</h2>
+                  </div>
+                  <p className="text-xs text-tiki-brown/40 mb-3">
+                    Updates as you type — not saved.
+                  </p>
+                  <pre className="text-xs text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-72 leading-relaxed whitespace-pre-wrap break-words">
+                    {JSON.stringify(previewData, null, 2)}
+                  </pre>
+                </div>
+
+                {/* Character Fidelity Checklist */}
+                <div className="bg-white rounded-3xl border border-warm-coral/20 shadow-sm p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm">🔒</span>
+                    <h2 className="text-sm font-black text-tiki-brown">
+                      Character Fidelity Checklist
+                    </h2>
+                  </div>
+                  <ul className="space-y-2.5">
+                    {FIDELITY_RULES.map((rule) => (
+                      <li
+                        key={rule}
+                        className="flex items-start gap-2 text-xs text-tiki-brown/70 leading-snug"
+                      >
+                        <span className="text-warm-coral flex-shrink-0 mt-0.5">•</span>
+                        {rule}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            ) : (
+              /* Episode Package placeholder */
+              <div className="bg-white rounded-3xl border border-ube-purple/20 shadow-sm p-6 flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎬</span>
+                  <h2 className="text-sm font-black text-tiki-brown">
+                    Episode Package Preview
+                  </h2>
+                </div>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blush-pink/40 text-tiki-brown w-fit">
+                  Coming Next
+                </span>
+                <p className="text-sm text-tiki-brown/65 leading-relaxed">
+                  This future preview will map the storyboard draft into a
+                  production-ready episode package structure. AI generation is
+                  not active yet.
+                </p>
+                <div className="bg-bg-cream rounded-2xl px-4 py-3 mt-1">
+                  <p className="text-xs font-semibold text-tiki-brown/50">
+                    Will include: scene breakdown, dialogue placeholders,
+                    voiceover notes, image &amp; animation prompt structure,
+                    character fidelity checklist, and approval workflow.
+                  </p>
+                </div>
               </div>
-              <ul className="space-y-2.5">
-                {FIDELITY_RULES.map((rule) => (
-                  <li
-                    key={rule}
-                    className="flex items-start gap-2 text-xs text-tiki-brown/70 leading-snug"
-                  >
-                    <span className="text-warm-coral flex-shrink-0 mt-0.5">•</span>
-                    {rule}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            )}
           </div>
         </div>
 
