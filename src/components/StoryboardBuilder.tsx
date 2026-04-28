@@ -2,30 +2,12 @@
 
 import { useState, useRef } from "react";
 import type { Character } from "@/lib/content";
-
-// ─── Local types ──────────────────────────────────────────────────────────────
-
-type SceneDraft = {
-  id: string;
-  sceneNumber: number;
-  title: string;
-  summary: string;
-  characters: string[];
-  visualNotes: string;
-  emotionalBeat: string;
-};
-
-type StoryboardDraft = {
-  title: string;
-  shortDescription: string;
-  featuredCharacters: string[];
-  setting: string;
-  lesson: string;
-  targetAgeRange: string;
-  tone: string;
-  storyNotes: string;
-  scenes: SceneDraft[];
-};
+import {
+  type SceneDraft,
+  type StoryboardDraft,
+  createSlug,
+  buildEpisodePackagePreview,
+} from "@/lib/storyboard";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -51,15 +33,6 @@ const PIPELINE_STEPS = [
 ];
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-}
 
 function emptyScene(id: string, sceneNumber: number): SceneDraft {
   return { id, sceneNumber, title: "", summary: "", characters: [], visualNotes: "", emotionalBeat: "" };
@@ -164,11 +137,11 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
         .map((s, i) => ({ ...s, sceneNumber: i + 1 })),
     }));
 
-  // ── Preview object ────────────────────────────────────────────────────────
+  // ── Preview objects ───────────────────────────────────────────────────────
 
   const previewData = {
     id: "",
-    slug: slugify(draft.title) || "",
+    slug: createSlug(draft.title) || "",
     title: draft.title,
     status: "draft",
     featuredCharacters: draft.featuredCharacters,
@@ -509,29 +482,20 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 </div>
               </>
             ) : (
-              /* Episode Package placeholder */
-              <div className="bg-white rounded-3xl border border-ube-purple/20 shadow-sm p-6 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">🎬</span>
+              /* Episode Package JSON preview */
+              <div className="bg-white rounded-3xl border border-ube-purple/20 shadow-sm p-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm">🎬</span>
                   <h2 className="text-sm font-black text-tiki-brown">
                     Episode Package Preview
                   </h2>
                 </div>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blush-pink/40 text-tiki-brown w-fit">
-                  Coming Next
-                </span>
-                <p className="text-sm text-tiki-brown/65 leading-relaxed">
-                  This future preview will map the storyboard draft into a
-                  production-ready episode package structure. AI generation is
-                  not active yet.
+                <p className="text-xs text-tiki-brown/40 mb-3">
+                  Derived from your draft — no AI, not saved.
                 </p>
-                <div className="bg-bg-cream rounded-2xl px-4 py-3 mt-1">
-                  <p className="text-xs font-semibold text-tiki-brown/50">
-                    Will include: scene breakdown, dialogue placeholders,
-                    voiceover notes, image &amp; animation prompt structure,
-                    character fidelity checklist, and approval workflow.
-                  </p>
-                </div>
+                <pre className="text-xs text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-72 leading-relaxed whitespace-pre-wrap break-words">
+                  {JSON.stringify(buildEpisodePackagePreview(draft), null, 2)}
+                </pre>
               </div>
             )}
           </div>
