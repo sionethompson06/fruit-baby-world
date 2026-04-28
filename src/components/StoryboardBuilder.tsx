@@ -509,8 +509,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
             Storyboard Builder
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Draft simple Fruit Baby story ideas, organize scenes, and prepare
-            future episode packages.
+            Draft Fruit Baby story ideas, organize scenes, and preview the future
+            episode package structure before AI generation is added.
           </p>
         </div>
       </section>
@@ -522,12 +522,13 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
           <span className="text-xl flex-shrink-0">🏗️</span>
           <div>
             <p className="text-sm font-bold text-tiki-brown mb-0.5">
-              Draft-only planning tool
+              Draft only — nothing saves yet
             </p>
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              Storyboards are not saved yet. AI generation, GitHub saving, and
-              publishing will be added in future phases. Refreshing the page
-              will clear this draft.
+              This is a planning tool. Everything you type lives in memory only —
+              nothing is saved to a file or database. AI generation is not active
+              yet. GitHub saving will be added in a future phase. Refreshing the
+              page will clear the draft.
             </p>
           </div>
         </div>
@@ -538,11 +539,16 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
           {/* ── LEFT: Form ─────────────────────────────────────────────── */}
           <div className="flex flex-col gap-6">
 
-            {/* Story Info */}
+            {/* Story Basics */}
             <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
-              <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2">
-                <span>📖</span> Story Info
-              </h2>
+              <div>
+                <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2 mb-0.5">
+                  <span>📖</span> Story Basics
+                </h2>
+                <p className="text-xs text-tiki-brown/45">
+                  Start with the core idea for the episode.
+                </p>
+              </div>
 
               <div>
                 <label className={labelCls}>Episode Title</label>
@@ -565,14 +571,34 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                   onChange={(e) => patchDraft({ shortDescription: e.target.value })}
                 />
               </div>
+            </div>
 
+            {/* Featured Characters */}
+            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
               <div>
-                <label className={labelCls}>Featured Characters</label>
-                <CharPills
-                  characters={characters}
-                  selected={draft.featuredCharacters}
-                  onToggle={toggleFeaturedChar}
-                />
+                <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2 mb-0.5">
+                  <span>🍍</span> Featured Characters
+                </h2>
+                <p className="text-xs text-tiki-brown/45">
+                  Choose which official Fruit Baby World characters appear in this story.
+                </p>
+              </div>
+              <CharPills
+                characters={characters}
+                selected={draft.featuredCharacters}
+                onToggle={toggleFeaturedChar}
+              />
+            </div>
+
+            {/* Story Direction */}
+            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
+              <div>
+                <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2 mb-0.5">
+                  <span>🧭</span> Story Direction
+                </h2>
+                <p className="text-xs text-tiki-brown/45">
+                  Guide the setting, lesson, tone, and creative notes.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -639,14 +665,19 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
               </div>
             </div>
 
-            {/* Scenes */}
+            {/* Scene List */}
             <div className="flex flex-col gap-4">
-              <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2">
-                <span>🎬</span> Scenes
-                <span className="text-xs font-semibold text-tiki-brown/40 ml-1">
-                  ({draft.scenes.length})
-                </span>
-              </h2>
+              <div>
+                <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2 mb-0.5">
+                  <span>🎬</span> Scene List
+                  <span className="text-xs font-semibold text-tiki-brown/40 ml-1">
+                    ({draft.scenes.length})
+                  </span>
+                </h2>
+                <p className="text-xs text-tiki-brown/45">
+                  Break the story into simple moments that can later become scenes, prompts, and animation clips.
+                </p>
+              </div>
 
               {draft.scenes.map((scene) => (
                 <div
