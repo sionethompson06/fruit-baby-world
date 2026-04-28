@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getAllCharacters, getAllEpisodes, getAllProducts } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ const modules = [
     status: "Coming Soon",
     statusColor: "bg-pineapple-yellow/40 text-tiki-brown",
     emoji: "📝",
+    href: "/admin/storyboards",
   },
   {
     title: "Episode Package Generator",
@@ -22,6 +24,7 @@ const modules = [
     status: "Coming Soon",
     statusColor: "bg-pineapple-yellow/40 text-tiki-brown",
     emoji: "🎬",
+    href: "/admin/episodes",
   },
   {
     title: "Character Canon Library",
@@ -30,6 +33,7 @@ const modules = [
     status: "Planned",
     statusColor: "bg-sky-blue/60 text-tiki-brown",
     emoji: "📚",
+    href: "/admin/characters",
   },
   {
     title: "Reference-Anchored Variation Generator",
@@ -38,6 +42,7 @@ const modules = [
     status: "Future Phase",
     statusColor: "bg-blush-pink/40 text-tiki-brown",
     emoji: "🎨",
+    href: "/admin/variations",
   },
   {
     title: "Product & Merch Planner",
@@ -46,6 +51,7 @@ const modules = [
     status: "Planned",
     statusColor: "bg-sky-blue/60 text-tiki-brown",
     emoji: "🛍️",
+    href: "/admin/products",
   },
   {
     title: "Publishing Queue",
@@ -54,6 +60,7 @@ const modules = [
     status: "Future Phase",
     statusColor: "bg-blush-pink/40 text-tiki-brown",
     emoji: "📤",
+    href: "/admin/publishing",
   },
   {
     title: "GitHub Content Saver",
@@ -62,6 +69,7 @@ const modules = [
     status: "Future Phase",
     statusColor: "bg-blush-pink/40 text-tiki-brown",
     emoji: "💾",
+    href: null,
   },
 ];
 
@@ -188,27 +196,41 @@ export default function AdminPage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {modules.map((mod) => (
-            <div
-              key={mod.title}
-              className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-3xl">{mod.emoji}</span>
-                <span
-                  className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${mod.statusColor}`}
-                >
-                  {mod.status}
-                </span>
+          {modules.map((mod) => {
+            const cardContent = (
+              <>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-3xl">{mod.emoji}</span>
+                  <span
+                    className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 ${mod.statusColor}`}
+                  >
+                    {mod.status}
+                  </span>
+                </div>
+                <h3 className="text-base font-black text-tiki-brown leading-snug">
+                  {mod.title}
+                </h3>
+                <p className="text-sm text-tiki-brown/65 leading-relaxed flex-1">
+                  {mod.description}
+                </p>
+              </>
+            );
+            const cardClass =
+              "bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3";
+            return mod.href ? (
+              <Link
+                key={mod.title}
+                href={mod.href}
+                className={`${cardClass} hover:shadow-md hover:scale-[1.01] transition-all`}
+              >
+                {cardContent}
+              </Link>
+            ) : (
+              <div key={mod.title} className={cardClass}>
+                {cardContent}
               </div>
-              <h3 className="text-base font-black text-tiki-brown leading-snug">
-                {mod.title}
-              </h3>
-              <p className="text-sm text-tiki-brown/65 leading-relaxed flex-1">
-                {mod.description}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
