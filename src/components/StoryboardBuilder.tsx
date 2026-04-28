@@ -5,6 +5,7 @@ import type { Character } from "@/lib/content";
 import {
   type SceneDraft,
   type StoryboardDraft,
+  type EpisodePackagePreview,
   createSlug,
   buildEpisodePackagePreview,
 } from "@/lib/storyboard";
@@ -65,6 +66,322 @@ function CharPills({
           {c.shortName}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ─── Episode Package Panel ────────────────────────────────────────────────────
+
+const FUTURE_SECTIONS = [
+  {
+    emoji: "💬",
+    label: "Dialogue Draft",
+    key: "dialogueDraft" as const,
+  },
+  {
+    emoji: "🎙️",
+    label: "Voiceover Notes",
+    key: "voiceoverNotes" as const,
+  },
+  {
+    emoji: "🖼️",
+    label: "Image Prompts",
+    key: "imagePrompts" as const,
+  },
+  {
+    emoji: "🎬",
+    label: "Animation Prompts",
+    key: "animationPrompts" as const,
+  },
+];
+
+function EpisodePackagePanel({
+  pkg,
+  characters,
+}: {
+  pkg: EpisodePackagePreview;
+  characters: Character[];
+}) {
+  const [showJson, setShowJson] = useState(false);
+  const charMap = Object.fromEntries(characters.map((c) => [c.id, c]));
+  const val = (v: string) => v || "—";
+
+  return (
+    <div className="flex flex-col gap-4">
+
+      {/* 1 · Episode Overview */}
+      <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+        <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest">
+          Episode Overview
+        </h3>
+
+        {/* Status badges */}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/40 text-tiki-brown uppercase tracking-wide">
+            {pkg.status}
+          </span>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+            {pkg.productionStatus}
+          </span>
+        </div>
+
+        {/* Title + slug */}
+        <div>
+          <p className="text-base font-black text-tiki-brown leading-tight">
+            {val(pkg.title)}
+          </p>
+          {pkg.slug && (
+            <p className="text-[10px] font-mono text-tiki-brown/35 mt-0.5">
+              /{pkg.slug}
+            </p>
+          )}
+        </div>
+
+        {/* Description */}
+        {pkg.shortDescription && (
+          <p className="text-xs text-tiki-brown/65 leading-relaxed">
+            {pkg.shortDescription}
+          </p>
+        )}
+
+        {/* Field grid */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+          {[
+            { label: "Setting", value: pkg.setting },
+            { label: "Lesson", value: pkg.lesson },
+            { label: "Age Range", value: pkg.targetAgeRange },
+            { label: "Tone", value: pkg.tone },
+          ].map(({ label, value }) => (
+            <div key={label}>
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">
+                {label}
+              </p>
+              <p className="text-xs text-tiki-brown/75 font-semibold mt-0.5">
+                {val(value)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 2 · Featured Characters */}
+      <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-2.5">
+        <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest">
+          Featured Characters
+        </h3>
+        {pkg.featuredCharacters.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {pkg.featuredCharacters.map((id) => {
+              const c = charMap[id];
+              return (
+                <span
+                  key={id}
+                  className="text-xs font-semibold px-2.5 py-1 rounded-full border border-tiki-brown/15 text-tiki-brown"
+                  style={{
+                    backgroundColor: c
+                      ? `${c.visualIdentity.primaryColors[0]}22`
+                      : undefined,
+                  }}
+                >
+                  {c ? c.shortName : id}
+                </span>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-xs text-tiki-brown/35 italic">
+            No characters selected yet.
+          </p>
+        )}
+      </div>
+
+      {/* 3 · Scene Breakdown */}
+      <div className="flex flex-col gap-3">
+        <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest px-1">
+          Scene Breakdown
+        </h3>
+        {pkg.sceneBreakdown.map((scene) => (
+          <div
+            key={scene.sceneNumber}
+            className="bg-white rounded-2xl border border-tiki-brown/10 shadow-sm p-4 flex flex-col gap-3"
+          >
+            {/* Scene header */}
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-pineapple-yellow/40 text-tiki-brown text-[10px] font-black flex items-center justify-center flex-shrink-0">
+                {scene.sceneNumber}
+              </span>
+              <p className="text-xs font-black text-tiki-brown leading-snug">
+                {val(scene.title)}
+              </p>
+            </div>
+
+            {/* Summary */}
+            {scene.summary && (
+              <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                {scene.summary}
+              </p>
+            )}
+
+            {/* Characters */}
+            {scene.characters.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {scene.characters.map((id) => {
+                  const c = charMap[id];
+                  return (
+                    <span
+                      key={id}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-tiki-brown/15 text-tiki-brown/70"
+                    >
+                      {c ? c.shortName : id}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Visual notes + Emotional beat */}
+            {(scene.visualNotes || scene.emotionalBeat) && (
+              <div className="grid grid-cols-2 gap-2">
+                {scene.visualNotes && (
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-0.5">
+                      Visual
+                    </p>
+                    <p className="text-[10px] text-tiki-brown/60 leading-snug">
+                      {scene.visualNotes}
+                    </p>
+                  </div>
+                )}
+                {scene.emotionalBeat && (
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-0.5">
+                      Beat
+                    </p>
+                    <p className="text-[10px] text-tiki-brown/60 leading-snug">
+                      {scene.emotionalBeat}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Future generation mini-badges */}
+            <div className="pt-1 border-t border-tiki-brown/8">
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { emoji: "💬", label: "Dialogue" },
+                  { emoji: "🎙️", label: "Voiceover" },
+                  { emoji: "🖼️", label: "Image" },
+                  { emoji: "🎬", label: "Animation" },
+                ].map(({ emoji, label }) => (
+                  <span
+                    key={label}
+                    className="flex items-center gap-1 text-[10px] font-semibold text-tiki-brown/40 px-2 py-1 rounded-lg bg-blush-pink/20"
+                  >
+                    <span>{emoji}</span>
+                    <span>{label}</span>
+                    <span className="ml-auto text-tiki-brown/25">future</span>
+                  </span>
+                ))}
+              </div>
+              {/* Character fidelity notes for scene */}
+              {scene.characterFidelityNotes.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {scene.characterFidelityNotes.map((note) => (
+                    <li
+                      key={note}
+                      className="text-[10px] text-warm-coral/70 leading-snug flex items-start gap-1"
+                    >
+                      <span className="flex-shrink-0 mt-0.5">⚠</span>
+                      {note}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 4 · Future Generation */}
+      <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+        <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest">
+          Future Generation
+        </h3>
+        <div className="flex flex-col gap-2">
+          {FUTURE_SECTIONS.map(({ emoji, label, key }) => (
+            <div
+              key={key}
+              className="flex items-start gap-2.5 bg-blush-pink/15 rounded-xl px-3 py-2.5"
+            >
+              <span className="text-sm flex-shrink-0">{emoji}</span>
+              <div>
+                <p className="text-xs font-bold text-tiki-brown mb-0.5">
+                  {label}
+                </p>
+                <p className="text-[10px] text-tiki-brown/55 leading-snug">
+                  {pkg[key].notes}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 5 · Character Fidelity Checklist */}
+      <div className="bg-white rounded-3xl border border-warm-coral/20 shadow-sm p-5 flex flex-col gap-2.5">
+        <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest">
+          🔒 Character Fidelity
+        </h3>
+        <ul className="space-y-2">
+          {pkg.characterFidelityChecklist.map((rule) => (
+            <li
+              key={rule}
+              className="flex items-start gap-1.5 text-[10px] text-tiki-brown/70 leading-snug"
+            >
+              <span className="text-warm-coral flex-shrink-0 mt-0.5">•</span>
+              {rule}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* 6 · Approval Status */}
+      <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-2.5">
+        <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest">
+          Approval Status
+        </h3>
+        <div className="flex flex-wrap gap-1.5">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/40 text-tiki-brown uppercase tracking-wide">
+            {pkg.approval.status}
+          </span>
+          {pkg.approval.requiresHumanReview && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-warm-coral/20 text-tiki-brown uppercase tracking-wide">
+              Human Review Required
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-tiki-brown/55 leading-snug">
+          {pkg.approval.notes}
+        </p>
+      </div>
+
+      {/* 7 · Developer JSON */}
+      <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
+        <button
+          type="button"
+          onClick={() => setShowJson((v) => !v)}
+          className="flex items-center justify-between w-full text-xs font-black text-tiki-brown/50 uppercase tracking-widest hover:text-tiki-brown/70 transition-colors"
+        >
+          <span>Developer JSON</span>
+          <span className="text-tiki-brown/30">{showJson ? "▲ Hide" : "▼ Show"}</span>
+        </button>
+        {showJson && (
+          <pre className="mt-3 text-[10px] text-tiki-brown/65 bg-bg-cream rounded-2xl p-3 overflow-y-auto overflow-x-auto max-h-60 leading-relaxed whitespace-pre-wrap break-words">
+            {JSON.stringify(pkg, null, 2)}
+          </pre>
+        )}
+      </div>
     </div>
   );
 }
@@ -138,6 +455,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
     }));
 
   // ── Preview objects ───────────────────────────────────────────────────────
+
+  const episodePackage = buildEpisodePackagePreview(draft);
 
   const previewData = {
     id: "",
@@ -424,7 +743,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
           </div>
 
           {/* ── RIGHT: Preview + Checklist ─────────────────────────────── */}
-          <div className="flex flex-col gap-5 lg:sticky lg:top-20">
+          <div className="flex flex-col gap-5 lg:sticky lg:top-20 lg:max-h-[calc(100vh-5.5rem)] lg:overflow-y-auto">
 
             {/* Preview mode tabs */}
             <div className="flex gap-1 bg-white rounded-2xl border border-tiki-brown/10 shadow-sm p-1.5">
@@ -482,21 +801,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 </div>
               </>
             ) : (
-              /* Episode Package JSON preview */
-              <div className="bg-white rounded-3xl border border-ube-purple/20 shadow-sm p-5">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm">🎬</span>
-                  <h2 className="text-sm font-black text-tiki-brown">
-                    Episode Package Preview
-                  </h2>
-                </div>
-                <p className="text-xs text-tiki-brown/40 mb-3">
-                  Derived from your draft — no AI, not saved.
-                </p>
-                <pre className="text-xs text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-72 leading-relaxed whitespace-pre-wrap break-words">
-                  {JSON.stringify(buildEpisodePackagePreview(draft), null, 2)}
-                </pre>
-              </div>
+              /* Episode Package visual panel */
+              <EpisodePackagePanel pkg={episodePackage} characters={characters} />
             )}
           </div>
         </div>
