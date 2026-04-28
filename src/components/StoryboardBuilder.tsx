@@ -761,6 +761,196 @@ function GeneratedPackagePanel({
   );
 }
 
+// ─── Review status ───────────────────────────────────────────────────────────
+
+type ReviewStatus = "draft" | "needs-review" | "approved-for-save" | "revise";
+
+const REVIEW_STATUS_META: Record<ReviewStatus, { label: string; badge: string; desc: string }> = {
+  draft: {
+    label: "Draft",
+    badge: "bg-pineapple-yellow/40 text-tiki-brown",
+    desc: "Freshly generated draft. Review all content and character fidelity before marking it as ready.",
+  },
+  "needs-review": {
+    label: "Needs Review",
+    badge: "bg-sky-blue/30 text-tiki-brown",
+    desc: "Flagged for closer review. Check character fidelity and all scene content carefully.",
+  },
+  "approved-for-save": {
+    label: "Approved for Save",
+    badge: "bg-tropical-green/25 text-tiki-brown",
+    desc: "Content looks correct and is ready to be saved in a future phase.",
+  },
+  revise: {
+    label: "Revise",
+    badge: "bg-warm-coral/25 text-tiki-brown",
+    desc: "Needs revision before use. Note your concerns in the Review Notes field below.",
+  },
+};
+
+const FIDELITY_REVIEW_ITEMS = [
+  "Character behavior matches official canon.",
+  "Character visuals/prompts preserve official profile references.",
+  "No character has been redesigned.",
+  "Colors, shape language, accessories, and identity details are protected.",
+  "Tiki Trouble remains mischievous, funny, dramatic, and kid-friendly — not scary or violent.",
+  "Image and animation prompts remain reference-anchored to official character art.",
+  "Human approval is required before publishing.",
+];
+
+// ─── Draft Review Panel ───────────────────────────────────────────────────────
+
+function DraftReviewPanel({
+  hasGenResult,
+  reviewStatus,
+  onStatusChange,
+  reviewNotes,
+  onNotesChange,
+  fidelityChecked,
+  onFidelityToggle,
+}: {
+  hasGenResult: boolean;
+  reviewStatus: ReviewStatus;
+  onStatusChange: (s: ReviewStatus) => void;
+  reviewNotes: string;
+  onNotesChange: (v: string) => void;
+  fidelityChecked: boolean[];
+  onFidelityToggle: (i: number) => void;
+}) {
+  const cardCls = "bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3";
+  const headCls = "text-xs font-black text-tiki-brown/50 uppercase tracking-widest";
+
+  if (!hasGenResult) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className={cardCls}>
+          <h3 className={headCls}>📋 Draft Review Status</h3>
+          <p className="text-xs text-tiki-brown/40 italic leading-snug">
+            Generate an episode package draft first, then review it here.
+          </p>
+        </div>
+        <div className="flex items-start gap-3 bg-white border border-ube-purple/15 rounded-2xl px-5 py-4 shadow-sm">
+          <span className="text-base flex-shrink-0">💾</span>
+          <p className="text-sm text-tiki-brown/65 leading-relaxed">
+            <span className="font-bold text-tiki-brown">Future phase:</span>{" "}
+            approved drafts will be saved to GitHub as episode JSON after review.
+            Saving is not active yet.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const meta = REVIEW_STATUS_META[reviewStatus];
+
+  return (
+    <div className="flex flex-col gap-5">
+
+      {/* 1 · Review Status */}
+      <div className={cardCls}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h3 className={headCls}>📋 Draft Review Status</h3>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${meta.badge}`}>
+              {meta.label}
+            </span>
+            <span className="text-[10px] text-tiki-brown/35 font-semibold">Not saved</span>
+          </div>
+        </div>
+
+        <p className="text-xs text-tiki-brown/65 leading-snug">{meta.desc}</p>
+        <p className="text-[10px] text-tiki-brown/30 italic leading-snug">
+          This status lives in memory only and will clear on page refresh. Saving is not active yet.
+        </p>
+
+        {/* Status buttons */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {(["draft", "needs-review", "approved-for-save", "revise"] as ReviewStatus[]).map((s) => {
+            const isActive = reviewStatus === s;
+            const m = REVIEW_STATUS_META[s];
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => onStatusChange(s)}
+                disabled={isActive}
+                className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
+                  isActive
+                    ? `${m.badge} cursor-default`
+                    : "bg-bg-cream border border-tiki-brown/20 text-tiki-brown/55 hover:border-tiki-brown/40 hover:text-tiki-brown hover:bg-white"
+                }`}
+              >
+                {isActive ? `✓ ${m.label}` : m.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2 · Character Fidelity Review Checklist */}
+      <div className="bg-white rounded-3xl border border-warm-coral/20 shadow-sm p-5 flex flex-col gap-3">
+        <h3 className={headCls}>🔒 Character Fidelity Review</h3>
+        <p className="text-xs text-tiki-brown/45 leading-snug">
+          Check each item before marking this draft as Approved for Save.
+        </p>
+        <ul className="flex flex-col gap-2.5">
+          {FIDELITY_REVIEW_ITEMS.map((item, i) => (
+            <li key={i}>
+              <label className="flex items-start gap-2.5 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={fidelityChecked[i] ?? false}
+                  onChange={() => onFidelityToggle(i)}
+                  className="mt-0.5 flex-shrink-0 accent-tropical-green"
+                />
+                <span className={`text-xs leading-snug transition-colors ${
+                  fidelityChecked[i]
+                    ? "text-tiki-brown/35 line-through"
+                    : "text-tiki-brown/70 group-hover:text-tiki-brown"
+                }`}>
+                  {item}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[10px] text-tiki-brown/30 italic">
+          Checkboxes reset on page refresh — not saved.
+        </p>
+      </div>
+
+      {/* 3 · Review Notes */}
+      <div className={cardCls}>
+        <h3 className={headCls}>📝 Review Notes</h3>
+        <p className="text-xs text-tiki-brown/45 leading-snug">
+          Add reminders, concerns, or revision notes before this draft is saved in a future phase.
+        </p>
+        <textarea
+          className="w-full px-3.5 py-2.5 rounded-xl border border-tiki-brown/20 bg-bg-cream text-sm text-tiki-brown placeholder:text-tiki-brown/30 focus:outline-none focus:border-ube-purple/40 focus:ring-2 focus:ring-ube-purple/10 transition-all resize-none"
+          rows={4}
+          placeholder="e.g. Scene 2 dialogue feels slightly off-brand — check Tiki's tone. Image prompts look good but need official reference art linked before generating."
+          value={reviewNotes}
+          onChange={(e) => onNotesChange(e.target.value)}
+        />
+        <p className="text-[10px] text-tiki-brown/30 italic">
+          Notes live in memory only and clear on refresh.
+        </p>
+      </div>
+
+      {/* 4 · Future Save Notice */}
+      <div className="flex items-start gap-3 bg-white border border-ube-purple/15 rounded-2xl px-5 py-4 shadow-sm">
+        <span className="text-base flex-shrink-0">💾</span>
+        <p className="text-sm text-tiki-brown/65 leading-relaxed">
+          <span className="font-bold text-tiki-brown">Future phase:</span>{" "}
+          approved drafts will be saved to GitHub as episode JSON after review.
+          Saving is not active yet.
+        </p>
+      </div>
+
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StoryboardBuilder({ characters }: { characters: Character[] }) {
@@ -777,6 +967,13 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
   const [genResult, setGenResult] = useState<Record<string, unknown> | null>(null);
   const [genRawText, setGenRawText] = useState("");
   const [genNotes, setGenNotes] = useState<string[]>([]);
+
+  // ── Review state ──────────────────────────────────────────────────────────
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("draft");
+  const [reviewNotes, setReviewNotes] = useState("");
+  const [fidelityChecked, setFidelityChecked] = useState<boolean[]>(
+    Array(FIDELITY_REVIEW_ITEMS.length).fill(false) as boolean[]
+  );
 
   const [draft, setDraft] = useState<StoryboardDraft>({
     title: "",
@@ -900,6 +1097,9 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
     setGenRawText("");
     setGenNotes([]);
     setGenError(null);
+    setReviewStatus("draft");
+    setReviewNotes("");
+    setFidelityChecked(Array(FIDELITY_REVIEW_ITEMS.length).fill(false) as boolean[]);
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -1548,6 +1748,29 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
             )}
           </div>
         )}
+
+        {/* ── Draft Review Panel ───────────────────────────────────────── */}
+        <div className="mt-10 pt-8 border-t border-dashed border-tiki-brown/15">
+          <h2 className="text-sm font-black text-tiki-brown flex items-center gap-2 mb-1">
+            <span>📋</span> Review This Draft
+          </h2>
+          <p className="text-xs text-tiki-brown/45 mb-5">
+            Local review workflow — status and notes live in memory only and are not saved anywhere.
+          </p>
+          <DraftReviewPanel
+            hasGenResult={genResult !== null}
+            reviewStatus={reviewStatus}
+            onStatusChange={setReviewStatus}
+            reviewNotes={reviewNotes}
+            onNotesChange={setReviewNotes}
+            fidelityChecked={fidelityChecked}
+            onFidelityToggle={(i) =>
+              setFidelityChecked((prev) =>
+                prev.map((v, idx) => (idx === i ? !v : v))
+              )
+            }
+          />
+        </div>
 
         {/* ── Future Workflow ───────────────────────────────────────────── */}
         <div className="mt-10 pt-8 border-t border-dashed border-tiki-brown/15">
