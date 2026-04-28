@@ -6,6 +6,9 @@ import coconutBaby from "@/content/characters/coconut-baby.json";
 import tiki from "@/content/characters/tiki.json";
 import sampleEpisode from "@/content/episodes/sample-episode.json";
 import sampleProduct from "@/content/products/sample-product.json";
+import ubeBabySquish from "@/content/products/ube-baby-squish.json";
+import tikiTroubleCollectible from "@/content/products/tiki-trouble-collectible.json";
+import fruitBabyStickerPack from "@/content/products/fruit-baby-sticker-pack.json";
 import episodePackageTemplate from "@/content/prompt-templates/episode-package-template.json";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -151,7 +154,12 @@ const characters: Character[] = [
 
 const episodes: Episode[] = [sampleEpisode as Episode];
 
-const products: Product[] = [sampleProduct as Product];
+const products: Product[] = [
+  sampleProduct as Product,
+  ubeBabySquish as Product,
+  tikiTroubleCollectible as Product,
+  fruitBabyStickerPack as Product,
+];
 
 // ─── Character helpers ────────────────────────────────────────────────────────
 

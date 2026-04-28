@@ -1,0 +1,15 @@
+{
+  "id": "ube-baby-squish",
+  "slug": "ube-baby-squish",
+  "name": "Ube Baby Squish",
+  "status": "concept",
+  "category": "squish",
+  "relatedCharacters": ["ube-baby"],
+  "shortDescription": "A dreamy, purple squishmallow-style Ube Baby plush. Soft lavender with a glittery crown detail — made for squishing, snuggling, and showing off.",
+  "price": null,
+  "image": {
+    "main": "",
+    "alt": "Ube Baby squishy plush — dreamy purple with sparkle crown"
+  },
+  "tags": ["squish", "ube-baby", "collectible", "plush", "kids"]
+}

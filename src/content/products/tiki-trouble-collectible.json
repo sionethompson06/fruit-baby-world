@@ -1,0 +1,15 @@
+{
+  "id": "tiki-trouble-collectible",
+  "slug": "tiki-trouble-collectible",
+  "name": "Tiki Trouble Collectible",
+  "status": "concept",
+  "category": "collectible",
+  "relatedCharacters": ["tiki"],
+  "shortDescription": "A limited-edition vinyl collectible of Tiki mid-mischief. Deep brown with carved detail markings — a must-have for any Fruit Baby World fan who roots for the underdog.",
+  "price": null,
+  "image": {
+    "main": "",
+    "alt": "Tiki vinyl collectible figure — dark carved tiki with mischievous grin"
+  },
+  "tags": ["collectible", "tiki", "vinyl", "limited", "villain"]
+}

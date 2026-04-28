@@ -1,0 +1,15 @@
+{
+  "id": "fruit-baby-sticker-pack",
+  "slug": "fruit-baby-sticker-pack",
+  "name": "Fruit Baby Sticker Pack",
+  "status": "concept",
+  "category": "stickers",
+  "relatedCharacters": ["pineapple-baby", "ube-baby", "mango-baby", "kiwi-baby", "coconut-baby"],
+  "shortDescription": "A bumper sticker pack featuring all the Fruit Baby friends in their most expressive poses. Glossy, waterproof, and bursting with tropical color — for laptops, water bottles, and everywhere in between.",
+  "price": null,
+  "image": {
+    "main": "",
+    "alt": "Fruit Baby sticker pack — glossy sheet of all five fruit baby characters"
+  },
+  "tags": ["stickers", "all-characters", "collectible", "lifestyle", "fun"]
+}
