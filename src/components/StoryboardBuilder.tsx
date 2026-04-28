@@ -10,6 +10,7 @@ import {
   buildEpisodePackagePreview,
 } from "@/lib/storyboard";
 import { buildEpisodePrompt } from "@/lib/episodePrompt";
+import { buildEpisodeSavePreview } from "@/lib/episodeSavePreview";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1135,6 +1136,14 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
     createdIn: "Storyboard Builder Draft",
   };
 
+  // ── Save-ready preview (derived from genResult + review state) ────────────
+
+  const checkedFidelityItems = FIDELITY_REVIEW_ITEMS.filter((_, i) => fidelityChecked[i]);
+
+  const savePreview = genResult
+    ? buildEpisodeSavePreview(draft, genResult, reviewStatus, reviewNotes, checkedFidelityItems)
+    : null;
+
   // ── Shared styles ─────────────────────────────────────────────────────────
 
   const fieldCls =
@@ -1746,6 +1755,55 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* ── Save-Ready Episode JSON Preview ─────────────────────────── */}
+        {savePreview && (
+          <div className="mt-10 pt-8 border-t border-dashed border-tiki-brown/15">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm">💾</span>
+              <h2 className="text-sm font-black text-tiki-brown">
+                Save-Ready Episode JSON Preview
+              </h2>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide ml-auto">
+                Preview only
+              </span>
+            </div>
+            <p className="text-xs text-tiki-brown/45 mb-5 leading-snug">
+              Future GitHub saving will use this kind of structure to create an episode JSON file.
+              Nothing is saved yet.
+            </p>
+
+            {/* Review status callout */}
+            {reviewStatus === "approved-for-save" ? (
+              <div className="flex items-start gap-2.5 bg-tropical-green/10 border border-tropical-green/30 rounded-2xl px-4 py-3.5 mb-5">
+                <span className="text-sm flex-shrink-0">✅</span>
+                <p className="text-xs text-tiki-brown/70 leading-snug">
+                  <span className="font-bold text-tiki-brown">Approved for Save.</span>{" "}
+                  In a future phase, this JSON can be committed to GitHub after final review.
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-4 py-3.5 mb-5">
+                <span className="text-sm flex-shrink-0">⚠️</span>
+                <p className="text-xs text-tiki-brown/65 leading-snug">
+                  This draft is not marked{" "}
+                  <span className="font-bold">Approved for Save</span> yet. You can still preview
+                  the JSON, but future saving should require approval.
+                </p>
+              </div>
+            )}
+
+            {/* JSON block */}
+            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-3">
+                Episode JSON Preview
+              </p>
+              <pre className="text-[11px] leading-relaxed text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-words select-all">
+                {JSON.stringify(savePreview, null, 2)}
+              </pre>
+            </div>
           </div>
         )}
 
