@@ -85,12 +85,20 @@ export type Episode = {
   title: string;
   status: "draft" | "published" | "archived";
   episodeNumber?: number;
+  season?: number;
   featuredCharacters: string[];
   shortDescription: string;
   lesson: string;
   setting: string;
   scenes: Scene[];
   merchTieIns: string[];
+  thumbnail?: string;
+  duration?: string;
+  ageRange?: string;
+  theme?: string;
+  releaseStatus?: string;
+  callout?: string;
+  tags?: string[];
 };
 
 export type Product = {
