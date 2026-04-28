@@ -23,7 +23,7 @@ export default function CharacterImage({ src, alt, emoji, bgColor, className = "
           src={src}
           alt={alt}
           fill
-          className="object-contain"
+          className="object-cover object-top"
           onError={() => setFailed(true)}
           sizes="(max-width: 768px) 100vw, 50vw"
         />
