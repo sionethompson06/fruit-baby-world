@@ -45,27 +45,37 @@ function CharPills({
   characters,
   selected,
   onToggle,
+  hint,
 }: {
   characters: Character[];
   selected: string[];
   onToggle: (id: string) => void;
+  hint?: string;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {characters.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          onClick={() => onToggle(c.id)}
-          className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-            selected.includes(c.id)
-              ? "bg-ube-purple/15 border-2 border-ube-purple/40 text-ube-purple"
-              : "bg-white border border-tiki-brown/20 text-tiki-brown/60 hover:border-ube-purple/30 hover:text-tiki-brown"
-          }`}
-        >
-          {c.shortName}
-        </button>
-      ))}
+    <div className="flex flex-col gap-2.5">
+      <div className="flex flex-wrap gap-2">
+        {characters.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onToggle(c.id)}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              selected.includes(c.id)
+                ? "bg-ube-purple/15 border-2 border-ube-purple/50 text-ube-purple shadow-sm"
+                : "bg-bg-cream border border-tiki-brown/25 text-tiki-brown/55 hover:border-ube-purple/40 hover:text-tiki-brown hover:bg-white"
+            }`}
+          >
+            {selected.includes(c.id) && (
+              <span className="mr-1 opacity-70">✓</span>
+            )}
+            {c.shortName}
+          </button>
+        ))}
+      </div>
+      {selected.length === 0 && hint && (
+        <p className="text-xs text-tiki-brown/35 italic">{hint}</p>
+      )}
     </div>
   );
 }
@@ -486,7 +496,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
   const fieldCls =
     "w-full px-3.5 py-2.5 rounded-xl border border-tiki-brown/20 bg-white text-sm text-tiki-brown placeholder:text-tiki-brown/30 focus:outline-none focus:border-ube-purple/40 focus:ring-2 focus:ring-ube-purple/10 transition-all";
-  const labelCls = "block text-xs font-bold text-tiki-brown/65 mb-1.5 uppercase tracking-wide";
+  const labelCls = "block text-xs font-bold text-tiki-brown/65 mb-0.5 uppercase tracking-wide";
+  const helperCls = "text-xs text-tiki-brown/40 mt-0.5 mb-2 leading-snug";
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -552,6 +563,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
               <div>
                 <label className={labelCls}>Episode Title</label>
+                <p className={helperCls}>Give this short story a working title.</p>
                 <input
                   type="text"
                   className={fieldCls}
@@ -563,10 +575,11 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
               <div>
                 <label className={labelCls}>Short Description</label>
+                <p className={helperCls}>One or two sentences about the story.</p>
                 <textarea
                   className={`${fieldCls} resize-none`}
                   rows={3}
-                  placeholder="A brief summary of this episode..."
+                  placeholder="e.g. Mango Baby accidentally mixes up everyone's fruit baskets and the gang has to sort them out before the big festival."
                   value={draft.shortDescription}
                   onChange={(e) => patchDraft({ shortDescription: e.target.value })}
                 />
@@ -587,6 +600,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 characters={characters}
                 selected={draft.featuredCharacters}
                 onToggle={toggleFeaturedChar}
+                hint="No characters selected yet — tap one above to add them."
               />
             </div>
 
@@ -604,6 +618,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Setting</label>
+                  <p className={helperCls}>Where does the story happen?</p>
                   <input
                     type="text"
                     className={fieldCls}
@@ -614,6 +629,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 </div>
                 <div>
                   <label className={labelCls}>Lesson / Moral</label>
+                  <p className={helperCls}>What should children learn or feel by the end?</p>
                   <input
                     type="text"
                     className={fieldCls}
@@ -627,6 +643,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>Target Age Range</label>
+                  <p className={helperCls}>Who is this episode written for?</p>
                   <select
                     className={fieldCls}
                     value={draft.targetAgeRange}
@@ -640,6 +657,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 </div>
                 <div>
                   <label className={labelCls}>Tone</label>
+                  <p className={helperCls}>e.g. Playful, cozy, silly, adventurous, gentle.</p>
                   <select
                     className={fieldCls}
                     value={draft.tone}
@@ -655,10 +673,11 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
               <div>
                 <label className={labelCls}>Story Notes</label>
+                <p className={helperCls}>Optional extra ideas, reminders, or creative direction.</p>
                 <textarea
                   className={`${fieldCls} resize-none`}
                   rows={3}
-                  placeholder="Additional notes, ideas, or directions for this episode..."
+                  placeholder="e.g. Could open with a musical number — Tiki causes the chaos but helps fix it at the end."
                   value={draft.storyNotes}
                   onChange={(e) => patchDraft({ storyNotes: e.target.value })}
                 />
@@ -685,9 +704,9 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                   className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4"
                 >
                   {/* Scene header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-7 h-7 rounded-full bg-pineapple-yellow/40 text-tiki-brown text-xs font-black flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-center justify-between pb-1 border-b border-tiki-brown/8">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-full bg-pineapple-yellow/50 text-tiki-brown text-sm font-black flex items-center justify-center flex-shrink-0 shadow-sm">
                         {scene.sceneNumber}
                       </span>
                       <span className="text-sm font-black text-tiki-brown">
@@ -698,7 +717,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                       <button
                         type="button"
                         onClick={() => removeScene(scene.id)}
-                        className="text-xs font-semibold text-warm-coral/70 hover:text-warm-coral px-3 py-1 rounded-full hover:bg-warm-coral/10 transition-all"
+                        className="text-xs font-semibold text-tiki-brown/40 hover:text-warm-coral px-3 py-1.5 rounded-full hover:bg-warm-coral/10 transition-all"
                       >
                         Remove
                       </button>
@@ -707,6 +726,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
                   <div>
                     <label className={labelCls}>Scene Title</label>
+                    <p className={helperCls}>A name for this moment.</p>
                     <input
                       type="text"
                       className={fieldCls}
@@ -718,10 +738,11 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
                   <div>
                     <label className={labelCls}>Scene Summary</label>
+                    <p className={helperCls}>What happens — keep it to a sentence or two.</p>
                     <textarea
                       className={`${fieldCls} resize-none`}
                       rows={3}
-                      placeholder="What happens in this scene..."
+                      placeholder="e.g. Mango Baby rushes in carrying too many baskets and bumps into Pineapple Baby, sending fruit flying everywhere."
                       value={scene.summary}
                       onChange={(e) => patchScene(scene.id, { summary: e.target.value })}
                     />
@@ -729,30 +750,34 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
                   <div>
                     <label className={labelCls}>Characters in Scene</label>
+                    <p className={helperCls}>Who appears in this scene?</p>
                     <CharPills
                       characters={characters}
                       selected={scene.characters}
                       onToggle={(charId) => toggleSceneChar(scene.id, charId)}
+                      hint="No characters added to this scene yet."
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className={labelCls}>Visual Notes</label>
+                      <p className={helperCls}>Colors, mood, and setting details.</p>
                       <textarea
                         className={`${fieldCls} resize-none`}
                         rows={3}
-                        placeholder="Visual mood, colors, and style for this scene..."
+                        placeholder="e.g. Bright, warm light — fruit flying in every direction."
                         value={scene.visualNotes}
                         onChange={(e) => patchScene(scene.id, { visualNotes: e.target.value })}
                       />
                     </div>
                     <div>
                       <label className={labelCls}>Emotional Beat</label>
+                      <p className={helperCls}>How does the story move forward here?</p>
                       <textarea
                         className={`${fieldCls} resize-none`}
                         rows={3}
-                        placeholder="e.g. Surprise and delight, tension resolves..."
+                        placeholder="e.g. Surprise and panic — but also the first moment of teamwork."
                         value={scene.emotionalBeat}
                         onChange={(e) => patchScene(scene.id, { emotionalBeat: e.target.value })}
                       />
