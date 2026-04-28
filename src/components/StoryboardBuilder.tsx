@@ -9,6 +9,7 @@ import {
   createSlug,
   buildEpisodePackagePreview,
 } from "@/lib/storyboard";
+import { buildEpisodePrompt } from "@/lib/episodePrompt";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -404,7 +405,7 @@ function EpisodePackagePanel({
 
 export default function StoryboardBuilder({ characters }: { characters: Character[] }) {
   const idCounter = useRef(2);
-  const [previewMode, setPreviewMode] = useState<"storyboard" | "episode-package">("storyboard");
+  const [previewMode, setPreviewMode] = useState<"storyboard" | "episode-package" | "ai-prompt">("storyboard");
   const [showDraftJson, setShowDraftJson] = useState(false);
 
   const [draft, setDraft] = useState<StoryboardDraft>({
@@ -476,6 +477,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
   // ── Preview objects ───────────────────────────────────────────────────────
 
   const episodePackage = buildEpisodePackagePreview(draft);
+  const aiPrompt = buildEpisodePrompt(draft, characters);
 
   const previewData = {
     id: "",
@@ -812,18 +814,24 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
             {/* Preview mode tabs */}
             <div className="flex gap-1 bg-white rounded-2xl border border-tiki-brown/10 shadow-sm p-1.5">
-              {(["storyboard", "episode-package"] as const).map((mode) => (
+              {(
+                [
+                  { id: "storyboard", label: "📋 Draft" },
+                  { id: "episode-package", label: "🎬 Package" },
+                  { id: "ai-prompt", label: "🤖 AI Prompt" },
+                ] as const
+              ).map(({ id, label }) => (
                 <button
-                  key={mode}
+                  key={id}
                   type="button"
-                  onClick={() => setPreviewMode(mode)}
-                  className={`flex-1 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                    previewMode === mode
+                  onClick={() => setPreviewMode(id)}
+                  className={`flex-1 px-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                    previewMode === id
                       ? "bg-ube-purple text-white shadow-sm"
                       : "text-tiki-brown/60 hover:bg-ube-purple/10 hover:text-ube-purple"
                   }`}
                 >
-                  {mode === "storyboard" ? "📋 Storyboard Draft" : "🎬 Episode Package"}
+                  {label}
                 </button>
               ))}
             </div>
@@ -973,9 +981,70 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                   </ul>
                 </div>
               </>
-            ) : (
+            ) : previewMode === "episode-package" ? (
               /* Episode Package visual panel */
               <EpisodePackagePanel pkg={episodePackage} characters={characters} />
+            ) : (
+              /* AI Prompt Preview */
+              <div className="flex flex-col gap-4">
+
+                {/* Callout */}
+                <div className="flex items-start gap-3 bg-white border border-ube-purple/20 rounded-2xl px-5 py-4 shadow-sm">
+                  <span className="text-xl flex-shrink-0">🤖</span>
+                  <div>
+                    <p className="text-sm font-bold text-tiki-brown mb-0.5">
+                      Prompt Preview — no AI is active yet
+                    </p>
+                    <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                      This is the structured prompt that will eventually be sent to an AI
+                      generation route. No generation happens here. Review and approve the
+                      structure before the next phase connects it to a server-side route.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Prompt card */}
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">📄</span>
+                      <h2 className="text-sm font-black text-tiki-brown">AI Prompt</h2>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+                      Updates live
+                    </span>
+                  </div>
+                  <p className="text-xs text-tiki-brown/40">
+                    Updates as you fill in the storyboard form. Select text to copy.
+                  </p>
+                  <pre className="text-[11px] leading-relaxed text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-hidden max-h-[60vh] whitespace-pre-wrap break-words">
+                    {aiPrompt}
+                  </pre>
+                </div>
+
+                {/* Section guide */}
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-2">
+                  <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest mb-1">
+                    Prompt Sections
+                  </h3>
+                  {[
+                    { label: "Role / Task", desc: "Instructs the AI on its production role." },
+                    { label: "Source of Truth", desc: "Enforces canonical character data and official references." },
+                    { label: "Storyboard Input", desc: "Your current draft title, scenes, and story details." },
+                    { label: "Character Canon Summaries", desc: "Pulled from official character JSON for selected characters." },
+                    { label: "Character Fidelity Rules", desc: "Strict visual preservation rules for all characters." },
+                    { label: "Tiki Special Rules", desc: "Appears only when Tiki Trouble is selected." },
+                    { label: "Output Format", desc: "Tells the AI to return a structured episode package JSON." },
+                    { label: "Safety & Brand Rules", desc: "Kid-friendly content and human review requirements." },
+                  ].map(({ label, desc }) => (
+                    <div key={label} className="flex items-start gap-2 text-xs text-tiki-brown/65 leading-snug py-1 border-b border-tiki-brown/6 last:border-0">
+                      <span className="text-ube-purple flex-shrink-0 mt-0.5">•</span>
+                      <span><span className="font-bold">{label}</span> — {desc}</span>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
             )}
           </div>
         </div>
