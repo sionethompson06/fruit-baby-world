@@ -32,7 +32,7 @@ export default function StoryCard({ episode, characterMap }: Props) {
     featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#FFB347";
 
   return (
-    <div className="rounded-3xl overflow-hidden flex flex-col bg-white border-2 border-white shadow-md hover:shadow-lg hover:scale-[1.01] transition-all">
+    <div className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all">
       {/* Thumbnail area */}
       <div
         className="relative flex items-center justify-center h-44 flex-shrink-0"

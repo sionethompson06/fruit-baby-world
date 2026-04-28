@@ -13,39 +13,54 @@ export default function StoriesPage() {
   const characters = getAllCharacters();
   const characterMap = Object.fromEntries(characters.map((c) => [c.id, c]));
 
-  return (
-    <div className="min-h-screen bg-bg-cream">
+  const gridClass =
+    episodes.length === 1
+      ? "max-w-md w-full mx-auto"
+      : episodes.length === 2
+      ? "grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl"
+      : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
 
-      {/* Hero */}
-      <section className="bg-white border-b border-pineapple-yellow/30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-14 text-center">
+  return (
+    <div className="flex flex-col">
+
+      {/* Hero — warm gradient gives clear separation from the sticky nav */}
+      <section className="bg-gradient-to-b from-mango-orange/20 via-bg-cream to-bg-cream py-16 px-4 text-center">
+        <div className="max-w-2xl mx-auto">
           <div className="text-5xl mb-4" role="img" aria-label="stories">🎬</div>
-          <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown mb-4">
+          <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown mb-4 leading-tight">
             Fruit Baby Stories
           </h1>
-          <p className="text-lg text-tiki-brown/65 max-w-xl mx-auto leading-relaxed">
-            Follow the Fruit Baby friends through playful adventures, gentle lessons, and mischievous surprises.
+          <p className="text-tiki-brown/70 text-lg leading-relaxed">
+            Follow the Fruit Baby friends through playful adventures, gentle
+            lessons, and mischievous surprises.
           </p>
         </div>
       </section>
 
-      {/* About stories */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 pb-4">
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm px-6 sm:px-10 py-6 text-center">
-          <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-2xl mx-auto">
-            Stories begin as simple episode concepts and will later grow into storyboards, scripts, scene prompts, animation clips, and merchandise ideas.
-          </p>
-        </div>
+      {/* Pipeline info banner */}
+      <section className="bg-coconut-cream border-y border-pineapple-yellow/30 py-4 px-4 text-center">
+        <p className="text-sm font-semibold text-tiki-brown/70 max-w-xl mx-auto">
+          📖 Stories begin as episode concepts and grow into storyboards,
+          scripts, scene prompts, animation clips, and merchandise ideas.
+        </p>
       </section>
 
-      {/* Episode grid */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      {/* Episode gallery */}
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-14">
         {episodes.length > 0 ? (
           <>
-            <h2 className="text-xs font-black text-tiki-brown/40 uppercase tracking-widest mb-6">
-              Episodes — {episodes.length} total
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mb-8">
+              <h2 className="text-2xl font-black text-tiki-brown mb-1">
+                🎬 Episodes
+              </h2>
+              <p className="text-sm text-tiki-brown/60">
+                {episodes.length}{" "}
+                {episodes.length === 1 ? "episode" : "episodes"} — more on the
+                way
+              </p>
+            </div>
+
+            <div className={gridClass}>
               {episodes.map((episode) => (
                 <StoryCard
                   key={episode.id}
@@ -65,15 +80,23 @@ export default function StoriesPage() {
         )}
       </section>
 
-      {/* Episode Studio Coming Soon */}
-      <section className="bg-coconut-cream border-t border-pineapple-yellow/30 py-14 px-4">
-        <div className="max-w-xl mx-auto text-center flex flex-col items-center gap-4">
+      {/* Divider */}
+      <div className="max-w-5xl mx-auto w-full px-4 sm:px-6">
+        <div className="border-t-2 border-dashed border-tiki-brown/15" />
+      </div>
+
+      {/* Story Studio Coming Soon */}
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-14">
+        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm px-6 sm:px-10 py-10 text-center flex flex-col items-center gap-4">
           <div className="text-4xl" role="img" aria-label="studio">🎬✨</div>
           <h2 className="text-xl font-black text-tiki-brown">
-            Episode Studio Coming Soon
+            Story Studio Coming Soon
           </h2>
-          <p className="text-sm text-tiki-brown/60 leading-relaxed">
-            The Fruit Baby Story Studio will let the team write episode concepts, generate storyboards and scene scripts, create image and animation prompts, and build out complete episode packages — all in one place.
+          <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-md">
+            The Fruit Baby Story Studio will let the team write episode
+            concepts, generate storyboards and scene scripts, create image and
+            animation prompts, and build out complete episode packages — all in
+            one place.
           </p>
         </div>
       </section>
