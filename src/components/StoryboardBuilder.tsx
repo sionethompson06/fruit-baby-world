@@ -137,8 +137,10 @@ function EpisodePackagePanel({
 
         {/* Title + slug */}
         <div>
-          <p className="text-base font-black text-tiki-brown leading-tight">
-            {val(pkg.title)}
+          <p className={`text-base font-black leading-tight ${
+            pkg.title ? "text-tiki-brown" : "text-tiki-brown/30 italic"
+          }`}>
+            {pkg.title || "Untitled Episode"}
           </p>
           {pkg.slug && (
             <p className="text-[10px] font-mono text-tiki-brown/35 mt-0.5">
@@ -220,8 +222,10 @@ function EpisodePackagePanel({
               <span className="w-6 h-6 rounded-full bg-pineapple-yellow/40 text-tiki-brown text-[10px] font-black flex items-center justify-center flex-shrink-0">
                 {scene.sceneNumber}
               </span>
-              <p className="text-xs font-black text-tiki-brown leading-snug">
-                {val(scene.title)}
+              <p className={`text-xs font-black leading-snug ${
+                scene.title ? "text-tiki-brown" : "text-tiki-brown/30 italic"
+              }`}>
+                {scene.title || "Untitled Scene"}
               </p>
             </div>
 
@@ -401,6 +405,7 @@ function EpisodePackagePanel({
 export default function StoryboardBuilder({ characters }: { characters: Character[] }) {
   const idCounter = useRef(2);
   const [previewMode, setPreviewMode] = useState<"storyboard" | "episode-package">("storyboard");
+  const [showDraftJson, setShowDraftJson] = useState(false);
 
   const [draft, setDraft] = useState<StoryboardDraft>({
     title: "",
@@ -463,6 +468,10 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
         .filter((s) => s.id !== sceneId)
         .map((s, i) => ({ ...s, sceneNumber: i + 1 })),
     }));
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+
+  const charMap = Object.fromEntries(characters.map((c) => [c.id, c]));
 
   // ── Preview objects ───────────────────────────────────────────────────────
 
@@ -790,7 +799,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
               <button
                 type="button"
                 onClick={addScene}
-                className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl border-2 border-dashed border-pineapple-yellow/50 text-sm font-bold text-tiki-brown/55 hover:border-pineapple-yellow hover:text-tiki-brown hover:bg-pineapple-yellow/5 transition-all"
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-2 border-dashed border-pineapple-yellow/50 text-sm font-bold text-tiki-brown/55 hover:border-pineapple-yellow hover:text-tiki-brown hover:bg-pineapple-yellow/5 transition-all"
               >
                 <span className="text-base leading-none">+</span>
                 <span>Add Scene</span>
@@ -808,7 +817,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                   key={mode}
                   type="button"
                   onClick={() => setPreviewMode(mode)}
-                  className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex-1 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     previewMode === mode
                       ? "bg-ube-purple text-white shadow-sm"
                       : "text-tiki-brown/60 hover:bg-ube-purple/10 hover:text-ube-purple"
@@ -821,18 +830,126 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
 
             {previewMode === "storyboard" ? (
               <>
-                {/* Live JSON Preview */}
-                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm">👁️</span>
-                    <h2 className="text-sm font-black text-tiki-brown">Live Preview</h2>
+                {/* Human-readable draft summary */}
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">👁️</span>
+                      <h2 className="text-sm font-black text-tiki-brown">Storyboard Draft</h2>
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/55 uppercase tracking-wide">
+                      Not saved
+                    </span>
                   </div>
-                  <p className="text-xs text-tiki-brown/40 mb-3">
-                    Updates as you type — not saved.
+
+                  {/* Title */}
+                  <p className={`text-base font-black leading-tight ${
+                    draft.title ? "text-tiki-brown" : "text-tiki-brown/25 italic"
+                  }`}>
+                    {draft.title || "Untitled Episode"}
                   </p>
-                  <pre className="text-xs text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-72 leading-relaxed whitespace-pre-wrap break-words">
-                    {JSON.stringify(previewData, null, 2)}
-                  </pre>
+
+                  {/* Description */}
+                  {draft.shortDescription ? (
+                    <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                      {draft.shortDescription}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-tiki-brown/30 italic">No description yet.</p>
+                  )}
+
+                  {/* Characters */}
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                      Characters
+                    </p>
+                    {draft.featuredCharacters.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {draft.featuredCharacters.map((id) => {
+                          const c = charMap[id];
+                          return (
+                            <span
+                              key={id}
+                              className="text-[10px] font-semibold px-2 py-0.5 rounded-full border border-tiki-brown/15 text-tiki-brown/70"
+                              style={{
+                                backgroundColor: c
+                                  ? `${c.visualIdentity.primaryColors[0]}22`
+                                  : undefined,
+                              }}
+                            >
+                              {c ? c.shortName : id}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-tiki-brown/30 italic">No characters selected.</p>
+                    )}
+                  </div>
+
+                  {/* Field grid */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {[
+                      { label: "Setting", value: draft.setting },
+                      { label: "Lesson", value: draft.lesson },
+                      { label: "Age Range", value: draft.targetAgeRange },
+                      { label: "Tone", value: draft.tone },
+                    ].map(({ label, value }) => (
+                      <div key={label}>
+                        <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">
+                          {label}
+                        </p>
+                        <p className={`text-xs mt-0.5 ${
+                          value ? "text-tiki-brown/75 font-semibold" : "text-tiki-brown/25 italic"
+                        }`}>
+                          {value || "—"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Scene list */}
+                  <div>
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+                      Scenes ({draft.scenes.length})
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      {draft.scenes.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center gap-2 bg-bg-cream rounded-xl px-3 py-2"
+                        >
+                          <span className="w-5 h-5 rounded-full bg-pineapple-yellow/40 text-tiki-brown text-[10px] font-black flex items-center justify-center flex-shrink-0">
+                            {s.sceneNumber}
+                          </span>
+                          <span className={`text-xs ${
+                            s.title
+                              ? "font-semibold text-tiki-brown"
+                              : "italic text-tiki-brown/30"
+                          }`}>
+                            {s.title || "Untitled Scene"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Collapsible raw JSON — secondary */}
+                  <div className="pt-2 border-t border-tiki-brown/8">
+                    <button
+                      type="button"
+                      onClick={() => setShowDraftJson((v) => !v)}
+                      className="flex items-center justify-between w-full text-[10px] font-bold text-tiki-brown/35 uppercase tracking-widest hover:text-tiki-brown/55 transition-colors py-1"
+                    >
+                      <span>Raw Draft JSON</span>
+                      <span>{showDraftJson ? "▲ Hide" : "▼ Show"}</span>
+                    </button>
+                    {showDraftJson && (
+                      <pre className="mt-2 text-[10px] text-tiki-brown/60 bg-bg-cream rounded-xl p-3 overflow-y-auto overflow-x-auto max-h-56 leading-relaxed whitespace-pre-wrap break-words">
+                        {JSON.stringify(previewData, null, 2)}
+                      </pre>
+                    )}
+                  </div>
                 </div>
 
                 {/* Character Fidelity Checklist */}
@@ -840,7 +957,7 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-sm">🔒</span>
                     <h2 className="text-sm font-black text-tiki-brown">
-                      Character Fidelity Checklist
+                      Character Fidelity
                     </h2>
                   </div>
                   <ul className="space-y-2.5">
