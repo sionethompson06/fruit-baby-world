@@ -31,7 +31,7 @@ const PIPELINE_STEPS = [
   { step: 2, label: "Generate episode package", emoji: "⚙️", active: true },
   { step: 3, label: "Review character fidelity", emoji: "🔍", active: false },
   { step: 4, label: "Approve draft", emoji: "✅", active: false },
-  { step: 5, label: "Save to GitHub", emoji: "💾", active: false },
+  { step: 5, label: "Save to GitHub", emoji: "💾", active: true },
   { step: 6, label: "Publish to website", emoji: "🚀", active: false },
 ];
 
@@ -976,6 +976,15 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
     Array(FIDELITY_REVIEW_ITEMS.length).fill(false) as boolean[]
   );
 
+  // ── Save state ────────────────────────────────────────────────────────────
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<{
+    path: string;
+    commitMessage: string;
+    htmlUrl: string;
+  } | null>(null);
+
   const [draft, setDraft] = useState<StoryboardDraft>({
     title: "",
     shortDescription: "",
@@ -1101,6 +1110,52 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
     setReviewStatus("draft");
     setReviewNotes("");
     setFidelityChecked(Array(FIDELITY_REVIEW_ITEMS.length).fill(false) as boolean[]);
+    setSaving(false);
+    setSaveError(null);
+    setSaveSuccess(null);
+  };
+
+  // ── Save to GitHub ────────────────────────────────────────────────────────
+
+  const handleSave = async () => {
+    if (!savePreview) return;
+    setSaveError(null);
+    setSaveSuccess(null);
+    setSaving(true);
+    try {
+      const res = await fetch("/api/github/save-episode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ episode: savePreview }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        status: string;
+        message?: string;
+        path?: string;
+        commitMessage?: string;
+        htmlUrl?: string;
+      };
+      if (data.ok) {
+        setSaveSuccess({
+          path: data.path ?? "",
+          commitMessage: data.commitMessage ?? "",
+          htmlUrl: data.htmlUrl ?? "",
+        });
+      } else if (data.status === "setup_required") {
+        setSaveError(
+          "GitHub saving is not configured yet. Add GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, and GITHUB_BRANCH in Vercel environment variables."
+        );
+      } else {
+        setSaveError(
+          data.message ?? "Something went wrong while saving. Please review the draft and try again."
+        );
+      }
+    } catch {
+      setSaveError("Something went wrong while saving. Please check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ── Derived ───────────────────────────────────────────────────────────────
@@ -1143,6 +1198,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
   const savePreview = genResult
     ? buildEpisodeSavePreview(draft, genResult, reviewStatus, reviewNotes, checkedFidelityItems)
     : null;
+
+  const canSave = savePreview !== null && reviewStatus === "approved-for-save";
 
   // ── Shared styles ─────────────────────────────────────────────────────────
 
@@ -1766,22 +1823,29 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
               <h2 className="text-sm font-black text-tiki-brown">
                 Save-Ready Episode JSON Preview
               </h2>
-              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide ml-auto">
-                Preview only
+              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ml-auto ${
+                reviewStatus === "approved-for-save"
+                  ? "bg-tropical-green/20 text-tiki-brown"
+                  : "bg-tiki-brown/8 text-tiki-brown/50"
+              }`}>
+                {reviewStatus === "approved-for-save" ? "Approved" : "Preview only"}
               </span>
             </div>
             <p className="text-xs text-tiki-brown/45 mb-5 leading-snug">
-              Future GitHub saving will use this kind of structure to create an episode JSON file.
-              Nothing is saved yet.
+              This shows exactly what will be saved to{" "}
+              <code className="text-[10px] font-mono bg-tiki-brown/8 px-1 py-0.5 rounded">
+                src/content/episodes
+              </code>{" "}
+              as a GitHub JSON file. Mark as Approved for Save, then use the save button below.
             </p>
 
-            {/* Review status callout */}
+            {/* Approval callout */}
             {reviewStatus === "approved-for-save" ? (
               <div className="flex items-start gap-2.5 bg-tropical-green/10 border border-tropical-green/30 rounded-2xl px-4 py-3.5 mb-5">
                 <span className="text-sm flex-shrink-0">✅</span>
                 <p className="text-xs text-tiki-brown/70 leading-snug">
                   <span className="font-bold text-tiki-brown">Approved for Save.</span>{" "}
-                  In a future phase, this JSON can be committed to GitHub after final review.
+                  Use the save button below to commit this JSON to GitHub.
                 </p>
               </div>
             ) : (
@@ -1789,20 +1853,105 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                 <span className="text-sm flex-shrink-0">⚠️</span>
                 <p className="text-xs text-tiki-brown/65 leading-snug">
                   This draft is not marked{" "}
-                  <span className="font-bold">Approved for Save</span> yet. You can still preview
-                  the JSON, but future saving should require approval.
+                  <span className="font-bold">Approved for Save</span> yet. Review the draft
+                  using the Review section below, then mark it approved to enable saving.
                 </p>
               </div>
             )}
 
             {/* JSON block */}
-            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5">
+            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 mb-5">
               <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-3">
                 Episode JSON Preview
               </p>
               <pre className="text-[11px] leading-relaxed text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-words select-all">
                 {JSON.stringify(savePreview, null, 2)}
               </pre>
+            </div>
+
+            {/* ── Save to GitHub action ──────────────────────────────── */}
+            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-4">
+              <div>
+                <h3 className="text-xs font-black text-tiki-brown/50 uppercase tracking-widest mb-1.5">
+                  💾 Save Approved Draft to GitHub
+                </h3>
+                <p className="text-xs text-tiki-brown/50 leading-snug">
+                  Commits the approved episode draft as a JSON file to{" "}
+                  <code className="text-[10px] font-mono bg-tiki-brown/8 px-1 py-0.5 rounded">
+                    src/content/episodes
+                  </code>
+                  . Saving is only allowed after the draft is marked Approved for Save.
+                  Vercel will redeploy from GitHub after the commit.
+                </p>
+              </div>
+
+              {/* Success message */}
+              {saveSuccess && (
+                <div className="flex items-start gap-3 bg-tropical-green/10 border border-tropical-green/25 rounded-2xl px-4 py-3.5">
+                  <span className="text-base flex-shrink-0">✅</span>
+                  <div>
+                    <p className="text-xs font-bold text-tiki-brown mb-0.5">Saved to GitHub</p>
+                    <p className="text-xs text-tiki-brown/65 leading-snug">
+                      Committed to{" "}
+                      <code className="text-[10px] font-mono bg-tiki-brown/8 px-1 py-0.5 rounded">
+                        {saveSuccess.path}
+                      </code>
+                    </p>
+                    {saveSuccess.commitMessage && (
+                      <p className="text-[10px] text-tiki-brown/45 mt-1 leading-snug">
+                        {saveSuccess.commitMessage}
+                      </p>
+                    )}
+                    {saveSuccess.htmlUrl && (
+                      <a
+                        href={saveSuccess.htmlUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-ube-purple hover:underline mt-1.5 block font-semibold"
+                      >
+                        View on GitHub →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Error message */}
+              {saveError && (
+                <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3">
+                  <span className="text-sm flex-shrink-0">⚠️</span>
+                  <p className="text-xs font-semibold text-tiki-brown leading-snug">{saveError}</p>
+                </div>
+              )}
+
+              {/* Save button */}
+              {canSave ? (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`w-full py-3.5 rounded-2xl text-sm font-black transition-all ${
+                    saving
+                      ? "bg-tropical-green/40 text-white cursor-not-allowed"
+                      : "bg-tropical-green text-white hover:bg-tropical-green/90 shadow-sm hover:shadow"
+                  }`}
+                >
+                  {saving ? "Saving approved draft to GitHub…" : "Save Approved Draft to GitHub"}
+                </button>
+              ) : (
+                <div>
+                  <button
+                    type="button"
+                    disabled
+                    className="w-full py-3.5 rounded-2xl text-sm font-black bg-tiki-brown/10 text-tiki-brown/30 cursor-not-allowed"
+                  >
+                    Save Approved Draft to GitHub
+                  </button>
+                  <p className="text-xs text-tiki-brown/40 text-center mt-2 italic">
+                    Mark this draft Approved for Save before saving to GitHub.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1836,7 +1985,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
             <span>🔄</span> Future Workflow
           </h2>
           <p className="text-xs text-tiki-brown/45 mb-5">
-            Planned pipeline — informational only. None of these steps are active yet except Step 1.
+            Production pipeline — Steps 1 (Draft), 2 (Generate), and 5 (Save to GitHub) are now active.
+            Steps 3, 4, and 6 are future phases.
           </p>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             {PIPELINE_STEPS.map((s, i) => (
