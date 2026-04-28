@@ -27,7 +27,7 @@ const FIDELITY_RULES = [
 
 const PIPELINE_STEPS = [
   { step: 1, label: "Draft storyboard", emoji: "✍️", active: true },
-  { step: 2, label: "Generate episode package", emoji: "⚙️", active: false },
+  { step: 2, label: "Generate episode package", emoji: "⚙️", active: true },
   { step: 3, label: "Review character fidelity", emoji: "🔍", active: false },
   { step: 4, label: "Approve draft", emoji: "✅", active: false },
   { step: 5, label: "Save to GitHub", emoji: "💾", active: false },
@@ -405,8 +405,18 @@ function EpisodePackagePanel({
 
 export default function StoryboardBuilder({ characters }: { characters: Character[] }) {
   const idCounter = useRef(2);
+  const genResultRef = useRef<HTMLDivElement>(null);
+
   const [previewMode, setPreviewMode] = useState<"storyboard" | "episode-package" | "ai-prompt">("storyboard");
   const [showDraftJson, setShowDraftJson] = useState(false);
+
+  // ── Generation state ──────────────────────────────────────────────────────
+  const [generating, setGenerating] = useState(false);
+  const [validationMsg, setValidationMsg] = useState<string | null>(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [genResult, setGenResult] = useState<Record<string, unknown> | null>(null);
+  const [genRawText, setGenRawText] = useState("");
+  const [genNotes, setGenNotes] = useState<string[]>([]);
 
   const [draft, setDraft] = useState<StoryboardDraft>({
     title: "",
@@ -470,6 +480,61 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
         .map((s, i) => ({ ...s, sceneNumber: i + 1 })),
     }));
 
+  // ── Generation ────────────────────────────────────────────────────────────
+
+  const handleGenerate = async () => {
+    setValidationMsg(null);
+    setGenError(null);
+    setGenResult(null);
+    setGenRawText("");
+    setGenNotes([]);
+
+    if (!draft.title.trim()) {
+      setValidationMsg("Please add an episode title before generating.");
+      return;
+    }
+    if (draft.featuredCharacters.length === 0) {
+      setValidationMsg("Please select at least one featured character before generating.");
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/generate-episode-package", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          storyboardDraft: draft,
+          aiPrompt,
+          selectedCharacters: draft.featuredCharacters,
+        }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        status: string;
+        message?: string;
+        episodePackage?: Record<string, unknown>;
+        rawText?: string;
+        notes?: string[];
+      };
+
+      if (data.ok && data.episodePackage) {
+        setGenResult(data.episodePackage);
+        setGenRawText(data.rawText ?? "");
+        setGenNotes(data.notes ?? []);
+        setTimeout(() => genResultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      } else if (data.status === "setup_required") {
+        setGenError("OpenAI is not configured yet. Add OPENAI_API_KEY in your Vercel environment variables to enable generation.");
+      } else {
+        setGenError(data.message ?? "Something went wrong while generating. Please review the storyboard and try again.");
+      }
+    } catch {
+      setGenError("Something went wrong while generating. Please check your connection and try again.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   // ── Derived ───────────────────────────────────────────────────────────────
 
   const charMap = Object.fromEntries(characters.map((c) => [c.id, c]));
@@ -531,8 +596,8 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
             Storyboard Builder
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Draft Fruit Baby story ideas, organize scenes, and preview the future
-            episode package structure before AI generation is added.
+            Draft Fruit Baby story ideas, organize scenes, and generate an AI
+            episode package draft for review.
           </p>
         </div>
       </section>
@@ -544,13 +609,13 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
           <span className="text-xl flex-shrink-0">🏗️</span>
           <div>
             <p className="text-sm font-bold text-tiki-brown mb-0.5">
-              Draft only — nothing saves yet
+              Draft only — nothing is saved
             </p>
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              This is a planning tool. Everything you type lives in memory only —
-              nothing is saved to a file or database. AI generation is not active
-              yet. GitHub saving will be added in a future phase. Refreshing the
-              page will clear the draft.
+              Everything typed here lives in memory only — nothing is saved to a
+              file or database. AI generation is active via the 🤖 AI Prompt tab.
+              Generated output is a draft and requires human review. GitHub saving
+              will be added in a future phase. Refreshing the page will clear everything.
             </p>
           </div>
         </div>
@@ -985,23 +1050,49 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
               /* Episode Package visual panel */
               <EpisodePackagePanel pkg={episodePackage} characters={characters} />
             ) : (
-              /* AI Prompt Preview */
+              /* AI Prompt Preview + Generate */
               <div className="flex flex-col gap-4">
 
-                {/* Callout */}
-                <div className="flex items-start gap-3 bg-white border border-ube-purple/20 rounded-2xl px-5 py-4 shadow-sm">
-                  <span className="text-xl flex-shrink-0">🤖</span>
-                  <div>
-                    <p className="text-sm font-bold text-tiki-brown mb-0.5">
-                      Prompt Preview — no AI is active yet
-                    </p>
-                    <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                      This is the structured prompt that will eventually be sent to an AI
-                      generation route. No generation happens here. Review and approve the
-                      structure before the next phase connects it to a server-side route.
-                    </p>
-                  </div>
+                {/* Safety notice */}
+                <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-4 py-3.5">
+                  <span className="text-base flex-shrink-0">⚠️</span>
+                  <p className="text-xs text-tiki-brown/70 leading-relaxed">
+                    This creates a draft only. Nothing is saved, published, or written to
+                    GitHub. Review all generated content for character fidelity before using it.
+                  </p>
                 </div>
+
+                {/* Validation message */}
+                {validationMsg && (
+                  <div className="flex items-start gap-2.5 bg-white border border-pineapple-yellow/50 rounded-xl px-4 py-3">
+                    <span className="text-sm flex-shrink-0">💛</span>
+                    <p className="text-xs font-semibold text-tiki-brown leading-snug">{validationMsg}</p>
+                  </div>
+                )}
+
+                {/* Error message */}
+                {genError && (
+                  <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3">
+                    <span className="text-sm flex-shrink-0">⚠️</span>
+                    <p className="text-xs font-semibold text-tiki-brown leading-snug">{genError}</p>
+                  </div>
+                )}
+
+                {/* Generate button */}
+                <button
+                  type="button"
+                  onClick={handleGenerate}
+                  disabled={generating}
+                  className={`w-full py-3.5 rounded-2xl text-sm font-black transition-all ${
+                    generating
+                      ? "bg-ube-purple/40 text-white cursor-not-allowed"
+                      : "bg-ube-purple text-white hover:bg-ube-purple/90 shadow-sm hover:shadow"
+                  }`}
+                >
+                  {generating
+                    ? "Generating episode package draft…"
+                    : "Generate Episode Package Draft"}
+                </button>
 
                 {/* Prompt card */}
                 <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
@@ -1015,9 +1106,9 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
                     </span>
                   </div>
                   <p className="text-xs text-tiki-brown/40">
-                    Updates as you fill in the storyboard form. Select text to copy.
+                    Updates as you fill in the storyboard form. Review before generating.
                   </p>
-                  <pre className="text-[11px] leading-relaxed text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-hidden max-h-[60vh] whitespace-pre-wrap break-words">
+                  <pre className="text-[11px] leading-relaxed text-tiki-brown/75 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-hidden max-h-[50vh] whitespace-pre-wrap break-words">
                     {aiPrompt}
                   </pre>
                 </div>
@@ -1048,6 +1139,75 @@ export default function StoryboardBuilder({ characters }: { characters: Characte
             )}
           </div>
         </div>
+
+        {/* ── Generated Episode Package Draft ──────────────────────────── */}
+        {(genResult || (genError && genError.includes("OPENAI_API_KEY"))) && (
+          <div
+            ref={genResultRef}
+            className="mt-10 pt-8 border-t border-dashed border-tiki-brown/15"
+          >
+            <div className="flex items-center gap-2 mb-5">
+              <span className="text-lg">{genResult ? "✅" : "⚙️"}</span>
+              <h2 className="text-base font-black text-tiki-brown">
+                Generated Episode Package Draft
+              </h2>
+              <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-tropical-green/20 text-tiki-brown uppercase tracking-wide ml-auto">
+                Draft — not saved
+              </span>
+            </div>
+
+            {/* Fidelity review reminder */}
+            <div className="flex items-start gap-3 bg-white border border-warm-coral/25 rounded-2xl px-5 py-4 shadow-sm mb-5">
+              <span className="text-lg flex-shrink-0">🔒</span>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                <span className="font-bold text-tiki-brown">Review required.</span>{" "}
+                Generated episode packages must preserve official character canon and visual
+                identity. Generated image and animation prompts must remain
+                reference-anchored to official character assets. Do not publish without
+                human approval.
+              </p>
+            </div>
+
+            {/* Generation notes */}
+            {genNotes.length > 0 && (
+              <div className="flex flex-col gap-1.5 mb-5">
+                {genNotes.map((note, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-2 text-xs text-tiki-brown/55 bg-white rounded-xl px-4 py-2.5 border border-tiki-brown/10"
+                  >
+                    <span className="flex-shrink-0 text-sm">ℹ️</span>
+                    {note}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Generated package JSON */}
+            {genResult && (
+              <div className="bg-white rounded-3xl border border-tropical-green/25 shadow-sm p-6">
+                <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-3">
+                  Episode Package JSON
+                </p>
+                <pre className="text-xs text-tiki-brown/70 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-words leading-relaxed">
+                  {JSON.stringify(genResult, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Raw text fallback */}
+            {!genResult && genRawText && (
+              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6">
+                <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-3">
+                  Raw Generated Text
+                </p>
+                <pre className="text-xs text-tiki-brown/70 bg-bg-cream rounded-2xl p-4 overflow-y-auto overflow-x-auto max-h-[70vh] whitespace-pre-wrap break-words leading-relaxed">
+                  {genRawText}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Future Workflow ───────────────────────────────────────────── */}
         <div className="mt-10 pt-8 border-t border-dashed border-tiki-brown/15">
