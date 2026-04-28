@@ -53,7 +53,7 @@ export default function CharacterCard({ character }: { character: Character }) {
         </div>
 
         <CharacterImage
-          src={character.image.main || character.image.profileSheet || ""}
+          src={character.image.main}
           alt={character.image.alt}
           emoji={emoji}
           bgColor={headerColor}
