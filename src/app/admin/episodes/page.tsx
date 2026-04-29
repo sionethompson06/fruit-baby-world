@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAllSavedEpisodeDrafts, type SavedEpisodeDraft } from "@/lib/savedEpisodes";
+import { loadEpisodeDrafts, type SavedEpisodeDraft, type EpisodeLoadDiag } from "@/lib/savedEpisodes";
 
 export const metadata: Metadata = {
   title: "Episode Package Studio | Story Studio",
 };
 
-// Force dynamic rendering so newly committed episode files appear after each
-// Vercel redeploy without waiting for a static cache to expire.
+// Force dynamic server rendering on every request. Prevents stale static
+// output after new episode JSON files are committed and Vercel redeploys.
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // ─── Badge helpers ────────────────────────────────────────────────────────────
 
@@ -32,6 +33,36 @@ function Pill({ children, className }: { children: React.ReactNode; className: s
     <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${className}`}>
       {children}
     </span>
+  );
+}
+
+// ─── Diagnostic panel (admin-only, no secrets exposed) ───────────────────────
+
+function DiagPanel({ diag }: { diag: EpisodeLoadDiag }) {
+  return (
+    <div className="bg-white border border-tiki-brown/15 rounded-2xl p-5 font-mono text-xs text-tiki-brown/60 space-y-1">
+      <p className="font-bold text-tiki-brown/80 mb-2 font-sans text-sm">File discovery diagnostics</p>
+      <p><span className="text-tiki-brown/40">cwd:</span> {diag.cwd}</p>
+      <p><span className="text-tiki-brown/40">dir:</span> {diag.dir}</p>
+      <p><span className="text-tiki-brown/40">dirExists:</span> {String(diag.dirExists)}</p>
+      <p><span className="text-tiki-brown/40">jsonFilesFound:</span> {diag.jsonFilesFound}</p>
+      {diag.filenames.length > 0 && (
+        <div>
+          <p className="text-tiki-brown/40">filenames:</p>
+          <ul className="ml-4 space-y-0.5">
+            {diag.filenames.map((f) => <li key={f}>{f}</li>)}
+          </ul>
+        </div>
+      )}
+      {diag.parseErrors.length > 0 && (
+        <div>
+          <p className="text-warm-coral">errors:</p>
+          <ul className="ml-4 space-y-0.5 text-warm-coral/80">
+            {diag.parseErrors.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -104,10 +135,7 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
       {draft.featuredCharacters.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {draft.featuredCharacters.map((char) => (
-            <span
-              key={char}
-              className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple"
-            >
+            <span key={char} className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple">
               {char}
             </span>
           ))}
@@ -128,19 +156,13 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
         {draft.updatedAt && (
           <p className="text-xs text-tiki-brown/35">
             Updated:{" "}
-            {new Date(draft.updatedAt).toLocaleString("en-US", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
+            {new Date(draft.updatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
           </p>
         )}
         {!draft.updatedAt && draft.createdAt && (
           <p className="text-xs text-tiki-brown/35">
             Created:{" "}
-            {new Date(draft.createdAt).toLocaleString("en-US", {
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}
+            {new Date(draft.createdAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
           </p>
         )}
       </div>
@@ -151,7 +173,7 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function EpisodesPage() {
-  const drafts = getAllSavedEpisodeDrafts();
+  const { drafts, diag } = loadEpisodeDrafts();
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -193,31 +215,58 @@ export default async function EpisodesPage() {
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📁</span>
           <div>
-            <p className="text-sm font-bold text-tiki-brown mb-0.5">
-              Saved draft episodes only
-            </p>
+            <p className="text-sm font-bold text-tiki-brown mb-0.5">Saved draft episodes only</p>
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
               These are episode package JSON files committed to{" "}
-              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">
-                src/content/episodes/
-              </code>{" "}
+              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">src/content/episodes/</code>{" "}
               in the repository. Saved drafts are read from{" "}
-              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">
-                src/content/episodes
-              </code>{" "}
-              after GitHub commits and Vercel redeploys. Read-only — no editing,
-              deleting, or publishing controls.
+              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">src/content/episodes</code>{" "}
+              after GitHub commits and Vercel redeploys. Read-only — no editing, deleting, or publishing controls.
             </p>
           </div>
         </div>
 
         {/* File count */}
         <p className="text-sm font-semibold text-tiki-brown/50">
-          {drafts.length} episode JSON file{drafts.length !== 1 ? "s" : ""} found.
+          {diag.jsonFilesFound} episode JSON file{diag.jsonFilesFound !== 1 ? "s" : ""} found.
+          {" "}{drafts.length} rendered.
         </p>
 
-        {/* Empty state */}
-        {drafts.length === 0 && (
+        {/* Directory not found */}
+        {!diag.dirExists && (
+          <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
+            <span className="text-xl flex-shrink-0">⚠️</span>
+            <div>
+              <p className="text-sm font-bold text-tiki-brown mb-1">
+                Episode directory not found at deployment
+              </p>
+              <p className="text-sm text-tiki-brown/65 leading-relaxed mb-3">
+                The server could not find{" "}
+                <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">src/content/episodes/</code>.
+                This usually means the JSON files were not included in the Vercel output bundle.
+                The <code className="font-mono text-xs">outputFileTracingIncludes</code> setting in{" "}
+                <code className="font-mono text-xs">next.config.ts</code> should fix this after the next redeploy.
+              </p>
+              <DiagPanel diag={diag} />
+            </div>
+          </div>
+        )}
+
+        {/* Files found but none parsed */}
+        {diag.dirExists && diag.jsonFilesFound > 0 && drafts.length === 0 && (
+          <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
+            <span className="text-xl flex-shrink-0">⚠️</span>
+            <div>
+              <p className="text-sm font-bold text-tiki-brown mb-1">
+                Episode JSON files were found but could not be parsed
+              </p>
+              <DiagPanel diag={diag} />
+            </div>
+          </div>
+        )}
+
+        {/* Empty state — directory exists but zero JSON files */}
+        {diag.dirExists && diag.jsonFilesFound === 0 && (
           <div className="bg-white rounded-3xl border border-dashed border-tiki-brown/20 p-10 text-center flex flex-col items-center gap-4">
             <p className="text-4xl">🌴</p>
             <div>
@@ -234,6 +283,7 @@ export default async function EpisodesPage() {
               <span>+</span>
               Create New Storyboard
             </Link>
+            <DiagPanel diag={diag} />
           </div>
         )}
 
@@ -252,11 +302,13 @@ export default async function EpisodesPage() {
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
               All AI-generated image and animation prompts must be checked for
               character fidelity against official reference art before any asset
-              generation. Do not send prompts to an image model without a manual
-              fidelity review.
+              generation. Do not send prompts to an image model without a manual fidelity review.
             </p>
           </div>
         </div>
+
+        {/* Diagnostic footer — always shown for admin visibility */}
+        <DiagPanel diag={diag} />
 
         {/* Future workflow */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-7">

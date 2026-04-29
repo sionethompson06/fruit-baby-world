@@ -7,9 +7,6 @@ import path from "path";
 
 // ─── Raw shape ────────────────────────────────────────────────────────────────
 
-// Flexible type matching both the simple sample-episode shape and the
-// AI-generated shape. All fields are optional to handle varied JSON gracefully.
-
 type RawEpisodeDraft = {
   id?: string;
   slug?: string;
@@ -45,9 +42,7 @@ type RawEpisodeDraft = {
   updatedAt?: string;
 };
 
-// ─── Normalised shape ─────────────────────────────────────────────────────────
-
-// Derived display-ready fields so the page never needs conditional logic.
+// ─── Normalised display shape ─────────────────────────────────────────────────
 
 export type SavedEpisodeDraft = {
   title: string;
@@ -72,59 +67,98 @@ export type SavedEpisodeDraft = {
   _filePath: string;
 };
 
+// ─── Diagnostic info (admin-facing, no secrets) ───────────────────────────────
+
+export type EpisodeLoadDiag = {
+  cwd: string;
+  dir: string;
+  dirExists: boolean;
+  jsonFilesFound: number;
+  filenames: string[];
+  parseErrors: string[];
+};
+
+// ─── Load result ──────────────────────────────────────────────────────────────
+
+export type EpisodeLoadResult = {
+  drafts: SavedEpisodeDraft[];
+  diag: EpisodeLoadDiag;
+};
+
+// ─── Normalise ────────────────────────────────────────────────────────────────
+
 function normalise(raw: RawEpisodeDraft, filename: string): SavedEpisodeDraft {
   const slug = raw.slug ?? filename.replace(/\.json$/, "");
   return {
-    title:             raw.title?.trim()                                   || "Untitled Episode",
+    title:              raw.title?.trim()                                || "Untitled Episode",
     slug,
-    status:            raw.status                                          || "draft",
-    productionStatus:  raw.productionStatus                                || "draft",
-    reviewStatus:      raw.review?.status ?? raw.reviewStatus              ?? "draft",
-    approvedForSave:   Boolean(raw.review?.approvedForSave),
-    publicStatus:      raw.publishing?.publicStatus                        || "not-published",
+    status:             raw.status                                       || "draft",
+    productionStatus:   raw.productionStatus                             || "draft",
+    reviewStatus:       raw.review?.status ?? raw.reviewStatus           ?? "draft",
+    approvedForSave:    Boolean(raw.review?.approvedForSave),
+    publicStatus:       raw.publishing?.publicStatus                     || "not-published",
     readyForPublicSite: Boolean(raw.publishing?.readyForPublicSite),
-    featuredCharacters: raw.featuredCharacters                             ?? [],
-    shortDescription:  raw.shortDescription ?? raw.episodeSummary          ?? "",
-    lesson:            raw.lesson?.trim()                                  ?? "",
-    setting:           raw.setting?.trim()                                 ?? "",
-    tone:              raw.tone                                            ?? "",
-    targetAgeRange:    raw.targetAgeRange                                  ?? "",
-    sceneCount:        raw.sceneBreakdown?.length ?? raw.scenes?.length    ?? 0,
-    reviewNotes:       raw.review?.notes                                   ?? "",
-    createdAt:         raw.createdAt ?? raw.generatedAt                    ?? "",
-    updatedAt:         raw.updatedAt                                       ?? "",
-    _filename:         filename,
-    _filePath:         `src/content/episodes/${filename}`,
+    featuredCharacters: raw.featuredCharacters                           ?? [],
+    shortDescription:   raw.shortDescription ?? raw.episodeSummary       ?? "",
+    lesson:             raw.lesson?.trim()                               ?? "",
+    setting:            raw.setting?.trim()                              ?? "",
+    tone:               raw.tone                                         ?? "",
+    targetAgeRange:     raw.targetAgeRange                               ?? "",
+    sceneCount:         raw.sceneBreakdown?.length ?? raw.scenes?.length ?? 0,
+    reviewNotes:        raw.review?.notes                                ?? "",
+    createdAt:          raw.createdAt ?? raw.generatedAt                 ?? "",
+    updatedAt:          raw.updatedAt                                    ?? "",
+    _filename:          filename,
+    _filePath:          `src/content/episodes/${filename}`,
   };
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
-export function getAllSavedEpisodeDrafts(): SavedEpisodeDraft[] {
-  const dir = path.join(process.cwd(), "src", "content", "episodes");
+export function loadEpisodeDrafts(): EpisodeLoadResult {
+  const cwd = process.cwd();
+  const dir = path.join(cwd, "src", "content", "episodes");
+
+  const diag: EpisodeLoadDiag = {
+    cwd,
+    dir,
+    dirExists: false,
+    jsonFilesFound: 0,
+    filenames: [],
+    parseErrors: [],
+  };
 
   let filenames: string[];
   try {
-    filenames = fs.readdirSync(dir).filter((f) => f.endsWith(".json"));
-  } catch {
-    return [];
+    const all = fs.readdirSync(dir);
+    filenames = all.filter((f) => f.endsWith(".json"));
+    diag.dirExists = true;
+    diag.jsonFilesFound = filenames.length;
+    diag.filenames = filenames;
+  } catch (err) {
+    diag.dirExists = false;
+    diag.parseErrors.push(
+      `Could not read directory: ${err instanceof Error ? err.message : String(err)}`
+    );
+    return { drafts: [], diag };
   }
 
-  const results: SavedEpisodeDraft[] = [];
+  const drafts: SavedEpisodeDraft[] = [];
 
   for (const filename of filenames) {
     const fullPath = path.join(dir, filename);
     try {
       const raw = fs.readFileSync(fullPath, "utf-8");
       const parsed = JSON.parse(raw) as RawEpisodeDraft;
-      results.push(normalise(parsed, filename));
-    } catch {
-      // Skip files that are malformed or unreadable
+      drafts.push(normalise(parsed, filename));
+    } catch (err) {
+      diag.parseErrors.push(
+        `${filename}: ${err instanceof Error ? err.message : String(err)}`
+      );
     }
   }
 
-  // Sort by updatedAt descending (newest first), fall back to filename
-  results.sort((a, b) => {
+  drafts.sort((a, b) => {
     const ta = a.updatedAt || a.createdAt;
     const tb = b.updatedAt || b.createdAt;
     if (tb > ta) return 1;
@@ -132,5 +166,5 @@ export function getAllSavedEpisodeDrafts(): SavedEpisodeDraft[] {
     return a._filename.localeCompare(b._filename);
   });
 
-  return results;
+  return { drafts, diag };
 }
