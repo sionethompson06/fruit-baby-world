@@ -1,0 +1,107 @@
+{
+  "id": "",
+  "slug": "words-have-consequences-",
+  "title": "Words Have Consequences ",
+  "status": "draft",
+  "reviewStatus": "approved-for-save",
+  "productionStatus": "generated-draft",
+  "featuredCharacters": [
+    "pineapple-baby",
+    "ube-baby",
+    "mango-baby"
+  ],
+  "shortDescription": "this short is a lesson on what you say has an effect on others feelings. ",
+  "episodeSummary": "Pineapple Baby teaches Mango Baby an important lesson about handling hurtful words, while Ube Baby learns the impact of words on others' feelings.",
+  "lesson": "Words have an effect on how people feel ",
+  "setting": "classroom ",
+  "targetAgeRange": "6–8 years",
+  "tone": "Educational",
+  "storyNotes": "ube, mango, and pineapple are speaking in a classroom. ube tells mango that her flower look silly and is not pretty. mango becomes sad and leaves to be alone. pineapple goes over to mango and consoles her. pineapple asks mango whats wrong. mango says, ube hurt her feelings when he said her flower looks silly. pineapple tells mango not to let ube's words make you sad. that it was just ube's opinion. ",
+  "sourceStoryboard": {
+    "title": "Words Have Consequences ",
+    "shortDescription": "this short is a lesson on what you say has an effect on others feelings. ",
+    "lesson": "Words have an effect on how people feel ",
+    "setting": "classroom ",
+    "targetAgeRange": "6–8 years",
+    "tone": "Educational",
+    "storyNotes": "ube, mango, and pineapple are speaking in a classroom. ube tells mango that her flower look silly and is not pretty. mango becomes sad and leaves to be alone. pineapple goes over to mango and consoles her. pineapple asks mango whats wrong. mango says, ube hurt her feelings when he said her flower looks silly. pineapple tells mango not to let ube's words make you sad. that it was just ube's opinion. ",
+    "scenes": [
+      {
+        "sceneNumber": 1,
+        "title": "words have an effect ",
+        "summary": "ube, mango, and pineapple are speaking in a classroom. ube tells mango that her flower look silly and is not pretty. mango becomes sad and leaves to be alone. pineapple goes over to mango and consoles her. pineapple asks mango whats wrong. mango says, ube hurt her feelings when he said her flower looks silly. pineapple tells mango not to let ube's words make you sad. that it was just ube's opinion. ",
+        "characters": [
+          "pineapple-baby",
+          "ube-baby",
+          "mango-baby"
+        ],
+        "visualNotes": "",
+        "emotionalBeat": ""
+      }
+    ]
+  },
+  "sceneBreakdown": [
+    {
+      "sceneNumber": 1,
+      "title": "Words Have an Effect",
+      "summary": "In the classroom, Ube Baby tells Mango Baby that her flower looks silly, causing Mango Baby to feel sad and walk away. Pineapple Baby approaches Mango Baby to console her, explaining that Ube's words are just an opinion and shouldn't affect her happiness.",
+      "characters": [
+        "pineapple-baby",
+        "ube-baby",
+        "mango-baby"
+      ],
+      "dialogueDraft": [
+        "Ube Baby: Mango, your flower looks a bit silly, don't you think?",
+        "Mango Baby: Oh... I thought it looked nice.",
+        "Mango Baby: (to herself) Maybe it does look silly...",
+        "Pineapple Baby: Mango, what's wrong?",
+        "Mango Baby: Ube said my flower looks silly.",
+        "Pineapple Baby: It's just Ube's opinion. Your flower is beautiful if it makes you happy!"
+      ],
+      "voiceoverNotes": "Warm and reassuring narration guiding the audience through the emotional changes and resolution.",
+      "imagePromptDraft": "Scene of Ube Baby, Mango Baby, and Pineapple Baby in a colorful classroom setting. Ube Baby has a shy expression, Mango Baby looks a bit sad, and Pineapple Baby is speaking kindly to Mango Baby.",
+      "animationPromptDraft": "Ube Baby softly speaking to Mango Baby, Mango Baby's expression changing to sadness, Pineapple Baby comforting Mango Baby with gentle gestures and a reassuring smile.",
+      "characterFidelityNotes": [
+        "Maintain Pineapple Baby's bright yellow body and green leafy crown.",
+        "Keep Ube Baby's soft purple body and bright green top.",
+        "Ensure Mango Baby's warm yellow-orange body and green leaf top are accurate."
+      ]
+    }
+  ],
+  "dialogueDraft": {
+    "status": "draft",
+    "notes": "Dialogue should emphasize kindness and understanding, ensuring Ube Baby learns the impact of words."
+  },
+  "voiceoverNotes": {
+    "status": "draft",
+    "notes": "Voiceover should guide the young audience through the emotional journey with warmth and clarity."
+  },
+  "imagePromptDrafts": [
+    "Scene of Ube Baby, Mango Baby, and Pineapple Baby in a colorful classroom setting. Ube Baby has a shy expression, Mango Baby looks a bit sad, and Pineapple Baby is speaking kindly to Mango Baby."
+  ],
+  "animationPromptDrafts": [
+    "Ube Baby softly speaking to Mango Baby, Mango Baby's expression changing to sadness, Pineapple Baby comforting Mango Baby with gentle gestures and a reassuring smile."
+  ],
+  "merchTieIns": [
+    "Classroom playset featuring Pineapple Baby, Ube Baby, and Mango Baby with interchangeable accessories like Mango Baby's flower."
+  ],
+  "characterFidelityChecklist": [
+    "Preserve Pineapple Baby's sunshine yellow body, bold green crown, and diamond pattern.",
+    "Preserve Ube Baby's soft purple body and dreamy expression.",
+    "Preserve Mango Baby's warm gradient body and cheerful energy."
+  ],
+  "review": {
+    "status": "approved-for-save",
+    "notes": "",
+    "requiresHumanReview": true,
+    "approvedForSave": true,
+    "checkedFidelityItems": []
+  },
+  "publishing": {
+    "publicStatus": "not-published",
+    "readyForPublicSite": false
+  },
+  "createdIn": "Fruit Baby Story Studio",
+  "generatedAt": "2026-04-29T04:18:29.553Z",
+  "updatedAt": "2026-04-29T04:18:29.553Z"
+}
