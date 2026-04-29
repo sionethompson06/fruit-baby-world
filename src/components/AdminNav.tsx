@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const adminLinks = [
   { href: "/admin", label: "Studio Home", emoji: "🏠" },
@@ -16,6 +16,12 @@ const adminLinks = [
 
 export default function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLock() {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin/login");
+  }
 
   return (
     <nav className="bg-ube-purple/10 border-b border-ube-purple/20">
@@ -35,6 +41,13 @@ export default function AdminNav() {
               <span>{label}</span>
             </Link>
           ))}
+          <button
+            onClick={handleLock}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-warm-coral/70 hover:bg-warm-coral/10 hover:text-warm-coral ml-2"
+          >
+            <span>🔒</span>
+            <span>Lock Studio</span>
+          </button>
         </div>
       </div>
     </nav>
