@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { getPublicEpisodes, getAllCharacters } from "@/lib/content";
+import { loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import StoryCard from "@/components/StoryCard";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Fruit Baby Stories | Fruit Baby World",
@@ -9,7 +12,13 @@ export const metadata: Metadata = {
 };
 
 export default function StoriesPage() {
-  const episodes = getPublicEpisodes();
+  // Combine static public episodes with public-ready saved episode JSON files.
+  // Deduplicate by slug so a saved episode that's also in the static array only appears once.
+  const staticEpisodes = getPublicEpisodes();
+  const savedEpisodes = loadPublicSavedEpisodes();
+  const staticSlugs = new Set(staticEpisodes.map((e) => e.slug));
+  const episodes = [...staticEpisodes, ...savedEpisodes.filter((e) => !staticSlugs.has(e.slug))];
+
   const characters = getAllCharacters();
   const characterMap = Object.fromEntries(characters.map((c) => [c.id, c]));
 

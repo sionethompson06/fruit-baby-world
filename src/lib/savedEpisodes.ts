@@ -4,6 +4,7 @@
 
 import fs from "fs";
 import path from "path";
+import type { Episode, Scene } from "@/lib/content";
 
 // ─── Raw shape ────────────────────────────────────────────────────────────────
 
@@ -189,4 +190,77 @@ export function loadEpisodeDrafts(): EpisodeLoadResult {
   });
 
   return { drafts, diag };
+}
+
+// ─── Public episode loader for /stories ──────────────────────────────────────
+// Reads saved episode JSON files and returns those cleared for public display,
+// mapped to the Episode shape used by StoryCard.
+// Call only from Server Components — uses Node.js fs.
+
+export function loadPublicSavedEpisodes(): Episode[] {
+  const cwd = process.cwd();
+  const dir = path.join(cwd, "src", "content", "episodes");
+
+  let filenames: string[];
+  try {
+    const all = fs.readdirSync(dir);
+    filenames = all.filter((f) => f.endsWith(".json"));
+  } catch {
+    return [];
+  }
+
+  const publicEpisodes: Episode[] = [];
+
+  for (const filename of filenames) {
+    const fullPath = path.join(dir, filename);
+    try {
+      const text = fs.readFileSync(fullPath, "utf-8");
+      const raw = JSON.parse(text) as RawEpisodeDraft;
+
+      const isPublicReady =
+        raw.publishing?.readyForPublicSite === true ||
+        raw.publishing?.publicStatus === "published" ||
+        raw.status === "published";
+
+      if (!isPublicReady) continue;
+
+      const slug = raw.slug ?? filename.replace(/\.json$/, "");
+
+      const rawScenes: unknown[] = raw.sceneBreakdown ?? raw.scenes ?? [];
+      const scenes: Scene[] = rawScenes
+        .filter((s): s is Record<string, unknown> =>
+          typeof s === "object" && s !== null && !Array.isArray(s)
+        )
+        .map((s, i) => ({
+          sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : i + 1,
+          title: typeof s.title === "string" ? s.title : "",
+          summary: typeof s.summary === "string" ? s.summary : "",
+          characters: Array.isArray(s.characters)
+            ? (s.characters as unknown[]).filter((c): c is string => typeof c === "string")
+            : [],
+          visualNotes: typeof s.visualNotes === "string" ? s.visualNotes : "",
+        }));
+
+      publicEpisodes.push({
+        id: raw.id ?? slug,
+        slug,
+        title: raw.title?.trim() ?? "Untitled Episode",
+        status: "published",
+        featuredCharacters: raw.featuredCharacters ?? [],
+        shortDescription: raw.shortDescription ?? raw.episodeSummary ?? "",
+        lesson: raw.lesson?.trim() ?? "",
+        setting: raw.setting?.trim() ?? "",
+        scenes,
+        merchTieIns: raw.merchTieIns ?? [],
+        publishing: {
+          publicStatus: raw.publishing?.publicStatus,
+          readyForPublicSite: raw.publishing?.readyForPublicSite,
+        },
+      });
+    } catch {
+      // Skip unparseable files silently
+    }
+  }
+
+  return publicEpisodes;
 }
