@@ -113,6 +113,28 @@ function normalise(raw: RawEpisodeDraft, filename: string): SavedEpisodeDraft {
   };
 }
 
+// ─── Single-episode loader (for detail page) ─────────────────────────────────
+
+const SAFE_SLUG = /^[a-z0-9-]+$/;
+
+export type EpisodeDetailResult = {
+  raw: Record<string, unknown>;
+  normalised: SavedEpisodeDraft;
+};
+
+export function loadEpisodeBySlug(slug: string): EpisodeDetailResult | null {
+  if (!SAFE_SLUG.test(slug)) return null;
+  const filePath = path.join(process.cwd(), "src", "content", "episodes", `${slug}.json`);
+  try {
+    const text = fs.readFileSync(filePath, "utf-8");
+    const raw = JSON.parse(text) as Record<string, unknown>;
+    const normalised = normalise(raw as RawEpisodeDraft, `${slug}.json`);
+    return { raw, normalised };
+  } catch {
+    return null;
+  }
+}
+
 // ─── Loader ───────────────────────────────────────────────────────────────────
 
 export function loadEpisodeDrafts(): EpisodeLoadResult {

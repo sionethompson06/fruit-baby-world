@@ -166,6 +166,16 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
           </p>
         )}
       </div>
+
+      {/* View draft link */}
+      <div className="pt-1">
+        <Link
+          href={`/admin/episodes/${draft.slug}`}
+          className="inline-flex items-center gap-1.5 text-sm font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
+        >
+          View Draft →
+        </Link>
+      </div>
     </article>
   );
 }

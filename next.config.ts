@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   // it to include them explicitly for the /admin/episodes server route.
   outputFileTracingIncludes: {
     "/admin/episodes": ["./src/content/episodes/**/*.json"],
+    "/admin/episodes/**": ["./src/content/episodes/**/*.json"],
   },
 };
 
