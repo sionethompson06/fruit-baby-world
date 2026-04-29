@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Episode, Character } from "@/lib/content";
 
 type Props = {
@@ -32,7 +33,10 @@ export default function StoryCard({ episode, characterMap }: Props) {
     featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#FFB347";
 
   return (
-    <div className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all">
+    <Link
+      href={`/stories/${episode.slug}`}
+      className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer"
+    >
       {/* Thumbnail area */}
       <div
         className="relative flex items-center justify-center h-44 flex-shrink-0"
@@ -108,20 +112,25 @@ export default function StoryCard({ episode, characterMap }: Props) {
           </div>
         )}
 
-        {/* Footer stats */}
-        <div className="flex gap-4 pt-2 border-t border-tiki-brown/10 mt-auto">
-          <span className="text-xs text-tiki-brown/45 font-semibold">
-            🎬 {episode.scenes.length}{" "}
-            {episode.scenes.length === 1 ? "scene" : "scenes"}
-          </span>
-          {episode.merchTieIns.length > 0 && (
+        {/* Footer stats + read link */}
+        <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto">
+          <div className="flex gap-4">
             <span className="text-xs text-tiki-brown/45 font-semibold">
-              🎁 {episode.merchTieIns.length} merch tie-in
-              {episode.merchTieIns.length !== 1 ? "s" : ""}
+              🎬 {episode.scenes.length}{" "}
+              {episode.scenes.length === 1 ? "scene" : "scenes"}
             </span>
-          )}
+            {episode.merchTieIns.length > 0 && (
+              <span className="text-xs text-tiki-brown/45 font-semibold">
+                🎁 {episode.merchTieIns.length} merch tie-in
+                {episode.merchTieIns.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <span className="text-xs font-bold text-ube-purple">
+            Read Story →
+          </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
