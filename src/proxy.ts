@@ -36,5 +36,6 @@ export const config = {
     "/admin/:path*",
     "/api/generate-episode-package",
     "/api/github/save-episode",
+    "/api/github/mark-episode-public-ready",
   ],
 };
