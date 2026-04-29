@@ -233,6 +233,11 @@ export default async function EpisodesPage() {
               <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">src/content/episodes</code>{" "}
               after GitHub commits and Vercel redeploys. Read-only — no editing, deleting, or publishing controls.
             </p>
+            <p className="text-sm text-tiki-brown/50 leading-relaxed mt-1.5">
+              🔒 Saved drafts remain private to this admin library until a future publishing phase marks them public-ready.
+              They do not appear on the public{" "}
+              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">/stories</code> page.
+            </p>
           </div>
         </div>
 

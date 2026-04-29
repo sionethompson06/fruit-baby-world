@@ -102,6 +102,10 @@ export type Episode = {
   releaseStatus?: string;
   callout?: string;
   tags?: string[];
+  publishing?: {
+    publicStatus?: string;
+    readyForPublicSite?: boolean;
+  };
 };
 
 export type Product = {
@@ -175,6 +179,19 @@ export function getCharacterBySlug(slug: string): Character | undefined {
 
 export function getAllEpisodes(): Episode[] {
   return episodes;
+}
+
+// Returns only episodes cleared for public display.
+// An episode is public if status === "published", or if its publishing
+// object marks it readyForPublicSite / publicStatus "published".
+// Admin-saved drafts (status "draft", readyForPublicSite false) are excluded.
+export function getPublicEpisodes(): Episode[] {
+  return episodes.filter(
+    (e) =>
+      e.status === "published" ||
+      e.publishing?.readyForPublicSite === true ||
+      e.publishing?.publicStatus === "published"
+  );
 }
 
 export function getEpisodeBySlug(slug: string): Episode | undefined {
