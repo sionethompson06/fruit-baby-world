@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, type SavedEpisodeDraft } from "@/lib/savedEpisodes";
+import PublishReadyAction from "./PublishReadyAction";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -318,9 +319,9 @@ function PublishReadinessChecklist() {
         <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-xl px-4 py-3">
           <span className="text-base flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            This checklist is for review only. It does not publish, save, or
-            update the episode yet. A future phase will add a controlled
-            publish-ready update workflow.
+            Review each item before using the Publish-Ready Action below. The
+            checklist is for human review only — it does not automatically
+            enforce any conditions.
           </p>
         </div>
       </div>
@@ -428,6 +429,10 @@ export default async function EpisodeDetailPage({
   const topDialogue = strArr(raw.dialogueDraft);
   const topVoiceover = strArr(raw.voiceoverNotes);
   const tikiFlagged = hasTiki(raw);
+  const isAlreadyPublished =
+    normalised.readyForPublicSite ||
+    normalised.publicStatus === "published" ||
+    (publishingObj !== null && publishingObj.publicStatus === "published");
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -474,8 +479,9 @@ export default async function EpisodeDetailPage({
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
             <strong className="text-tiki-brown font-bold">Read-only draft. </strong>
-            This is a saved episode draft from GitHub content files. Editing, publishing,
-            and update workflows will be added in future phases.
+            This is a saved episode draft from GitHub content files. Content editing and
+            delete workflows are not available. A controlled publish-ready action is
+            available below after review.
           </p>
         </div>
 
@@ -502,6 +508,13 @@ export default async function EpisodeDetailPage({
 
         {/* ── Publish Readiness Checklist ── */}
         <PublishReadinessChecklist />
+
+        {/* ── Publish-Ready Action ── */}
+        <PublishReadyAction
+          slug={normalised.slug}
+          approvedForSave={normalised.approvedForSave}
+          isAlreadyPublished={isAlreadyPublished}
+        />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">
