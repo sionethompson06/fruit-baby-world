@@ -402,6 +402,15 @@ export default async function StoryDetailPage({
           </PublicSection>
         )}
 
+        {/* Coming soon — media note */}
+        <div className="flex items-start gap-3 bg-sky-blue/15 border border-sky-blue/40 rounded-2xl px-5 py-4">
+          <span className="text-xl flex-shrink-0">🎬</span>
+          <p className="text-sm text-tiki-brown/65 leading-relaxed">
+            Still-image story panels and animated video will be added after media assets are
+            generated and approved.
+          </p>
+        </div>
+
         {/* Footer back link */}
         <div className="pt-2">
           <Link
