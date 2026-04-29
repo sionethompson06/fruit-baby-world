@@ -1,20 +1,170 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { getAllSavedEpisodeDrafts, type SavedEpisodeDraft } from "@/lib/savedEpisodes";
 
 export const metadata: Metadata = {
   title: "Episode Package Studio | Story Studio",
 };
 
-export default function EpisodesPage() {
+// Force dynamic rendering so newly committed episode files appear after each
+// Vercel redeploy without waiting for a static cache to expire.
+export const dynamic = "force-dynamic";
+
+// ─── Badge helpers ────────────────────────────────────────────────────────────
+
+function ReviewBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; className: string }> = {
+    "draft":             { label: "Draft",             className: "bg-tiki-brown/10 text-tiki-brown/70" },
+    "needs-review":      { label: "Needs Review",      className: "bg-pineapple-yellow/50 text-tiki-brown" },
+    "approved-for-save": { label: "Approved for Save", className: "bg-tropical-green/20 text-tropical-green" },
+    "revise":            { label: "Revise",            className: "bg-warm-coral/25 text-warm-coral" },
+  };
+  const meta = map[status] ?? { label: status, className: "bg-tiki-brown/10 text-tiki-brown/70" };
+  return (
+    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${meta.className}`}>
+      {meta.label}
+    </span>
+  );
+}
+
+function Pill({ children, className }: { children: React.ReactNode; className: string }) {
+  return (
+    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+// ─── Episode card ─────────────────────────────────────────────────────────────
+
+function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
+  return (
+    <article className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
+
+      {/* Badge row */}
+      <div className="flex flex-wrap items-center gap-2">
+        <ReviewBadge status={draft.reviewStatus} />
+        {draft.status !== "draft" && (
+          <Pill className="bg-sky-blue/50 text-tiki-brown">Status: {draft.status}</Pill>
+        )}
+        {draft.productionStatus && (
+          <Pill className="bg-tiki-brown/8 text-tiki-brown/70">Production: {draft.productionStatus}</Pill>
+        )}
+        {draft.approvedForSave && (
+          <Pill className="bg-tropical-green/20 text-tropical-green">Save Approved</Pill>
+        )}
+        {draft.readyForPublicSite && (
+          <Pill className="bg-ube-purple/15 text-ube-purple">Ready to Publish</Pill>
+        )}
+        <Pill className="bg-tiki-brown/6 text-tiki-brown/50">Public: {draft.publicStatus}</Pill>
+      </div>
+
+      {/* Title + slug */}
+      <div>
+        <h2 className="text-xl font-black text-tiki-brown leading-snug">{draft.title}</h2>
+        {draft.slug && (
+          <p className="text-xs font-mono text-tiki-brown/40 mt-0.5">{draft.slug}</p>
+        )}
+      </div>
+
+      {/* Description */}
+      {draft.shortDescription && (
+        <p className="text-sm text-tiki-brown/70 leading-relaxed line-clamp-3">
+          {draft.shortDescription}
+        </p>
+      )}
+
+      {/* Meta grid */}
+      {(draft.lesson || draft.setting || draft.tone || draft.targetAgeRange || draft.sceneCount > 0) && (
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
+          {draft.lesson && (
+            <><dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Lesson</dt>
+              <dd className="text-xs text-tiki-brown/75">{draft.lesson}</dd></>
+          )}
+          {draft.setting && (
+            <><dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Setting</dt>
+              <dd className="text-xs text-tiki-brown/75">{draft.setting}</dd></>
+          )}
+          {draft.tone && (
+            <><dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Tone</dt>
+              <dd className="text-xs text-tiki-brown/75">{draft.tone}</dd></>
+          )}
+          {draft.targetAgeRange && (
+            <><dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Age Range</dt>
+              <dd className="text-xs text-tiki-brown/75">{draft.targetAgeRange}</dd></>
+          )}
+          {draft.sceneCount > 0 && (
+            <><dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Scenes</dt>
+              <dd className="text-xs text-tiki-brown/75">{draft.sceneCount}</dd></>
+          )}
+        </dl>
+      )}
+
+      {/* Featured characters */}
+      {draft.featuredCharacters.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {draft.featuredCharacters.map((char) => (
+            <span
+              key={char}
+              className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple"
+            >
+              {char}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Review notes */}
+      {draft.reviewNotes && (
+        <div className="bg-pineapple-yellow/15 rounded-xl px-4 py-3">
+          <p className="text-xs font-bold text-tiki-brown mb-0.5">Review Notes</p>
+          <p className="text-xs text-tiki-brown/70 leading-relaxed">{draft.reviewNotes}</p>
+        </div>
+      )}
+
+      {/* File + timestamps */}
+      <div className="flex flex-col gap-0.5 pt-2 border-t border-tiki-brown/8">
+        <p className="text-xs font-mono text-tiki-brown/35">{draft._filePath}</p>
+        {draft.updatedAt && (
+          <p className="text-xs text-tiki-brown/35">
+            Updated:{" "}
+            {new Date(draft.updatedAt).toLocaleString("en-US", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </p>
+        )}
+        {!draft.updatedAt && draft.createdAt && (
+          <p className="text-xs text-tiki-brown/35">
+            Created:{" "}
+            {new Date(draft.createdAt).toLocaleString("en-US", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </p>
+        )}
+      </div>
+    </article>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+export default async function EpisodesPage() {
+  const drafts = getAllSavedEpisodeDrafts();
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
-      <section className="bg-gradient-to-b from-mango-orange/20 via-bg-cream to-bg-cream py-12 px-4">
+
+      {/* Hero */}
+      <section className="bg-gradient-to-b from-ube-purple/10 via-bg-cream to-bg-cream py-12 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-pineapple-yellow/40 text-tiki-brown uppercase tracking-widest">
-              Coming Soon
-            </span>
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-widest">
               Admin Only
+            </span>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-tiki-brown/10 text-tiki-brown/70 uppercase tracking-widest">
+              Draft Library
             </span>
           </div>
           <div className="text-4xl mb-3">🎬</div>
@@ -22,62 +172,108 @@ export default function EpisodesPage() {
             Episode Package Studio
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Turn approved storyboard prompts into complete, structured episode
-            packages ready for animation, publishing, and merchandise planning.
+            Review saved episode draft packages. All episodes here are
+            internal drafts — none are visible on the public site yet.
           </p>
+          <div className="mt-6">
+            <Link
+              href="/admin/storyboards"
+              className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors"
+            >
+              <span>+</span>
+              Create New Storyboard
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
+      <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
 
-        {/* Not active notice */}
+        {/* Draft-only notice */}
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
-          <span className="text-xl flex-shrink-0">🏗️</span>
+          <span className="text-xl flex-shrink-0">📁</span>
           <div>
             <p className="text-sm font-bold text-tiki-brown mb-0.5">
-              Not active yet
+              Saved draft episodes only
             </p>
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              AI generation and episode package creation will be built in a
-              future phase. No generation is active on this page.
+              These are episode package JSON files committed to{" "}
+              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">
+                src/content/episodes/
+              </code>{" "}
+              in the repository. Saved drafts are read from{" "}
+              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">
+                src/content/episodes
+              </code>{" "}
+              after GitHub commits and Vercel redeploys. Read-only — no editing,
+              deleting, or publishing controls.
             </p>
           </div>
         </div>
 
-        {/* What it will do */}
+        {/* File count */}
+        <p className="text-sm font-semibold text-tiki-brown/50">
+          {drafts.length} episode JSON file{drafts.length !== 1 ? "s" : ""} found.
+        </p>
+
+        {/* Empty state */}
+        {drafts.length === 0 && (
+          <div className="bg-white rounded-3xl border border-dashed border-tiki-brown/20 p-10 text-center flex flex-col items-center gap-4">
+            <p className="text-4xl">🌴</p>
+            <div>
+              <p className="text-base font-black text-tiki-brown mb-1">No saved episodes yet</p>
+              <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-sm mx-auto">
+                Saved episode drafts will appear here after you generate,
+                review, approve, and save them from the Storyboard Builder.
+              </p>
+            </div>
+            <Link
+              href="/admin/storyboards"
+              className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors mt-2"
+            >
+              <span>+</span>
+              Create New Storyboard
+            </Link>
+          </div>
+        )}
+
+        {/* Episode cards */}
+        {drafts.map((draft) => (
+          <EpisodeCard key={draft._filename} draft={draft} />
+        ))}
+
+        {/* Fidelity callout */}
+        <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
+          <span className="text-xl flex-shrink-0">🎨</span>
+          <div>
+            <p className="text-sm font-bold text-tiki-brown mb-0.5">
+              Image &amp; animation prompts require human review
+            </p>
+            <p className="text-sm text-tiki-brown/65 leading-relaxed">
+              All AI-generated image and animation prompts must be checked for
+              character fidelity against official reference art before any asset
+              generation. Do not send prompts to an image model without a manual
+              fidelity review.
+            </p>
+          </div>
+        </div>
+
+        {/* Future workflow */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-7">
-          <h2 className="text-base font-black text-tiki-brown mb-4">
-            What this will do later
-          </h2>
+          <h2 className="text-base font-black text-tiki-brown mb-4">Future workflow</h2>
           <ul className="space-y-3">
             {[
-              "Accept an approved storyboard as structured input",
-              "Generate a complete episode summary and title",
-              "Produce scene-by-scene scripts with dialogue and voiceover notes",
-              "Generate image prompts for each scene, reference-anchored to official character art",
-              "Generate animation prompts for each scene",
-              "Suggest merchandise tie-in ideas based on the episode",
-              "Output a structured episode JSON package ready for human review",
+              "Approved drafts flow to an animation production queue",
+              "Image prompts are reviewed and sent to a controlled image-generation pipeline",
+              "Episodes are scheduled, published to the public site, and linked to merchandise",
+              "Published episode data feeds into the public /stories page automatically",
             ].map((item) => (
-              <li
-                key={item}
-                className="flex items-start gap-2.5 text-sm text-tiki-brown/75 leading-snug"
-              >
-                <span className="text-mango-orange mt-0.5 flex-shrink-0">
-                  •
-                </span>
+              <li key={item} className="flex items-start gap-2.5 text-sm text-tiki-brown/70 leading-snug">
+                <span className="text-ube-purple mt-0.5 flex-shrink-0">→</span>
                 {item}
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Future output placeholder */}
-        <div className="bg-white rounded-3xl border border-dashed border-tiki-brown/20 p-7 text-center">
-          <p className="text-3xl mb-3">⚙️</p>
-          <p className="text-sm font-semibold text-tiki-brown/50">
-            Episode package generator coming in a future phase
-          </p>
         </div>
 
       </section>
