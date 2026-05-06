@@ -20,17 +20,18 @@ const FIDELITY_ITEMS = [
 type ReviewStatus = "needs-review" | "looks-close" | "needs-regeneration" | "reject-draft";
 
 const REVIEW_STATUS_OPTIONS: { value: ReviewStatus; label: string; className: string }[] = [
-  { value: "needs-review",      label: "Needs Review",      className: "bg-pineapple-yellow/30 text-tiki-brown border-pineapple-yellow/50" },
-  { value: "looks-close",       label: "Looks Close",       className: "bg-tropical-green/20 text-tropical-green border-tropical-green/40" },
-  { value: "needs-regeneration",label: "Needs Regeneration",className: "bg-warm-coral/15 text-warm-coral border-warm-coral/35" },
-  { value: "reject-draft",      label: "Reject Draft",      className: "bg-warm-coral/25 text-warm-coral border-warm-coral/50" },
+  { value: "needs-review",       label: "Needs Review",       className: "bg-pineapple-yellow/30 text-tiki-brown border-pineapple-yellow/50" },
+  { value: "looks-close",        label: "Looks Close",        className: "bg-tropical-green/20 text-tropical-green border-tropical-green/40" },
+  { value: "needs-regeneration", label: "Needs Regeneration", className: "bg-warm-coral/15 text-warm-coral border-warm-coral/35" },
+  { value: "reject-draft",       label: "Reject Draft",       className: "bg-warm-coral/25 text-warm-coral border-warm-coral/50" },
 ];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type GenStatus = "idle" | "loading" | "done" | "not_configured" | "error";
+type UploadStatus = "idle" | "loading" | "success" | "error";
 
-type ApiResult = {
+type GenApiResult = {
   ok: boolean;
   status: string;
   message?: string;
@@ -39,6 +40,34 @@ type ApiResult = {
   notes?: string[];
   image?: { mimeType: string; base64: string };
 };
+
+type UploadAsset = {
+  url: string;
+  pathname: string;
+  storageProvider: string;
+  mimeType: string;
+  sceneNumber: number;
+  alt: string;
+  referenceCharacters: string[];
+  uploadedAt: string;
+};
+
+type UploadApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  asset?: UploadAsset;
+  notes?: string[];
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildAltText(sceneNumber: number, sceneTitle?: string, sceneSummary?: string): string {
+  const parts: string[] = [`Story panel for Scene ${sceneNumber}`];
+  if (sceneTitle) parts.push(sceneTitle);
+  if (sceneSummary) parts.push(sceneSummary.slice(0, 120));
+  return parts.join(": ");
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -90,10 +119,7 @@ function FidelityChecklist({
       </p>
       <div className="flex flex-col gap-1.5">
         {FIDELITY_ITEMS.map((item, i) => (
-          <label
-            key={i}
-            className="flex items-start gap-2.5 cursor-pointer group"
-          >
+          <label key={i} className="flex items-start gap-2.5 cursor-pointer group">
             <input
               type="checkbox"
               checked={checked[i]}
@@ -117,6 +143,48 @@ function FidelityChecklist({
   );
 }
 
+function UploadSuccessPanel({ asset }: { asset: UploadAsset }) {
+  return (
+    <div className="flex flex-col gap-3 bg-tropical-green/8 border border-tropical-green/25 rounded-2xl p-4">
+      <div className="flex items-center gap-2">
+        <span className="text-base">✅</span>
+        <h4 className="text-sm font-black text-tropical-green">Uploaded to Media Storage</h4>
+      </div>
+      <div className="flex flex-col gap-1.5 text-xs text-tiki-brown/70">
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">URL</span>
+          <a
+            href={asset.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ube-purple underline break-all hover:opacity-75"
+          >
+            {asset.url}
+          </a>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">Path</span>
+          <span className="break-all font-mono">{asset.pathname}</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">Provider</span>
+          <span>{asset.storageProvider}</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">Uploaded</span>
+          <span>{new Date(asset.uploadedAt).toLocaleString()}</span>
+        </div>
+      </div>
+      <div className="flex items-start gap-2 bg-sky-blue/10 border border-sky-blue/25 rounded-xl px-3 py-2">
+        <span className="text-xs flex-shrink-0">ℹ️</span>
+        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+          Stored as a media asset only. Not attached to the episode JSON yet. Not published.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PanelDraftGenerator({
@@ -124,14 +192,19 @@ export default function PanelDraftGenerator({
   sceneNumber,
   panelPrompt,
   referenceCharacters,
+  sceneTitle,
+  sceneSummary,
 }: {
   episodeSlug: string;
   sceneNumber: number;
   panelPrompt: string;
   referenceCharacters: string[];
+  sceneTitle?: string;
+  sceneSummary?: string;
 }) {
+  // Generation state
   const [genStatus, setGenStatus] = useState<GenStatus>("idle");
-  const [result, setResult] = useState<ApiResult | null>(null);
+  const [result, setResult] = useState<GenApiResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   // Review state — local only, not persisted
@@ -141,14 +214,33 @@ export default function PanelDraftGenerator({
   );
   const [reviewNotes, setReviewNotes] = useState<string>("");
 
+  // Upload state — local only, not persisted
+  const [fidelityApprovedForUpload, setFidelityApprovedForUpload] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
+  const [uploadResult, setUploadResult] = useState<UploadApiResult | null>(null);
+  const [uploadErrorMsg, setUploadErrorMsg] = useState<string>("");
+
   const hasTiki = referenceCharacters.some((c) => c.toLowerCase().includes("tiki"));
+  const hasImage = genStatus === "done" && !!result?.image?.base64;
   const hasDraft = genStatus === "done" || genStatus === "not_configured";
   const isLoading = genStatus === "loading";
+  const canUpload = hasImage && reviewStatus === "looks-close" && fidelityApprovedForUpload;
+
+  function getUploadDisabledReason(): string | null {
+    if (!hasImage) return "Generate a draft image first.";
+    if (reviewStatus !== "looks-close") return 'Set review status to "Looks Close" first.';
+    if (!fidelityApprovedForUpload) return "Check the approval box below to enable upload.";
+    return null;
+  }
 
   function resetReviewState() {
     setReviewStatus("needs-review");
     setCheckedItems(new Array(FIDELITY_ITEMS.length).fill(false));
     setReviewNotes("");
+    setFidelityApprovedForUpload(false);
+    setUploadStatus("idle");
+    setUploadResult(null);
+    setUploadErrorMsg("");
   }
 
   function toggleItem(i: number) {
@@ -191,9 +283,9 @@ export default function PanelDraftGenerator({
         return;
       }
 
-      let data: ApiResult;
+      let data: GenApiResult;
       try {
-        data = (await res.json()) as ApiResult;
+        data = (await res.json()) as GenApiResult;
       } catch {
         setGenStatus("error");
         setErrorMsg("Something went wrong while generating this temporary panel draft.");
@@ -221,6 +313,59 @@ export default function PanelDraftGenerator({
     }
   }
 
+  async function handleUpload() {
+    if (!result?.image || !canUpload) return;
+
+    setUploadStatus("loading");
+    setUploadResult(null);
+    setUploadErrorMsg("");
+
+    const alt = buildAltText(sceneNumber, sceneTitle, sceneSummary);
+
+    try {
+      const res = await fetch("/api/media/upload-story-panel-image", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          imageBase64: result.image.base64,
+          mimeType: result.image.mimeType,
+          alt,
+          referenceCharacters: result.referenceCharacters ?? referenceCharacters,
+          review: { characterFidelityApproved: true },
+        }),
+      });
+
+      if (res.status === 401) {
+        setUploadStatus("error");
+        setUploadErrorMsg("Admin access is required. Please unlock the Story Studio again.");
+        return;
+      }
+
+      let data: UploadApiResult;
+      try {
+        data = (await res.json()) as UploadApiResult;
+      } catch {
+        setUploadStatus("error");
+        setUploadErrorMsg("Upload failed — could not parse server response.");
+        return;
+      }
+
+      if (data.ok && data.status === "uploaded") {
+        setUploadStatus("success");
+        setUploadResult(data);
+      } else {
+        setUploadStatus("error");
+        setUploadErrorMsg(data.message ?? "Upload failed. See server logs for details.");
+      }
+    } catch {
+      setUploadStatus("error");
+      setUploadErrorMsg("Upload failed — network error.");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-3 pt-3 border-t border-sky-blue/25 mt-1">
 
@@ -230,7 +375,7 @@ export default function PanelDraftGenerator({
         <p className="text-xs text-tiki-brown/65 leading-relaxed">
           <strong className="font-semibold">Temporary review draft only.</strong>{" "}
           Generated images are not saved, uploaded, attached to this episode, committed to GitHub, or
-          published.
+          published until explicitly approved and uploaded below.
         </p>
       </div>
 
@@ -412,6 +557,72 @@ export default function PanelDraftGenerator({
             </p>
           </div>
 
+          {/* ── Upload section ── */}
+          {hasImage && (
+            <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base">☁️</span>
+                <h4 className="text-sm font-black text-tiki-brown">Upload to Media Storage</h4>
+              </div>
+
+              {/* Upload success */}
+              {uploadStatus === "success" && uploadResult?.asset && (
+                <UploadSuccessPanel asset={uploadResult.asset} />
+              )}
+
+              {/* Upload error */}
+              {uploadStatus === "error" && (
+                <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                  <span className="text-sm flex-shrink-0">⚠️</span>
+                  <p className="text-xs text-warm-coral leading-relaxed font-semibold">
+                    {uploadErrorMsg}
+                  </p>
+                </div>
+              )}
+
+              {/* Fidelity approval gate */}
+              {uploadStatus !== "success" && (
+                <>
+                  <label className="flex items-start gap-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={fidelityApprovedForUpload}
+                      onChange={(e) => setFidelityApprovedForUpload(e.target.checked)}
+                      className="mt-0.5 flex-shrink-0 accent-tropical-green"
+                    />
+                    <span className="text-xs text-tiki-brown/70 leading-relaxed">
+                      <strong className="font-bold">I confirm</strong> this draft meets character
+                      fidelity standards and is suitable for temporary media storage. I understand
+                      this does not attach the image to the episode or publish it.
+                    </span>
+                  </label>
+
+                  {/* Disable reason hint */}
+                  {!canUpload && (
+                    <p className="text-xs text-tiki-brown/40 italic">
+                      {getUploadDisabledReason()}
+                    </p>
+                  )}
+
+                  <button
+                    onClick={handleUpload}
+                    disabled={!canUpload || uploadStatus === "loading"}
+                    className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  >
+                    {uploadStatus === "loading"
+                      ? "Uploading…"
+                      : "Upload Reviewed Draft to Media Storage"}
+                  </button>
+
+                  <p className="text-xs text-tiki-brown/35 italic">
+                    Uploads to Vercel Blob storage only. Not attached to the episode JSON. Not
+                    published.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
+
           {/* API notes */}
           {result.notes && result.notes.length > 0 && (
             <ul className="space-y-1 border-t border-tiki-brown/8 pt-3">
@@ -428,16 +639,6 @@ export default function PanelDraftGenerator({
           {result.generationPrompt && (
             <GenerationPromptBlock prompt={result.generationPrompt} />
           )}
-
-          {/* Future workflow note */}
-          <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2.5">
-            <span className="text-sm flex-shrink-0">🔮</span>
-            <p className="text-xs text-tiki-brown/55 leading-relaxed">
-              <strong className="font-semibold">Future phase:</strong> Approved draft images may be
-              saved to media storage and attached to the episode after review. Saving is not active
-              yet.
-            </p>
-          </div>
 
         </div>
       )}
