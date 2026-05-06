@@ -35,6 +35,7 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/api/generate-episode-package",
+    "/api/generate-animation-clip",
     "/api/github/save-episode",
     "/api/github/mark-episode-public-ready",
     "/api/github/attach-story-panel-asset",
