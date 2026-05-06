@@ -388,6 +388,113 @@ function ApprovedPanelCard({
   );
 }
 
+// ─── Read-Aloud Mode helpers ──────────────────────────────────────────────────
+
+const READING_CUES = [
+  "Use a warm, slow voice for this scene.",
+  "Pause after each line to let the feelings land.",
+  "Try giving each character a slightly different voice.",
+  "Read this part gently — it's an emotional moment.",
+  "Make eye contact with your child after reading this scene.",
+  "Slow down here — this is the heart of the story.",
+  "Use a cheerful, hopeful tone for this scene.",
+  "Read with curiosity — let your child wonder along with you.",
+];
+
+const REFLECTION_QUESTIONS_BASE = [
+  "What do you think {character} was feeling in this part?",
+  "Has something like this ever happened to you?",
+  "What would you do if you were in this story?",
+  "Why do you think that moment was important?",
+  "How did the characters help each other here?",
+  "What do you think will happen next?",
+  "If you could talk to one of the characters, what would you say?",
+  "What feeling word fits this part of the story?",
+];
+
+function buildReadingCue(sceneIndex: number): string {
+  return READING_CUES[sceneIndex % READING_CUES.length];
+}
+
+function buildReflectionQuestion(sceneIndex: number, lesson: string): string {
+  const base = REFLECTION_QUESTIONS_BASE[sceneIndex % REFLECTION_QUESTIONS_BASE.length];
+  if (lesson && sceneIndex === REFLECTION_QUESTIONS_BASE.length - 1) {
+    return `Today's lesson is: "${lesson}" — what does that mean to you?`;
+  }
+  return base.replace("{character}", "one of the characters");
+}
+
+function deriveNarration(scene: Record<string, unknown>): string {
+  const summary = str(scene.summary);
+  if (summary) return summary;
+  const title = str(scene.title);
+  if (title) return `Scene: ${title}`;
+  return "The story continues…";
+}
+
+// ─── Read-Aloud components ────────────────────────────────────────────────────
+
+function ReadAloudSceneCard({
+  scene,
+  index,
+  lesson,
+}: {
+  scene: Record<string, unknown>;
+  index: number;
+  lesson: string;
+}) {
+  const sceneNumber = Number(scene.sceneNumber) || index + 1;
+  const title = str(scene.title);
+  const narration = deriveNarration(scene);
+  const dialogue = strArr(scene.dialogueDraft);
+  const readingCue = buildReadingCue(index);
+  const reflectionQ = buildReflectionQuestion(index, lesson);
+
+  return (
+    <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
+      {/* Scene header */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-ube-purple text-white text-xs font-black flex-shrink-0">
+          {sceneNumber}
+        </div>
+        {title && (
+          <h3 className="text-sm font-black text-tiki-brown leading-snug">{title}</h3>
+        )}
+      </div>
+
+      {/* Narration text */}
+      <p className="text-base text-tiki-brown/80 leading-relaxed font-medium">{narration}</p>
+
+      {/* First dialogue line as a read-along hint */}
+      {dialogue.length > 0 && (
+        <div className="flex items-start gap-2.5 bg-sky-blue/8 border border-sky-blue/20 rounded-2xl px-4 py-3">
+          <span className="text-base flex-shrink-0">💬</span>
+          <p className="text-sm text-tiki-brown/70 leading-relaxed italic">
+            {dialogue[0]}
+          </p>
+        </div>
+      )}
+
+      {/* Reading cue */}
+      <div className="flex items-start gap-2.5 bg-tropical-green/8 border border-tropical-green/20 rounded-2xl px-4 py-3">
+        <span className="text-base flex-shrink-0">🎙️</span>
+        <p className="text-sm font-semibold text-tiki-brown/65 leading-relaxed">{readingCue}</p>
+      </div>
+
+      {/* Reflection question */}
+      <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-4 py-3">
+        <span className="text-base flex-shrink-0">🌟</span>
+        <div>
+          <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide mb-1">
+            Reflection
+          </p>
+          <p className="text-sm text-tiki-brown/80 leading-relaxed">{reflectionQ}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StoryDetailPage({
@@ -498,7 +605,7 @@ export default async function StoryDetailPage({
         </Link>
 
         {/* ── Story Mode cards ── */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {/* Read Story — active */}
           <div className="flex flex-col items-center gap-2 bg-ube-purple rounded-2xl px-3 py-4 text-center shadow-sm">
             <span className="text-2xl">📖</span>
@@ -521,6 +628,15 @@ export default async function StoryDetailPage({
                 Coming Soon
               </span>
             )}
+          </div>
+
+          {/* Read Aloud — active */}
+          <div className="flex flex-col items-center gap-2 bg-pineapple-yellow/20 border border-pineapple-yellow/40 rounded-2xl px-3 py-4 text-center shadow-sm">
+            <span className="text-2xl">🎙️</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">Read Aloud</p>
+            <span className="text-xs font-bold text-tiki-brown/60 bg-pineapple-yellow/30 px-2 py-0.5 rounded-full">
+              Available
+            </span>
           </div>
 
           {/* Watch — coming soon */}
@@ -605,14 +721,6 @@ export default async function StoryDetailPage({
             </p>
           </PublicSection>
         )}
-
-        {/* Read-aloud note */}
-        <div className="flex items-start gap-3 bg-sky-blue/10 border border-sky-blue/30 rounded-2xl px-5 py-4">
-          <span className="text-lg flex-shrink-0">🎙️</span>
-          <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            Read-aloud narration and captions are planned for future story releases.
-          </p>
-        </div>
 
         {/* ══════════════════════════════════════════
             STORY PANELS — approved or coming soon
@@ -718,6 +826,90 @@ export default async function StoryDetailPage({
             <p className="text-xs text-tiki-brown/45 leading-relaxed">
               Some stories may later include still-image panels once official artwork is approved.
             </p>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            READ-ALOUD STORY MODE
+        ══════════════════════════════════════════ */}
+
+        {scenes.length > 0 && (
+          <div
+            id="read-aloud"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
+          >
+            {/* Section header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                  <span>🎙️</span> Read-Aloud Mode
+                </h2>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Read the story out loud with gentle pacing, expression, and reflection questions.
+                </p>
+              </div>
+              <span className="flex-shrink-0 text-xs font-bold text-tiki-brown/60 bg-pineapple-yellow/25 px-3 py-1 rounded-full">
+                {scenes.length} {scenes.length === 1 ? "scene" : "scenes"}
+              </span>
+            </div>
+
+            {/* Guide card */}
+            <div className="bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-2xl p-5 flex flex-col gap-3">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
+                Reader&apos;s Guide
+              </p>
+              <dl className="flex flex-col gap-2">
+                <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
+                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Suggested reader</dt>
+                  <dd className="text-sm text-tiki-brown/75">Adult or older child reading aloud</dd>
+                </div>
+                <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
+                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Pacing</dt>
+                  <dd className="text-sm text-tiki-brown/75">Slow and expressive — pause between scenes</dd>
+                </div>
+                {lesson && (
+                  <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
+                    <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Focus skill</dt>
+                    <dd className="text-sm text-tiki-brown/75">{lesson}</dd>
+                  </div>
+                )}
+                <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
+                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Audio</dt>
+                  <dd className="text-sm text-tiki-brown/75">Coming later — read together for now</dd>
+                </div>
+              </dl>
+            </div>
+
+            {/* No-audio notice */}
+            <div className="flex items-start gap-3 bg-sky-blue/8 border border-sky-blue/20 rounded-2xl px-5 py-4">
+              <span className="text-lg flex-shrink-0">🔇</span>
+              <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                Audio narration is not active yet. This read-aloud mode is designed for adults
+                and children to read together.
+              </p>
+            </div>
+
+            {/* Scene cards */}
+            <div className="flex flex-col gap-5">
+              {scenes.map((scene, i) => (
+                <ReadAloudSceneCard key={i} scene={scene} index={i} lesson={lesson} />
+              ))}
+            </div>
+
+            {/* Closing lesson reflection */}
+            {lesson && (
+              <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
+                <span className="text-xl flex-shrink-0">💛</span>
+                <div>
+                  <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
+                    After the Story
+                  </p>
+                  <p className="text-sm text-tiki-brown/80 leading-relaxed">
+                    Today&apos;s lesson: {lesson}. Take a moment to talk about it together.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
