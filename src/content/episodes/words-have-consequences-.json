@@ -105,5 +105,44 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-04-29T17:36:20.589Z"
+  "updatedAt": "2026-05-06T05:34:14.841Z",
+  "media": {
+    "storyPanelMode": {
+      "status": "assets-attached",
+      "panels": [
+        {
+          "sceneNumber": 1,
+          "panelTitle": "Words Have an Effect",
+          "status": "approved",
+          "approvalStatus": "approved",
+          "referenceCharacters": [
+            "pineapple-baby",
+            "ube-baby",
+            "mango-baby"
+          ],
+          "prompt": "Scene of Ube Baby, Mango Baby, and Pineapple Baby in a colorful classroom setting. Ube Baby has a shy expression, Mango Baby looks a bit sad, and Pineapple Baby is speaking kindly to Mango Baby.",
+          "asset": {
+            "url": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/words-have-consequences-/story-panels/scene-1-1778045647085.png",
+            "pathname": "episodes/words-have-consequences-/story-panels/scene-1-1778045647085.png",
+            "storageProvider": "vercel-blob",
+            "mimeType": "image/png",
+            "width": null,
+            "height": null,
+            "alt": "Story panel for Scene 1: Words Have an Effect: In the classroom, Ube Baby tells Mango Baby that her flower looks silly, causing Mango Baby to feel sad and walk away. P",
+            "createdAt": "2026-05-06T05:34:08.280Z",
+            "approvedAt": "2026-05-06T05:34:14.378Z"
+          },
+          "review": {
+            "requiresHumanReview": true,
+            "characterFidelityApproved": true,
+            "notes": ""
+          },
+          "publicUse": {
+            "allowed": true,
+            "appearsOnPublicStoryPage": true
+          }
+        }
+      ]
+    }
+  }
 }
