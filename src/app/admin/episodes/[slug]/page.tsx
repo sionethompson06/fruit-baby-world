@@ -935,6 +935,8 @@ function PanelPromptCard({
         sceneNumber={sceneNum}
         panelPrompt={promptText}
         referenceCharacters={refChars}
+        sceneTitle={title}
+        sceneSummary={summary}
       />
     </div>
   );
