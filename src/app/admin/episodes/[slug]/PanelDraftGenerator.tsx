@@ -30,6 +30,7 @@ const REVIEW_STATUS_OPTIONS: { value: ReviewStatus; label: string; className: st
 
 type GenStatus = "idle" | "loading" | "done" | "not_configured" | "error";
 type UploadStatus = "idle" | "loading" | "success" | "error";
+type AttachStatus = "idle" | "loading" | "success" | "error";
 
 type GenApiResult = {
   ok: boolean;
@@ -57,6 +58,17 @@ type UploadApiResult = {
   status: string;
   message?: string;
   asset?: UploadAsset;
+  notes?: string[];
+};
+
+type AttachApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  path?: string;
+  commitMessage?: string;
+  htmlUrl?: string;
+  panelAsset?: unknown;
   notes?: string[];
 };
 
@@ -89,6 +101,31 @@ function uploadErrorMessage(status: string, apiMessage?: string): string {
     return "Admin access is required. Please unlock the Story Studio again.";
   }
   return apiMessage ?? "Upload failed. Something went wrong — check admin settings and try again.";
+}
+
+function attachErrorMessage(status: string, apiMessage?: string): string {
+  if (status === "unauthorized") {
+    return "Admin access is required. Please unlock the Story Studio again.";
+  }
+  if (status === "setup_required") {
+    return "GitHub saving is not configured yet. Add GITHUB_TOKEN, GITHUB_OWNER, GITHUB_REPO, and GITHUB_BRANCH in Vercel environment variables.";
+  }
+  if (status === "episode_not_found") {
+    return "Episode file was not found in GitHub. Make sure this episode has been saved to GitHub first.";
+  }
+  if (status === "not_approved_for_save") {
+    return apiMessage ?? "Episode must be approved for save before media assets can be attached.";
+  }
+  if (status === "invalid_episode_json") {
+    return "Episode file could not be parsed. Contact support if this persists.";
+  }
+  if (status === "validation_error") {
+    return apiMessage ?? "Validation failed. Check all required fields and try again.";
+  }
+  if (status === "github_error") {
+    return apiMessage ?? "GitHub error while attaching asset. Check GitHub configuration and try again.";
+  }
+  return apiMessage ?? "Something went wrong while attaching this uploaded asset to episode JSON.";
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -197,10 +234,113 @@ function UploadSuccessPanel({ asset }: { asset: UploadAsset }) {
           <span>{new Date(asset.uploadedAt).toLocaleString()}</span>
         </div>
       </div>
-      <div className="flex items-start gap-2 bg-sky-blue/10 border border-sky-blue/25 rounded-xl px-3 py-2">
+    </div>
+  );
+}
+
+function AttachSuccessPanel({
+  result,
+  asset,
+  sceneNumber,
+}: {
+  result: AttachApiResult;
+  asset: UploadAsset;
+  sceneNumber: number;
+}) {
+  return (
+    <div className="flex flex-col gap-3 bg-ube-purple/8 border border-ube-purple/25 rounded-2xl p-4">
+      <div className="flex items-center gap-2">
+        <span className="text-base">📎</span>
+        <h4 className="text-sm font-black text-ube-purple">Attached to Episode JSON</h4>
+        <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+          This Session
+        </span>
+      </div>
+
+      {/* Manifest-style summary */}
+      <div className="flex flex-col gap-1.5 bg-white/50 border border-ube-purple/15 rounded-xl px-3 py-2.5 text-xs text-tiki-brown/70">
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Status</span>
+          <span className="font-semibold text-tropical-green">attached-this-session</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Scene</span>
+          <span>{sceneNumber}</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Approval</span>
+          <span className="font-semibold text-tropical-green">approved</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Provider</span>
+          <span>{asset.storageProvider}</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Asset URL</span>
+          <a
+            href={asset.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ube-purple underline break-all hover:opacity-75"
+          >
+            {asset.url}
+          </a>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Public use</span>
+          <span className="font-semibold text-tropical-green">allowed</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span className="font-bold text-tiki-brown/45 w-32 flex-shrink-0">Public story page</span>
+          <span className="font-semibold text-tropical-green">true</span>
+        </div>
+      </div>
+
+      {/* GitHub commit info */}
+      <div className="flex flex-col gap-1.5 text-xs text-tiki-brown/65">
+        {result.path && (
+          <div className="flex items-start gap-2">
+            <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">File</span>
+            <span className="font-mono break-all">{result.path}</span>
+          </div>
+        )}
+        {result.commitMessage && (
+          <div className="flex items-start gap-2">
+            <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">Commit</span>
+            <span>{result.commitMessage}</span>
+          </div>
+        )}
+        {result.htmlUrl && (
+          <div className="flex items-start gap-2">
+            <span className="font-bold text-tiki-brown/45 w-24 flex-shrink-0">GitHub</span>
+            <a
+              href={result.htmlUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-ube-purple underline break-all hover:opacity-75"
+            >
+              View commit
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Redeploy note */}
+      <div className="flex items-start gap-2 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-xl px-3 py-2.5">
+        <span className="text-xs flex-shrink-0">🔄</span>
+        <p className="text-xs text-tiki-brown/65 leading-relaxed">
+          <strong className="font-semibold">Vercel redeploy is required</strong> before this saved media
+          manifest appears in the deployed app. After Vercel redeploys, reload this admin episode page
+          to confirm the media asset appears in the saved episode JSON.
+        </p>
+      </div>
+
+      {/* Not published note */}
+      <div className="flex items-start gap-2 bg-sky-blue/10 border border-sky-blue/25 rounded-xl px-3 py-2.5">
         <span className="text-xs flex-shrink-0">ℹ️</span>
         <p className="text-xs text-tiki-brown/60 leading-relaxed">
-          Stored as a media asset only. Not attached to the episode JSON yet. Not published.
+          This does not publish the image publicly yet. Public story panel display will be added in a
+          later phase.
         </p>
       </div>
     </div>
@@ -242,11 +382,25 @@ export default function PanelDraftGenerator({
   const [uploadResult, setUploadResult] = useState<UploadApiResult | null>(null);
   const [uploadErrorMsg, setUploadErrorMsg] = useState<string>("");
 
+  // Attach state — local only, not persisted
+  const [attachStatus, setAttachStatus] = useState<AttachStatus>("idle");
+  const [attachResult, setAttachResult] = useState<AttachApiResult | null>(null);
+  const [attachErrorMsg, setAttachErrorMsg] = useState<string>("");
+
   const hasTiki = referenceCharacters.some((c) => c.toLowerCase().includes("tiki"));
   const hasImage = genStatus === "done" && !!result?.image?.base64;
   const hasDraft = genStatus === "done" || genStatus === "not_configured";
   const isLoading = genStatus === "loading";
   const canUpload = hasImage && reviewStatus === "looks-close" && fidelityApprovedForUpload;
+
+  const uploadedAsset = uploadResult?.asset;
+  const canAttach =
+    uploadStatus === "success" &&
+    !!uploadedAsset &&
+    uploadedAsset.storageProvider === "vercel-blob" &&
+    reviewStatus === "looks-close" &&
+    fidelityApprovedForUpload &&
+    attachStatus !== "success";
 
   function getUploadDisabledReason(): string | null {
     if (!hasImage) return "Generate a draft image first.";
@@ -263,6 +417,9 @@ export default function PanelDraftGenerator({
     setUploadStatus("idle");
     setUploadResult(null);
     setUploadErrorMsg("");
+    setAttachStatus("idle");
+    setAttachResult(null);
+    setAttachErrorMsg("");
   }
 
   function toggleItem(i: number) {
@@ -341,6 +498,9 @@ export default function PanelDraftGenerator({
     setUploadStatus("loading");
     setUploadResult(null);
     setUploadErrorMsg("");
+    setAttachStatus("idle");
+    setAttachResult(null);
+    setAttachErrorMsg("");
 
     const alt = buildAltText(sceneNumber, sceneTitle, sceneSummary);
 
@@ -385,6 +545,84 @@ export default function PanelDraftGenerator({
     } catch {
       setUploadStatus("error");
       setUploadErrorMsg("Upload failed — network error. Check your connection and try again.");
+    }
+  }
+
+  async function handleAttach() {
+    if (!uploadedAsset || !canAttach) return;
+
+    setAttachStatus("loading");
+    setAttachResult(null);
+    setAttachErrorMsg("");
+
+    const now = new Date().toISOString();
+
+    try {
+      const res = await fetch("/api/github/attach-story-panel-asset", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          panelAsset: {
+            sceneNumber,
+            panelTitle: sceneTitle ?? `Scene ${sceneNumber}`,
+            status: "approved",
+            approvalStatus: "approved",
+            referenceCharacters:
+              uploadedAsset.referenceCharacters.length > 0
+                ? uploadedAsset.referenceCharacters
+                : referenceCharacters,
+            prompt: panelPrompt,
+            asset: {
+              url: uploadedAsset.url,
+              pathname: uploadedAsset.pathname,
+              storageProvider: "vercel-blob",
+              mimeType: uploadedAsset.mimeType || "image/png",
+              width: null,
+              height: null,
+              alt: uploadedAsset.alt,
+              createdAt: uploadedAsset.uploadedAt,
+              approvedAt: now,
+            },
+            review: {
+              requiresHumanReview: true,
+              characterFidelityApproved: true,
+              notes: reviewNotes,
+            },
+            publicUse: {
+              allowed: true,
+              appearsOnPublicStoryPage: true,
+            },
+          },
+        }),
+      });
+
+      if (res.status === 401) {
+        setAttachStatus("error");
+        setAttachErrorMsg("Admin access is required. Please unlock the Story Studio again.");
+        return;
+      }
+
+      let data: AttachApiResult;
+      try {
+        data = (await res.json()) as AttachApiResult;
+      } catch {
+        setAttachStatus("error");
+        setAttachErrorMsg("Something went wrong while attaching this uploaded asset to episode JSON.");
+        return;
+      }
+
+      if (data.ok && data.status === "attached") {
+        setAttachStatus("success");
+        setAttachResult(data);
+      } else {
+        setAttachStatus("error");
+        setAttachErrorMsg(attachErrorMessage(data.status, data.message));
+      }
+    } catch {
+      setAttachStatus("error");
+      setAttachErrorMsg("Something went wrong while attaching this uploaded asset to episode JSON.");
     }
   }
 
@@ -588,8 +826,8 @@ export default function PanelDraftGenerator({
               </div>
 
               {/* Upload success */}
-              {uploadStatus === "success" && uploadResult?.asset && (
-                <UploadSuccessPanel asset={uploadResult.asset} />
+              {uploadStatus === "success" && uploadedAsset && (
+                <UploadSuccessPanel asset={uploadedAsset} />
               )}
 
               {/* Upload error */}
@@ -641,6 +879,75 @@ export default function PanelDraftGenerator({
                     published.
                   </p>
                 </>
+              )}
+            </div>
+          )}
+
+          {/* ── Attach section — only after upload succeeds ── */}
+          {uploadStatus === "success" && uploadedAsset && (
+            <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base">📎</span>
+                <h4 className="text-sm font-black text-tiki-brown">Attach to Episode JSON</h4>
+              </div>
+
+              {/* Attach success */}
+              {attachStatus === "success" && attachResult && (
+                <AttachSuccessPanel
+                  result={attachResult}
+                  asset={uploadedAsset}
+                  sceneNumber={sceneNumber}
+                />
+              )}
+
+              {/* Attach error */}
+              {attachStatus === "error" && (
+                <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                  <span className="text-sm flex-shrink-0">⚠️</span>
+                  <p className="text-xs text-warm-coral leading-relaxed font-semibold">
+                    {attachErrorMsg}
+                  </p>
+                </div>
+              )}
+
+              {/* Attach action */}
+              {attachStatus !== "success" && (
+                <div className="flex flex-col gap-3">
+                  {/* Helper text */}
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                      This will save the uploaded media asset URL into the episode JSON media manifest
+                      in GitHub. After Vercel redeploys, the episode will know about this approved
+                      story panel asset.
+                    </p>
+                  </div>
+
+                  {/* Warning */}
+                  <div className="flex items-start gap-2 bg-pineapple-yellow/10 border border-pineapple-yellow/30 rounded-xl px-3 py-2.5">
+                    <span className="text-xs flex-shrink-0">⚠️</span>
+                    <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                      This does not publish the image publicly yet. Public story panel display will be
+                      added in a later phase.
+                    </p>
+                  </div>
+
+                  {/* Attach loading indicator */}
+                  {attachStatus === "loading" && (
+                    <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                      Attaching uploaded asset to episode JSON…
+                    </p>
+                  )}
+
+                  <button
+                    onClick={handleAttach}
+                    disabled={!canAttach || attachStatus === "loading"}
+                    className="self-start px-4 py-2 rounded-xl bg-tiki-brown text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  >
+                    {attachStatus === "loading"
+                      ? "Attaching…"
+                      : "Attach Uploaded Asset to Episode JSON"}
+                  </button>
+                </div>
               )}
             </div>
           )}
