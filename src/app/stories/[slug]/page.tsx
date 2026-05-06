@@ -72,6 +72,18 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
+function formatCharName(slug: string): string {
+  const overrides: Record<string, string> = {
+    tiki: "Tiki Trouble",
+    "tiki-trouble": "Tiki Trouble",
+  };
+  if (overrides[slug]) return overrides[slug];
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
 // ─── Approved public story panels ────────────────────────────────────────────
 
 type ApprovedPanel = {
@@ -178,7 +190,7 @@ function CharBadge({ char }: { char: Character }) {
 function CharNameBadge({ name }: { name: string }) {
   return (
     <span className="text-sm font-semibold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple">
-      {name}
+      {formatCharName(name)}
     </span>
   );
 }
@@ -388,6 +400,50 @@ function ApprovedPanelCard({
   );
 }
 
+// ─── Discussion prompts ───────────────────────────────────────────────────────
+
+function buildDiscussionPrompts(lesson: string): string[] {
+  const lower = lesson.toLowerCase();
+  if (lower.includes("word") || lower.includes("say") || lower.includes("speak") || lower.includes("language")) {
+    return [
+      "What words in this story helped someone feel better?",
+      "Can you think of a kind thing to say to a friend?",
+      "How do you think it felt when someone said something unkind?",
+      "What could you say differently next time?",
+    ];
+  }
+  if (lower.includes("kind") || lower.includes("help") || lower.includes("share")) {
+    return [
+      "Who was kind in this story, and how did they show it?",
+      "How did it feel to help someone?",
+      "When have you helped a friend recently?",
+      "What small act of kindness could you do today?",
+    ];
+  }
+  if (lower.includes("feel") || lower.includes("emotion") || lower.includes("sad") || lower.includes("happy")) {
+    return [
+      "What feelings did you notice in this story?",
+      "Which character felt the way you sometimes feel?",
+      "What helps you when you feel upset?",
+      "How can we tell when a friend needs some extra kindness?",
+    ];
+  }
+  if (lower.includes("friend") || lower.includes("trust") || lower.includes("together")) {
+    return [
+      "What made the characters good friends to each other?",
+      "How did they solve a problem together?",
+      "What does it mean to be a true friend?",
+      "How can you be a great friend this week?",
+    ];
+  }
+  return [
+    "What did the characters feel in this story?",
+    "Which words helped someone feel better?",
+    "What would you do if this happened to you?",
+    "How can friends solve a problem kindly?",
+  ];
+}
+
 // ─── Read-Aloud Mode helpers ──────────────────────────────────────────────────
 
 const READING_CUES = [
@@ -590,6 +646,14 @@ export default async function StoryDetailPage({
               </span>
             )}
           </div>
+
+          {/* Lesson pill */}
+          {lesson && (
+            <div className="flex items-center gap-2 bg-pineapple-yellow/40 border border-pineapple-yellow/60 rounded-2xl px-4 py-2.5 max-w-sm text-center">
+              <span className="text-base flex-shrink-0">💡</span>
+              <p className="text-sm font-bold text-tiki-brown leading-snug">{lesson}</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -603,6 +667,34 @@ export default async function StoryDetailPage({
         >
           ← Back to Stories
         </Link>
+
+        {/* ── Section navigation ── */}
+        <nav className="flex flex-wrap gap-2" aria-label="Page sections">
+          <a
+            href="#read-story"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+          >
+            📖 Story
+          </a>
+          <a
+            href="#story-panels"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+          >
+            🖼️ Panels
+          </a>
+          <a
+            href="#read-aloud"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+          >
+            🎙️ Read-Aloud
+          </a>
+          <a
+            href="#animated-short"
+            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+          >
+            🎬 Animated Short
+          </a>
+        </nav>
 
         {/* ── Story Mode cards ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -649,16 +741,38 @@ export default async function StoryDetailPage({
           </div>
         </div>
 
-        {/* ── Lesson ── */}
-        <LessonBubble lesson={lesson} />
-
-        {/* ── Educational callout ── */}
-        <div className="flex items-start gap-3 bg-tropical-green/10 border border-tropical-green/25 rounded-2xl px-5 py-4">
-          <span className="text-xl flex-shrink-0">🌺</span>
-          <p className="text-sm text-tiki-brown/70 leading-relaxed">
-            Fruit Baby stories are designed to support kindness, feelings, friendship,
-            problem-solving, and playful learning.
+        {/* ── Today's Lesson ── */}
+        <div className="bg-pineapple-yellow/15 border border-pineapple-yellow/45 rounded-3xl px-6 py-5 flex flex-col gap-3">
+          <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+            Today&apos;s Lesson
           </p>
+          <p className="text-lg font-black text-tiki-brown leading-snug">
+            {lesson || "This story supports kindness, feelings, friendship, and problem-solving."}
+          </p>
+          <p className="text-sm text-tiki-brown/65 leading-relaxed">
+            Talk about this lesson together after reading.
+          </p>
+        </div>
+
+        {/* ── Grown-Up Guide ── */}
+        <div className="bg-tropical-green/8 border border-tropical-green/25 rounded-3xl px-6 py-5 flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🌺</span>
+            <p className="text-sm font-black text-tiki-brown">Grown-Up Guide</p>
+          </div>
+          <p className="text-xs text-tiki-brown/55 leading-relaxed">
+            Discussion questions to explore together:
+          </p>
+          <ul className="flex flex-col gap-2.5">
+            {buildDiscussionPrompts(lesson).map((q, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className="text-tropical-green font-black text-sm flex-shrink-0 mt-0.5">
+                  {i + 1}.
+                </span>
+                <p className="text-sm text-tiki-brown/75 leading-relaxed">{q}</p>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* ══════════════════════════════════════════
@@ -666,39 +780,36 @@ export default async function StoryDetailPage({
         ══════════════════════════════════════════ */}
 
         {/* About This Story */}
-        {(shortDesc || setting || ageRange || tone) && (
-          <PublicSection title="About This Story" icon="📖" id="read-story">
-            {shortDesc && (
-              <p className="text-sm text-tiki-brown/75 leading-relaxed">{shortDesc}</p>
-            )}
-            <dl className="flex flex-col gap-2">
-              {setting && (
-                <div className="grid grid-cols-[7rem_1fr] gap-2 items-baseline">
-                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
-                    Setting
-                  </dt>
-                  <dd className="text-sm text-tiki-brown/75">{setting}</dd>
-                </div>
-              )}
-              {ageRange && (
-                <div className="grid grid-cols-[7rem_1fr] gap-2 items-baseline">
-                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
-                    Ages
-                  </dt>
-                  <dd className="text-sm text-tiki-brown/75">{ageRange}</dd>
-                </div>
-              )}
-              {tone && (
-                <div className="grid grid-cols-[7rem_1fr] gap-2 items-baseline">
-                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
-                    Tone
-                  </dt>
-                  <dd className="text-sm text-tiki-brown/75">{tone}</dd>
-                </div>
-              )}
-            </dl>
-          </PublicSection>
-        )}
+        <PublicSection title="About This Story" icon="📖" id="read-story">
+          {shortDesc && (
+            <p className="text-sm text-tiki-brown/75 leading-relaxed">{shortDesc}</p>
+          )}
+          {featuredChars.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
+                Featuring
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {featuredChars.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/characters/${c.slug}`}
+                    className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-tiki-brown/10 hover:border-tiki-brown/25 transition-colors"
+                    style={{ backgroundColor: `${c.visualIdentity.primaryColors[0]}18` }}
+                  >
+                    <span className="text-sm font-bold text-tiki-brown">{c.shortName}</span>
+                    <span className="text-xs text-tiki-brown/45">→</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+          {!shortDesc && featuredChars.length === 0 && (
+            <p className="text-sm text-tiki-brown/55 leading-relaxed">
+              A Fruit Baby World story for young readers.
+            </p>
+          )}
+        </PublicSection>
 
         {/* Scene-by-scene story */}
         {scenes.length > 0 && (
@@ -931,55 +1042,31 @@ export default async function StoryDetailPage({
           </div>
 
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            Future approved animation clips will appear here after video generation, review,
-            and approval.
+            Animated story clips are planned for future releases after video assets are
+            created, reviewed, and approved.
           </p>
 
           {/* Video placeholder */}
-          <div className="flex flex-col items-center justify-center gap-4 h-52 bg-gradient-to-br from-tiki-brown/8 via-tiki-brown/5 to-tiki-brown/8 rounded-2xl border border-tiki-brown/10">
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-white/70 border border-tiki-brown/15 shadow-sm">
-              <span className="text-3xl ml-1 select-none">▶</span>
-            </div>
+          <div className="flex flex-col items-center justify-center gap-4 h-44 bg-gradient-to-br from-pineapple-yellow/8 via-sky-blue/6 to-tropical-green/8 rounded-2xl border border-tiki-brown/8">
+            <span className="text-5xl select-none" aria-hidden="true">🎬</span>
             <div className="text-center">
-              <p className="text-sm font-bold text-tiki-brown/45">Video not added yet</p>
+              <p className="text-sm font-bold text-tiki-brown/45">Animation coming later</p>
               {scenes.length > 0 && (
                 <p className="text-xs text-tiki-brown/30 mt-0.5">
-                  {scenes.length} planned {scenes.length === 1 ? "clip" : "clips"}
+                  {scenes.length} planned {scenes.length === 1 ? "scene" : "scenes"}
                 </p>
               )}
             </div>
           </div>
 
-          <p className="text-xs text-tiki-brown/45 leading-relaxed">
-            Some stories may later include animated shorts once official video is approved.
+          <p className="text-xs text-tiki-brown/40 leading-relaxed">
+            All animated clips will be reviewed and approved before appearing here.
           </p>
         </div>
 
         {/* ══════════════════════════════════════════
-            CHARACTERS & EXTRAS
+            EXTRAS
         ══════════════════════════════════════════ */}
-
-        {/* Featured characters */}
-        {featuredChars.length > 0 && (
-          <PublicSection title="Characters" icon="🍍">
-            <p className="text-sm text-tiki-brown/60 leading-relaxed">
-              Featuring official Fruit Baby World characters.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {featuredChars.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/characters/${c.slug}`}
-                  className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-tiki-brown/10 bg-white hover:border-tiki-brown/25 transition-colors"
-                  style={{ backgroundColor: `${c.visualIdentity.primaryColors[0]}15` }}
-                >
-                  <span className="text-sm font-bold text-tiki-brown">{c.name}</span>
-                  <span className="text-xs text-tiki-brown/50">→</span>
-                </Link>
-              ))}
-            </div>
-          </PublicSection>
-        )}
 
         {/* Merch tie-ins */}
         {merchTieIns.length > 0 && (
