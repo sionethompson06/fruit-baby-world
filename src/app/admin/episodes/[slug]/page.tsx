@@ -5,6 +5,7 @@ import { loadEpisodeBySlug, type SavedEpisodeDraft } from "@/lib/savedEpisodes";
 import PublishReadyAction from "./PublishReadyAction";
 import { deriveMediaPlan, type MediaPlan, type PanelPlan, type ClipPlan } from "@/lib/episodeMediaPlan";
 import PanelDraftGenerator from "./PanelDraftGenerator";
+import AnimationRouteTestPanel, { type SceneOption } from "./AnimationRouteTestPanel";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -2429,6 +2430,28 @@ export default async function EpisodeDetailPage({
 
   const mediaPlan = deriveMediaPlan(raw);
 
+  // Pre-compute scene options for AnimationRouteTestPanel (client component)
+  const episodeSetting = str(raw.setting);
+  const episodeTone = str(raw.tone);
+  const sceneOptions: SceneOption[] = scenes.map((scene, i) => {
+    const num = typeof scene.sceneNumber === "number" ? scene.sceneNumber : i + 1;
+    const title = str(scene.title);
+    const characters = strArr(scene.characters);
+    const existingPrompt = str(scene.animationPromptDraft);
+    const prompt =
+      existingPrompt ||
+      buildDeterministicAnimationPrompt({
+        sceneNum: num,
+        title,
+        characters,
+        setting: episodeSetting,
+        tone: episodeTone,
+        emotionalBeat: str(scene.emotionalBeat),
+        visualNotes: str(scene.visualNotes),
+      });
+    return { sceneNumber: num, title, characters, prompt };
+  });
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -2525,6 +2548,14 @@ export default async function EpisodeDetailPage({
 
         {/* ── Animation Prompt Builder ── */}
         <AnimationPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+
+        {/* ── Animation Route Test ── */}
+        <AnimationRouteTestPanel
+          episodeSlug={normalised.slug}
+          tikiFlagged={tikiFlagged}
+          scenes={sceneOptions}
+          featuredCharacters={normalised.featuredCharacters}
+        />
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
         <ReadAloudPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
