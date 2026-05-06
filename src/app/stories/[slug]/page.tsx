@@ -337,34 +337,40 @@ function ApprovedPanelCard({
   const chars = strArr(scene?.characters ?? panel.referenceCharacters);
   const altText =
     panel.asset.alt ||
-    `Story panel for Scene ${panel.sceneNumber}: ${sceneTitle}`;
+    `Illustrated story panel for Scene ${panel.sceneNumber}: ${sceneTitle}`;
 
   return (
-    <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden flex flex-col shadow-sm bg-white">
+    <div className="rounded-3xl overflow-hidden flex flex-col shadow-md bg-white border border-tiki-brown/10">
+      {/* Panel image — full width, aspect-ratio preserving */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={panel.asset.url}
         alt={altText}
-        className="w-full rounded-t-2xl"
-        style={{ display: "block" }}
+        className="w-full block"
       />
 
-      <div className="px-4 py-3 flex flex-col gap-2 bg-white">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green">
-            Panel {panel.sceneNumber}
+      {/* Panel info — warm cream card */}
+      <div className="px-6 py-5 flex flex-col gap-3 bg-pineapple-yellow/5 border-t border-tiki-brown/8">
+        {/* Scene number + title */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ube-purple/15 text-ube-purple flex-shrink-0">
+            Scene {panel.sceneNumber}
           </span>
           {sceneTitle && (
-            <span className="text-xs font-bold text-tiki-brown/75">{sceneTitle}</span>
+            <span className="text-sm font-black text-tiki-brown leading-snug">
+              {sceneTitle}
+            </span>
           )}
         </div>
 
+        {/* Scene summary */}
         {sceneSummary && (
-          <p className="text-xs text-tiki-brown/60 leading-relaxed line-clamp-3">
+          <p className="text-sm text-tiki-brown/75 leading-relaxed">
             {sceneSummary}
           </p>
         )}
 
+        {/* Character badges */}
         {chars.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {chars.map((id) => {
@@ -377,10 +383,6 @@ function ApprovedPanelCard({
             })}
           </div>
         )}
-
-        <p className="text-xs text-tiki-brown/35 italic mt-0.5">
-          Approved story artwork
-        </p>
       </div>
     </div>
   );
@@ -619,22 +621,34 @@ export default async function StoryDetailPage({
         {approvedPanels.length > 0 ? (
           <div
             id="story-panels"
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
           >
+            {/* Section header */}
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                <span>🖼️</span> Story Panels
-              </h2>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                  <span>🖼️</span> Illustrated Story Panels
+                </h2>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Read the story through approved illustrated moments.
+                </p>
+              </div>
               <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
-                {approvedPanels.length} {approvedPanels.length === 1 ? "Panel" : "Panels"}
+                {approvedPanels.length}{" "}
+                {approvedPanels.length === 1 ? "illustrated panel" : "illustrated panels"}
               </span>
             </div>
 
-            <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              Follow the story through approved illustrated panels.
-            </p>
+            {/* Reading intro */}
+            <div className="flex items-center gap-2.5 bg-sky-blue/10 border border-sky-blue/25 rounded-2xl px-4 py-3">
+              <span className="text-lg flex-shrink-0">📖</span>
+              <p className="text-sm font-semibold text-tiki-brown/70 leading-snug">
+                Use the panels below to read the story one moment at a time.
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Panels — single column for sequential storybook reading */}
+            <div className="flex flex-col gap-8">
               {approvedPanels.map((panel) => (
                 <ApprovedPanelCard
                   key={panel.sceneNumber}
@@ -645,8 +659,23 @@ export default async function StoryDetailPage({
               ))}
             </div>
 
-            <p className="text-xs text-tiki-brown/45 leading-relaxed">
-              These story panels have been reviewed before appearing publicly.
+            {/* Talk about it */}
+            {lesson && (
+              <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
+                <span className="text-xl flex-shrink-0">💬</span>
+                <div>
+                  <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
+                    Talk About It
+                  </p>
+                  <p className="text-sm text-tiki-brown/80 leading-relaxed">
+                    {lesson}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs text-tiki-brown/40 leading-relaxed">
+              All story panels are reviewed before appearing here.
             </p>
           </div>
         ) : (
@@ -655,17 +684,21 @@ export default async function StoryDetailPage({
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
           >
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                <span>🖼️</span> Story Panels
-              </h2>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                  <span>🖼️</span> Illustrated Story Panels
+                </h2>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Read the story through approved illustrated moments.
+                </p>
+              </div>
               <span className="flex-shrink-0 text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-3 py-1 rounded-full">
                 Coming Soon
               </span>
             </div>
 
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              Future approved still-image panels will appear here after artwork is generated,
-              reviewed, and approved.
+              Illustrated story panels will appear here once artwork has been reviewed and approved.
             </p>
 
             {scenes.length > 0 ? (
