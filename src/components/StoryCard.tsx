@@ -4,6 +4,8 @@ import { Episode, Character } from "@/lib/content";
 type Props = {
   episode: Episode;
   characterMap: Record<string, Character>;
+  thumbnailUrl?: string;
+  thumbnailAlt?: string;
 };
 
 const statusStyles: Record<string, { label: string; className: string }> = {
@@ -21,7 +23,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
   },
 };
 
-export default function StoryCard({ episode, characterMap }: Props) {
+export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbnailAlt }: Props) {
   const status = statusStyles[episode.status] ?? statusStyles.draft;
   const featuredChars = episode.featuredCharacters
     .map((id) => characterMap[id])
@@ -39,14 +41,25 @@ export default function StoryCard({ episode, characterMap }: Props) {
     >
       {/* Thumbnail area */}
       <div
-        className="relative flex items-center justify-center h-44 flex-shrink-0"
-        style={{
-          background: `linear-gradient(135deg, ${gradientFrom}55 0%, ${gradientTo}33 100%)`,
-        }}
+        className="relative flex items-center justify-center h-44 flex-shrink-0 overflow-hidden"
+        style={
+          thumbnailUrl
+            ? undefined
+            : { background: `linear-gradient(135deg, ${gradientFrom}55 0%, ${gradientTo}33 100%)` }
+        }
       >
-        <span className="text-6xl select-none" role="img" aria-label="story">
-          🎬
-        </span>
+        {thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbnailUrl}
+            alt={thumbnailAlt ?? episode.title}
+            className="w-full h-44 object-cover"
+          />
+        ) : (
+          <span className="text-6xl select-none" role="img" aria-label="story">
+            🎬
+          </span>
+        )}
 
         {episode.episodeNumber != null && (
           <span className="absolute top-3 left-3 bg-white/70 backdrop-blur-sm text-tiki-brown text-xs font-black px-2.5 py-1 rounded-full">
