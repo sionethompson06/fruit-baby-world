@@ -2681,6 +2681,357 @@ function MediaProductionOverview({
   );
 }
 
+// ─── Saved Story Panel Asset Library ────────────────────────────────────────
+
+function bool(v: unknown): boolean {
+  return v === true;
+}
+
+function fmtDate(v: unknown): string {
+  if (typeof v !== "string" || !v.trim()) return "—";
+  try {
+    return new Date(v).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return v;
+  }
+}
+
+function PublicDisplayBadge({ panel }: { panel: Record<string, unknown> }) {
+  const publicUse = isRec(panel.publicUse) ? panel.publicUse : null;
+  const review = isRec(panel.review) ? panel.review : null;
+  const isApproved =
+    panel.status === "approved" || panel.approvalStatus === "approved";
+  const fidelityApproved = bool(review?.characterFidelityApproved);
+  const publicAllowed = bool(publicUse?.allowed);
+  const appearsOnPage = bool(publicUse?.appearsOnPublicStoryPage);
+
+  if (isApproved && fidelityApproved && publicAllowed && appearsOnPage) {
+    return (
+      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green">
+        Public Display: Yes
+      </span>
+    );
+  }
+  if (isApproved && fidelityApproved) {
+    return (
+      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80">
+        Approved Asset
+      </span>
+    );
+  }
+  if (!isApproved || !fidelityApproved) {
+    return (
+      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/40 text-tiki-brown/70">
+        Needs Review
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/10 text-tiki-brown/50">
+      Public Display: No
+    </span>
+  );
+}
+
+function SavedPanelCard({
+  panel,
+  scene,
+}: {
+  panel: Record<string, unknown>;
+  scene?: Record<string, unknown>;
+}) {
+  const sceneNum = typeof panel.sceneNumber === "number" ? panel.sceneNumber : 0;
+  const panelTitle = str(panel.panelTitle) || `Scene ${sceneNum}`;
+  const refChars = strArr(panel.referenceCharacters);
+  const asset = isRec(panel.asset) ? panel.asset : null;
+  const review = isRec(panel.review) ? panel.review : null;
+  const publicUse = isRec(panel.publicUse) ? panel.publicUse : null;
+
+  const imageUrl = asset ? str(asset.url) : "";
+  const altText = asset ? str(asset.alt) : "";
+  const mimeType = asset ? str(asset.mimeType) : "";
+  const storageProvider = asset ? str(asset.storageProvider) : "";
+  const isApproved =
+    panel.status === "approved" || panel.approvalStatus === "approved";
+
+  const sceneTitle = scene ? str(scene.title) : "";
+  const sceneSummary = scene ? str(scene.summary) : "";
+
+  return (
+    <div className="rounded-2xl border border-tiki-brown/10 overflow-hidden bg-white shadow-sm">
+      {/* Image preview */}
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={altText || `Story panel Scene ${sceneNum}`}
+          className="w-full block object-contain bg-tiki-brown/3 max-h-80"
+        />
+      ) : (
+        <div className="flex items-center justify-center h-32 bg-tiki-brown/4 border-b border-tiki-brown/8">
+          <p className="text-xs text-tiki-brown/35 font-semibold">No image URL stored</p>
+        </div>
+      )}
+
+      {/* Card info */}
+      <div className="p-5 flex flex-col gap-4">
+        {/* Header row */}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
+              Scene {sceneNum}
+            </span>
+            <span className="text-sm font-black text-tiki-brown">{panelTitle}</span>
+          </div>
+          <PublicDisplayBadge panel={panel} />
+        </div>
+
+        {/* Matching scene info */}
+        {(sceneTitle || sceneSummary) && (
+          <div className="bg-sky-blue/6 border border-sky-blue/20 rounded-xl px-4 py-3 flex flex-col gap-1">
+            {sceneTitle && (
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
+                {sceneTitle}
+              </p>
+            )}
+            {sceneSummary && (
+              <p className="text-xs text-tiki-brown/65 leading-relaxed">{sceneSummary}</p>
+            )}
+          </div>
+        )}
+
+        {/* Asset details grid */}
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {[
+            ["Storage Provider", storageProvider || "—"],
+            ["MIME Type", mimeType || "—"],
+            ["Approval Status", isApproved ? "Approved ✓" : "Not Approved"],
+            ["Fidelity Approved", bool(review?.characterFidelityApproved) ? "Yes ✓" : "No"],
+            ["Public Use Allowed", bool(publicUse?.allowed) ? "Yes ✓" : "No"],
+            ["Appears on Story Page", bool(publicUse?.appearsOnPublicStoryPage) ? "Yes ✓" : "No"],
+            ["Created", fmtDate(panel.createdAt)],
+            ["Approved", fmtDate(panel.approvedAt)],
+          ].map(([label, value]) => (
+            <div key={label} className="flex items-start gap-2">
+              <span className="text-xs text-tiki-brown/40 font-semibold whitespace-nowrap min-w-[7rem]">
+                {label}:
+              </span>
+              <span
+                className={`text-xs font-bold ${
+                  String(value).includes("✓")
+                    ? "text-tropical-green"
+                    : String(value) === "No" || String(value) === "Not Approved"
+                    ? "text-warm-coral/70"
+                    : "text-tiki-brown/70"
+                }`}
+              >
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Alt text */}
+        {altText && (
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-tiki-brown/40 font-semibold uppercase tracking-wide">
+              Alt Text
+            </span>
+            <p className="text-xs text-tiki-brown/65 leading-relaxed bg-tiki-brown/3 rounded-lg px-3 py-2">
+              {altText}
+            </p>
+          </div>
+        )}
+
+        {/* Reference characters */}
+        {refChars.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs text-tiki-brown/40 font-semibold uppercase tracking-wide">
+              Reference Characters
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {refChars.map((c) => (
+                <span
+                  key={c}
+                  className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Review notes */}
+        {review && str(review.notes) && (
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-tiki-brown/40 font-semibold uppercase tracking-wide">
+              Review Notes
+            </span>
+            <p className="text-xs text-tiki-brown/65 leading-relaxed bg-pineapple-yellow/10 border border-pineapple-yellow/25 rounded-lg px-3 py-2">
+              {str(review.notes)}
+            </p>
+          </div>
+        )}
+
+        {/* Asset URL */}
+        {imageUrl && (
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="self-start text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors underline underline-offset-2"
+          >
+            Open asset ↗
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SavedStoryPanelAssetLibrary({
+  raw,
+  scenes,
+}: {
+  raw: Record<string, unknown>;
+  scenes: Record<string, unknown>[];
+}) {
+  const media = isRec(raw.media) ? raw.media : null;
+  const spm = isRec(media?.storyPanelMode) ? media!.storyPanelMode : null;
+  const panels = Array.isArray(spm?.panels)
+    ? (spm!.panels as unknown[]).filter(isRec)
+    : [];
+  const spmStatus = spm ? str(spm.status) : "";
+
+  // Build scene lookup by sceneNumber
+  const sceneByNumber = Object.fromEntries(
+    scenes.map((s) => [typeof s.sceneNumber === "number" ? s.sceneNumber : -1, s])
+  );
+
+  // Summary counts
+  const total = panels.length;
+  const approved = panels.filter(
+    (p) => p.status === "approved" || p.approvalStatus === "approved"
+  ).length;
+  const publicAllowed = panels.filter((p) => {
+    const pu = isRec(p.publicUse) ? p.publicUse : null;
+    return bool(pu?.allowed);
+  }).length;
+  const appearsOnPage = panels.filter((p) => {
+    const pu = isRec(p.publicUse) ? p.publicUse : null;
+    return bool(pu?.appearsOnPublicStoryPage);
+  }).length;
+  const vercelBlobCount = panels.filter((p) => {
+    const asset = isRec(p.asset) ? p.asset : null;
+    return asset?.storageProvider === "vercel-blob";
+  }).length;
+
+  const sorted = [...panels].sort((a, b) => {
+    const an = typeof a.sceneNumber === "number" ? a.sceneNumber : 999;
+    const bn = typeof b.sceneNumber === "number" ? b.sceneNumber : 999;
+    return an - bn;
+  });
+
+  return (
+    <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-6">
+
+      {/* Header */}
+      <div>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className="text-lg">🖼️</span>
+          <h2 className="text-base font-black text-tiki-brown">Saved Story Panel Assets</h2>
+          <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide">
+            Read-Only
+          </span>
+        </div>
+        <p className="text-sm text-tiki-brown/65 leading-relaxed">
+          These are approved story panel media assets already attached to this episode JSON.
+          This section is read-only. Editing, replacing, deleting, and reordering will be added
+          in future phases.
+        </p>
+      </div>
+
+      {total === 0 ? (
+        /* ── Empty state ── */
+        <div className="flex flex-col items-center gap-3 py-8 text-center bg-tiki-brown/3 rounded-2xl border border-dashed border-tiki-brown/15">
+          <span className="text-4xl">🖼️</span>
+          <p className="text-sm font-bold text-tiki-brown/55">No saved story panel assets</p>
+          <p className="text-xs text-tiki-brown/40 leading-relaxed max-w-sm">
+            No saved story panel assets are attached to this episode yet. Generate, review,
+            upload, and attach approved panels from the Story Panel Prompt Builder.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* ── Summary card ── */}
+          <div className="bg-sky-blue/6 border border-sky-blue/20 rounded-2xl p-4 flex flex-col gap-3">
+            <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+              Asset Library Summary
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                ["Total Panels", String(total)],
+                ["Approved", String(approved)],
+                ["Public Use Allowed", String(publicAllowed)],
+                ["On Public Story Page", String(appearsOnPage)],
+                ["Vercel Blob", String(vercelBlobCount)],
+                ["Panel Mode Status", spmStatus || "—"],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="flex flex-col gap-0.5 bg-white rounded-xl px-3 py-2.5 border border-tiki-brown/8"
+                >
+                  <span className="text-xs text-tiki-brown/40 font-semibold leading-tight">
+                    {label}
+                  </span>
+                  <span
+                    className={`text-sm font-black ${
+                      label === "Total Panels" || label === "Vercel Blob"
+                        ? "text-tiki-brown"
+                        : value === String(total) && total > 0
+                        ? "text-tropical-green"
+                        : value === "0"
+                        ? "text-warm-coral/70"
+                        : "text-tiki-brown/70"
+                    }`}
+                  >
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Panel cards ── */}
+          <div className="flex flex-col gap-6">
+            {sorted.map((panel, i) => {
+              const sceneNum =
+                typeof panel.sceneNumber === "number" ? panel.sceneNumber : -1;
+              return (
+                <SavedPanelCard
+                  key={i}
+                  panel={panel}
+                  scene={sceneByNumber[sceneNum]}
+                />
+              );
+            })}
+          </div>
+
+          {/* ── Future actions note ── */}
+          <div className="flex items-start gap-3 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-xl px-4 py-3">
+            <span className="text-base flex-shrink-0">🔮</span>
+            <p className="text-sm text-tiki-brown/65 leading-relaxed">
+              Future phases will add replacing, removing, reordering, and editing alt text
+              for saved story panel assets.
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function EpisodeDetailPage({
@@ -2829,6 +3180,9 @@ export default async function EpisodeDetailPage({
 
         {/* ── Story Panel Asset Manifest Preview ── */}
         <StoryPanelAssetManifest scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+
+        {/* ── Saved Story Panel Asset Library ── */}
+        <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} />
 
         {/* ── Animation Prompt Builder ── */}
         <AnimationPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
