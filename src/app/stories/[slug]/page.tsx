@@ -68,6 +68,62 @@ function recArr(v: unknown): Record<string, unknown>[] {
   );
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+// ─── Approved public story panels ────────────────────────────────────────────
+
+type ApprovedPanel = {
+  sceneNumber: number;
+  panelTitle: string;
+  referenceCharacters: string[];
+  asset: {
+    url: string;
+    mimeType: string;
+    alt: string;
+  };
+};
+
+function getApprovedPublicPanels(raw: Record<string, unknown>): ApprovedPanel[] {
+  const media = isRecord(raw.media) ? raw.media : null;
+  if (!media) return [];
+  const storyPanelMode = isRecord(media.storyPanelMode) ? media.storyPanelMode : null;
+  if (!storyPanelMode) return [];
+  const panels = Array.isArray(storyPanelMode.panels) ? storyPanelMode.panels : [];
+
+  const approved: ApprovedPanel[] = [];
+  for (const p of panels) {
+    if (!isRecord(p)) continue;
+    const asset = isRecord(p.asset) ? p.asset : null;
+    if (!asset) continue;
+    const url = str(asset.url);
+    if (!url.startsWith("https://")) continue;
+    if (asset.storageProvider !== "vercel-blob") continue;
+    const review = isRecord(p.review) ? p.review : null;
+    if (!review || review.characterFidelityApproved !== true) continue;
+    const publicUse = isRecord(p.publicUse) ? p.publicUse : null;
+    if (!publicUse || publicUse.allowed !== true || publicUse.appearsOnPublicStoryPage !== true) continue;
+    if (p.status !== "approved" && p.approvalStatus !== "approved") continue;
+    const sceneNumber = typeof p.sceneNumber === "number" && p.sceneNumber >= 1 ? p.sceneNumber : 0;
+    if (sceneNumber < 1) continue;
+    approved.push({
+      sceneNumber,
+      panelTitle: str(p.panelTitle) || `Scene ${sceneNumber}`,
+      referenceCharacters: Array.isArray(p.referenceCharacters)
+        ? (p.referenceCharacters as unknown[]).filter((s): s is string => typeof s === "string")
+        : [],
+      asset: {
+        url,
+        mimeType: str(asset.mimeType) || "image/png",
+        alt: str(asset.alt) || `Story panel for Scene ${sceneNumber}`,
+      },
+    });
+  }
+
+  return approved.sort((a, b) => a.sceneNumber - b.sceneNumber);
+}
+
 // ─── Layout primitives ────────────────────────────────────────────────────────
 
 function PublicSection({
@@ -265,6 +321,71 @@ function PanelPlaceholder({
   );
 }
 
+// ─── Approved story panel card ───────────────────────────────────────────────
+
+function ApprovedPanelCard({
+  panel,
+  scene,
+  charMap,
+}: {
+  panel: ApprovedPanel;
+  scene?: Record<string, unknown>;
+  charMap: Record<string, Character>;
+}) {
+  const sceneTitle = str(scene?.title) || panel.panelTitle;
+  const sceneSummary = str(scene?.summary);
+  const chars = strArr(scene?.characters ?? panel.referenceCharacters);
+  const altText =
+    panel.asset.alt ||
+    `Story panel for Scene ${panel.sceneNumber}: ${sceneTitle}`;
+
+  return (
+    <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden flex flex-col shadow-sm bg-white">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={panel.asset.url}
+        alt={altText}
+        className="w-full rounded-t-2xl"
+        style={{ display: "block" }}
+      />
+
+      <div className="px-4 py-3 flex flex-col gap-2 bg-white">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green">
+            Panel {panel.sceneNumber}
+          </span>
+          {sceneTitle && (
+            <span className="text-xs font-bold text-tiki-brown/75">{sceneTitle}</span>
+          )}
+        </div>
+
+        {sceneSummary && (
+          <p className="text-xs text-tiki-brown/60 leading-relaxed line-clamp-3">
+            {sceneSummary}
+          </p>
+        )}
+
+        {chars.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {chars.map((id) => {
+              const c = charMap[id];
+              return c ? (
+                <CharBadge key={id} char={c} />
+              ) : (
+                <CharNameBadge key={id} name={id} />
+              );
+            })}
+          </div>
+        )}
+
+        <p className="text-xs text-tiki-brown/35 italic mt-0.5">
+          Approved story artwork
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StoryDetailPage({
@@ -299,6 +420,10 @@ export default async function StoryDetailPage({
       ? recArr(raw.sceneBreakdown)
       : recArr(raw.scenes);
   const merchTieIns = strArr(raw.merchTieIns);
+
+  // Approved public story panels
+  const approvedPanels = getApprovedPublicPanels(raw);
+  const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 
   // Gradient colors from featured characters
   const heroColorA = featuredChars[0]?.visualIdentity.primaryColors[0] ?? "#FFD84D";
@@ -381,13 +506,19 @@ export default async function StoryDetailPage({
             </span>
           </div>
 
-          {/* Story Panels — coming soon */}
-          <div className="flex flex-col items-center gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-3 py-4 text-center shadow-sm">
+          {/* Story Panels — available or coming soon */}
+          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${approvedPanels.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
             <span className="text-2xl">🖼️</span>
             <p className="text-xs font-black text-tiki-brown leading-snug">Story Panels</p>
-            <span className="text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-2 py-0.5 rounded-full">
-              Coming Soon
-            </span>
+            {approvedPanels.length > 0 ? (
+              <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
+                Available
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-2 py-0.5 rounded-full">
+                Coming Soon
+              </span>
+            )}
           </div>
 
           {/* Watch — coming soon */}
@@ -482,45 +613,80 @@ export default async function StoryDetailPage({
         </div>
 
         {/* ══════════════════════════════════════════
-            STORY PANELS — COMING SOON
+            STORY PANELS — approved or coming soon
         ══════════════════════════════════════════ */}
 
-        <div
-          id="story-panels"
-          className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-              <span>🖼️</span> Story Panels
-            </h2>
-            <span className="flex-shrink-0 text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-3 py-1 rounded-full">
-              Coming Soon
-            </span>
-          </div>
+        {approvedPanels.length > 0 ? (
+          <div
+            id="story-panels"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                <span>🖼️</span> Story Panels
+              </h2>
+              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
+                {approvedPanels.length} {approvedPanels.length === 1 ? "Panel" : "Panels"}
+              </span>
+            </div>
 
-          <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            Future approved still-image panels will appear here after artwork is generated,
-            reviewed, and approved.
-          </p>
+            <p className="text-sm text-tiki-brown/65 leading-relaxed">
+              Follow the story through approved illustrated panels.
+            </p>
 
-          {scenes.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {scenes.map((scene, i) => (
-                <PanelPlaceholder key={i} scene={scene} index={i} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {approvedPanels.map((panel) => (
+                <ApprovedPanelCard
+                  key={panel.sceneNumber}
+                  panel={panel}
+                  scene={sceneByNumber[panel.sceneNumber]}
+                  charMap={charMap}
+                />
               ))}
             </div>
-          ) : (
-            <div className="flex items-center justify-center h-28 rounded-2xl bg-tiki-brown/4 border border-tiki-brown/8">
-              <p className="text-xs text-tiki-brown/35 font-semibold">
-                No scenes available yet
-              </p>
-            </div>
-          )}
 
-          <p className="text-xs text-tiki-brown/45 leading-relaxed">
-            Some stories may later include still-image panels once official artwork is approved.
-          </p>
-        </div>
+            <p className="text-xs text-tiki-brown/45 leading-relaxed">
+              These story panels have been reviewed before appearing publicly.
+            </p>
+          </div>
+        ) : (
+          <div
+            id="story-panels"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                <span>🖼️</span> Story Panels
+              </h2>
+              <span className="flex-shrink-0 text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-3 py-1 rounded-full">
+                Coming Soon
+              </span>
+            </div>
+
+            <p className="text-sm text-tiki-brown/65 leading-relaxed">
+              Future approved still-image panels will appear here after artwork is generated,
+              reviewed, and approved.
+            </p>
+
+            {scenes.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {scenes.map((scene, i) => (
+                  <PanelPlaceholder key={i} scene={scene} index={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-28 rounded-2xl bg-tiki-brown/4 border border-tiki-brown/8">
+                <p className="text-xs text-tiki-brown/35 font-semibold">
+                  No scenes available yet
+                </p>
+              </div>
+            )}
+
+            <p className="text-xs text-tiki-brown/45 leading-relaxed">
+              Some stories may later include still-image panels once official artwork is approved.
+            </p>
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════
             WATCH ANIMATED SHORT — COMING SOON
