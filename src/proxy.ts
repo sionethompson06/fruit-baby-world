@@ -37,5 +37,6 @@ export const config = {
     "/api/generate-episode-package",
     "/api/github/save-episode",
     "/api/github/mark-episode-public-ready",
+    "/api/generate-story-panel-image",
   ],
 };
