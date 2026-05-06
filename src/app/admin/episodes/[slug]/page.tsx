@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, type SavedEpisodeDraft } from "@/lib/savedEpisodes";
 import PublishReadyAction from "./PublishReadyAction";
 import { deriveMediaPlan, type MediaPlan, type PanelPlan, type ClipPlan } from "@/lib/episodeMediaPlan";
+import PanelDraftGenerator from "./PanelDraftGenerator";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -750,13 +751,18 @@ function PanelPromptCard({
   index,
   episodeSetting,
   episodeTone,
+  episodeSlug,
+  episodeFeaturedCharacters,
 }: {
   scene: Record<string, unknown>;
   index: number;
   episodeSetting: string;
   episodeTone: string;
+  episodeSlug: string;
+  episodeFeaturedCharacters: string[];
 }) {
   const num = scene.sceneNumber ?? index + 1;
+  const sceneNum = typeof num === "number" ? num : index + 1;
   const title = str(scene.title);
   const summary = str(scene.summary);
   const characters = strArr(scene.characters);
@@ -764,6 +770,7 @@ function PanelPromptCard({
   const emotionalBeat = str(scene.emotionalBeat);
   const existingPrompt = str(scene.imagePromptDraft);
   const hasTikiInScene = characters.some((c) => c.toLowerCase().includes("tiki"));
+  const refChars = characters.length > 0 ? characters : episodeFeaturedCharacters;
 
   const promptText =
     existingPrompt ||
@@ -921,6 +928,14 @@ function PanelPromptCard({
           <span className="text-xs font-bold text-warm-coral/60 uppercase tracking-wide">No</span>
         </div>
       </div>
+
+      {/* Temporary draft generation — client-side, nothing is saved */}
+      <PanelDraftGenerator
+        episodeSlug={episodeSlug}
+        sceneNumber={sceneNum}
+        panelPrompt={promptText}
+        referenceCharacters={refChars}
+      />
     </div>
   );
 }
@@ -929,13 +944,16 @@ function StoryPanelPromptBuilder({
   scenes,
   raw,
   tikiFlagged,
+  episodeSlug,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
+  episodeSlug: string;
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
+  const featuredCharacters = strArr(raw.featuredCharacters);
 
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-6">
@@ -945,13 +963,13 @@ function StoryPanelPromptBuilder({
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg">🖼️</span>
           <h2 className="text-base font-black text-tiki-brown">Story Panel Prompt Builder</h2>
-          <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide">
-            Read-Only
+          <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple uppercase tracking-wide">
+            Admin Only
           </span>
         </div>
         <p className="text-sm text-tiki-brown/65 leading-relaxed">
-          These prompts prepare future still-image story panels. No images are generated yet.
-          Future image generation must use official character references and human approval.
+          Generate temporary story panel image drafts for review. Drafts are not saved, uploaded,
+          or attached to this episode. Human review and approval are required before any image is used.
         </p>
       </div>
 
@@ -977,13 +995,12 @@ function StoryPanelPromptBuilder({
         ))}
       </div>
 
-      {/* No generation notice */}
-      <div className="flex items-start gap-3 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-xl px-4 py-3">
-        <span className="text-base flex-shrink-0">🔮</span>
+      {/* Temporary draft warning */}
+      <div className="flex items-start gap-3 bg-warm-coral/8 border border-warm-coral/25 rounded-xl px-4 py-3">
+        <span className="text-base flex-shrink-0">⚠️</span>
         <p className="text-sm text-tiki-brown/65 leading-relaxed">
-          Image generation is not active. These are text-only prompt drafts for planning purposes.
-          No assets have been created. Official character reference images must be provided before
-          any visual generation begins.
+          <strong className="font-semibold text-tiki-brown">Generated panel drafts are temporary review images only.</strong>{" "}
+          They are not saved, uploaded, attached to this episode, committed to GitHub, or published.
         </p>
       </div>
 
@@ -1001,6 +1018,8 @@ function StoryPanelPromptBuilder({
               index={i}
               episodeSetting={setting}
               episodeTone={tone}
+              episodeSlug={episodeSlug}
+              episodeFeaturedCharacters={featuredCharacters}
             />
           ))}
         </div>
@@ -2237,7 +2256,7 @@ export default async function EpisodeDetailPage({
         <MediaProductionOverview scenes={scenes} isPublicReady={isAlreadyPublished} />
 
         {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <StoryPanelPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} />
 
         {/* ── Animation Prompt Builder ── */}
         <AnimationPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
