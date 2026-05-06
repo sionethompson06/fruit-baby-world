@@ -4,9 +4,17 @@
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
 // Safety:  Requires characterFidelityApproved === true before uploading.
 //          Does not update episode JSON. Does not publish. Does not expose tokens.
-// Phase:   6F — foundation only. Not connected to UI yet.
+// Phase:   6F/6G Fix — improved error handling and MIME detection.
 
-import { put } from "@vercel/blob";
+import {
+  put,
+  BlobAccessError,
+  BlobClientTokenExpiredError,
+  BlobFileTooLargeError,
+  BlobStoreNotFoundError,
+  BlobStoreSuspendedError,
+  BlobError,
+} from "@vercel/blob";
 import { validateSlug } from "@/lib/storyPanelImageGeneration";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -20,7 +28,8 @@ const MIME_EXTENSIONS: Record<AllowedMime, string> = {
   "image/webp": "webp",
 };
 
-const MAX_BASE64_BYTES = 8 * 1024 * 1024; // 8 MB
+// 12 MB — covers DALL-E 3 1024×1024 PNG output with headroom
+const MAX_BASE64_BYTES = 12 * 1024 * 1024;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,8 +55,15 @@ type UploadResult =
         | "validation_error"
         | "setup_required"
         | "not_approved"
-        | "upload_error";
+        | "invalid_image_payload"
+        | "image_too_large"
+        | "blob_upload_failed";
       message: string;
+      details?: {
+        storageProvider?: string;
+        mimeType?: string;
+        targetPath?: string;
+      };
     };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -60,9 +76,16 @@ function isAllowedMime(v: unknown): v is AllowedMime {
   return typeof v === "string" && (ALLOWED_MIME_TYPES as readonly string[]).includes(v);
 }
 
-function stripDataUrlPrefix(raw: string): string {
-  const match = raw.match(/^data:[a-z/]+;base64,(.+)$/);
-  return match ? match[1] : raw;
+/**
+ * Accepts either a raw base64 string or a data URL (data:image/...;base64,...).
+ * Returns both the stripped base64 and the detected MIME type (if found in prefix).
+ */
+function parseImageBase64(raw: string): { base64: string; detectedMime: string | null } {
+  const dataUrlMatch = raw.match(/^data:(image\/[a-z]+);base64,([\s\S]+)$/);
+  if (dataUrlMatch) {
+    return { base64: dataUrlMatch[2], detectedMime: dataUrlMatch[1] };
+  }
+  return { base64: raw, detectedMime: null };
 }
 
 function buildStoragePath(
@@ -129,7 +152,7 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 }
     );
   }
-  const episodeSlug = body.episodeSlug;
+  const episodeSlug = body.episodeSlug as string;
 
   // ── Validate sceneNumber ──────────────────────────────────────────────────────
   if (
@@ -146,35 +169,39 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 }
     );
   }
-  const sceneNumber = body.sceneNumber;
+  const sceneNumber = body.sceneNumber as number;
 
   // ── Validate imageBase64 ──────────────────────────────────────────────────────
   if (typeof body.imageBase64 !== "string" || body.imageBase64.trim().length === 0) {
     return Response.json(
       {
         ok: false,
-        status: "validation_error",
+        status: "invalid_image_payload",
         message: "imageBase64 is required and must be a non-empty string.",
       } satisfies UploadResult,
       { status: 400 }
     );
   }
 
-  if (Buffer.byteLength(body.imageBase64, "utf8") > MAX_BASE64_BYTES) {
+  const rawBase64Input = body.imageBase64.trim();
+
+  if (Buffer.byteLength(rawBase64Input, "utf8") > MAX_BASE64_BYTES) {
     return Response.json(
       {
         ok: false,
-        status: "validation_error",
-        message: "Image data is too large. Maximum base64 payload size is 8MB.",
+        status: "image_too_large",
+        message: "The generated image is too large to upload in this request. Maximum base64 payload size is 12 MB.",
       } satisfies UploadResult,
       { status: 400 }
     );
   }
 
-  const base64Data = stripDataUrlPrefix(body.imageBase64.trim());
+  const { base64: base64Data, detectedMime } = parseImageBase64(rawBase64Input);
 
-  // ── Validate mimeType ─────────────────────────────────────────────────────────
-  if (!isAllowedMime(body.mimeType)) {
+  // ── Resolve MIME type (from data URL prefix or request body) ─────────────────
+  const resolvedMime = detectedMime ?? body.mimeType;
+
+  if (!isAllowedMime(resolvedMime)) {
     return Response.json(
       {
         ok: false,
@@ -184,7 +211,7 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 }
     );
   }
-  const mimeType = body.mimeType;
+  const mimeType: AllowedMime = resolvedMime;
 
   // ── Validate alt text ─────────────────────────────────────────────────────────
   if (typeof body.alt !== "string" || body.alt.trim().length === 0) {
@@ -206,8 +233,7 @@ export async function POST(request: Request): Promise<Response> {
       {
         ok: false,
         status: "not_approved",
-        message:
-          "Character fidelity must be approved before uploading a story panel image.",
+        message: "Character fidelity must be approved before uploading a story panel image.",
       } satisfies UploadResult,
       { status: 422 }
     );
@@ -215,9 +241,7 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── referenceCharacters (optional) ───────────────────────────────────────────
   const referenceCharacters: string[] = Array.isArray(body.referenceCharacters)
-    ? (body.referenceCharacters as unknown[]).filter(
-        (s): s is string => typeof s === "string"
-      )
+    ? (body.referenceCharacters as unknown[]).filter((s): s is string => typeof s === "string")
     : [];
 
   // ── Decode base64 → Buffer ────────────────────────────────────────────────────
@@ -228,8 +252,8 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(
       {
         ok: false,
-        status: "validation_error",
-        message: "imageBase64 could not be decoded. Ensure it is valid base64.",
+        status: "invalid_image_payload",
+        message: "The uploaded draft image could not be read. Regenerate the temporary draft and try again.",
       } satisfies UploadResult,
       { status: 400 }
     );
@@ -239,8 +263,8 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(
       {
         ok: false,
-        status: "validation_error",
-        message: "Decoded image data is empty.",
+        status: "invalid_image_payload",
+        message: "The uploaded draft image could not be read. Regenerate the temporary draft and try again.",
       } satisfies UploadResult,
       { status: 400 }
     );
@@ -248,6 +272,10 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Upload to Vercel Blob ─────────────────────────────────────────────────────
   const storagePath = buildStoragePath(episodeSlug, sceneNumber, mimeType);
+
+  console.info(
+    `[upload-story-panel-image] Uploading ${mimeType} (~${Math.round(imageBuffer.length / 1024)}KB) to ${storagePath}`
+  );
 
   try {
     const blob = await put(storagePath, imageBuffer, {
@@ -281,13 +309,84 @@ export async function POST(request: Request): Promise<Response> {
       { status: 200 }
     );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Upload failed.";
-    console.error("[upload-story-panel-image] Vercel Blob error:", msg);
+    // Map specific Blob errors to useful messages
+    if (err instanceof BlobAccessError || err instanceof BlobClientTokenExpiredError) {
+      console.error("[upload-story-panel-image] Blob access error:", err.message);
+      return Response.json(
+        {
+          ok: false,
+          status: "blob_upload_failed",
+          message:
+            "Vercel Blob access denied. Check that BLOB_READ_WRITE_TOKEN is valid and has write access to this Blob store.",
+          details: { storageProvider: "vercel-blob", mimeType, targetPath: storagePath },
+        } satisfies UploadResult,
+        { status: 502 }
+      );
+    }
+
+    if (err instanceof BlobStoreNotFoundError) {
+      console.error("[upload-story-panel-image] Blob store not found:", err.message);
+      return Response.json(
+        {
+          ok: false,
+          status: "blob_upload_failed",
+          message:
+            "Vercel Blob store not found. The BLOB_READ_WRITE_TOKEN may point to a deleted or non-existent store. Recreate the Blob store in Vercel dashboard.",
+          details: { storageProvider: "vercel-blob", mimeType, targetPath: storagePath },
+        } satisfies UploadResult,
+        { status: 502 }
+      );
+    }
+
+    if (err instanceof BlobStoreSuspendedError) {
+      console.error("[upload-story-panel-image] Blob store suspended:", err.message);
+      return Response.json(
+        {
+          ok: false,
+          status: "blob_upload_failed",
+          message: "Vercel Blob store is suspended. Check Vercel account status.",
+          details: { storageProvider: "vercel-blob", mimeType, targetPath: storagePath },
+        } satisfies UploadResult,
+        { status: 502 }
+      );
+    }
+
+    if (err instanceof BlobFileTooLargeError) {
+      console.error("[upload-story-panel-image] Blob file too large:", err.message);
+      return Response.json(
+        {
+          ok: false,
+          status: "image_too_large",
+          message: "The generated image is too large for Vercel Blob storage. Try regenerating a smaller draft.",
+          details: { storageProvider: "vercel-blob", mimeType, targetPath: storagePath },
+        } satisfies UploadResult,
+        { status: 413 }
+      );
+    }
+
+    // Generic BlobError — surface message safely
+    if (err instanceof BlobError) {
+      console.error("[upload-story-panel-image] Blob error:", err.message);
+      return Response.json(
+        {
+          ok: false,
+          status: "blob_upload_failed",
+          message: `Vercel Blob upload failed: ${err.message}. Check Blob storage configuration and token permissions.`,
+          details: { storageProvider: "vercel-blob", mimeType, targetPath: storagePath },
+        } satisfies UploadResult,
+        { status: 502 }
+      );
+    }
+
+    // Unknown error
+    const safeMsg = err instanceof Error ? err.message : "Unknown error";
+    console.error("[upload-story-panel-image] Unexpected error:", safeMsg);
     return Response.json(
       {
         ok: false,
-        status: "upload_error",
-        message: "Media upload failed. See server logs for details.",
+        status: "blob_upload_failed",
+        message: `Vercel Blob upload failed. Check Blob storage configuration and token permissions.`,
+        details: { storageProvider: "vercel-blob", mimeType, targetPath: storagePath },
       } satisfies UploadResult,
       { status: 502 }
     );

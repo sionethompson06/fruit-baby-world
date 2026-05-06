@@ -69,6 +69,28 @@ function buildAltText(sceneNumber: number, sceneTitle?: string, sceneSummary?: s
   return parts.join(": ");
 }
 
+function uploadErrorMessage(status: string, apiMessage?: string): string {
+  if (status === "setup_required") {
+    return "Media storage is not configured yet. Add BLOB_READ_WRITE_TOKEN in Vercel environment variables.";
+  }
+  if (status === "not_approved") {
+    return "Character fidelity must be approved before uploading. Enable the approval checkbox first.";
+  }
+  if (status === "invalid_image_payload") {
+    return "The draft image could not be read. Regenerate the temporary draft and try again.";
+  }
+  if (status === "image_too_large") {
+    return "The generated image is too large to upload. Try regenerating a smaller draft.";
+  }
+  if (status === "blob_upload_failed") {
+    return apiMessage ?? "Vercel Blob upload failed. Check Blob storage configuration and token permissions.";
+  }
+  if (status === "unauthorized") {
+    return "Admin access is required. Please unlock the Story Studio again.";
+  }
+  return apiMessage ?? "Upload failed. Something went wrong — check admin settings and try again.";
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function GenerationPromptBlock({ prompt }: { prompt: string }) {
@@ -358,11 +380,11 @@ export default function PanelDraftGenerator({
         setUploadResult(data);
       } else {
         setUploadStatus("error");
-        setUploadErrorMsg(data.message ?? "Upload failed. See server logs for details.");
+        setUploadErrorMsg(uploadErrorMessage(data.status, data.message));
       }
     } catch {
       setUploadStatus("error");
-      setUploadErrorMsg("Upload failed — network error.");
+      setUploadErrorMsg("Upload failed — network error. Check your connection and try again.");
     }
   }
 
