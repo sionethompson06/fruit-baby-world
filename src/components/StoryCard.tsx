@@ -8,23 +8,7 @@ type Props = {
   thumbnailAlt?: string;
 };
 
-const statusStyles: Record<string, { label: string; className: string }> = {
-  published: {
-    label: "Published",
-    className: "bg-tropical-green/20 text-tiki-brown",
-  },
-  draft: {
-    label: "Draft",
-    className: "bg-pineapple-yellow/40 text-tiki-brown",
-  },
-  archived: {
-    label: "Archived",
-    className: "bg-tiki-brown/10 text-tiki-brown/50",
-  },
-};
-
 export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbnailAlt }: Props) {
-  const status = statusStyles[episode.status] ?? statusStyles.draft;
   const featuredChars = episode.featuredCharacters
     .map((id) => characterMap[id])
     .filter((c): c is Character => Boolean(c));
@@ -33,6 +17,9 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
     featuredChars[0]?.visualIdentity.primaryColors[0] ?? "#FFD84D";
   const gradientTo =
     featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#FFB347";
+
+  const hasIllustrated = Boolean(thumbnailUrl);
+  const hasReadAloud = episode.scenes.length > 0;
 
   return (
     <Link
@@ -57,7 +44,7 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
           />
         ) : (
           <span className="text-6xl select-none" role="img" aria-label="story">
-            🎬
+            📖
           </span>
         )}
 
@@ -67,10 +54,8 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
           </span>
         )}
 
-        <span
-          className={`absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full ${status.className}`}
-        >
-          {status.label}
+        <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-tropical-green/25 text-tiki-brown">
+          Published
         </span>
       </div>
 
@@ -110,7 +95,7 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
 
         {/* Featured character badges */}
         {featuredChars.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-auto pt-1">
+          <div className="flex flex-wrap gap-1.5">
             {featuredChars.map((char) => (
               <span
                 key={char.id}
@@ -125,21 +110,24 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
           </div>
         )}
 
-        {/* Footer stats + read link */}
-        <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto">
-          <div className="flex gap-4">
-            <span className="text-xs text-tiki-brown/45 font-semibold">
-              🎬 {episode.scenes.length}{" "}
-              {episode.scenes.length === 1 ? "scene" : "scenes"}
-            </span>
-            {episode.merchTieIns.length > 0 && (
-              <span className="text-xs text-tiki-brown/45 font-semibold">
-                🎁 {episode.merchTieIns.length} merch tie-in
-                {episode.merchTieIns.length !== 1 ? "s" : ""}
+        {/* Mode badges + CTA */}
+        <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
+            {hasIllustrated && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green">
+                🖼️ Illustrated
               </span>
             )}
+            {hasReadAloud && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/70">
+                🎙️ Read-Aloud
+              </span>
+            )}
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-warm-coral/10 text-warm-coral/70">
+              🎬 Short Soon
+            </span>
           </div>
-          <span className="text-xs font-bold text-ube-purple">
+          <span className="text-xs font-bold text-ube-purple flex-shrink-0">
             Read Story →
           </span>
         </div>

@@ -10,15 +10,39 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Fruit Baby Stories | Fruit Baby World",
   description:
-    "Follow the Fruit Baby friends through playful adventures, gentle lessons, and mischievous surprises.",
+    "Read playful educational adventures, explore illustrated story panels, and discover animated shorts coming soon.",
 };
 
 // ─── Coming Soon placeholder data ─────────────────────────────────────────────
 
 const COMING_SOON_CARDS = [
-  { slug: "the-kindness-garden", title: "The Kindness Garden", emoji: "🌱" },
-  { slug: "mangos-big-silly-day", title: "Mango's Big Silly Day", emoji: "🥭" },
-  { slug: "tikis-tiny-trick", title: "Tiki's Tiny Trick", emoji: "🌴" },
+  {
+    slug: "the-kindness-garden",
+    title: "The Kindness Garden",
+    emoji: "🌱",
+    description:
+      "Pineapple Baby discovers that small acts of kindness can bloom into something wonderful.",
+    characters: ["Pineapple Baby", "Coconut Baby"],
+    lesson: "Kindness grows when you share it.",
+  },
+  {
+    slug: "mangos-big-silly-day",
+    title: "Mango's Big Silly Day",
+    emoji: "🥭",
+    description:
+      "Mango Baby has a day full of wobbles, giggles, and friendly surprises.",
+    characters: ["Mango Baby", "Ube Baby"],
+    lesson: "It's okay to laugh at yourself.",
+  },
+  {
+    slug: "tikis-tiny-trick",
+    title: "Tiki's Tiny Trick",
+    emoji: "🌴",
+    description:
+      "Tiki Trouble tries a sneaky little trick — but things don't go quite as planned!",
+    characters: ["Tiki Trouble", "Kiwi Baby"],
+    lesson: "Honesty is always the better trick.",
+  },
 ] as const;
 
 // ─── Approved panel thumbnail extractor ───────────────────────────────────────
@@ -42,12 +66,15 @@ function buildThumbnailMap(): Record<string, ThumbnailEntry> {
 
   for (const filename of filenames) {
     try {
-      const raw = JSON.parse(fs.readFileSync(path.join(dir, filename), "utf-8")) as unknown;
+      const raw = JSON.parse(
+        fs.readFileSync(path.join(dir, filename), "utf-8")
+      ) as unknown;
       if (!isRecord(raw)) continue;
 
-      const slug = typeof raw.slug === "string" && raw.slug.length > 0
-        ? raw.slug
-        : filename.replace(/\.json$/, "");
+      const slug =
+        typeof raw.slug === "string" && raw.slug.length > 0
+          ? raw.slug
+          : filename.replace(/\.json$/, "");
 
       const media = isRecord(raw.media) ? raw.media : null;
       const spm = isRecord(media?.storyPanelMode) ? media!.storyPanelMode : null;
@@ -72,16 +99,19 @@ function buildThumbnailMap(): Record<string, ThumbnailEntry> {
             p.sceneNumber >= 1
           );
         })
-        .sort((a, b) => (a.sceneNumber as number) - (b.sceneNumber as number));
+        .sort(
+          (a, b) => (a.sceneNumber as number) - (b.sceneNumber as number)
+        );
 
       if (approved.length > 0) {
         const first = approved[0];
         const asset = first.asset as Record<string, unknown>;
         map[slug] = {
           url: asset.url as string,
-          alt: typeof asset.alt === "string" && asset.alt.trim().length > 0
-            ? asset.alt.trim()
-            : `Story panel for ${slug}`,
+          alt:
+            typeof asset.alt === "string" && asset.alt.trim().length > 0
+              ? asset.alt.trim()
+              : `Story panel for ${slug}`,
         };
       }
     } catch {
@@ -95,16 +125,16 @@ function buildThumbnailMap(): Record<string, ThumbnailEntry> {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StoriesPage() {
-  // Combine static public episodes with public-ready saved episode JSON files.
-  // Deduplicate by slug so a saved episode that's also in the static array only appears once.
   const staticEpisodes = getPublicEpisodes();
   const savedEpisodes = loadPublicSavedEpisodes();
   const staticSlugs = new Set(staticEpisodes.map((e) => e.slug));
-  const episodes = [...staticEpisodes, ...savedEpisodes.filter((e) => !staticSlugs.has(e.slug))];
+  const episodes = [
+    ...staticEpisodes,
+    ...savedEpisodes.filter((e) => !staticSlugs.has(e.slug)),
+  ];
 
   const characters = getAllCharacters();
   const characterMap = Object.fromEntries(characters.map((c) => [c.id, c]));
-
   const thumbnailMap = buildThumbnailMap();
 
   const episodeGridClass =
@@ -117,41 +147,76 @@ export default function StoriesPage() {
   return (
     <div className="flex flex-col">
 
-      {/* Hero */}
+      {/* ── Hero ── */}
       <section className="bg-gradient-to-b from-mango-orange/20 via-bg-cream to-bg-cream py-16 px-4 text-center">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-5xl mb-4" role="img" aria-label="stories">🎬</div>
-          <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown mb-4 leading-tight">
+        <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
+          <div className="text-5xl" role="img" aria-label="stories">📖</div>
+          <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown leading-tight">
             Fruit Baby Stories
           </h1>
-          <p className="text-tiki-brown/70 text-lg leading-relaxed">
-            Follow the Fruit Baby friends through playful adventures, gentle
-            lessons, and mischievous surprises.
+          <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-lg">
+            Read playful educational adventures, explore illustrated story
+            panels, and discover animated shorts coming soon.
+          </p>
+          <p className="text-xs font-semibold text-tiki-brown/45 bg-white/60 border border-tiki-brown/10 px-4 py-2 rounded-full">
+            ✅ New stories are reviewed before they appear here.
           </p>
         </div>
       </section>
 
-      {/* Pipeline info banner */}
-      <section className="bg-coconut-cream border-y border-pineapple-yellow/30 py-4 px-4 text-center">
-        <p className="text-sm font-semibold text-tiki-brown/70 max-w-xl mx-auto">
-          📖 Stories begin as episode concepts and grow into storyboards,
-          scripts, scene prompts, animation clips, and merchandise ideas.
-        </p>
+      {/* ── Ways to Enjoy Stories ── */}
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-12 pb-4">
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-black text-tiki-brown">Ways to Enjoy Stories</h2>
+          <p className="text-sm text-tiki-brown/55 mt-1">
+            Each story is built to be experienced in multiple ways.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2 text-center">
+            <span className="text-2xl">📖</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">Read Story</p>
+            <p className="text-xs text-tiki-brown/55 leading-snug">
+              Scene-by-scene with dialogue
+            </p>
+          </div>
+          <div className="bg-tropical-green/8 border border-tropical-green/20 rounded-2xl px-4 py-4 flex flex-col gap-2 text-center">
+            <span className="text-2xl">🖼️</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">Illustrated Panels</p>
+            <p className="text-xs text-tiki-brown/55 leading-snug">
+              Approved story artwork
+            </p>
+          </div>
+          <div className="bg-pineapple-yellow/15 border border-pineapple-yellow/35 rounded-2xl px-4 py-4 flex flex-col gap-2 text-center">
+            <span className="text-2xl">🎙️</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">Read-Aloud</p>
+            <p className="text-xs text-tiki-brown/55 leading-snug">
+              Prompts for shared reading
+            </p>
+          </div>
+          <div className="bg-warm-coral/6 border border-warm-coral/15 rounded-2xl px-4 py-4 flex flex-col gap-2 text-center">
+            <span className="text-2xl">🎬</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">Animated Shorts</p>
+            <p className="text-xs text-tiki-brown/55 leading-snug">
+              Coming in a future release
+            </p>
+          </div>
+        </div>
       </section>
 
-      {/* Episode gallery */}
-      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-14 flex flex-col gap-14">
+      {/* ── Episode gallery ── */}
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-12 flex flex-col gap-14">
 
-        {/* Published episodes */}
+        {/* Available stories */}
         <div>
           <div className="mb-8">
             <h2 className="text-2xl font-black text-tiki-brown mb-1">
-              🎬 Episodes
+              Available Stories
             </h2>
             <p className="text-sm text-tiki-brown/60">
               {episodes.length > 0
-                ? `${episodes.length} ${episodes.length === 1 ? "episode" : "episodes"} — more on the way`
-                : "Public Fruit Baby stories are coming soon."}
+                ? `${episodes.length} ${episodes.length === 1 ? "story" : "stories"} available now`
+                : "Stories are being reviewed in the Story Studio."}
             </p>
           </div>
 
@@ -171,12 +236,12 @@ export default function StoriesPage() {
               })}
             </div>
           ) : (
-            <div className="text-center py-12 flex flex-col items-center gap-4">
-              <p className="text-5xl">📖</p>
+            <div className="text-center py-12 flex flex-col items-center gap-4 bg-white rounded-3xl border border-tiki-brown/10 shadow-sm px-6">
+              <p className="text-5xl">🌺</p>
+              <p className="text-base font-black text-tiki-brown">Coming Soon</p>
               <p className="text-sm text-tiki-brown/55 leading-relaxed max-w-md mx-auto">
-                Saved episode drafts are currently being reviewed in the Story
-                Studio before publication. Check back for the first published
-                adventures!
+                Public Fruit Baby stories are being reviewed in the Story Studio.
+                Check back soon for illustrated adventures.
               </p>
             </div>
           )}
@@ -189,7 +254,7 @@ export default function StoriesPage() {
               🌟 Coming Soon
             </h2>
             <p className="text-sm text-tiki-brown/60">
-              These adventures are in the Story Studio pipeline.
+              More adventures are on the way.
             </p>
           </div>
 
@@ -197,32 +262,62 @@ export default function StoriesPage() {
             {COMING_SOON_CARDS.map((card) => (
               <div
                 key={card.slug}
-                className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-sm opacity-70 select-none"
+                className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-sm"
                 aria-label={`${card.title} — coming soon`}
               >
                 {/* Placeholder thumbnail */}
-                <div className="relative flex items-center justify-center h-44 flex-shrink-0 bg-gradient-to-br from-pineapple-yellow/20 to-mango-orange/10">
-                  <span className="text-6xl" role="img" aria-label={card.title}>
+                <div className="relative flex items-center justify-center h-44 flex-shrink-0 bg-gradient-to-br from-pineapple-yellow/20 via-sky-blue/10 to-tropical-green/10">
+                  <span className="text-6xl select-none" role="img" aria-label={card.title}>
                     {card.emoji}
                   </span>
-                  <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-tiki-brown/10 text-tiki-brown/50">
+                  <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-warm-coral/15 text-warm-coral/80">
                     Coming Soon
                   </span>
                 </div>
 
                 {/* Card body */}
                 <div className="p-5 flex flex-col gap-3 flex-1">
-                  <h3 className="text-lg font-black text-tiki-brown/60 leading-tight">
+                  <h3 className="text-lg font-black text-tiki-brown leading-tight">
                     {card.title}
                   </h3>
-                  <p className="text-sm text-tiki-brown/40 leading-relaxed">
-                    This story is being crafted in the Fruit Baby Story Studio.
+
+                  <p className="text-sm text-tiki-brown/65 leading-relaxed">
+                    {card.description}
                   </p>
-                  <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto">
-                    <span className="text-xs text-tiki-brown/30 font-semibold">
-                      🎬 In progress
-                    </span>
-                    <span className="text-xs font-bold text-tiki-brown/25">
+
+                  {/* Lesson teaser */}
+                  <div className="bg-pineapple-yellow/15 rounded-2xl px-3 py-2">
+                    <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-0.5">
+                      Lesson
+                    </p>
+                    <p className="text-sm text-tiki-brown/70 leading-snug">
+                      {card.lesson}
+                    </p>
+                  </div>
+
+                  {/* Character names */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {card.characters.map((name) => (
+                      <span
+                        key={name}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/8 text-ube-purple/70"
+                      >
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Coming soon mode badges */}
+                  <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45">
+                        🖼️ Panels Soon
+                      </span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45">
+                        🎬 Short Soon
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-tiki-brown/30">
                       Not yet available
                     </span>
                   </div>
@@ -239,18 +334,26 @@ export default function StoriesPage() {
         <div className="border-t-2 border-dashed border-tiki-brown/15" />
       </div>
 
-      {/* Story Studio note */}
-      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-14">
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm px-6 sm:px-10 py-10 text-center flex flex-col items-center gap-4">
-          <div className="text-4xl" role="img" aria-label="studio">🎬✨</div>
-          <h2 className="text-xl font-black text-tiki-brown">
-            Story Studio Coming Soon
-          </h2>
-          <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-md">
-            The Fruit Baby Story Studio is actively building episode packages.
-            Episodes move from concept to storyboard, script, scene prompts,
-            and a full review pipeline before they appear here publicly.
-          </p>
+      {/* Footer note */}
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-12">
+        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm px-6 sm:px-10 py-8 flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
+          <div className="text-4xl flex-shrink-0" role="img" aria-label="fruit babies">🍍🥭🥝</div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-black text-tiki-brown">
+              Meet the Characters
+            </h2>
+            <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-md">
+              Pineapple Baby, Mango Baby, Ube Baby, Coconut Baby, Kiwi Baby, and
+              the mischievous Tiki Trouble — each with their own personality,
+              feelings, and adventures.
+            </p>
+            <a
+              href="/characters"
+              className="self-start text-sm font-bold text-ube-purple hover:text-ube-purple/70 transition-colors mt-1"
+            >
+              Meet the Fruit Baby characters →
+            </a>
+          </div>
         </div>
       </section>
 
