@@ -66,6 +66,21 @@
         "Keep Ube Baby's soft purple body and bright green top.",
         "Ensure Mango Baby's warm yellow-orange body and green leaf top are accurate."
       ]
+    },
+    {
+      "sceneNumber": 2,
+      "title": "Empathy",
+      "summary": "Pineapple Baby speaks to Mango Baby and ask where she go the flower from. Mango Baby tells a story of how she was given the flower from her grandmother (tutu) who was a lei maker. Mango Baby explained that she learned how to make leis from her grandmother and has happy memories making leis with her grandmother. So to always remember her grandmother, Mango Baby wears a flower in her honor.",
+      "characters": [
+        "pineapple-baby",
+        "mango-baby"
+      ],
+      "visualNotes": "in a classroom, away from anyone else.",
+      "emotionalBeat": "serious",
+      "dialogueDraft": "",
+      "voiceoverNotes": "",
+      "imagePromptDraft": "Create a kid-friendly still storybook panel for Scene 2, Empathy. Show pineapple-baby, mango-baby in the episode setting. Preserve official Fruit Baby character designs exactly to very close to the uploaded references. Do not redesign characters.",
+      "animationPromptDraft": "Create a short kid-friendly animated cartoon clip for Scene 2, Empathy. Show pineapple-baby, mango-baby with gentle movement and warm expressions. Preserve official Fruit Baby character designs exactly to very close to the uploaded references. Do not redesign characters."
     }
   ],
   "dialogueDraft": {
@@ -105,7 +120,7 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-07T08:33:32.034Z",
+  "updatedAt": "2026-05-07T09:56:09.015Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
