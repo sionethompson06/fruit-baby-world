@@ -105,7 +105,7 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-06T05:34:14.841Z",
+  "updatedAt": "2026-05-07T08:33:32.034Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
@@ -128,9 +128,11 @@
             "mimeType": "image/png",
             "width": null,
             "height": null,
-            "alt": "Story panel for Scene 1: Words Have an Effect: In the classroom, Ube Baby tells Mango Baby that her flower looks silly, causing Mango Baby to feel sad and walk away. P",
+            "alt": "Story panel for Scene 1: Words Have an Effect: In the classroom, Ube Baby tells Mango Baby that her flower looks silly, causing Mango Baby to feel sad. Mango Baby then walks away from the group.",
             "createdAt": "2026-05-06T05:34:08.280Z",
-            "approvedAt": "2026-05-06T05:34:14.378Z"
+            "approvedAt": "2026-05-06T05:34:14.378Z",
+            "caption": "",
+            "updatedAt": "2026-05-07T08:33:32.034Z"
           },
           "review": {
             "requiresHumanReview": true,
@@ -140,7 +142,8 @@
           "publicUse": {
             "allowed": true,
             "appearsOnPublicStoryPage": true
-          }
+          },
+          "publicCaption": ""
         }
       ]
     }
