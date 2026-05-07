@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import { getAllCharacters, type Character } from "@/lib/content";
+import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
 
 // ─── Public eligibility ───────────────────────────────────────────────────────
 
@@ -610,6 +611,26 @@ export default async function StoryDetailPage({
   const approvedPanels = getApprovedPublicPanels(raw);
   const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 
+  // Build flat reader panel data for the client component
+  const readerPanels: ReaderPanel[] = approvedPanels.map((panel) => {
+    const scene = sceneByNumber[panel.sceneNumber];
+    const rawCharIds = scene
+      ? strArr(scene.characters ?? panel.referenceCharacters)
+      : panel.referenceCharacters;
+    const characterNames = rawCharIds.map((id) => {
+      const c = charMap[id];
+      return c ? c.shortName : formatCharName(id);
+    });
+    return {
+      sceneNumber: panel.sceneNumber,
+      panelTitle: str(scene?.title) || panel.panelTitle,
+      caption: panel.caption,
+      sceneSummary: str(scene?.summary),
+      characterNames,
+      asset: { url: panel.asset.url, alt: panel.asset.alt },
+    };
+  });
+
   // Gradient colors from featured characters
   const heroColorA = featuredChars[0]?.visualIdentity.primaryColors[0] ?? "#FFD84D";
   const heroColorB = featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#7AC943";
@@ -863,13 +884,13 @@ export default async function StoryDetailPage({
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
           >
             {/* Section header */}
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex flex-col gap-1">
                 <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span>🖼️</span> Illustrated Story Panels
+                  <span>🖼️</span> Picture Story Reader
                 </h2>
                 <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Read the story through approved illustrated moments.
+                  Move through the story one illustrated moment at a time.
                 </p>
               </div>
               <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
@@ -878,25 +899,8 @@ export default async function StoryDetailPage({
               </span>
             </div>
 
-            {/* Reading intro */}
-            <div className="flex items-center gap-2.5 bg-sky-blue/10 border border-sky-blue/25 rounded-2xl px-4 py-3">
-              <span className="text-lg flex-shrink-0">📖</span>
-              <p className="text-sm font-semibold text-tiki-brown/70 leading-snug">
-                Use the panels below to read the story one moment at a time.
-              </p>
-            </div>
-
-            {/* Panels — single column for sequential storybook reading */}
-            <div className="flex flex-col gap-8">
-              {approvedPanels.map((panel) => (
-                <ApprovedPanelCard
-                  key={panel.sceneNumber}
-                  panel={panel}
-                  scene={sceneByNumber[panel.sceneNumber]}
-                  charMap={charMap}
-                />
-              ))}
-            </div>
+            {/* Interactive reader */}
+            <StoryPanelReader panels={readerPanels} />
 
             {/* Talk about it */}
             {lesson && (
