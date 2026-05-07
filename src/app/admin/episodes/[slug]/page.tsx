@@ -6,6 +6,7 @@ import PublishReadyAction from "./PublishReadyAction";
 import { deriveMediaPlan, type MediaPlan, type PanelPlan, type ClipPlan } from "@/lib/episodeMediaPlan";
 import PanelDraftGenerator from "./PanelDraftGenerator";
 import AnimationRouteTestPanel, { type SceneOption } from "./AnimationRouteTestPanel";
+import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -2927,9 +2928,11 @@ function SavedPanelCard({
 function SavedStoryPanelAssetLibrary({
   raw,
   scenes,
+  episodeSlug,
 }: {
   raw: Record<string, unknown>;
   scenes: Record<string, unknown>[];
+  episodeSlug: string;
 }) {
   const media = isRec(raw.media) ? raw.media : null;
   const spm = isRec(media?.storyPanelMode) ? media!.storyPanelMode : null;
@@ -2962,9 +2965,25 @@ function SavedStoryPanelAssetLibrary({
   }).length;
 
   const sorted = [...panels].sort((a, b) => {
-    const an = typeof a.sceneNumber === "number" ? a.sceneNumber : 999;
-    const bn = typeof b.sceneNumber === "number" ? b.sceneNumber : 999;
-    return an - bn;
+    const aOrder =
+      (typeof a.displayOrder === "number" ? a.displayOrder : null) ??
+      (typeof a.sceneNumber === "number" ? a.sceneNumber : 999);
+    const bOrder =
+      (typeof b.displayOrder === "number" ? b.displayOrder : null) ??
+      (typeof b.sceneNumber === "number" ? b.sceneNumber : 999);
+    return aOrder - bOrder;
+  });
+
+  const panelSummaries: PanelSummary[] = sorted.map((p) => {
+    const asset = isRec(p.asset) ? p.asset : null;
+    const pu = isRec(p.publicUse) ? p.publicUse : null;
+    return {
+      sceneNumber: typeof p.sceneNumber === "number" ? p.sceneNumber : 0,
+      panelTitle: str(p.panelTitle) || `Scene ${p.sceneNumber ?? "?"}`,
+      imageUrl: typeof asset?.url === "string" ? asset.url : "",
+      isPublic: bool(pu?.appearsOnPublicStoryPage),
+      displayOrder: typeof p.displayOrder === "number" ? p.displayOrder : undefined,
+    };
   });
 
   return (
@@ -2980,9 +2999,9 @@ function SavedStoryPanelAssetLibrary({
           </span>
         </div>
         <p className="text-sm text-tiki-brown/65 leading-relaxed">
-          These are approved story panel media assets already attached to this episode JSON.
-          This section is read-only. Editing, replacing, deleting, and reordering will be added
-          in future phases.
+          Approved story panel media assets attached to this episode JSON.
+          Use the reorder controls below to adjust display order. Editing alt text and deleting
+          panels will be added in future phases.
         </p>
       </div>
 
@@ -3052,12 +3071,19 @@ function SavedStoryPanelAssetLibrary({
             })}
           </div>
 
+          {/* ── Reorder section ── */}
+          {total >= 2 && (
+            <ReorderPanelsSection
+              episodeSlug={episodeSlug}
+              initialPanels={panelSummaries}
+            />
+          )}
+
           {/* ── Future actions note ── */}
           <div className="flex items-start gap-3 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-xl px-4 py-3">
             <span className="text-base flex-shrink-0">🔮</span>
             <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              Future phases will add replacing, removing, reordering, and editing alt text
-              for saved story panel assets.
+              Future phases will add removing and editing alt text for saved story panel assets.
             </p>
           </div>
         </>
@@ -3216,7 +3242,7 @@ export default async function EpisodeDetailPage({
         <StoryPanelAssetManifest scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Saved Story Panel Asset Library ── */}
-        <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} />
+        <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
 
         {/* ── Animation Prompt Builder ── */}
         <AnimationPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />

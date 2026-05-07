@@ -88,6 +88,7 @@ function formatCharName(slug: string): string {
 
 type ApprovedPanel = {
   sceneNumber: number;
+  displayOrder?: number;
   panelTitle: string;
   referenceCharacters: string[];
   asset: {
@@ -119,8 +120,13 @@ function getApprovedPublicPanels(raw: Record<string, unknown>): ApprovedPanel[] 
     if (p.status !== "approved" && p.approvalStatus !== "approved") continue;
     const sceneNumber = typeof p.sceneNumber === "number" && p.sceneNumber >= 1 ? p.sceneNumber : 0;
     if (sceneNumber < 1) continue;
+    const displayOrder =
+      typeof p.displayOrder === "number" && p.displayOrder >= 1
+        ? p.displayOrder
+        : undefined;
     approved.push({
       sceneNumber,
+      displayOrder,
       panelTitle: str(p.panelTitle) || `Scene ${sceneNumber}`,
       referenceCharacters: Array.isArray(p.referenceCharacters)
         ? (p.referenceCharacters as unknown[]).filter((s): s is string => typeof s === "string")
@@ -133,7 +139,10 @@ function getApprovedPublicPanels(raw: Record<string, unknown>): ApprovedPanel[] 
     });
   }
 
-  return approved.sort((a, b) => a.sceneNumber - b.sceneNumber);
+  return approved.sort(
+    (a, b) =>
+      (a.displayOrder ?? a.sceneNumber) - (b.displayOrder ?? b.sceneNumber)
+  );
 }
 
 // ─── Layout primitives ────────────────────────────────────────────────────────
