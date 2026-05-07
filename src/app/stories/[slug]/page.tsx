@@ -91,6 +91,7 @@ type ApprovedPanel = {
   displayOrder?: number;
   panelTitle: string;
   referenceCharacters: string[];
+  caption: string;
   asset: {
     url: string;
     mimeType: string;
@@ -124,9 +125,12 @@ function getApprovedPublicPanels(raw: Record<string, unknown>): ApprovedPanel[] 
       typeof p.displayOrder === "number" && p.displayOrder >= 1
         ? p.displayOrder
         : undefined;
+    const caption =
+      str(asset.caption) || str(p.publicCaption);
     approved.push({
       sceneNumber,
       displayOrder,
+      caption,
       panelTitle: str(p.panelTitle) || `Scene ${sceneNumber}`,
       referenceCharacters: Array.isArray(p.referenceCharacters)
         ? (p.referenceCharacters as unknown[]).filter((s): s is string => typeof s === "string")
@@ -403,6 +407,13 @@ function ApprovedPanelCard({
               );
             })}
           </div>
+        )}
+
+        {/* Public caption */}
+        {panel.caption && (
+          <p className="text-xs text-tiki-brown/55 leading-relaxed italic border-t border-tiki-brown/8 pt-2">
+            {panel.caption}
+          </p>
         )}
       </div>
     </div>

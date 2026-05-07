@@ -7,6 +7,7 @@ import { deriveMediaPlan, type MediaPlan, type PanelPlan, type ClipPlan } from "
 import PanelDraftGenerator from "./PanelDraftGenerator";
 import AnimationRouteTestPanel, { type SceneOption } from "./AnimationRouteTestPanel";
 import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection";
+import EditPanelCopySection from "./EditPanelCopySection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -2737,9 +2738,11 @@ function PublicDisplayBadge({ panel }: { panel: Record<string, unknown> }) {
 function SavedPanelCard({
   panel,
   scene,
+  episodeSlug,
 }: {
   panel: Record<string, unknown>;
   scene?: Record<string, unknown>;
+  episodeSlug: string;
 }) {
   const sceneNum = typeof panel.sceneNumber === "number" ? panel.sceneNumber : 0;
   const panelTitle = str(panel.panelTitle) || `Scene ${sceneNum}`;
@@ -2750,6 +2753,9 @@ function SavedPanelCard({
 
   const imageUrl = asset ? str(asset.url) : "";
   const altText = asset ? str(asset.alt) : "";
+  const captionText = asset
+    ? str(asset.caption) || str(panel.publicCaption)
+    : str(panel.publicCaption);
   const mimeType = asset ? str(asset.mimeType) : "";
   const storageProvider = asset ? str(asset.storageProvider) : "";
   const isApproved =
@@ -2920,6 +2926,14 @@ function SavedPanelCard({
             Generate Replacement Draft for Scene {sceneNum} ↓
           </a>
         </div>
+
+        {/* ── Edit Alt Text & Caption ── */}
+        <EditPanelCopySection
+          episodeSlug={episodeSlug}
+          sceneNumber={sceneNum}
+          initialAlt={altText}
+          initialCaption={captionText}
+        />
       </div>
     </div>
   );
@@ -3066,6 +3080,7 @@ function SavedStoryPanelAssetLibrary({
                   key={i}
                   panel={panel}
                   scene={sceneByNumber[sceneNum]}
+                  episodeSlug={episodeSlug}
                 />
               );
             })}
