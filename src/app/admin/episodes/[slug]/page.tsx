@@ -8,6 +8,7 @@ import PanelDraftGenerator from "./PanelDraftGenerator";
 import AnimationRouteTestPanel, { type SceneOption } from "./AnimationRouteTestPanel";
 import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection";
 import EditPanelCopySection from "./EditPanelCopySection";
+import AddSceneSection from "./AddSceneSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -3433,6 +3434,9 @@ export default async function EpisodeDetailPage({
             </div>
           </Section>
         )}
+
+        {/* ── Add Scene to Episode ── */}
+        <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} />
 
         {/* ── F. Dialogue Draft (top-level) ── */}
         {topDialogue.length > 0 && (

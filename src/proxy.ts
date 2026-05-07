@@ -41,6 +41,7 @@ export const config = {
     "/api/github/attach-story-panel-asset",
     "/api/github/reorder-story-panel-assets",
     "/api/github/update-story-panel-copy",
+    "/api/github/add-episode-scene",
     "/api/generate-story-panel-image",
     "/api/media/upload-story-panel-image",
   ],
