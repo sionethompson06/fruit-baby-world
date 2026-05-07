@@ -251,10 +251,20 @@ function AttachSuccessPanel({
     <div className="flex flex-col gap-3 bg-ube-purple/8 border border-ube-purple/25 rounded-2xl p-4">
       <div className="flex items-center gap-2">
         <span className="text-base">📎</span>
-        <h4 className="text-sm font-black text-ube-purple">Attached to Episode JSON</h4>
+        <h4 className="text-sm font-black text-ube-purple">Panel Asset Saved to Episode JSON</h4>
         <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
           This Session
         </span>
+      </div>
+
+      {/* Replacement notice */}
+      <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/25 rounded-xl px-3 py-2.5">
+        <span className="text-sm flex-shrink-0">✅</span>
+        <p className="text-xs text-tiki-brown/70 leading-relaxed">
+          <strong className="font-bold">Panel asset reference updated for Scene {sceneNumber}.</strong>{" "}
+          After Vercel redeploys, the public story page will use the replacement image.
+          The previous Blob asset is not deleted.
+        </p>
       </div>
 
       {/* Manifest-style summary */}
@@ -329,18 +339,9 @@ function AttachSuccessPanel({
       <div className="flex items-start gap-2 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-xl px-3 py-2.5">
         <span className="text-xs flex-shrink-0">🔄</span>
         <p className="text-xs text-tiki-brown/65 leading-relaxed">
-          <strong className="font-semibold">Vercel redeploy is required</strong> before this saved media
-          manifest appears in the deployed app. After Vercel redeploys, reload this admin episode page
-          to confirm the media asset appears in the saved episode JSON.
-        </p>
-      </div>
-
-      {/* Not published note */}
-      <div className="flex items-start gap-2 bg-sky-blue/10 border border-sky-blue/25 rounded-xl px-3 py-2.5">
-        <span className="text-xs flex-shrink-0">ℹ️</span>
-        <p className="text-xs text-tiki-brown/60 leading-relaxed">
-          This does not publish the image publicly yet. Public story panel display will be added in a
-          later phase.
+          <strong className="font-semibold">Vercel redeploy required.</strong>{" "}
+          After Vercel redeploys, reload this admin page to confirm the updated asset
+          appears in the Saved Story Panel Assets section.
         </p>
       </div>
     </div>

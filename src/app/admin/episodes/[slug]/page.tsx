@@ -788,7 +788,7 @@ function PanelPromptCard({
   const fidelityNotes = getCharacterFidelityNotes(characters);
 
   return (
-    <div className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
+    <div id={`panel-prompt-scene-${sceneNum}`} className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
       {/* Panel header */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/30 text-tiki-brown/70">
@@ -2885,6 +2885,40 @@ function SavedPanelCard({
             Open asset ↗
           </a>
         )}
+
+        {/* ── Replace This Panel ── */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-tiki-brown/8">
+          <p className="text-xs font-black text-tiki-brown/55 uppercase tracking-wide">
+            Replace This Panel
+          </p>
+          <p className="text-xs text-tiki-brown/65 leading-relaxed">
+            To replace this panel, generate a new temporary draft for Scene {sceneNum} in
+            the Story Panel Prompt Builder below, review it, upload it to media storage,
+            then attach the uploaded asset to episode JSON. The existing saved panel
+            reference will be replaced for this scene number.
+          </p>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+              <span className="text-xs flex-shrink-0">🔄</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                Replacement uses the same scene number: <strong className="font-bold">Scene {sceneNum}</strong>.
+                Attaching a new asset for Scene {sceneNum} will update this saved panel reference.
+              </p>
+            </div>
+            <div className="flex items-start gap-2 bg-pineapple-yellow/12 border border-pineapple-yellow/30 rounded-xl px-3 py-2">
+              <span className="text-xs flex-shrink-0">⚠️</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                The previous Blob asset is not deleted automatically in this phase.
+              </p>
+            </div>
+          </div>
+          <a
+            href={`#panel-prompt-scene-${sceneNum}`}
+            className="self-start text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors underline underline-offset-2"
+          >
+            Generate Replacement Draft for Scene {sceneNum} ↓
+          </a>
+        </div>
       </div>
     </div>
   );
