@@ -17,14 +17,14 @@ type ReviewFormState = {
 type SubmitState =
   | { status: "idle" }
   | { status: "submitting" }
-  | { status: "success" }
+  | { status: "success"; commitMessage: string; path: string; assetTitle: string; reviewStatus: ReviewStatus; generationUseAllowed: boolean }
   | { status: "error"; message: string };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function statusBadgeClass(s: ReviewStatus): string {
   switch (s) {
-    case "approved": return "bg-tropical-green/15 text-tropical-green";
+    case "approved-for-generation": return "bg-tropical-green/15 text-tropical-green";
     case "rejected": return "bg-warm-coral/20 text-warm-coral/80";
     case "archived": return "bg-tiki-brown/12 text-tiki-brown/50";
     default: return "bg-pineapple-yellow/25 text-tiki-brown/65";
@@ -33,7 +33,7 @@ function statusBadgeClass(s: ReviewStatus): string {
 
 function statusLabel(s: ReviewStatus): string {
   switch (s) {
-    case "approved": return "Approved";
+    case "approved-for-generation": return "Approved for Generation";
     case "rejected": return "Rejected";
     case "archived": return "Archived";
     default: return "Needs Review";
@@ -45,13 +45,15 @@ function formatBytes(n: number): string {
   return `${(n / 1024).toFixed(1)} KB`;
 }
 
-// ─── Per-asset review form ────────────────────────────────────────────────────
+// ─── Per-asset review card ────────────────────────────────────────────────────
 
 function AssetReviewCard({
   asset,
+  isDraftCharacter,
   onReviewed,
 }: {
   asset: UploadedReferenceAsset;
+  isDraftCharacter: boolean;
   onReviewed: (updated: UploadedReferenceAsset) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -65,25 +67,17 @@ function AssetReviewCard({
   });
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
+  const isApprovingForGeneration = form.reviewStatus === "approved-for-generation";
+  const isSubmitting = submitState.status === "submitting";
+
   function setReviewStatus(s: ReviewStatus) {
-    const safeApprove = s !== "approved" ? false : form.approvedForGeneration;
-    const safeGen = safeApprove ? form.generationUseAllowed : false;
-    const safePub = safeApprove ? form.publicUseAllowed : false;
+    const genAllowed = s === "approved-for-generation";
     setForm((f) => ({
       ...f,
       reviewStatus: s,
-      approvedForGeneration: safeApprove,
-      generationUseAllowed: safeGen,
-      publicUseAllowed: safePub,
-    }));
-  }
-
-  function setApprovedForGeneration(v: boolean) {
-    setForm((f) => ({
-      ...f,
-      approvedForGeneration: v,
-      generationUseAllowed: v ? f.generationUseAllowed : false,
-      publicUseAllowed: v ? f.publicUseAllowed : false,
+      approvedForGeneration: genAllowed,
+      generationUseAllowed: genAllowed ? f.generationUseAllowed : false,
+      publicUseAllowed: genAllowed ? f.publicUseAllowed : false,
     }));
   }
 
@@ -104,11 +98,18 @@ function AssetReviewCard({
         }),
       });
       const data = (await res.json()) as
-        | { ok: true; asset: UploadedReferenceAsset }
+        | { ok: true; status: string; asset: UploadedReferenceAsset; commitMessage: string; path: string }
         | { ok: false; message: string };
 
       if (data.ok) {
-        setSubmitState({ status: "success" });
+        setSubmitState({
+          status: "success",
+          commitMessage: data.commitMessage,
+          path: data.path,
+          assetTitle: data.asset.title || asset.title,
+          reviewStatus: data.asset.reviewStatus,
+          generationUseAllowed: data.asset.generationUseAllowed ?? false,
+        });
         onReviewed(data.asset);
         setExpanded(false);
       } else {
@@ -117,12 +118,10 @@ function AssetReviewCard({
     } catch {
       setSubmitState({
         status: "error",
-        message: "Network error — check connection and try again.",
+        message: "Something went wrong while saving the reference review.",
       });
     }
   }
-
-  const isSubmitting = submitState.status === "submitting";
 
   return (
     <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
@@ -149,20 +148,38 @@ function AssetReviewCard({
               {asset.characterSlug} · {asset.assetType}
             </p>
             <p className="text-xs font-mono text-tiki-brown/35">
-              {formatBytes(asset.fileSizeBytes)} · {asset.mimeType.replace("image/", "")}
+              {formatBytes(asset.fileSizeBytes)} · {asset.mimeType.replace("image/", "").toUpperCase()}
             </p>
+            {asset.uploadedAt && (
+              <p className="text-xs text-tiki-brown/30">
+                Uploaded {new Date(asset.uploadedAt).toLocaleDateString()}
+              </p>
+            )}
           </div>
 
-          {/* Status + actions */}
+          {/* Status badges + actions */}
           <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-            <span
-              className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${statusBadgeClass(asset.reviewStatus)}`}
-            >
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${statusBadgeClass(asset.reviewStatus)}`}>
               {statusLabel(asset.reviewStatus)}
             </span>
             {asset.approvedForGeneration && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green uppercase tracking-wide">
                 Gen OK
+              </span>
+            )}
+            {asset.generationUseAllowed && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-blue/20 text-tiki-brown/60 uppercase tracking-wide">
+                Gen Use ✓
+              </span>
+            )}
+            {asset.isOfficialReference && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ube-purple/12 text-ube-purple uppercase tracking-wide">
+                Official Ref
+              </span>
+            )}
+            {!asset.publicUseAllowed && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/6 text-tiki-brown/40 uppercase tracking-wide">
+                Public: No
               </span>
             )}
             <a
@@ -171,19 +188,22 @@ function AssetReviewCard({
               rel="noopener noreferrer"
               className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
             >
-              View →
+              Open →
             </a>
             <button
               type="button"
-              onClick={() => setExpanded((v) => !v)}
-              className="text-xs font-bold text-tiki-brown/60 hover:text-tiki-brown transition-colors px-2 py-1 rounded-lg bg-tiki-brown/6 hover:bg-tiki-brown/10"
+              onClick={() => {
+                setExpanded((v) => !v);
+                if (submitState.status === "error") setSubmitState({ status: "idle" });
+              }}
+              className="text-xs font-bold px-2 py-1 rounded-lg bg-tiki-brown/6 text-tiki-brown/60 hover:bg-tiki-brown/10 transition-colors"
             >
               {expanded ? "Close" : "Review"}
             </button>
           </div>
         </div>
 
-        {/* Description / notes if present */}
+        {/* Description / review notes / review date */}
         {asset.description && (
           <p className="text-xs text-tiki-brown/55 leading-relaxed">{asset.description}</p>
         )}
@@ -197,13 +217,64 @@ function AssetReviewCard({
             Reviewed {new Date(asset.reviewedAt).toLocaleString()}
           </p>
         )}
+
+        {/* Success summary */}
+        {submitState.status === "success" && !expanded && (
+          <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2">
+            <span className="text-sm flex-shrink-0">✅</span>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-bold text-tiki-brown/75">Reference review saved.</p>
+              <p className="text-xs text-tiki-brown/55">
+                Status: <strong>{statusLabel(submitState.reviewStatus)}</strong> ·{" "}
+                Generation use: <strong>{submitState.generationUseAllowed ? "Allowed" : "Not allowed"}</strong>
+              </p>
+              <p className="text-xs font-mono text-tiki-brown/35">{submitState.path}</p>
+              <p className="text-xs text-tiki-brown/45 italic">
+                A future phase will connect approved reference assets to generation.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Inline review form */}
       {expanded && (
         <div className="border-t border-tiki-brown/8 bg-tiki-brown/3 p-4 flex flex-col gap-4">
 
-          {/* Submit error */}
+          {/* Fidelity guidance */}
+          <div className="flex items-start gap-2.5 bg-pineapple-yellow/12 border border-pineapple-yellow/30 rounded-xl px-3 py-2.5">
+            <span className="text-sm flex-shrink-0">⚠️</span>
+            <p className="text-xs text-tiki-brown/70 leading-relaxed">
+              Only approve assets that are creator-provided, brand-approved, and visually faithful to
+              the official Fruit Baby character. Do not approve random AI interpretations as official
+              generation references.
+            </p>
+          </div>
+
+          {/* Tiki-specific warning */}
+          {(asset.characterSlug === "tiki" || asset.characterSlug === "tiki-trouble") && (
+            <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/20 rounded-xl px-3 py-2.5">
+              <span className="text-sm flex-shrink-0">⚡</span>
+              <p className="text-xs text-tiki-brown/70 leading-relaxed">
+                <strong className="font-bold">Tiki Trouble:</strong> References must remain mischievous,
+                funny, dramatic, and kid-friendly. Do not approve references that make Tiki scary,
+                violent, horror-like, cruel, evil, or too intense.
+              </p>
+            </div>
+          )}
+
+          {/* Draft character warning */}
+          {isDraftCharacter && (
+            <div className="flex items-start gap-2.5 bg-sky-blue/12 border border-sky-blue/25 rounded-xl px-3 py-2.5">
+              <span className="text-sm flex-shrink-0">📝</span>
+              <p className="text-xs text-tiki-brown/70 leading-relaxed">
+                <strong className="font-bold">Draft character.</strong> Approving this reference asset
+                does not approve or publish the character. Character approval is handled separately.
+              </p>
+            </div>
+          )}
+
+          {/* Error state */}
           {submitState.status === "error" && (
             <div className="flex items-start gap-2 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
               <span className="text-sm flex-shrink-0">⚠️</span>
@@ -213,13 +284,13 @@ function AssetReviewCard({
             </div>
           )}
 
-          {/* Review status */}
+          {/* Review decision */}
           <div>
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
               Review Decision
             </p>
             <div className="flex flex-wrap gap-2">
-              {(["needs-review", "approved", "rejected", "archived"] as ReviewStatus[]).map((s) => (
+              {(["needs-review", "approved-for-generation", "rejected", "archived"] as ReviewStatus[]).map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -227,7 +298,7 @@ function AssetReviewCard({
                   onClick={() => setReviewStatus(s)}
                   className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50 ${
                     form.reviewStatus === s
-                      ? s === "approved"
+                      ? s === "approved-for-generation"
                         ? "bg-tropical-green text-white border-tropical-green"
                         : s === "rejected"
                         ? "bg-warm-coral/80 text-white border-warm-coral/80"
@@ -243,92 +314,68 @@ function AssetReviewCard({
             </div>
           </div>
 
-          {/* Approval checkboxes — only shown when approved */}
-          {form.reviewStatus === "approved" && (
-            <div className="flex flex-col gap-2.5">
-              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                Approval Permissions
-              </p>
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.approvedForGeneration}
-                  onChange={(e) => setApprovedForGeneration(e.target.checked)}
-                  disabled={isSubmitting}
-                  className="w-4 h-4 accent-tropical-green"
-                />
-                <span className="text-xs font-semibold text-tiki-brown/70">
-                  Approved for Generation
-                  <span className="font-normal text-tiki-brown/45 ml-1">
-                    — this asset may be used as a reference input
-                  </span>
-                </span>
-              </label>
-              <label className={`flex items-center gap-2.5 ${form.approvedForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
-                <input
-                  type="checkbox"
-                  checked={form.generationUseAllowed}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, generationUseAllowed: e.target.checked }))
-                  }
-                  disabled={isSubmitting || !form.approvedForGeneration}
-                  className="w-4 h-4 accent-tropical-green"
-                />
-                <span className="text-xs font-semibold text-tiki-brown/70">
-                  Generation Use Allowed
-                  <span className="font-normal text-tiki-brown/45 ml-1">
-                    — confirmed for reference-anchored generation
-                  </span>
-                </span>
-              </label>
-              <label className={`flex items-center gap-2.5 ${form.approvedForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
-                <input
-                  type="checkbox"
-                  checked={form.publicUseAllowed}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, publicUseAllowed: e.target.checked }))
-                  }
-                  disabled={isSubmitting || !form.approvedForGeneration}
-                  className="w-4 h-4 accent-tropical-green"
-                />
-                <span className="text-xs font-semibold text-tiki-brown/70">
-                  Public Use Allowed
-                  <span className="font-normal text-tiki-brown/45 ml-1">
-                    — may appear in public-facing contexts
-                  </span>
-                </span>
-              </label>
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isOfficialReference}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, isOfficialReference: e.target.checked }))
-                  }
-                  disabled={isSubmitting}
-                  className="w-4 h-4 accent-ube-purple"
-                />
-                <span className="text-xs font-semibold text-tiki-brown/70">
-                  Official Reference
-                  <span className="font-normal text-tiki-brown/45 ml-1">
-                    — part of the official Fruit Baby Universe canon
-                  </span>
-                </span>
-              </label>
-            </div>
-          )}
+          {/* Checkboxes — always visible, some gated on approval */}
+          <div className="flex flex-col gap-2.5">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+              Reference Permissions
+            </p>
 
-          {/* Tiki fidelity warning */}
-          {asset.characterSlug === "tiki" && (
-            <div className="flex items-start gap-2 bg-warm-coral/10 border border-warm-coral/20 rounded-xl px-3 py-2.5">
-              <span className="text-sm flex-shrink-0">⚡</span>
-              <p className="text-xs text-tiki-brown/70 leading-relaxed">
-                <strong className="font-bold">Tiki Trouble guardrail:</strong> Only approve assets
-                that show Tiki as mischievous, funny, dramatic, and kid-friendly. Do not approve
-                assets that portray Tiki as scary, violent, horror-like, or too intense.
-              </p>
-            </div>
-          )}
+            {/* Official reference — always editable */}
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.isOfficialReference}
+                onChange={(e) => setForm((f) => ({ ...f, isOfficialReference: e.target.checked }))}
+                disabled={isSubmitting}
+                className="w-4 h-4 accent-ube-purple"
+              />
+              <span className="text-xs font-semibold text-tiki-brown/70">
+                Official Reference
+                <span className="font-normal text-tiki-brown/45 ml-1">
+                  — part of official Fruit Baby Universe canon
+                </span>
+              </span>
+            </label>
+
+            {/* Generation use — only when approved-for-generation */}
+            <label className={`flex items-center gap-2.5 ${isApprovingForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
+              <input
+                type="checkbox"
+                checked={form.generationUseAllowed}
+                onChange={(e) => setForm((f) => ({ ...f, generationUseAllowed: e.target.checked }))}
+                disabled={isSubmitting || !isApprovingForGeneration}
+                className="w-4 h-4 accent-tropical-green"
+              />
+              <span className="text-xs font-semibold text-tiki-brown/70">
+                Allow Generation Use
+                <span className="font-normal text-tiki-brown/45 ml-1">
+                  — confirmed for reference-anchored generation
+                </span>
+                {!isApprovingForGeneration && (
+                  <span className="font-normal text-warm-coral/60 ml-1">
+                    — requires Approve for Generation
+                  </span>
+                )}
+              </span>
+            </label>
+
+            {/* Public use — only when approved-for-generation */}
+            <label className={`flex items-center gap-2.5 ${isApprovingForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
+              <input
+                type="checkbox"
+                checked={form.publicUseAllowed}
+                onChange={(e) => setForm((f) => ({ ...f, publicUseAllowed: e.target.checked }))}
+                disabled={isSubmitting || !isApprovingForGeneration}
+                className="w-4 h-4 accent-tropical-green"
+              />
+              <span className="text-xs font-semibold text-tiki-brown/70">
+                Allow Public Use
+                <span className="font-normal text-tiki-brown/45 ml-1">
+                  — may appear in public-facing contexts (default: off)
+                </span>
+              </span>
+            </label>
+          </div>
 
           {/* Review notes */}
           <div>
@@ -346,7 +393,7 @@ function AssetReviewCard({
             />
           </div>
 
-          {/* Submit */}
+          {/* Save / cancel */}
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -354,7 +401,7 @@ function AssetReviewCard({
               disabled={isSubmitting}
               className="text-sm font-bold px-4 py-2 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Saving…" : "Save Review"}
+              {isSubmitting ? "Saving reference review…" : "Save Reference Review"}
             </button>
             <button
               type="button"
@@ -367,9 +414,6 @@ function AssetReviewCard({
             >
               Cancel
             </button>
-            {submitState.status === "success" && (
-              <p className="text-xs font-bold text-tropical-green">Saved ✓</p>
-            )}
           </div>
         </div>
       )}
@@ -377,34 +421,31 @@ function AssetReviewCard({
   );
 }
 
-// ─── Main panel component ─────────────────────────────────────────────────────
+// ─── Main panel ───────────────────────────────────────────────────────────────
 
 export default function ReferenceAssetReviewPanel({
   initialAssets,
+  draftSlugs,
 }: {
   initialAssets: UploadedReferenceAsset[];
+  draftSlugs: Set<string>;
 }) {
   const [assets, setAssets] = useState<UploadedReferenceAsset[]>(initialAssets);
 
   function handleReviewed(updated: UploadedReferenceAsset) {
-    setAssets((prev) =>
-      prev.map((a) => (a.id === updated.id ? updated : a))
-    );
+    setAssets((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
   }
 
   const total = assets.length;
-  const approvedCount = assets.filter((a) => a.reviewStatus === "approved").length;
+  const approvedCount = assets.filter((a) => a.reviewStatus === "approved-for-generation").length;
   const needsReviewCount = assets.filter((a) => a.reviewStatus === "needs-review").length;
   const rejectedCount = assets.filter((a) => a.reviewStatus === "rejected").length;
   const archivedCount = assets.filter((a) => a.reviewStatus === "archived").length;
-  const approvedForGenCount = assets.filter((a) => a.approvedForGeneration).length;
+  const officialCount = assets.filter((a) => a.isOfficialReference).length;
+  const genUseCount = assets.filter((a) => a.generationUseAllowed).length;
 
-  // Group by character
   const byCharacter = assets.reduce<Record<string, UploadedReferenceAsset[]>>(
-    (acc, a) => {
-      (acc[a.characterSlug] ??= []).push(a);
-      return acc;
-    },
+    (acc, a) => { (acc[a.characterSlug] ??= []).push(a); return acc; },
     {}
   );
 
@@ -415,7 +456,7 @@ export default function ReferenceAssetReviewPanel({
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-lg">🗂️</span>
         <h2 className="text-base font-black text-tiki-brown">
-          Uploaded Reference Assets
+          Review Uploaded Reference Assets
         </h2>
         <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
           {total} file{total !== 1 ? "s" : ""}
@@ -427,19 +468,20 @@ export default function ReferenceAssetReviewPanel({
 
       {/* Summary stats */}
       {total > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
           {(
             [
               ["Total", total, undefined],
-              ["Approved", approvedCount, approvedCount === total && total > 0],
+              ["Approved", approvedCount, approvedCount > 0],
               ["Needs Review", needsReviewCount, needsReviewCount === 0 ? true : false],
               ["Rejected", rejectedCount, rejectedCount === 0 ? true : false],
-              ["Gen-Ready", approvedForGenCount, approvedForGenCount > 0],
+              ["Official Ref", officialCount, officialCount > 0],
+              ["Gen Use OK", genUseCount, genUseCount > 0],
             ] as [string, number, boolean | undefined][]
           ).map(([label, value, positive]) => (
             <div
               key={label}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 text-center border ${
+              className={`flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 text-center border ${
                 positive === true
                   ? "bg-tropical-green/8 border-tropical-green/20"
                   : positive === false && value > 0
@@ -447,15 +489,9 @@ export default function ReferenceAssetReviewPanel({
                   : "bg-tiki-brown/4 border-tiki-brown/8"
               }`}
             >
-              <span
-                className={`text-base font-black ${
-                  positive === true
-                    ? "text-tropical-green"
-                    : positive === false && value > 0
-                    ? "text-warm-coral/80"
-                    : "text-tiki-brown"
-                }`}
-              >
+              <span className={`text-base font-black ${
+                positive === true ? "text-tropical-green" : positive === false && value > 0 ? "text-warm-coral/80" : "text-tiki-brown"
+              }`}>
                 {value}
               </span>
               <span className="text-xs font-semibold text-tiki-brown/40 uppercase tracking-wide leading-tight">
@@ -464,6 +500,13 @@ export default function ReferenceAssetReviewPanel({
             </div>
           ))}
         </div>
+      )}
+
+      {/* Archived count note */}
+      {archivedCount > 0 && (
+        <p className="text-xs text-tiki-brown/40">
+          {archivedCount} archived asset{archivedCount !== 1 ? "s" : ""} (not shown in summary counts above).
+        </p>
       )}
 
       {/* Empty state */}
@@ -476,38 +519,48 @@ export default function ReferenceAssetReviewPanel({
       )}
 
       {/* Assets grouped by character */}
-      {Object.entries(byCharacter).map(([slug, charAssets]) => (
-        <div key={slug} className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
-              {slug}
-            </p>
-            <span className="text-xs text-tiki-brown/35">
-              {charAssets.length} asset{charAssets.length !== 1 ? "s" : ""}
-            </span>
-            {charAssets.some((a) => a.reviewStatus === "needs-review") && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 uppercase tracking-wide">
-                {charAssets.filter((a) => a.reviewStatus === "needs-review").length} pending
-              </span>
-            )}
+      {Object.entries(byCharacter).map(([slug, charAssets]) => {
+        const approvedInGroup = charAssets.filter((a) => a.reviewStatus === "approved-for-generation").length;
+        const pendingInGroup = charAssets.filter((a) => a.reviewStatus === "needs-review").length;
+        return (
+          <div key={slug} className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">{slug}</p>
+              <span className="text-xs text-tiki-brown/35">{charAssets.length} asset{charAssets.length !== 1 ? "s" : ""}</span>
+              {draftSlugs.has(slug) && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/70 uppercase tracking-wide">Draft</span>
+              )}
+              {approvedInGroup > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green uppercase tracking-wide">
+                  {approvedInGroup} approved
+                </span>
+              )}
+              {pendingInGroup > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 uppercase tracking-wide">
+                  {pendingInGroup} pending
+                </span>
+              )}
+            </div>
+            {charAssets.map((asset) => (
+              <AssetReviewCard
+                key={asset.id}
+                asset={asset}
+                isDraftCharacter={draftSlugs.has(slug)}
+                onReviewed={handleReviewed}
+              />
+            ))}
           </div>
-          {charAssets.map((asset) => (
-            <AssetReviewCard
-              key={asset.id}
-              asset={asset}
-              onReviewed={handleReviewed}
-            />
-          ))}
-        </div>
-      ))}
+        );
+      })}
 
       {/* Safety note */}
       <div className="flex items-start gap-2.5 bg-tiki-brown/4 rounded-xl px-4 py-3">
         <span className="text-sm flex-shrink-0">🔒</span>
         <p className="text-xs text-tiki-brown/55 leading-relaxed">
           Uploaded reference assets are stored in Vercel Blob and recorded in GitHub. They are not
-          used for generation until individually approved here. Approving an asset saves review
-          metadata to GitHub — no files are moved or deleted.
+          used for generation until approved here. Approving saves review metadata to GitHub — no
+          files are moved or deleted. Approving a reference asset does not approve or publish the
+          character.
         </p>
       </div>
     </div>

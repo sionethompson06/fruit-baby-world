@@ -454,7 +454,7 @@ export default function VariationBuilderClient({
     ? uploadedReferenceAssets.filter((a) => a.characterSlug === character.slug)
     : [];
   const approvedUploadedAssets = characterUploadedAssets.filter(
-    (a) => a.reviewStatus === "approved" && a.approvedForGeneration
+    (a) => a.reviewStatus === "approved-for-generation" && a.approvedForGeneration
   );
   const pendingUploadedAssets = characterUploadedAssets.filter(
     (a) => a.reviewStatus === "needs-review"

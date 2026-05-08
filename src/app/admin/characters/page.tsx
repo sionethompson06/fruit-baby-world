@@ -728,7 +728,7 @@ export default function AdminCharactersPage() {
     approvedRefCounts[c.slug] = uploadedAssets.filter(
       (a) =>
         a.characterSlug === c.slug &&
-        a.reviewStatus === "approved" &&
+        a.reviewStatus === "approved-for-generation" &&
         a.approvedForGeneration === true &&
         a.generationUseAllowed === true
     ).length;
@@ -813,7 +813,10 @@ export default function AdminCharactersPage() {
         </div>
 
         {/* ── Uploaded Reference Assets (review panel) ── */}
-        <ReferenceAssetReviewPanel initialAssets={uploadedAssets} />
+        <ReferenceAssetReviewPanel
+          initialAssets={uploadedAssets}
+          draftSlugs={new Set(draftCharacters.map((c) => c.slug))}
+        />
 
         {/* ── Character Approval ── */}
         <CharacterApprovalPanel
