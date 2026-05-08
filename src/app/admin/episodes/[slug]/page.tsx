@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, type SavedEpisodeDraft } from "@/lib/savedEpisodes";
+import { getEpisodeScenes, getActiveEpisodeScenes } from "@/lib/episodeScenes";
 import PublishReadyAction from "./PublishReadyAction";
 import { deriveMediaPlan, type MediaPlan, type PanelPlan, type ClipPlan } from "@/lib/episodeMediaPlan";
 import PanelDraftGenerator from "./PanelDraftGenerator";
@@ -3146,7 +3147,7 @@ export default async function EpisodeDetailPage({
   const sourceStoryboard = isRec(raw.sourceStoryboard) ? raw.sourceStoryboard : null;
   const reviewObj = isRec(raw.review) ? raw.review : null;
   const publishingObj = isRec(raw.publishing) ? raw.publishing : null;
-  const scenes = recArr(raw.sceneBreakdown).length > 0 ? recArr(raw.sceneBreakdown) : recArr(raw.scenes);
+  const scenes = getEpisodeScenes(raw);
   const sourceScenes = sourceStoryboard ? recArr(sourceStoryboard.scenes) : [];
   const imagePrompts = strArr(raw.imagePromptDrafts);
   const animPrompts = strArr(raw.animationPromptDrafts);
@@ -3222,7 +3223,7 @@ export default async function EpisodeDetailPage({
   })();
 
   // Scenes available for active generation (excludes archived)
-  const activeScenes = scenes.filter((s) => str(s.status) !== "archived");
+  const activeScenes = getActiveEpisodeScenes(raw);
 
   const sceneForArchiveList: SceneForArchive[] = scenes.map((s) => ({
     sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : 0,

@@ -4,6 +4,7 @@ import path from "path";
 import { getPublicEpisodes, getAllCharacters } from "@/lib/content";
 import { loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import StoryCard from "@/components/StoryCard";
+import { getApprovedPublicStoryPanels } from "@/lib/episodeScenes";
 
 export const dynamic = "force-dynamic";
 
@@ -47,10 +48,6 @@ const COMING_SOON_CARDS = [
 
 // ─── Approved panel thumbnail extractor ───────────────────────────────────────
 
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
 type ThumbnailEntry = { url: string; alt: string };
 
 function buildThumbnailMap(): Record<string, ThumbnailEntry> {
@@ -68,51 +65,18 @@ function buildThumbnailMap(): Record<string, ThumbnailEntry> {
     try {
       const raw = JSON.parse(
         fs.readFileSync(path.join(dir, filename), "utf-8")
-      ) as unknown;
-      if (!isRecord(raw)) continue;
+      ) as Record<string, unknown>;
 
       const slug =
         typeof raw.slug === "string" && raw.slug.length > 0
           ? raw.slug
           : filename.replace(/\.json$/, "");
 
-      const media = isRecord(raw.media) ? raw.media : null;
-      const spm = isRecord(media?.storyPanelMode) ? media!.storyPanelMode : null;
-      const panels = Array.isArray(spm?.panels) ? spm!.panels : [];
-
-      const approved = (panels as unknown[])
-        .filter((p): p is Record<string, unknown> => isRecord(p))
-        .filter((p) => {
-          const asset = isRecord(p.asset) ? p.asset : null;
-          const review = isRecord(p.review) ? p.review : null;
-          const publicUse = isRecord(p.publicUse) ? p.publicUse : null;
-          return (
-            asset !== null &&
-            typeof asset.url === "string" &&
-            asset.url.startsWith("https://") &&
-            asset.storageProvider === "vercel-blob" &&
-            review?.characterFidelityApproved === true &&
-            publicUse?.allowed === true &&
-            publicUse?.appearsOnPublicStoryPage === true &&
-            (p.status === "approved" || p.approvalStatus === "approved") &&
-            typeof p.sceneNumber === "number" &&
-            p.sceneNumber >= 1
-          );
-        })
-        .sort(
-          (a, b) => (a.sceneNumber as number) - (b.sceneNumber as number)
-        );
+      const approved = getApprovedPublicStoryPanels(raw);
 
       if (approved.length > 0) {
         const first = approved[0];
-        const asset = first.asset as Record<string, unknown>;
-        map[slug] = {
-          url: asset.url as string,
-          alt:
-            typeof asset.alt === "string" && asset.alt.trim().length > 0
-              ? asset.alt.trim()
-              : `Story panel for ${slug}`,
-        };
+        map[slug] = { url: first.asset.url, alt: first.asset.alt };
       }
     } catch {
       // skip unparseable files

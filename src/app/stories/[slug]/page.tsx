@@ -4,6 +4,11 @@ import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import { getAllCharacters, type Character } from "@/lib/content";
 import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
+import {
+  getActiveEpisodeScenes,
+  getApprovedPublicStoryPanels,
+  type ApprovedPanel,
+} from "@/lib/episodeScenes";
 
 // ─── Public eligibility ───────────────────────────────────────────────────────
 
@@ -61,18 +66,6 @@ function strArr(v: unknown): string[] {
   return [];
 }
 
-function recArr(v: unknown): Record<string, unknown>[] {
-  if (!Array.isArray(v)) return [];
-  return v.filter(
-    (x): x is Record<string, unknown> =>
-      typeof x === "object" && x !== null && !Array.isArray(x)
-  );
-}
-
-function isRecord(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
 function formatCharName(slug: string): string {
   const overrides: Record<string, string> = {
     tiki: "Tiki Trouble",
@@ -83,75 +76,6 @@ function formatCharName(slug: string): string {
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-}
-
-// ─── Approved public story panels ────────────────────────────────────────────
-
-type ApprovedPanel = {
-  sceneNumber: number;
-  sceneId?: string;
-  displayOrder?: number;
-  panelTitle: string;
-  referenceCharacters: string[];
-  caption: string;
-  asset: {
-    url: string;
-    mimeType: string;
-    alt: string;
-  };
-};
-
-function getApprovedPublicPanels(raw: Record<string, unknown>): ApprovedPanel[] {
-  const media = isRecord(raw.media) ? raw.media : null;
-  if (!media) return [];
-  const storyPanelMode = isRecord(media.storyPanelMode) ? media.storyPanelMode : null;
-  if (!storyPanelMode) return [];
-  const panels = Array.isArray(storyPanelMode.panels) ? storyPanelMode.panels : [];
-
-  const approved: ApprovedPanel[] = [];
-  for (const p of panels) {
-    if (!isRecord(p)) continue;
-    const asset = isRecord(p.asset) ? p.asset : null;
-    if (!asset) continue;
-    const url = str(asset.url);
-    if (!url.startsWith("https://")) continue;
-    if (asset.storageProvider !== "vercel-blob") continue;
-    const review = isRecord(p.review) ? p.review : null;
-    if (!review || review.characterFidelityApproved !== true) continue;
-    const publicUse = isRecord(p.publicUse) ? p.publicUse : null;
-    if (!publicUse || publicUse.allowed !== true || publicUse.appearsOnPublicStoryPage !== true) continue;
-    if (p.status !== "approved" && p.approvalStatus !== "approved") continue;
-    const sceneNumber = typeof p.sceneNumber === "number" && p.sceneNumber >= 1 ? p.sceneNumber : 0;
-    if (sceneNumber < 1) continue;
-    const displayOrder =
-      typeof p.displayOrder === "number" && p.displayOrder >= 1
-        ? p.displayOrder
-        : undefined;
-    const caption =
-      str(asset.caption) || str(p.publicCaption);
-    const sceneId =
-      typeof p.sceneId === "string" && p.sceneId ? p.sceneId : undefined;
-    approved.push({
-      sceneNumber,
-      sceneId,
-      displayOrder,
-      caption,
-      panelTitle: str(p.panelTitle) || `Scene ${sceneNumber}`,
-      referenceCharacters: Array.isArray(p.referenceCharacters)
-        ? (p.referenceCharacters as unknown[]).filter((s): s is string => typeof s === "string")
-        : [],
-      asset: {
-        url,
-        mimeType: str(asset.mimeType) || "image/png",
-        alt: str(asset.alt) || `Story panel for Scene ${sceneNumber}`,
-      },
-    });
-  }
-
-  return approved.sort(
-    (a, b) =>
-      (a.displayOrder ?? a.sceneNumber) - (b.displayOrder ?? b.sceneNumber)
-  );
 }
 
 // ─── Layout primitives ────────────────────────────────────────────────────────
@@ -606,36 +530,13 @@ export default async function StoryDetailPage({
     .map((id) => charMap[id])
     .filter((c): c is Character => Boolean(c));
 
-  // All scenes (including archived) — used to build the archived scene number set
-  const allScenes =
-    recArr(raw.sceneBreakdown).length > 0
-      ? recArr(raw.sceneBreakdown)
-      : recArr(raw.scenes);
-
-  // Archived scene numbers and IDs — used to exclude archived scenes and their panels
-  const archivedScenes = allScenes.filter((s) => str(s.status) === "archived");
-  const archivedSceneNumbers = new Set(
-    archivedScenes
-      .map((s) => (typeof s.sceneNumber === "number" ? s.sceneNumber : -1))
-      .filter((n) => n > 0)
-  );
-  const archivedSceneIds = new Set(
-    archivedScenes
-      .map((s) => str(s.sceneId))
-      .filter(Boolean)
-  );
-
-  // Active-only scenes for public display
-  const scenes = allScenes.filter((s) => str(s.status) !== "archived");
+  // Active-only scenes for public display (archived scenes excluded)
+  const scenes = getActiveEpisodeScenes(raw);
 
   const merchTieIns = strArr(raw.merchTieIns);
 
-  // Approved public story panels — exclude panels for archived scenes (by number or ID)
-  const approvedPanels = getApprovedPublicPanels(raw).filter(
-    (p) =>
-      !archivedSceneNumbers.has(p.sceneNumber) &&
-      !(p.sceneId && archivedSceneIds.has(p.sceneId))
-  );
+  // Approved public story panels (archived scenes excluded by shared helper)
+  const approvedPanels = getApprovedPublicStoryPanels(raw);
   const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 
   // Build flat reader panel data for the client component
