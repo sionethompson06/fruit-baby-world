@@ -152,6 +152,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778225035218-jvqd0t",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "adventure hiking travel",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778225034195-coconut-adventure-hiking-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1937200,
+      "uploadedAt": "2026-05-08T07:23:55.218Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
