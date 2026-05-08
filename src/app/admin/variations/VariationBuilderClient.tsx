@@ -453,6 +453,12 @@ export default function VariationBuilderClient({
   const characterUploadedAssets = character
     ? uploadedReferenceAssets.filter((a) => a.characterSlug === character.slug)
     : [];
+  const approvedUploadedAssets = characterUploadedAssets.filter(
+    (a) => a.reviewStatus === "approved" && a.approvedForGeneration
+  );
+  const pendingUploadedAssets = characterUploadedAssets.filter(
+    (a) => a.reviewStatus === "needs-review"
+  );
 
   const prompt = character
     ? buildVariationPrompt(character, purpose, pose, expression, scene, storyContext, intendedUse, notes)
@@ -534,13 +540,46 @@ export default function VariationBuilderClient({
           </div>
         )}
 
-        {/* Uploaded reference assets for selected character */}
-        {character && characterUploadedAssets.length > 0 && (
+        {/* Approved reference assets for selected character */}
+        {character && approvedUploadedAssets.length > 0 && (
           <div className="flex flex-col gap-2">
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Uploaded Reference Assets ({characterUploadedAssets.length}) — Awaiting Review
+              Approved Reference Assets ({approvedUploadedAssets.length})
             </p>
-            {characterUploadedAssets.map((asset) => (
+            {approvedUploadedAssets.map((asset) => (
+              <div
+                key={asset.id}
+                className="flex items-start justify-between gap-3 bg-tropical-green/8 border border-tropical-green/25 rounded-xl px-4 py-3 flex-wrap"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs font-bold text-tiki-brown/80">{asset.title}</p>
+                  <p className="text-xs text-tiki-brown/50">{asset.assetType}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                    Approved
+                  </span>
+                  <a
+                    href={asset.blobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
+                  >
+                    View →
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pending reference assets for selected character */}
+        {character && pendingUploadedAssets.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+              Uploaded Assets — Awaiting Review ({pendingUploadedAssets.length})
+            </p>
+            {pendingUploadedAssets.map((asset) => (
               <div
                 key={asset.id}
                 className="flex items-start justify-between gap-3 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-4 py-3 flex-wrap"
@@ -565,7 +604,27 @@ export default function VariationBuilderClient({
               </div>
             ))}
             <p className="text-xs text-tiki-brown/40 italic">
-              These assets are awaiting admin review. They are not approved for generation yet.
+              These assets are awaiting admin review in{" "}
+              <Link href="/admin/characters" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
+                Character Canon Library
+              </Link>
+              . They are not approved for generation yet.
+            </p>
+          </div>
+        )}
+
+        {/* Warning: no approved generation references */}
+        {character && approvedUploadedAssets.length === 0 && characterUploadedAssets.length > 0 && (
+          <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
+            <span className="text-sm flex-shrink-0">⚠️</span>
+            <p className="text-xs text-tiki-brown/70 leading-relaxed">
+              <strong className="font-bold">No approved generation references.</strong>{" "}
+              {characterUploadedAssets.length} asset{characterUploadedAssets.length !== 1 ? "s" : ""} uploaded
+              but none are approved for generation yet. Review them in{" "}
+              <Link href="/admin/characters" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
+                Character Canon Library
+              </Link>
+              .
             </p>
           </div>
         )}

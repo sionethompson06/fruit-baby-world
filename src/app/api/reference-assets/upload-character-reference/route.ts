@@ -45,6 +45,8 @@ const GITHUB_JSON_PATH =
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type ReviewStatus = "needs-review" | "approved" | "rejected" | "archived";
+
 export type UploadedReferenceAsset = {
   id: string;
   characterSlug: string;
@@ -56,11 +58,16 @@ export type UploadedReferenceAsset = {
   mimeType: string;
   fileSizeBytes: number;
   uploadedAt: string;
-  approvedForGeneration: false;
-  requiresReview: true;
-  reviewStatus: "needs-review";
-  reviewedAt: null;
-  reviewedBy: null;
+  approvedForGeneration: boolean;
+  requiresReview: boolean;
+  reviewStatus: ReviewStatus;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  generationUseAllowed?: boolean;
+  publicUseAllowed?: boolean;
+  isOfficialReference?: boolean;
+  reviewNotes?: string;
+  updatedAt?: string;
 };
 
 type UploadResult =

@@ -48,6 +48,7 @@ export const config = {
     "/api/generate-story-panel-image",
     "/api/media/upload-story-panel-image",
     "/api/reference-assets/upload-character-reference",
+    "/api/reference-assets/review-character-reference",
     "/api/github/create-character-draft",
   ],
 };

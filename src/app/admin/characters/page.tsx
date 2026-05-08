@@ -15,6 +15,7 @@ import CharacterReferenceUploadForm, {
   type CharacterOption,
 } from "./CharacterReferenceUploadForm";
 import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
+import ReferenceAssetReviewPanel from "./ReferenceAssetReviewPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -789,82 +790,8 @@ export default function AdminCharactersPage() {
           <CharacterReferenceUploadForm characters={characterOptions} />
         </div>
 
-        {/* ── Uploaded Reference Assets ── */}
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">🗂️</span>
-            <h2 className="text-base font-black text-tiki-brown">
-              Uploaded Reference Assets
-            </h2>
-            <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
-              {uploadedAssets.length} file{uploadedAssets.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-          {uploadedAssets.length === 0 ? (
-            <div className="bg-tiki-brown/4 rounded-2xl px-5 py-6 text-center">
-              <p className="text-sm text-tiki-brown/40 italic">
-                No reference assets uploaded yet. Use the upload form above to add the first one.
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {uploadedAssets.map((asset) => (
-                <div
-                  key={asset.id}
-                  className="border border-tiki-brown/10 rounded-2xl p-4 flex flex-col gap-2"
-                >
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="flex flex-col gap-0.5">
-                      <p className="text-sm font-bold text-tiki-brown leading-tight">{asset.title}</p>
-                      <p className="text-xs text-tiki-brown/50">
-                        {asset.characterSlug} · {asset.assetType}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
-                        Needs Review
-                      </span>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide">
-                        Not Approved
-                      </span>
-                    </div>
-                  </div>
-                  {asset.description && (
-                    <p className="text-xs text-tiki-brown/60 leading-relaxed">{asset.description}</p>
-                  )}
-                  <div className="flex flex-wrap gap-3 items-center">
-                    <span className="text-xs font-mono text-tiki-brown/35">
-                      {(asset.fileSizeBytes / 1024).toFixed(1)} KB · {asset.mimeType}
-                    </span>
-                    <span className="text-xs text-tiki-brown/35">
-                      {new Date(asset.uploadedAt).toLocaleDateString()}
-                    </span>
-                    <a
-                      href={asset.blobUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
-                    >
-                      View file →
-                    </a>
-                  </div>
-                  {asset.notes && (
-                    <p className="text-xs text-tiki-brown/45 italic leading-relaxed border-t border-tiki-brown/6 pt-2 mt-0.5">
-                      Notes: {asset.notes}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="flex items-start gap-2.5 bg-tiki-brown/4 rounded-xl px-4 py-3">
-            <span className="text-sm flex-shrink-0">🔒</span>
-            <p className="text-xs text-tiki-brown/55 leading-relaxed">
-              Uploaded reference assets are stored in Vercel Blob and recorded in GitHub. They are not
-              public and not used for generation until manually reviewed and approved by an admin.
-            </p>
-          </div>
-        </div>
+        {/* ── Uploaded Reference Assets (review panel) ── */}
+        <ReferenceAssetReviewPanel initialAssets={uploadedAssets} />
 
         {/* ── Reference Asset Readiness Summary ── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
