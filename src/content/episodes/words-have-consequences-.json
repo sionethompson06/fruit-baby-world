@@ -65,7 +65,11 @@
         "Maintain Pineapple Baby's bright yellow body and green leafy crown.",
         "Keep Ube Baby's soft purple body and bright green top.",
         "Ensure Mango Baby's warm yellow-orange body and green leaf top are accurate."
-      ]
+      ],
+      "status": "archived",
+      "archivedAt": "2026-05-08T02:09:12.518Z",
+      "archiveReason": "",
+      "updatedAt": "2026-05-08T02:09:12.518Z"
     },
     {
       "sceneNumber": 2,
@@ -120,7 +124,7 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-08T00:49:19.302Z",
+  "updatedAt": "2026-05-08T02:09:12.518Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
