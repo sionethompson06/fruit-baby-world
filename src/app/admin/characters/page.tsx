@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAllCharacters, type Character } from "@/lib/content";
+import { type Character } from "@/lib/content";
 import {
   checkCharacterAssets,
   buildReadinessSummary,
@@ -11,7 +11,10 @@ import {
   type AssetRecommendedUse,
 } from "@/lib/characterAssets";
 import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
-import CharacterReferenceUploadForm from "./CharacterReferenceUploadForm";
+import CharacterReferenceUploadForm, {
+  type CharacterOption,
+} from "./CharacterReferenceUploadForm";
+import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
 
 export const dynamic = "force-dynamic";
 
@@ -77,6 +80,43 @@ function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
     );
   } catch {
     return [];
+  }
+}
+
+// ─── Admin character loader (includes drafts from disk) ───────────────────────
+
+function loadAllAdminCharacters(): Character[] {
+  const dir = path.join(process.cwd(), "src/content/characters");
+  try {
+    const files = fs
+      .readdirSync(dir)
+      .filter((f) => f.endsWith(".json"))
+      .sort();
+    return files.map((f) => {
+      const raw = fs.readFileSync(path.join(dir, f), "utf8");
+      return JSON.parse(raw) as Character;
+    });
+  } catch {
+    // Fallback: read each known official file individually
+    const known = [
+      "pineapple-baby",
+      "ube-baby",
+      "mango-baby",
+      "kiwi-baby",
+      "coconut-baby",
+      "tiki",
+    ];
+    return known.flatMap((slug) => {
+      try {
+        const raw = fs.readFileSync(
+          path.join(process.cwd(), "src/content/characters", `${slug}.json`),
+          "utf8"
+        );
+        return [JSON.parse(raw) as Character];
+      } catch {
+        return [];
+      }
+    });
   }
 }
 
@@ -256,6 +296,13 @@ function CharacterReferenceCard({
                 {isTiki ? "Rival Character" : "Fruit Baby"}
               </Pill>
               <Pill className="bg-tiki-brown/8 text-tiki-brown/55">{character.status}</Pill>
+              {/* Draft character safety badges */}
+              {character.status === "draft" && (
+                <>
+                  <Pill className="bg-warm-coral/20 text-warm-coral/80">Private</Pill>
+                  <Pill className="bg-warm-coral/15 text-warm-coral/70">Not Approved</Pill>
+                </>
+              )}
               {/* Reference generation readiness badge */}
               {assetSummary.readyForReferenceAnchoredGeneration ? (
                 <Pill className="bg-tropical-green/15 text-tropical-green">
@@ -540,7 +587,7 @@ function CharacterReferenceCard({
 
         {/* Character rules */}
         <div className="grid gap-3 sm:grid-cols-2">
-          {character.characterRules.always.length > 0 && (
+          {(character.characterRules?.always?.length ?? 0) > 0 && (
             <div className="bg-tropical-green/6 border border-tropical-green/15 rounded-xl p-4">
               <p className="text-xs font-bold text-tropical-green/80 uppercase tracking-wide mb-2">
                 Always
@@ -558,7 +605,7 @@ function CharacterReferenceCard({
               </ul>
             </div>
           )}
-          {character.characterRules.never.length > 0 && (
+          {(character.characterRules?.never?.length ?? 0) > 0 && (
             <div className="bg-warm-coral/6 border border-warm-coral/15 rounded-xl p-4">
               <p className="text-xs font-bold text-warm-coral/80 uppercase tracking-wide mb-2">
                 Never
@@ -650,10 +697,19 @@ function CharacterReferenceCard({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminCharactersPage() {
-  const characters = getAllCharacters();
+  const characters = loadAllAdminCharacters();
   const assetSummaries = characters.map(checkCharacterAssets);
   const readiness = buildReadinessSummary(assetSummaries);
   const uploadedAssets = loadUploadedReferenceAssets();
+
+  const officialCharacters = characters.filter((c) => c.status === "active");
+  const draftCharacters = characters.filter((c) => c.status === "draft");
+
+  const characterOptions: CharacterOption[] = characters.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    isDraft: c.status === "draft",
+  }));
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -688,8 +744,29 @@ export default function AdminCharactersPage() {
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
             <strong className="text-tiki-brown font-bold">Admin only. </strong>
             Character editing, image generation, and variation generation are not active yet.
-            Reference guide uploads are available below. Official character canon is managed via JSON files.
+            You can create new character drafts and upload reference guide files below.
+            Official character canon is managed via JSON files.
           </p>
+        </div>
+
+        {/* ── Create New Character Draft ── */}
+        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✨</span>
+            <h2 className="text-base font-black text-tiki-brown">
+              Create New Character Draft
+            </h2>
+            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+              Admin Only
+            </span>
+          </div>
+          <p className="text-sm text-tiki-brown/60 leading-relaxed">
+            Create a new character profile draft. New characters are{" "}
+            <strong className="font-semibold">private by default</strong> and are not approved for
+            stories or generation until reference assets are uploaded and reviewed in a future phase.
+            A Vercel redeploy is required for the character to appear in admin lists.
+          </p>
+          <CreateCharacterDraftForm />
         </div>
 
         {/* ── Upload Character Reference File ── */}
@@ -709,7 +786,7 @@ export default function AdminCharactersPage() {
             <strong className="font-semibold">approvedForGeneration: false</strong> and require human
             review before use. Nothing is published automatically.
           </p>
-          <CharacterReferenceUploadForm />
+          <CharacterReferenceUploadForm characters={characterOptions} />
         </div>
 
         {/* ── Uploaded Reference Assets ── */}
@@ -916,14 +993,60 @@ export default function AdminCharactersPage() {
           ))}
         </div>
 
-        {/* Character reference cards — one per character */}
-        {characters.map((character, i) => (
-          <CharacterReferenceCard
-            key={character.id}
-            character={character}
-            assetSummary={assetSummaries[i]}
-          />
-        ))}
+        {/* Official character reference cards */}
+        {officialCharacters.length > 0 && (
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🌟</span>
+              <h2 className="text-sm font-black text-tiki-brown/70 uppercase tracking-wide">
+                Official Characters ({officialCharacters.length})
+              </h2>
+            </div>
+            {officialCharacters.map((character) => {
+              const i = characters.findIndex((c) => c.id === character.id);
+              return (
+                <CharacterReferenceCard
+                  key={character.id}
+                  character={character}
+                  assetSummary={assetSummaries[i]}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Draft character cards */}
+        {draftCharacters.length > 0 && (
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <span className="text-base">📝</span>
+              <h2 className="text-sm font-black text-tiki-brown/70 uppercase tracking-wide">
+                Draft Characters ({draftCharacters.length})
+              </h2>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                Private
+              </span>
+            </div>
+            <div className="flex items-start gap-3 bg-tiki-brown/4 border border-tiki-brown/10 rounded-xl px-4 py-3">
+              <span className="text-sm flex-shrink-0">🔒</span>
+              <p className="text-xs text-tiki-brown/55 leading-relaxed">
+                Draft characters are private and not approved for stories or generation.
+                Upload reference assets for each draft, then review and approve in a future phase.
+                Draft characters do not appear on public pages.
+              </p>
+            </div>
+            {draftCharacters.map((character) => {
+              const i = characters.findIndex((c) => c.id === character.id);
+              return (
+                <CharacterReferenceCard
+                  key={character.id}
+                  character={character}
+                  assetSummary={assetSummaries[i]}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {/* Global character fidelity rules */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">

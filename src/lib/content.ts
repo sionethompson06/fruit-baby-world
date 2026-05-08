@@ -72,6 +72,21 @@ export type Character = {
     alt: string;
   };
   merchPotential: string[];
+  // Draft / canon safety fields (new characters only)
+  canonStatus?: string;
+  publicStatus?: string;
+  approvedForStories?: boolean;
+  approvedForGeneration?: boolean;
+  requiresReferenceAssets?: boolean;
+  referenceAssetsReviewed?: boolean;
+  generationUseAllowed?: boolean;
+  publicUseAllowed?: boolean;
+  voiceGuide?: string;
+  generationRestrictions?: string[];
+  notes?: string;
+  referenceAssetIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Scene = {
@@ -171,8 +186,24 @@ export function getAllCharacters(): Character[] {
   return characters;
 }
 
+// Returns only characters safe for public display.
+// A character is public if it is active AND publicUseAllowed is not explicitly false.
+export function getPublicCharacters(): Character[] {
+  return characters.filter(
+    (c) => c.status === "active" && c.publicUseAllowed !== false
+  );
+}
+
 export function getCharacterBySlug(slug: string): Character | undefined {
   return characters.find((c) => c.slug === slug);
+}
+
+// Returns a character by slug only if it is safe for public display.
+export function getPublicCharacterBySlug(slug: string): Character | undefined {
+  const c = getCharacterBySlug(slug);
+  if (!c) return undefined;
+  if (c.status !== "active" || c.publicUseAllowed === false) return undefined;
+  return c;
 }
 
 // ─── Episode helpers ──────────────────────────────────────────────────────────

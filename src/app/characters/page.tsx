@@ -1,8 +1,8 @@
-import { getAllCharacters } from "@/lib/content";
+import { getPublicCharacters } from "@/lib/content";
 import CharacterCard from "@/components/CharacterCard";
 
 export default function CharactersPage() {
-  const allCharacters = getAllCharacters();
+  const allCharacters = getPublicCharacters();
   const fruitBabies = allCharacters.filter((c) => c.type === "fruit-baby");
   const rivals = allCharacters.filter((c) => c.type === "villain");
 

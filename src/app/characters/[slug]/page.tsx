@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
-  getAllCharacters,
-  getCharacterBySlug,
+  getPublicCharacters,
+  getPublicCharacterBySlug,
   type Character,
   type CharacterRelationship,
   type ColorSwatch,
@@ -14,7 +14,7 @@ import ProfileSheetImage from "@/components/ProfileSheetImage";
 // ─── Static params ─────────────────────────────────────────────────────────────
 
 export function generateStaticParams() {
-  return getAllCharacters().map((c) => ({ slug: c.slug }));
+  return getPublicCharacters().map((c) => ({ slug: c.slug }));
 }
 
 // ─── Metadata ──────────────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const character = getCharacterBySlug(slug);
+  const character = getPublicCharacterBySlug(slug);
   if (!character) return { title: "Not Found | Fruit Baby World" };
   return {
     title: `${character.name} | Fruit Baby World`,
@@ -94,7 +94,7 @@ export default async function CharacterPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const character = getCharacterBySlug(slug);
+  const character = getPublicCharacterBySlug(slug);
   if (!character) notFound();
 
   const char = character as Character;

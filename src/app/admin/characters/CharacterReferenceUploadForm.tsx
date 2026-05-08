@@ -2,16 +2,13 @@
 
 import { useState, useRef } from "react";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const CHARACTER_OPTIONS = [
-  { slug: "pineapple-baby", name: "Pineapple Baby" },
-  { slug: "ube-baby", name: "Ube Baby" },
-  { slug: "mango-baby", name: "Mango Baby" },
-  { slug: "kiwi-baby", name: "Kiwi Baby" },
-  { slug: "coconut-baby", name: "Coconut Baby" },
-  { slug: "tiki", name: "Tiki Trouble" },
-];
+export type CharacterOption = {
+  slug: string;
+  name: string;
+  isDraft: boolean;
+};
 
 const ASSET_TYPE_OPTIONS = [
   { value: "profile-sheet", label: "Profile Sheet" },
@@ -23,8 +20,6 @@ const ASSET_TYPE_OPTIONS = [
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp"];
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 type UploadState =
   | { status: "idle" }
@@ -45,7 +40,11 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function CharacterReferenceUploadForm() {
+export default function CharacterReferenceUploadForm({
+  characters,
+}: {
+  characters: CharacterOption[];
+}) {
   const [characterSlug, setCharacterSlug] = useState("");
   const [assetType, setAssetType] = useState("");
   const [title, setTitle] = useState("");
@@ -194,9 +193,9 @@ export default function CharacterReferenceUploadForm() {
           className="w-full text-sm text-tiki-brown bg-white border border-tiki-brown/20 rounded-xl px-3 py-2 focus:outline-none focus:border-ube-purple/50 disabled:opacity-50"
         >
           <option value="">— Select character —</option>
-          {CHARACTER_OPTIONS.map((c) => (
+          {characters.map((c) => (
             <option key={c.slug} value={c.slug}>
-              {c.name}
+              {c.name}{c.isDraft ? " (Draft)" : ""}
             </option>
           ))}
         </select>
