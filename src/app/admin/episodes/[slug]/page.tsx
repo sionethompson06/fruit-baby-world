@@ -9,6 +9,7 @@ import AnimationRouteTestPanel, { type SceneOption } from "./AnimationRouteTestP
 import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection";
 import EditPanelCopySection from "./EditPanelCopySection";
 import AddSceneSection from "./AddSceneSection";
+import EditSceneSection, { type SceneForEdit } from "./EditSceneSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -3141,6 +3142,39 @@ export default async function EpisodeDetailPage({
 
   const mediaPlan = deriveMediaPlan(raw);
 
+  const sceneForEditList: SceneForEdit[] = scenes.map((s) => {
+    const rawDialogue = s.dialogueDraft;
+    const dialogueDraft = Array.isArray(rawDialogue)
+      ? rawDialogue
+          .filter((l): l is string => typeof l === "string")
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .join("\n")
+      : str(rawDialogue);
+    return {
+      sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : 0,
+      title: str(s.title),
+      summary: str(s.summary),
+      characters: strArr(s.characters),
+      visualNotes: str(s.visualNotes),
+      emotionalBeat: str(s.emotionalBeat),
+      dialogueDraft,
+      voiceoverNotes: str(s.voiceoverNotes),
+      imagePromptDraft: str(s.imagePromptDraft),
+      animationPromptDraft: str(s.animationPromptDraft),
+    };
+  });
+
+  const savedPanelSceneNumbers: number[] = (() => {
+    const media = isRec(raw.media) ? raw.media : null;
+    const spm = media && isRec(media.storyPanelMode) ? media.storyPanelMode : null;
+    const panels = spm && Array.isArray(spm.panels) ? spm.panels : [];
+    return panels
+      .filter(isRec)
+      .map((p) => (typeof p.sceneNumber === "number" ? p.sceneNumber : -1))
+      .filter((n) => n > 0);
+  })();
+
   // Pre-compute scene options for AnimationRouteTestPanel (client component)
   const episodeSetting = str(raw.setting);
   const episodeTone = str(raw.tone);
@@ -3437,6 +3471,13 @@ export default async function EpisodeDetailPage({
 
         {/* ── Add Scene to Episode ── */}
         <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} />
+
+        {/* ── Edit Scene ── */}
+        <EditSceneSection
+          episodeSlug={normalised.slug}
+          scenes={sceneForEditList}
+          savedPanelSceneNumbers={savedPanelSceneNumbers}
+        />
 
         {/* ── F. Dialogue Draft (top-level) ── */}
         {topDialogue.length > 0 && (
