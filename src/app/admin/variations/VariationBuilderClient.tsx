@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Character } from "@/lib/content";
 import type { ClientCharacterReadiness } from "@/lib/characterAssets";
+import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
 
 // ─── Character-specific variation rules ──────────────────────────────────────
 
@@ -429,9 +430,11 @@ function CharacterReferenceCard({
 export default function VariationBuilderClient({
   characters,
   assetReadiness,
+  uploadedReferenceAssets,
 }: {
   characters: Character[];
   assetReadiness: Record<string, ClientCharacterReadiness>;
+  uploadedReferenceAssets: UploadedReferenceAsset[];
 }) {
   const [characterId, setCharacterId] = useState("");
   const [purpose, setPurpose] = useState("");
@@ -447,6 +450,9 @@ export default function VariationBuilderClient({
   const readiness: ClientCharacterReadiness | null = characterId
     ? (assetReadiness[characterId] ?? null)
     : null;
+  const characterUploadedAssets = character
+    ? uploadedReferenceAssets.filter((a) => a.characterSlug === character.slug)
+    : [];
 
   const prompt = character
     ? buildVariationPrompt(character, purpose, pose, expression, scene, storyContext, intendedUse, notes)
@@ -525,6 +531,58 @@ export default function VariationBuilderClient({
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Uploaded reference assets for selected character */}
+        {character && characterUploadedAssets.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+              Uploaded Reference Assets ({characterUploadedAssets.length}) — Awaiting Review
+            </p>
+            {characterUploadedAssets.map((asset) => (
+              <div
+                key={asset.id}
+                className="flex items-start justify-between gap-3 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-4 py-3 flex-wrap"
+              >
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs font-bold text-tiki-brown/80">{asset.title}</p>
+                  <p className="text-xs text-tiki-brown/50">{asset.assetType}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                    Needs Review
+                  </span>
+                  <a
+                    href={asset.blobUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
+                  >
+                    View →
+                  </a>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-tiki-brown/40 italic">
+              These assets are awaiting admin review. They are not approved for generation yet.
+            </p>
+          </div>
+        )}
+
+        {character && characterUploadedAssets.length === 0 && (
+          <div className="flex items-start gap-2.5 bg-tiki-brown/4 border border-tiki-brown/8 rounded-xl px-3 py-2.5">
+            <span className="text-sm flex-shrink-0">📎</span>
+            <p className="text-xs text-tiki-brown/55 leading-relaxed">
+              No uploaded reference assets for {character.name} yet. Upload reference files in{" "}
+              <Link
+                href="/admin/characters"
+                className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
+              >
+                Character Canon Library
+              </Link>
+              .
+            </p>
           </div>
         )}
 

@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllCharacters, type Character } from "@/lib/content";
@@ -8,6 +10,10 @@ import {
   type AssetStatus,
   type AssetRecommendedUse,
 } from "@/lib/characterAssets";
+import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
+import CharacterReferenceUploadForm from "./CharacterReferenceUploadForm";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Character Canon Library | Story Studio",
@@ -53,6 +59,26 @@ const GLOBAL_FIDELITY_RULES = [
   "Public users should not freely generate or remix official characters.",
   "Human review is required before generated media is published.",
 ];
+
+// ─── Reference asset loader ───────────────────────────────────────────────────
+
+function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
+  const filePath = path.join(
+    process.cwd(),
+    "src/content/reference-assets/character-reference-assets.json"
+  );
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw) as { assets?: unknown[] };
+    if (!Array.isArray(parsed.assets)) return [];
+    return parsed.assets.filter(
+      (a): a is UploadedReferenceAsset =>
+        typeof a === "object" && a !== null && "id" in a && "characterSlug" in a
+    );
+  } catch {
+    return [];
+  }
+}
 
 // ─── Layout primitives ────────────────────────────────────────────────────────
 
@@ -627,6 +653,7 @@ export default function AdminCharactersPage() {
   const characters = getAllCharacters();
   const assetSummaries = characters.map(checkCharacterAssets);
   const readiness = buildReadinessSummary(assetSummaries);
+  const uploadedAssets = loadUploadedReferenceAssets();
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -655,14 +682,111 @@ export default function AdminCharactersPage() {
 
       <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
 
-        {/* Read-only notice */}
+        {/* Admin-only / upload notice */}
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            <strong className="text-tiki-brown font-bold">Read-only. </strong>
-            Character editing, image generation, variation generation, and asset uploads are not
-            active yet. Official character canon is managed via JSON files.
+            <strong className="text-tiki-brown font-bold">Admin only. </strong>
+            Character editing, image generation, and variation generation are not active yet.
+            Reference guide uploads are available below. Official character canon is managed via JSON files.
           </p>
+        </div>
+
+        {/* ── Upload Character Reference File ── */}
+        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">⬆️</span>
+            <h2 className="text-base font-black text-tiki-brown">
+              Upload Character Reference File
+            </h2>
+            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+              Admin Only
+            </span>
+          </div>
+          <p className="text-sm text-tiki-brown/60 leading-relaxed">
+            Upload PNG, JPEG, or WebP reference guide images (character sheets, expression sheets,
+            profile art) to Vercel Blob. Uploaded assets default to{" "}
+            <strong className="font-semibold">approvedForGeneration: false</strong> and require human
+            review before use. Nothing is published automatically.
+          </p>
+          <CharacterReferenceUploadForm />
+        </div>
+
+        {/* ── Uploaded Reference Assets ── */}
+        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🗂️</span>
+            <h2 className="text-base font-black text-tiki-brown">
+              Uploaded Reference Assets
+            </h2>
+            <span className="ml-2 text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
+              {uploadedAssets.length} file{uploadedAssets.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          {uploadedAssets.length === 0 ? (
+            <div className="bg-tiki-brown/4 rounded-2xl px-5 py-6 text-center">
+              <p className="text-sm text-tiki-brown/40 italic">
+                No reference assets uploaded yet. Use the upload form above to add the first one.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {uploadedAssets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="border border-tiki-brown/10 rounded-2xl p-4 flex flex-col gap-2"
+                >
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex flex-col gap-0.5">
+                      <p className="text-sm font-bold text-tiki-brown leading-tight">{asset.title}</p>
+                      <p className="text-xs text-tiki-brown/50">
+                        {asset.characterSlug} · {asset.assetType}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                        Needs Review
+                      </span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide">
+                        Not Approved
+                      </span>
+                    </div>
+                  </div>
+                  {asset.description && (
+                    <p className="text-xs text-tiki-brown/60 leading-relaxed">{asset.description}</p>
+                  )}
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <span className="text-xs font-mono text-tiki-brown/35">
+                      {(asset.fileSizeBytes / 1024).toFixed(1)} KB · {asset.mimeType}
+                    </span>
+                    <span className="text-xs text-tiki-brown/35">
+                      {new Date(asset.uploadedAt).toLocaleDateString()}
+                    </span>
+                    <a
+                      href={asset.blobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
+                    >
+                      View file →
+                    </a>
+                  </div>
+                  {asset.notes && (
+                    <p className="text-xs text-tiki-brown/45 italic leading-relaxed border-t border-tiki-brown/6 pt-2 mt-0.5">
+                      Notes: {asset.notes}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex items-start gap-2.5 bg-tiki-brown/4 rounded-xl px-4 py-3">
+            <span className="text-sm flex-shrink-0">🔒</span>
+            <p className="text-xs text-tiki-brown/55 leading-relaxed">
+              Uploaded reference assets are stored in Vercel Blob and recorded in GitHub. They are not
+              public and not used for generation until manually reviewed and approved by an admin.
+            </p>
+          </div>
         </div>
 
         {/* ── Reference Asset Readiness Summary ── */}

@@ -47,5 +47,6 @@ export const config = {
     "/api/github/backfill-episode-scene-ids",
     "/api/generate-story-panel-image",
     "/api/media/upload-story-panel-image",
+    "/api/reference-assets/upload-character-reference",
   ],
 };

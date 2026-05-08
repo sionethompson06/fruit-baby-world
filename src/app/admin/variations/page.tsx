@@ -1,20 +1,44 @@
+import fs from "fs";
+import path from "path";
 import type { Metadata } from "next";
 import { getAllCharacters } from "@/lib/content";
 import {
   checkCharacterAssets,
   buildClientReadinessMap,
 } from "@/lib/characterAssets";
+import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
 import VariationBuilderClient from "./VariationBuilderClient";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Variation Prompt Builder | Story Studio",
 };
+
+function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
+  const filePath = path.join(
+    process.cwd(),
+    "src/content/reference-assets/character-reference-assets.json"
+  );
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(raw) as { assets?: unknown[] };
+    if (!Array.isArray(parsed.assets)) return [];
+    return parsed.assets.filter(
+      (a): a is UploadedReferenceAsset =>
+        typeof a === "object" && a !== null && "id" in a && "characterSlug" in a
+    );
+  } catch {
+    return [];
+  }
+}
 
 export default function VariationsPage() {
   const characters = getAllCharacters();
   const assetReadiness = buildClientReadinessMap(
     characters.map(checkCharacterAssets)
   );
+  const uploadedReferenceAssets = loadUploadedReferenceAssets();
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -63,7 +87,11 @@ export default function VariationsPage() {
         </div>
 
         {/* Interactive client component */}
-        <VariationBuilderClient characters={characters} assetReadiness={assetReadiness} />
+        <VariationBuilderClient
+          characters={characters}
+          assetReadiness={assetReadiness}
+          uploadedReferenceAssets={uploadedReferenceAssets}
+        />
 
       </section>
     </div>
