@@ -17,6 +17,7 @@ import CharacterReferenceUploadForm, {
 import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
 import ReferenceAssetReviewPanel from "./ReferenceAssetReviewPanel";
 import CharacterApprovalPanel from "./CharacterApprovalPanel";
+import PrimaryReferenceAssignPanel from "./PrimaryReferenceAssignPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -727,16 +728,19 @@ export default function AdminCharactersPage() {
         c.publicUseAllowed !== true),
   }));
 
-  // Compute approved generation reference count per character
+  // Compute approved generation reference count and list per character
   const approvedRefCounts: Record<string, number> = {};
+  const approvedRefsBySlug: Record<string, UploadedReferenceAsset[]> = {};
   for (const c of characters) {
-    approvedRefCounts[c.slug] = uploadedAssets.filter(
+    const approved = uploadedAssets.filter(
       (a) =>
         a.characterSlug === c.slug &&
         a.reviewStatus === "approved-for-generation" &&
         a.approvedForGeneration === true &&
         a.generationUseAllowed === true
-    ).length;
+    );
+    approvedRefCounts[c.slug] = approved.length;
+    approvedRefsBySlug[c.slug] = approved;
   }
 
   // Compute built-in reference validity per character (from file-checked asset summaries)
@@ -836,6 +840,12 @@ export default function AdminCharactersPage() {
           approvedRefCounts={approvedRefCounts}
           builtInRefValid={builtInRefValid}
           officialSlugs={OFFICIAL_CHARACTER_SLUGS}
+        />
+
+        {/* ── Primary Official Reference Assignment ── */}
+        <PrimaryReferenceAssignPanel
+          characters={characters}
+          approvedRefsBySlug={approvedRefsBySlug}
         />
 
         {/* ── Reference Asset Readiness Summary ── */}

@@ -17,16 +17,27 @@ export default function CharacterImage({ src, alt, emoji, bgColor, className = "
   const hasImage = src && !failed;
 
   if (hasImage) {
+    const isExternal = src.startsWith("https://") || src.startsWith("http://");
     return (
       <div className={`relative ${className}`} style={{ backgroundColor: bgColor }}>
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          className="object-contain"
-          onError={() => setFailed(true)}
-          sizes="(max-width: 768px) 100vw, 50vw"
-        />
+        {isExternal ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt={alt}
+            className="absolute inset-0 w-full h-full object-contain"
+            onError={() => setFailed(true)}
+          />
+        ) : (
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            className="object-contain"
+            onError={() => setFailed(true)}
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        )}
       </div>
     );
   }

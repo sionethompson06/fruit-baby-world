@@ -1,8 +1,10 @@
-import { getPublicCharacters } from "@/lib/content";
+import { getPublicCharactersFromDisk } from "@/lib/characterContent";
 import CharacterCard from "@/components/CharacterCard";
 
+export const dynamic = "force-dynamic";
+
 export default function CharactersPage() {
-  const allCharacters = getPublicCharacters();
+  const allCharacters = getPublicCharactersFromDisk();
   const fruitBabies = allCharacters.filter((c) => c.type === "fruit-baby");
   const rivals = allCharacters.filter((c) => c.type === "villain");
 

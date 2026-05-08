@@ -2,19 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import {
-  getPublicCharacters,
-  getPublicCharacterBySlug,
   type Character,
   type CharacterRelationship,
   type ColorSwatch,
 } from "@/lib/content";
+import {
+  getPublicCharactersFromDisk,
+  getPublicCharacterBySlugFromDisk,
+} from "@/lib/characterContent";
 import CharacterImage from "@/components/CharacterImage";
 import ProfileSheetImage from "@/components/ProfileSheetImage";
+
+export const dynamic = "force-dynamic";
 
 // ─── Static params ─────────────────────────────────────────────────────────────
 
 export function generateStaticParams() {
-  return getPublicCharacters().map((c) => ({ slug: c.slug }));
+  return getPublicCharactersFromDisk().map((c) => ({ slug: c.slug }));
 }
 
 // ─── Metadata ──────────────────────────────────────────────────────────────────
@@ -25,7 +29,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const character = getPublicCharacterBySlug(slug);
+  const character = getPublicCharacterBySlugFromDisk(slug);
   if (!character) return { title: "Not Found | Fruit Baby World" };
   return {
     title: `${character.name} | Fruit Baby World`,
@@ -94,7 +98,7 @@ export default async function CharacterPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const character = getPublicCharacterBySlug(slug);
+  const character = getPublicCharacterBySlugFromDisk(slug);
   if (!character) notFound();
 
   const char = character as Character;

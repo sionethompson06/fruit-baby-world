@@ -104,6 +104,14 @@ export function checkAsset(
     };
   }
 
+  if (trimmed.startsWith("https://") || trimmed.startsWith("http://")) {
+    const recommendedUse: AssetRecommendedUse =
+      field === "image.profileSheet" || field === "image.main"
+        ? "primary-reference"
+        : "display-only";
+    return { field, label, path: trimmed, exists: true, valid: true, recommendedUse };
+  }
+
   if (!isSafeCharacterPath(trimmed)) {
     return {
       field, label, path: trimmed,

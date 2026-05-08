@@ -92,6 +92,10 @@ export type Character = {
   archivedAt?: string;
   createdAt?: string;
   updatedAt?: string;
+  primaryReferenceAssetId?: string;
+  primaryReferenceAssetUrl?: string;
+  primaryReferenceAssetType?: string;
+  mainReferenceAssetId?: string;
 };
 
 export type Scene = {
