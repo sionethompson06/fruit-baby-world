@@ -84,7 +84,11 @@
       "dialogueDraft": "",
       "voiceoverNotes": "",
       "imagePromptDraft": "Create a kid-friendly still storybook panel for Scene 2, Empathy. Show pineapple-baby, mango-baby in the episode setting. Preserve official Fruit Baby character designs exactly to very close to the uploaded references. Do not redesign characters.",
-      "animationPromptDraft": "Create a short kid-friendly animated cartoon clip for Scene 2, Empathy. Show pineapple-baby, mango-baby with gentle movement and warm expressions. Preserve official Fruit Baby character designs exactly to very close to the uploaded references. Do not redesign characters."
+      "animationPromptDraft": "Create a short kid-friendly animated cartoon clip for Scene 2, Empathy. Show pineapple-baby, mango-baby with gentle movement and warm expressions. Preserve official Fruit Baby character designs exactly to very close to the uploaded references. Do not redesign characters.",
+      "status": "archived",
+      "archivedAt": "2026-05-08T02:09:25.511Z",
+      "archiveReason": "",
+      "updatedAt": "2026-05-08T02:09:25.511Z"
     }
   ],
   "dialogueDraft": {
@@ -124,7 +128,7 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-08T02:09:12.518Z",
+  "updatedAt": "2026-05-08T02:09:25.511Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
