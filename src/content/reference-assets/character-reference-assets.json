@@ -55,13 +55,13 @@
       "uploadedAt": "2026-05-08T07:19:54.715Z",
       "approvedForGeneration": true,
       "requiresReview": false,
-      "reviewStatus": "approved",
-      "reviewedAt": "2026-05-08T08:04:53.398Z",
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-08T20:39:20.619Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": true,
       "isOfficialReference": true,
-      "updatedAt": "2026-05-08T08:04:53.398Z"
+      "updatedAt": "2026-05-08T20:39:20.619Z"
     },
     {
       "id": "ref-1778224836430-6y3ee0",
