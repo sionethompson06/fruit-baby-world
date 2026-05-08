@@ -16,6 +16,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224774487-wft736",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "Waiving",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224773539-coconut-waving-happy-fun-joy-playful-hello-bye-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1956924,
+      "uploadedAt": "2026-05-08T07:19:34.487Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
