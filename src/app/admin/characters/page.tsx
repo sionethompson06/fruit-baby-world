@@ -834,18 +834,18 @@ export default function AdminCharactersPage() {
           draftSlugs={new Set(draftCharacters.map((c) => c.slug))}
         />
 
+        {/* ── Primary Official Reference Assignment ── */}
+        <PrimaryReferenceAssignPanel
+          characters={characters}
+          approvedRefsBySlug={approvedRefsBySlug}
+        />
+
         {/* ── Character Approval ── */}
         <CharacterApprovalPanel
           characters={characters}
           approvedRefCounts={approvedRefCounts}
           builtInRefValid={builtInRefValid}
           officialSlugs={OFFICIAL_CHARACTER_SLUGS}
-        />
-
-        {/* ── Primary Official Reference Assignment ── */}
-        <PrimaryReferenceAssignPanel
-          characters={characters}
-          approvedRefsBySlug={approvedRefsBySlug}
         />
 
         {/* ── Reference Asset Readiness Summary ── */}
