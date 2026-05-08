@@ -1,6 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllCharacters, type Character } from "@/lib/content";
+import {
+  checkCharacterAssets,
+  buildReadinessSummary,
+  type CharacterAssetSummary,
+  type AssetStatus,
+  type AssetRecommendedUse,
+} from "@/lib/characterAssets";
 
 export const metadata: Metadata = {
   title: "Character Canon Library | Story Studio",
@@ -92,13 +99,114 @@ function StatusRow({
   );
 }
 
+// ─── Asset status badge ───────────────────────────────────────────────────────
+
+function recommendedUseLabel(use: AssetRecommendedUse): string {
+  switch (use) {
+    case "primary-reference": return "Primary Reference";
+    case "fallback-reference": return "Fallback Reference";
+    case "display-only": return "Display Only";
+    case "missing": return "Missing";
+    case "invalid": return "Invalid";
+    case "do-not-use": return "Do Not Use";
+  }
+}
+
+function recommendedUseBadgeClass(use: AssetRecommendedUse): string {
+  switch (use) {
+    case "primary-reference": return "bg-tropical-green/15 text-tropical-green";
+    case "fallback-reference": return "bg-sky-blue/20 text-tiki-brown/70";
+    case "display-only": return "bg-tiki-brown/8 text-tiki-brown/55";
+    case "missing": return "bg-tiki-brown/8 text-tiki-brown/40";
+    case "invalid":
+    case "do-not-use": return "bg-warm-coral/20 text-warm-coral/80";
+  }
+}
+
+function AssetBadge({ use }: { use: AssetRecommendedUse }) {
+  return (
+    <span
+      className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${recommendedUseBadgeClass(use)}`}
+    >
+      {recommendedUseLabel(use)}
+    </span>
+  );
+}
+
+// ─── Asset integrity table ────────────────────────────────────────────────────
+
+function AssetIntegrityTable({ assets }: { assets: AssetStatus[] }) {
+  return (
+    <div className="flex flex-col gap-2">
+      {assets.map((asset) => (
+        <div
+          key={asset.field}
+          className={`border rounded-xl p-3 flex flex-col gap-1.5 ${
+            asset.valid
+              ? "border-tropical-green/20 bg-tropical-green/4"
+              : asset.exists
+              ? "border-warm-coral/25 bg-warm-coral/5"
+              : "border-tiki-brown/10 bg-tiki-brown/3"
+          }`}
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-bold text-tiki-brown/70">{asset.label}</span>
+            <span className="text-xs font-mono text-tiki-brown/35 bg-white/60 px-1.5 py-0.5 rounded">
+              {asset.field}
+            </span>
+            <div className="ml-auto flex items-center gap-1.5">
+              {asset.valid ? (
+                <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
+                  Valid
+                </span>
+              ) : asset.exists ? (
+                <span className="text-xs font-bold text-warm-coral/80 bg-warm-coral/15 px-2 py-0.5 rounded-full">
+                  Invalid
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-tiki-brown/40 bg-tiki-brown/8 px-2 py-0.5 rounded-full">
+                  {asset.path ? "Missing" : "Not Configured"}
+                </span>
+              )}
+              <AssetBadge use={asset.recommendedUse} />
+            </div>
+          </div>
+
+          {asset.path ? (
+            <p className="text-xs font-mono text-tiki-brown/45 break-all">{asset.path}</p>
+          ) : (
+            <p className="text-xs text-tiki-brown/30 italic">No path configured</p>
+          )}
+
+          {asset.sizeBytes !== undefined && (
+            <p className="text-xs text-tiki-brown/40">
+              {asset.sizeBytes.toLocaleString()} bytes
+            </p>
+          )}
+
+          {asset.issue && (
+            <p className="text-xs text-warm-coral/80 font-semibold">{asset.issue}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Character reference card ─────────────────────────────────────────────────
 
-function CharacterReferenceCard({ character }: { character: Character }) {
-  const hasMain = Boolean(character.image.main);
-  const hasProfileSheet = Boolean(character.image.profileSheet);
+function CharacterReferenceCard({
+  character,
+  assetSummary,
+}: {
+  character: Character;
+  assetSummary: CharacterAssetSummary;
+}) {
   const isTiki = character.type === "villain";
   const fidelityNotes = CHARACTER_FIDELITY[character.id] ?? [];
+
+  const profileAsset = assetSummary.assets.find((a) => a.field === "image.profileSheet");
+  const mainAsset = assetSummary.assets.find((a) => a.field === "image.main");
 
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden">
@@ -122,6 +230,16 @@ function CharacterReferenceCard({ character }: { character: Character }) {
                 {isTiki ? "Rival Character" : "Fruit Baby"}
               </Pill>
               <Pill className="bg-tiki-brown/8 text-tiki-brown/55">{character.status}</Pill>
+              {/* Reference generation readiness badge */}
+              {assetSummary.readyForReferenceAnchoredGeneration ? (
+                <Pill className="bg-tropical-green/15 text-tropical-green">
+                  Reference-Ready
+                </Pill>
+              ) : (
+                <Pill className="bg-warm-coral/20 text-warm-coral/80">
+                  Missing References
+                </Pill>
+              )}
             </div>
             <h2 className="text-xl font-black text-tiki-brown leading-tight">{character.name}</h2>
             {character.role && (
@@ -142,12 +260,27 @@ function CharacterReferenceCard({ character }: { character: Character }) {
 
       <div className="p-6 flex flex-col gap-6">
 
-        {/* Profile sheet — displayed full, object-contain, not cropped */}
+        {/* Warnings */}
+        {assetSummary.warnings.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {assetSummary.warnings.map((w) => (
+              <div
+                key={w}
+                className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3"
+              >
+                <span className="text-base flex-shrink-0">⚠️</span>
+                <p className="text-xs font-semibold text-tiki-brown/75 leading-relaxed">{w}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Profile sheet — shown only if valid */}
         <div className="flex flex-col gap-2">
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
             Official Profile Sheet Reference
           </p>
-          {hasProfileSheet ? (
+          {profileAsset?.valid ? (
             <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden bg-bg-cream p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -163,33 +296,99 @@ function CharacterReferenceCard({ character }: { character: Character }) {
             <div className="border border-tiki-brown/10 rounded-2xl bg-tiki-brown/3 flex flex-col items-center justify-center h-36 gap-2">
               <span className="text-2xl select-none opacity-30">🖼️</span>
               <p className="text-xs font-bold text-tiki-brown/35 uppercase tracking-wide">
-                Profile sheet not added yet
+                {profileAsset?.issue ?? "Profile sheet not added yet"}
               </p>
             </div>
           )}
         </div>
 
-        {/* Main image — if available */}
-        {hasMain && (
+        {/* Main image — shown only if valid; warning shown if path exists but invalid */}
+        {mainAsset && mainAsset.path && (
           <div className="flex flex-col gap-2">
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
               Isolated Main Image
             </p>
-            <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden bg-bg-cream p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={character.image.main}
-                alt={character.image.alt}
-                className="w-full max-h-60 object-contain"
-              />
-              <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">
-                {character.image.main}
-              </p>
-            </div>
+            {mainAsset.valid ? (
+              <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden bg-bg-cream p-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={character.image.main}
+                  alt={character.image.alt}
+                  className="w-full max-h-60 object-contain"
+                />
+                <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">
+                  {character.image.main}
+                </p>
+              </div>
+            ) : (
+              <div className="border border-warm-coral/20 rounded-2xl bg-warm-coral/5 flex flex-col items-center justify-center h-28 gap-2 px-4">
+                <span className="text-xl select-none">🚫</span>
+                <p className="text-xs font-bold text-warm-coral/70 uppercase tracking-wide text-center">
+                  Invalid image — not rendered
+                </p>
+                <p className="text-xs text-tiki-brown/50 font-mono text-center truncate max-w-full">
+                  {character.image.main}
+                </p>
+                {mainAsset.issue && (
+                  <p className="text-xs text-warm-coral/65 text-center leading-snug">
+                    {mainAsset.issue}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Asset status */}
+        {/* ── Reference Asset Integrity ── */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🔍</span>
+            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
+              Reference Asset Integrity
+            </p>
+          </div>
+
+          {/* Summary readiness rows */}
+          <dl className="flex flex-col border border-tiki-brown/8 rounded-xl overflow-hidden">
+            <StatusRow
+              label="Valid Main Image"
+              value={assetSummary.hasValidMainImage ? "Yes" : "No"}
+              positive={assetSummary.hasValidMainImage}
+            />
+            <StatusRow
+              label="Valid Profile Sheet"
+              value={assetSummary.hasValidProfileSheet ? "Yes" : "No"}
+              positive={assetSummary.hasValidProfileSheet}
+            />
+            <StatusRow
+              label="Valid Character Sheet"
+              value={assetSummary.hasValidCharacterSheet ? "Yes" : "Not configured"}
+              positive={assetSummary.hasValidCharacterSheet || undefined}
+            />
+            <StatusRow
+              label="Has Any Valid Reference"
+              value={assetSummary.hasAnyValidReference ? "Yes" : "No"}
+              positive={assetSummary.hasAnyValidReference}
+            />
+            <StatusRow
+              label="Ready for Reference-Anchored Generation"
+              value={
+                assetSummary.readyForReferenceAnchoredGeneration ? "Yes" : "No — needs valid reference"
+              }
+              positive={assetSummary.readyForReferenceAnchoredGeneration}
+            />
+            <StatusRow
+              label="Recommended Primary Reference"
+              value={assetSummary.bestReferenceField ?? "None available"}
+              positive={assetSummary.bestReferenceField !== null || undefined}
+            />
+          </dl>
+
+          {/* Per-asset detail cards */}
+          <AssetIntegrityTable assets={assetSummary.assets} />
+        </div>
+
+        {/* Legacy asset status */}
         <div>
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
             Asset Status
@@ -198,23 +397,42 @@ function CharacterReferenceCard({ character }: { character: Character }) {
             <StatusRow label="Character JSON" value="Available" positive={true} />
             <StatusRow
               label="Profile Sheet"
-              value={hasProfileSheet ? "Available" : "Missing"}
-              positive={hasProfileSheet}
+              value={
+                assetSummary.hasValidProfileSheet
+                  ? "Valid"
+                  : profileAsset?.exists
+                  ? "Invalid"
+                  : "Missing"
+              }
+              positive={assetSummary.hasValidProfileSheet}
             />
             <StatusRow
               label="Main Image"
-              value={hasMain ? "Available" : "Missing"}
-              positive={hasMain}
+              value={
+                assetSummary.hasValidMainImage
+                  ? "Valid"
+                  : mainAsset?.exists
+                  ? "Invalid"
+                  : mainAsset?.path
+                  ? "Missing on disk"
+                  : "Not configured"
+              }
+              positive={
+                assetSummary.hasValidMainImage
+                  ? true
+                  : mainAsset?.path
+                  ? false
+                  : undefined
+              }
             />
             <StatusRow
               label="Approved for Reference Use"
-              value={hasProfileSheet ? "Yes" : "No — profile sheet needed"}
-              positive={hasProfileSheet}
-            />
-            <StatusRow
-              label="Isolated Media-Ready Image"
-              value={hasMain ? "Yes" : "No — main image needed"}
-              positive={hasMain}
+              value={
+                assetSummary.readyForReferenceAnchoredGeneration
+                  ? "Yes"
+                  : "No — valid reference asset needed"
+              }
+              positive={assetSummary.readyForReferenceAnchoredGeneration}
             />
           </dl>
         </div>
@@ -373,9 +591,13 @@ function CharacterReferenceCard({ character }: { character: Character }) {
             <StatusRow label="Story Panel Prompts" value="Yes — use scene data" positive={true} />
             <StatusRow label="Animation Prompts" value="Yes — use scene data" positive={true} />
             <StatusRow
-              label="Requires Official Image References"
-              value="Yes"
-              positive={true}
+              label="Reference-Anchored Generation"
+              value={
+                assetSummary.readyForReferenceAnchoredGeneration
+                  ? `Ready — use ${assetSummary.bestReferenceField ?? "available reference"}`
+                  : "Not ready — no valid reference asset"
+              }
+              positive={assetSummary.readyForReferenceAnchoredGeneration}
             />
             <StatusRow
               label="Public Variation Generation"
@@ -403,6 +625,8 @@ function CharacterReferenceCard({ character }: { character: Character }) {
 
 export default function AdminCharactersPage() {
   const characters = getAllCharacters();
+  const assetSummaries = characters.map(checkCharacterAssets);
+  const readiness = buildReadinessSummary(assetSummaries);
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -424,7 +648,7 @@ export default function AdminCharactersPage() {
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
             Review official Fruit Baby character data, profile images, visual rules, and reference
-            assets for future media generation.
+            asset integrity for future media generation.
           </p>
         </div>
       </section>
@@ -441,7 +665,103 @@ export default function AdminCharactersPage() {
           </p>
         </div>
 
-        {/* Summary stats */}
+        {/* ── Reference Asset Readiness Summary ── */}
+        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🔍</span>
+            <h2 className="text-base font-black text-tiki-brown">
+              Reference Asset Integrity Summary
+            </h2>
+          </div>
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {(
+              [
+                ["Total Characters", String(readiness.totalCharacters), undefined],
+                [
+                  "Reference-Ready",
+                  String(readiness.readyCount),
+                  readiness.readyCount === readiness.totalCharacters,
+                ],
+                [
+                  "Missing Valid References",
+                  String(readiness.notReadyCount),
+                  readiness.notReadyCount === 0 ? true : false,
+                ],
+                [
+                  "Invalid Asset References",
+                  String(readiness.invalidAssetCount),
+                  readiness.invalidAssetCount === 0 ? true : false,
+                ],
+                [
+                  "Profile Sheets Available",
+                  String(readiness.profileSheetsAvailable),
+                  readiness.profileSheetsAvailable === readiness.totalCharacters,
+                ],
+              ] as [string, string, boolean | undefined][]
+            ).map(([label, value, positive]) => (
+              <div
+                key={label}
+                className={`flex flex-col items-center gap-0.5 rounded-2xl px-4 py-3 text-center border ${
+                  positive === true
+                    ? "bg-tropical-green/8 border-tropical-green/20"
+                    : positive === false
+                    ? "bg-warm-coral/8 border-warm-coral/20"
+                    : "bg-tiki-brown/4 border-tiki-brown/8"
+                }`}
+              >
+                <span
+                  className={`text-xl font-black ${
+                    positive === true
+                      ? "text-tropical-green"
+                      : positive === false
+                      ? "text-warm-coral/80"
+                      : "text-tiki-brown"
+                  }`}
+                >
+                  {value}
+                </span>
+                <span className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide leading-tight">
+                  {label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Fidelity readiness explanation */}
+          <div className="flex items-start gap-3 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-4 py-4">
+            <span className="text-base flex-shrink-0">💡</span>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs font-bold text-tiki-brown/65 uppercase tracking-wide">
+                About Reference-Anchored Generation
+              </p>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                Future reference-anchored image generation should use valid official profile sheets,
+                isolated main images, and character sheets as visual source references.
+                Prompt-only generation should not be treated as final character-faithful media.
+              </p>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                Before reference-anchored generation is enabled, every character used in a scene
+                should have at least one valid official reference asset.
+              </p>
+            </div>
+          </div>
+
+          {/* Invalid asset alert if any */}
+          {readiness.invalidAssetCount > 0 && (
+            <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3">
+              <span className="text-base flex-shrink-0">⚠️</span>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                <strong className="font-bold">{readiness.invalidAssetCount} invalid asset reference{readiness.invalidAssetCount !== 1 ? "s" : ""} found.</strong>{" "}
+                Invalid files exist on disk but fail image validation. They are flagged below and
+                must not be used as generation references. No files have been modified.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Legacy summary stats */}
         <div className="flex flex-wrap gap-3">
           {(
             [
@@ -456,7 +776,7 @@ export default function AdminCharactersPage() {
               ],
               [
                 "Profile Sheets",
-                String(characters.filter((c) => c.image.profileSheet).length),
+                String(readiness.profileSheetsAvailable),
               ],
             ] as [string, string][]
           ).map(([label, value]) => (
@@ -473,8 +793,12 @@ export default function AdminCharactersPage() {
         </div>
 
         {/* Character reference cards — one per character */}
-        {characters.map((character) => (
-          <CharacterReferenceCard key={character.id} character={character} />
+        {characters.map((character, i) => (
+          <CharacterReferenceCard
+            key={character.id}
+            character={character}
+            assetSummary={assetSummaries[i]}
+          />
         ))}
 
         {/* Global character fidelity rules */}

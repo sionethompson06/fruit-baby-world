@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { getAllCharacters } from "@/lib/content";
+import {
+  checkCharacterAssets,
+  buildClientReadinessMap,
+} from "@/lib/characterAssets";
 import VariationBuilderClient from "./VariationBuilderClient";
 
 export const metadata: Metadata = {
@@ -8,6 +12,9 @@ export const metadata: Metadata = {
 
 export default function VariationsPage() {
   const characters = getAllCharacters();
+  const assetReadiness = buildClientReadinessMap(
+    characters.map(checkCharacterAssets)
+  );
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -56,7 +63,7 @@ export default function VariationsPage() {
         </div>
 
         {/* Interactive client component */}
-        <VariationBuilderClient characters={characters} />
+        <VariationBuilderClient characters={characters} assetReadiness={assetReadiness} />
 
       </section>
     </div>

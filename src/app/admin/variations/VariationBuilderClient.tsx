@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Character } from "@/lib/content";
+import type { ClientCharacterReadiness } from "@/lib/characterAssets";
 
 // ─── Character-specific variation rules ──────────────────────────────────────
 
@@ -254,9 +255,18 @@ function TextArea({
 
 // ─── Character reference mini-card ───────────────────────────────────────────
 
-function CharacterReferenceCard({ character }: { character: Character }) {
-  const hasMain = Boolean(character.image.main);
+function CharacterReferenceCard({
+  character,
+  readiness,
+}: {
+  character: Character;
+  readiness: ClientCharacterReadiness;
+}) {
   const hasProfileSheet = Boolean(character.image.profileSheet);
+  const profileRefValid = readiness.validRefs.some(
+    (r) => r.field === "image.profileSheet"
+  );
+  const mainRefValid = readiness.validRefs.some((r) => r.field === "image.main");
   const isTiki = character.type === "villain";
 
   return (
@@ -286,12 +296,12 @@ function CharacterReferenceCard({ character }: { character: Character }) {
       </div>
 
       <div className="p-5 flex flex-col gap-4">
-        {/* Profile sheet — full, not cropped */}
+        {/* Profile sheet — only render if validated */}
         <div>
           <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-2">
             Official Profile Sheet
           </p>
-          {hasProfileSheet ? (
+          {profileRefValid ? (
             <div className="bg-bg-cream border border-tiki-brown/10 rounded-xl p-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -299,6 +309,13 @@ function CharacterReferenceCard({ character }: { character: Character }) {
                 alt={character.image.alt}
                 className="w-full max-h-80 object-contain"
               />
+            </div>
+          ) : hasProfileSheet ? (
+            <div className="bg-warm-coral/6 border border-warm-coral/20 rounded-xl h-20 flex flex-col items-center justify-center gap-1 px-4">
+              <span className="text-base select-none">🚫</span>
+              <p className="text-xs font-bold text-warm-coral/70 uppercase tracking-wide text-center">
+                Profile sheet invalid — not rendered
+              </p>
             </div>
           ) : (
             <div className="bg-tiki-brown/4 border border-tiki-brown/10 rounded-xl h-28 flex flex-col items-center justify-center gap-1.5">
@@ -310,20 +327,29 @@ function CharacterReferenceCard({ character }: { character: Character }) {
           )}
         </div>
 
-        {/* Main image — if available */}
-        {hasMain && (
+        {/* Main image — only render if validated */}
+        {character.image.main && (
           <div>
             <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-2">
               Isolated Main Image
             </p>
-            <div className="bg-bg-cream border border-tiki-brown/10 rounded-xl p-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={character.image.main}
-                alt={character.image.alt}
-                className="w-full max-h-48 object-contain"
-              />
-            </div>
+            {mainRefValid ? (
+              <div className="bg-bg-cream border border-tiki-brown/10 rounded-xl p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={character.image.main}
+                  alt={character.image.alt}
+                  className="w-full max-h-48 object-contain"
+                />
+              </div>
+            ) : (
+              <div className="bg-warm-coral/6 border border-warm-coral/20 rounded-xl h-20 flex flex-col items-center justify-center gap-1 px-4">
+                <span className="text-base select-none">🚫</span>
+                <p className="text-xs font-bold text-warm-coral/70 uppercase tracking-wide text-center">
+                  Invalid file — not rendered
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -357,14 +383,14 @@ function CharacterReferenceCard({ character }: { character: Character }) {
           </div>
         )}
 
-        {/* Asset status */}
+        {/* Asset status using validated readiness */}
         <div className="grid grid-cols-2 gap-1.5">
           {(
             [
-              ["Profile Sheet", hasProfileSheet ? "Available ✓" : "Missing"],
-              ["Main Image", hasMain ? "Available ✓" : "Missing"],
+              ["Profile Sheet", profileRefValid ? "Valid ✓" : hasProfileSheet ? "Invalid" : "Missing"],
+              ["Main Image", mainRefValid ? "Valid ✓" : character.image.main ? "Invalid" : "Not configured"],
               ["Character JSON", "Available ✓"],
-              ["Reference Ready", hasProfileSheet ? "Yes ✓" : "No — sheet needed"],
+              ["Reference Ready", readiness.ready ? "Yes ✓" : "No — needs valid reference"],
             ] as [string, string][]
           ).map(([label, value]) => (
             <div key={label} className="bg-tiki-brown/4 rounded-lg px-3 py-1.5">
@@ -400,7 +426,13 @@ function CharacterReferenceCard({ character }: { character: Character }) {
 
 // ─── Main client component ────────────────────────────────────────────────────
 
-export default function VariationBuilderClient({ characters }: { characters: Character[] }) {
+export default function VariationBuilderClient({
+  characters,
+  assetReadiness,
+}: {
+  characters: Character[];
+  assetReadiness: Record<string, ClientCharacterReadiness>;
+}) {
   const [characterId, setCharacterId] = useState("");
   const [purpose, setPurpose] = useState("");
   const [pose, setPose] = useState("");
@@ -412,6 +444,9 @@ export default function VariationBuilderClient({ characters }: { characters: Cha
 
   const character = characters.find((c) => c.id === characterId) ?? null;
   const isTiki = character?.type === "villain";
+  const readiness: ClientCharacterReadiness | null = characterId
+    ? (assetReadiness[characterId] ?? null)
+    : null;
 
   const prompt = character
     ? buildVariationPrompt(character, purpose, pose, expression, scene, storyContext, intendedUse, notes)
@@ -458,8 +493,43 @@ export default function VariationBuilderClient({ characters }: { characters: Cha
           ))}
         </select>
 
-        {character && (
-          <CharacterReferenceCard character={character} />
+        {/* Reference asset readiness note */}
+        {character && readiness && (
+          <div
+            className={`flex items-start gap-3 rounded-xl px-4 py-3 border ${
+              readiness.ready
+                ? "bg-tropical-green/8 border-tropical-green/25"
+                : "bg-warm-coral/10 border-warm-coral/30"
+            }`}
+          >
+            <span className="text-base flex-shrink-0">
+              {readiness.ready ? "✅" : "⚠️"}
+            </span>
+            <div className="flex flex-col gap-1">
+              <p className="text-xs font-bold text-tiki-brown/75">
+                {readiness.ready
+                  ? `${character.name} is ready for reference-anchored generation.`
+                  : `${character.name} does not have valid reference assets yet.`}
+              </p>
+              {readiness.validRefs.length > 0 && (
+                <p className="text-xs text-tiki-brown/55">
+                  Valid references: {readiness.validRefs.map((r) => r.label).join(", ")}
+                </p>
+              )}
+              {readiness.warnings.map((w) => (
+                <p key={w} className="text-xs text-warm-coral/75 leading-snug">{w}</p>
+              ))}
+              {!readiness.ready && (
+                <p className="text-xs text-tiki-brown/55 italic">
+                  Generation should not proceed until a valid reference asset is uploaded.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {character && readiness && (
+          <CharacterReferenceCard character={character} readiness={readiness} />
         )}
 
         {!character && (
