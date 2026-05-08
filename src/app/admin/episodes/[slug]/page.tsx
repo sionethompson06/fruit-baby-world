@@ -11,6 +11,7 @@ import EditPanelCopySection from "./EditPanelCopySection";
 import AddSceneSection from "./AddSceneSection";
 import EditSceneSection, { type SceneForEdit } from "./EditSceneSection";
 import ArchiveSceneSection, { type SceneForArchive } from "./ArchiveSceneSection";
+import SceneIdStabilitySection from "./SceneIdStabilitySection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -188,6 +189,11 @@ function SceneCard({
           </span>
         )}
         {title && <span className="text-sm font-bold text-tiki-brown">{title}</span>}
+        {str(scene.sceneId) && (
+          <span className="ml-auto text-xs font-mono text-tiki-brown/35 bg-tiki-brown/5 px-2 py-0.5 rounded">
+            {str(scene.sceneId)}
+          </span>
+        )}
       </div>
 
       {summary && <p className="text-sm text-tiki-brown/70 leading-relaxed">{summary}</p>}
@@ -3189,6 +3195,32 @@ export default async function EpisodeDetailPage({
       .filter((n) => n > 0);
   })();
 
+  // Scene ID stability stats (for SceneIdStabilitySection)
+  const sceneIdStats = (() => {
+    const scenesWithId = scenes.filter(
+      (s) => typeof s.sceneId === "string" && (s.sceneId as string).length > 0
+    ).length;
+    const media = isRec(raw.media) ? raw.media : null;
+    const spm = media && isRec(media.storyPanelMode) ? media.storyPanelMode : null;
+    const panels = (spm && Array.isArray(spm.panels) ? spm.panels : []).filter(isRec);
+    const panelsWithId = panels.filter(
+      (p) => typeof p.sceneId === "string" && (p.sceneId as string).length > 0
+    ).length;
+    const am = media && isRec(media.animationMode) ? media.animationMode : null;
+    const clips = (am && Array.isArray(am.clips) ? am.clips : []).filter(isRec);
+    const clipsWithId = clips.filter(
+      (c) => typeof c.sceneId === "string" && (c.sceneId as string).length > 0
+    ).length;
+    return {
+      totalScenes: scenes.length,
+      scenesWithId,
+      totalPanels: panels.length,
+      panelsWithId,
+      totalClips: clips.length,
+      clipsWithId,
+    };
+  })();
+
   // Scenes available for active generation (excludes archived)
   const activeScenes = scenes.filter((s) => str(s.status) !== "archived");
 
@@ -3518,6 +3550,17 @@ export default async function EpisodeDetailPage({
           episodeSlug={normalised.slug}
           scenes={sceneForArchiveList}
           savedPanelSceneNumbers={savedPanelSceneNumbers}
+        />
+
+        {/* ── Scene ID Stability ── */}
+        <SceneIdStabilitySection
+          episodeSlug={normalised.slug}
+          totalScenes={sceneIdStats.totalScenes}
+          scenesWithId={sceneIdStats.scenesWithId}
+          totalPanels={sceneIdStats.totalPanels}
+          panelsWithId={sceneIdStats.panelsWithId}
+          totalClips={sceneIdStats.totalClips}
+          clipsWithId={sceneIdStats.clipsWithId}
         />
 
         {/* ── F. Dialogue Draft (top-level) ── */}

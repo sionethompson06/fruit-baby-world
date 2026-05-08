@@ -401,6 +401,24 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // ── Infer sceneId from matching scene ────────────────────────────────────────
+  const sceneArr = (() => {
+    const sb = episode.sceneBreakdown;
+    const sc = episode.scenes;
+    const arr = Array.isArray(sb) && sb.length > 0 ? sb : Array.isArray(sc) ? sc : [];
+    return arr.filter(isRecord);
+  })();
+
+  const matchingScene = sceneArr.find(
+    (s) => typeof s.sceneNumber === "number" && s.sceneNumber === panelAsset.sceneNumber
+  );
+  const inferredSceneId =
+    matchingScene &&
+    typeof matchingScene.sceneId === "string" &&
+    matchingScene.sceneId
+      ? matchingScene.sceneId
+      : null;
+
   // ── Build the updated panel asset (timestamps) ────────────────────────────────
   const now = new Date().toISOString();
   const sceneNumber = panelAsset.sceneNumber as number;
@@ -415,9 +433,17 @@ export async function POST(request: Request): Promise<Response> {
       : now,
   };
 
+  // Prefer sceneId from request body if present, else infer from matching scene
+  const providedSceneId =
+    typeof panelAsset.sceneId === "string" && panelAsset.sceneId
+      ? panelAsset.sceneId
+      : null;
+  const resolvedSceneId = providedSceneId || inferredSceneId;
+
   const updatedPanelAsset: Record<string, unknown> = {
     ...panelAsset,
     asset: updatedAsset,
+    ...(resolvedSceneId ? { sceneId: resolvedSceneId } : {}),
   };
 
   // ── Update episode.media.storyPanelMode.panels ────────────────────────────────

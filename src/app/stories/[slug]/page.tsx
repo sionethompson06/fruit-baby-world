@@ -89,6 +89,7 @@ function formatCharName(slug: string): string {
 
 type ApprovedPanel = {
   sceneNumber: number;
+  sceneId?: string;
   displayOrder?: number;
   panelTitle: string;
   referenceCharacters: string[];
@@ -128,8 +129,11 @@ function getApprovedPublicPanels(raw: Record<string, unknown>): ApprovedPanel[] 
         : undefined;
     const caption =
       str(asset.caption) || str(p.publicCaption);
+    const sceneId =
+      typeof p.sceneId === "string" && p.sceneId ? p.sceneId : undefined;
     approved.push({
       sceneNumber,
+      sceneId,
       displayOrder,
       caption,
       panelTitle: str(p.panelTitle) || `Scene ${sceneNumber}`,
@@ -608,12 +612,17 @@ export default async function StoryDetailPage({
       ? recArr(raw.sceneBreakdown)
       : recArr(raw.scenes);
 
-  // Archived scene numbers — used to exclude archived scenes and their panels
+  // Archived scene numbers and IDs — used to exclude archived scenes and their panels
+  const archivedScenes = allScenes.filter((s) => str(s.status) === "archived");
   const archivedSceneNumbers = new Set(
-    allScenes
-      .filter((s) => str(s.status) === "archived")
+    archivedScenes
       .map((s) => (typeof s.sceneNumber === "number" ? s.sceneNumber : -1))
       .filter((n) => n > 0)
+  );
+  const archivedSceneIds = new Set(
+    archivedScenes
+      .map((s) => str(s.sceneId))
+      .filter(Boolean)
   );
 
   // Active-only scenes for public display
@@ -621,9 +630,11 @@ export default async function StoryDetailPage({
 
   const merchTieIns = strArr(raw.merchTieIns);
 
-  // Approved public story panels — exclude panels for archived scenes
+  // Approved public story panels — exclude panels for archived scenes (by number or ID)
   const approvedPanels = getApprovedPublicPanels(raw).filter(
-    (p) => !archivedSceneNumbers.has(p.sceneNumber)
+    (p) =>
+      !archivedSceneNumbers.has(p.sceneNumber) &&
+      !(p.sceneId && archivedSceneIds.has(p.sceneId))
   );
   const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 

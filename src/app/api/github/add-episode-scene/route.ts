@@ -396,6 +396,21 @@ export async function POST(request: Request): Promise<Response> {
   }, 0);
   const newSceneNumber = maxSceneNumber + 1;
 
+  // ── Generate stable sceneId ───────────────────────────────────────────────────
+  const usedSceneIds = new Set<string>(
+    existingScenes
+      .filter((s) => typeof s.sceneId === "string" && (s.sceneId as string).length > 0)
+      .map((s) => s.sceneId as string)
+  );
+  const baseSceneId = `scene-${String(newSceneNumber).padStart(3, "0")}`;
+  let newSceneId = baseSceneId;
+  if (usedSceneIds.has(newSceneId)) {
+    for (const suffix of "abcdefghijklmnop") {
+      const candidate = `${baseSceneId}-${suffix}`;
+      if (!usedSceneIds.has(candidate)) { newSceneId = candidate; break; }
+    }
+  }
+
   // ── Build new scene object ────────────────────────────────────────────────────
   const imagePromptDraft =
     imagePromptDraftInput ||
@@ -406,6 +421,7 @@ export async function POST(request: Request): Promise<Response> {
     buildAnimationPromptFallback(newSceneNumber, title, characters);
 
   const newScene: Record<string, unknown> = {
+    sceneId: newSceneId,
     sceneNumber: newSceneNumber,
     title,
     summary,
