@@ -10,6 +10,7 @@ import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection"
 import EditPanelCopySection from "./EditPanelCopySection";
 import AddSceneSection from "./AddSceneSection";
 import EditSceneSection, { type SceneForEdit } from "./EditSceneSection";
+import ArchiveSceneSection, { type SceneForArchive } from "./ArchiveSceneSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -154,7 +155,15 @@ function Callout({
 
 // ─── Scene card ───────────────────────────────────────────────────────────────
 
-function SceneCard({ scene, index }: { scene: Record<string, unknown>; index: number }) {
+function SceneCard({
+  scene,
+  index,
+  isArchived = false,
+}: {
+  scene: Record<string, unknown>;
+  index: number;
+  isArchived?: boolean;
+}) {
   const num = scene.sceneNumber ?? index + 1;
   const title = str(scene.title);
   const summary = str(scene.summary);
@@ -168,11 +177,16 @@ function SceneCard({ scene, index }: { scene: Record<string, unknown>; index: nu
   const fidelityNotes = strArr(scene.characterFidelityNotes);
 
   return (
-    <div className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <div className={`border rounded-2xl p-5 flex flex-col gap-3 ${isArchived ? "border-warm-coral/20 bg-warm-coral/4 opacity-70" : "border-tiki-brown/10"}`}>
+      <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple">
           Scene {String(num)}
         </span>
+        {isArchived && (
+          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-warm-coral/20 text-warm-coral/80 uppercase tracking-wide">
+            Archived
+          </span>
+        )}
         {title && <span className="text-sm font-bold text-tiki-brown">{title}</span>}
       </div>
 
@@ -3175,10 +3189,19 @@ export default async function EpisodeDetailPage({
       .filter((n) => n > 0);
   })();
 
+  // Scenes available for active generation (excludes archived)
+  const activeScenes = scenes.filter((s) => str(s.status) !== "archived");
+
+  const sceneForArchiveList: SceneForArchive[] = scenes.map((s) => ({
+    sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : 0,
+    title: str(s.title),
+    status: str(s.status),
+  }));
+
   // Pre-compute scene options for AnimationRouteTestPanel (client component)
   const episodeSetting = str(raw.setting);
   const episodeTone = str(raw.tone);
-  const sceneOptions: SceneOption[] = scenes.map((scene, i) => {
+  const sceneOptions: SceneOption[] = activeScenes.map((scene, i) => {
     const num = typeof scene.sceneNumber === "number" ? scene.sceneNumber : i + 1;
     const title = str(scene.title);
     const characters = strArr(scene.characters);
@@ -3283,19 +3306,19 @@ export default async function EpisodeDetailPage({
         <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
 
         {/* ── Media Production Overview ── */}
-        <MediaProductionOverview scenes={scenes} isPublicReady={isAlreadyPublished} />
+        <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} />
 
         {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} />
+        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} />
 
         {/* ── Story Panel Asset Manifest Preview ── */}
-        <StoryPanelAssetManifest scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Saved Story Panel Asset Library ── */}
         <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
 
         {/* ── Animation Prompt Builder ── */}
-        <AnimationPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Animation Route Test ── */}
         <AnimationRouteTestPanel
@@ -3306,10 +3329,10 @@ export default async function EpisodeDetailPage({
         />
 
         {/* ── Animation Clip Asset Manifest Preview ── */}
-        <AnimationClipManifestPreview scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
-        <ReadAloudPromptBuilder scenes={scenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">
@@ -3461,9 +3484,20 @@ export default async function EpisodeDetailPage({
         {/* ── E. Scene Breakdown ── */}
         {scenes.length > 0 && (
           <Section title={`Scene Breakdown (${scenes.length} scene${scenes.length !== 1 ? "s" : ""})`}>
+            {scenes.some((s) => str(s.status) === "archived") && (
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Archived scenes are shown with muted styling and are excluded from active
+                generation tools.
+              </p>
+            )}
             <div className="flex flex-col gap-4">
               {scenes.map((scene, i) => (
-                <SceneCard key={i} scene={scene} index={i} />
+                <SceneCard
+                  key={i}
+                  scene={scene}
+                  index={i}
+                  isArchived={str(scene.status) === "archived"}
+                />
               ))}
             </div>
           </Section>
@@ -3476,6 +3510,13 @@ export default async function EpisodeDetailPage({
         <EditSceneSection
           episodeSlug={normalised.slug}
           scenes={sceneForEditList}
+          savedPanelSceneNumbers={savedPanelSceneNumbers}
+        />
+
+        {/* ── Archive / Restore Scene ── */}
+        <ArchiveSceneSection
+          episodeSlug={normalised.slug}
+          scenes={sceneForArchiveList}
           savedPanelSceneNumbers={savedPanelSceneNumbers}
         />
 

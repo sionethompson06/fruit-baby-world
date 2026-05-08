@@ -43,6 +43,7 @@ export const config = {
     "/api/github/update-story-panel-copy",
     "/api/github/add-episode-scene",
     "/api/github/update-episode-scene",
+    "/api/github/update-episode-scene-status",
     "/api/generate-story-panel-image",
     "/api/media/upload-story-panel-image",
   ],

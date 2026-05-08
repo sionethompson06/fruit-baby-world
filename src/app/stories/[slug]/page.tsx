@@ -601,14 +601,30 @@ export default async function StoryDetailPage({
   const featuredChars = featuredCharIds
     .map((id) => charMap[id])
     .filter((c): c is Character => Boolean(c));
-  const scenes =
+
+  // All scenes (including archived) — used to build the archived scene number set
+  const allScenes =
     recArr(raw.sceneBreakdown).length > 0
       ? recArr(raw.sceneBreakdown)
       : recArr(raw.scenes);
+
+  // Archived scene numbers — used to exclude archived scenes and their panels
+  const archivedSceneNumbers = new Set(
+    allScenes
+      .filter((s) => str(s.status) === "archived")
+      .map((s) => (typeof s.sceneNumber === "number" ? s.sceneNumber : -1))
+      .filter((n) => n > 0)
+  );
+
+  // Active-only scenes for public display
+  const scenes = allScenes.filter((s) => str(s.status) !== "archived");
+
   const merchTieIns = strArr(raw.merchTieIns);
 
-  // Approved public story panels
-  const approvedPanels = getApprovedPublicPanels(raw);
+  // Approved public story panels — exclude panels for archived scenes
+  const approvedPanels = getApprovedPublicPanels(raw).filter(
+    (p) => !archivedSceneNumbers.has(p.sceneNumber)
+  );
   const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 
   // Build flat reader panel data for the client component
