@@ -135,6 +135,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224991912-um9trf",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "sitting resting listening looking waiting",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224990952-coconut-sitting-resting-listening-looking-waiting-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1778554,
+      "uploadedAt": "2026-05-08T07:23:11.912Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
