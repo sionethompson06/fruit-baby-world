@@ -118,6 +118,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224966738-fptxyp",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "scared shy sad thinking worried",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224965785-coconut-scared-shy-sad-thinking-worried-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1835836,
+      "uploadedAt": "2026-05-08T07:22:46.738Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
