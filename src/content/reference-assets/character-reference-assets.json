@@ -139,13 +139,13 @@
       "uploadedAt": "2026-05-08T07:22:21.536Z",
       "approvedForGeneration": true,
       "requiresReview": false,
-      "reviewStatus": "approved",
-      "reviewedAt": "2026-05-08T08:05:39.465Z",
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-08T20:40:19.199Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": true,
       "isOfficialReference": true,
-      "updatedAt": "2026-05-08T08:05:39.465Z"
+      "updatedAt": "2026-05-08T20:40:19.199Z"
     },
     {
       "id": "ref-1778224966738-fptxyp",
