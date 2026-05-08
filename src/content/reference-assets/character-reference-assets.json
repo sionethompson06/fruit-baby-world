@@ -33,6 +33,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224794715-bsz5ea",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "sleepy",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224793754-coconut-sleepy-tired-thinking-restful-calm.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1833412,
+      "uploadedAt": "2026-05-08T07:19:54.715Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
