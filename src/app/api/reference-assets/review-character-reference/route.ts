@@ -1,10 +1,11 @@
 // POST /api/reference-assets/review-character-reference
-// Admin-only: Save review decision (approve/reject/archive) for an uploaded reference asset.
+// Admin-only: Save review decision for an uploaded character reference asset.
 // Updates reviewStatus, approvedForGeneration, and related fields in GitHub JSON.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
 // Safety:  Does not delete Blob files. Does not modify official character image files.
-//          Only updates metadata in character-reference-assets.json on GitHub.
+//          Does not change character approval/status fields.
+//          Only updates review metadata in character-reference-assets.json on GitHub.
 
 import type { UploadedReferenceAsset, ReviewStatus } from "@/app/api/reference-assets/upload-character-reference/route";
 
@@ -15,31 +16,34 @@ const GITHUB_JSON_PATH =
 
 const VALID_REVIEW_STATUSES: ReviewStatus[] = [
   "needs-review",
-  "approved",
+  "approved-for-generation",
   "rejected",
   "archived",
 ];
 
+// Safe asset id: lowercase letters, numbers, hyphens only
+const SAFE_ASSET_ID = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ReviewBody = {
-  assetId: string;
-  reviewStatus: ReviewStatus;
-  approvedForGeneration: boolean;
-  generationUseAllowed: boolean;
-  publicUseAllowed: boolean;
-  isOfficialReference: boolean;
-  reviewNotes: string;
-};
-
 type ReviewResult =
-  | { ok: true; status: "reviewed"; asset: UploadedReferenceAsset }
+  | {
+      ok: true;
+      status: "reference_asset_reviewed";
+      path: string;
+      commitMessage: string;
+      asset: UploadedReferenceAsset;
+      htmlUrl: string;
+      notes: string[];
+    }
   | {
       ok: false;
       status:
         | "validation_error"
-        | "not_found"
         | "setup_required"
+        | "reference_assets_not_found"
+        | "invalid_reference_assets_json"
+        | "asset_not_found"
         | "github_error";
       message: string;
     };
@@ -57,6 +61,20 @@ function isReviewStatus(v: unknown): v is ReviewStatus {
   );
 }
 
+function hasDangerousContent(s: string): boolean {
+  return /<[a-z/]/i.test(s) || /javascript\s*:/i.test(s);
+}
+
+function getHtmlUrl(putData: Record<string, unknown>): string {
+  const content = putData.content;
+  if (isRecord(content) && typeof content.html_url === "string")
+    return content.html_url;
+  const commit = putData.commit;
+  if (isRecord(commit) && typeof commit.html_url === "string")
+    return commit.html_url;
+  return "";
+}
+
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: Request): Promise<Response> {
@@ -71,7 +89,7 @@ export async function POST(request: Request): Promise<Response> {
       {
         ok: false,
         status: "setup_required",
-        message: "GitHub saving is not configured.",
+        message: "GitHub saving is not configured yet.",
       } satisfies ReviewResult,
       { status: 503 }
     );
@@ -105,16 +123,23 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Validate assetId ─────────────────────────────────────────────────────────
   const assetId = body.assetId;
-  if (typeof assetId !== "string" || assetId.trim().length === 0) {
+  if (
+    typeof assetId !== "string" ||
+    assetId.trim().length === 0 ||
+    !SAFE_ASSET_ID.test(assetId.trim()) ||
+    assetId.length > 120
+  ) {
     return Response.json(
       {
         ok: false,
         status: "validation_error",
-        message: "assetId is required.",
+        message:
+          "assetId must be a non-empty string with only lowercase letters, numbers, and hyphens.",
       } satisfies ReviewResult,
       { status: 400 }
     );
   }
+  const cleanAssetId = assetId.trim();
 
   // ── Validate reviewStatus ────────────────────────────────────────────────────
   const reviewStatus = body.reviewStatus;
@@ -174,22 +199,41 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 }
     );
   }
+
+  // ── Validate reviewNotes ─────────────────────────────────────────────────────
+  const rawNotes = body.reviewNotes;
   const reviewNotes =
-    typeof body.reviewNotes === "string"
-      ? body.reviewNotes.trim().slice(0, 1000)
-      : "";
+    typeof rawNotes === "string" ? rawNotes.trim().slice(0, 1000) : "";
+  if (reviewNotes && hasDangerousContent(reviewNotes)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "validation_error",
+        message: "reviewNotes contains invalid content.",
+      } satisfies ReviewResult,
+      { status: 400 }
+    );
+  }
 
   // ── Enforce consistency rules ────────────────────────────────────────────────
-  if (
-    (reviewStatus === "rejected" || reviewStatus === "archived") &&
-    approvedForGeneration
-  ) {
+  if (reviewStatus !== "approved-for-generation" && approvedForGeneration) {
     return Response.json(
       {
         ok: false,
         status: "validation_error",
         message:
-          "approvedForGeneration must be false when reviewStatus is rejected or archived.",
+          "approvedForGeneration must be false unless reviewStatus is approved-for-generation.",
+      } satisfies ReviewResult,
+      { status: 400 }
+    );
+  }
+  if (reviewStatus !== "approved-for-generation" && generationUseAllowed) {
+    return Response.json(
+      {
+        ok: false,
+        status: "validation_error",
+        message:
+          "generationUseAllowed must be false unless reviewStatus is approved-for-generation.",
       } satisfies ReviewResult,
       { status: 400 }
     );
@@ -205,19 +249,30 @@ export async function POST(request: Request): Promise<Response> {
       { status: 400 }
     );
   }
-  if (!approvedForGeneration && publicUseAllowed) {
+  if (publicUseAllowed && reviewStatus !== "approved-for-generation") {
     return Response.json(
       {
         ok: false,
         status: "validation_error",
         message:
-          "publicUseAllowed must be false when approvedForGeneration is false.",
+          "publicUseAllowed must be false unless reviewStatus is approved-for-generation.",
+      } satisfies ReviewResult,
+      { status: 400 }
+    );
+  }
+  if (publicUseAllowed && (!approvedForGeneration || !generationUseAllowed)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "validation_error",
+        message:
+          "publicUseAllowed requires approvedForGeneration and generationUseAllowed to both be true.",
       } satisfies ReviewResult,
       { status: 400 }
     );
   }
 
-  // ── Read existing GitHub JSON ────────────────────────────────────────────────
+  // ── Read reference assets JSON from GitHub ───────────────────────────────────
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${GITHUB_JSON_PATH}`;
   const ghHeaders = {
     Authorization: `Bearer ${ghToken}`,
@@ -226,7 +281,7 @@ export async function POST(request: Request): Promise<Response> {
     "X-GitHub-Api-Version": "2022-11-28",
   };
 
-  let existingSha: string | null = null;
+  let existingSha: string;
   let existingAssets: UploadedReferenceAsset[] = [];
 
   try {
@@ -234,6 +289,17 @@ export async function POST(request: Request): Promise<Response> {
       method: "GET",
       headers: ghHeaders,
     });
+
+    if (getRes.status === 404) {
+      return Response.json(
+        {
+          ok: false,
+          status: "reference_assets_not_found",
+          message: "Reference assets metadata file was not found.",
+        } satisfies ReviewResult,
+        { status: 404 }
+      );
+    }
 
     if (!getRes.ok) {
       const errText = await getRes.text().catch(() => "");
@@ -248,30 +314,50 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const getData = (await getRes.json()) as Record<string, unknown>;
-    if (typeof getData.sha === "string") existingSha = getData.sha;
-    if (typeof getData.content === "string") {
-      try {
-        const decoded = Buffer.from(
-          getData.content.replace(/\n/g, ""),
-          "base64"
-        ).toString("utf8");
-        const parsed = JSON.parse(decoded) as Record<string, unknown>;
-        if (Array.isArray(parsed.assets)) {
-          existingAssets = parsed.assets.filter(
-            (a): a is UploadedReferenceAsset =>
-              isRecord(a) && typeof a.id === "string"
-          );
-        }
-      } catch {
-        return Response.json(
-          {
-            ok: false,
-            status: "github_error",
-            message: "Failed to parse reference assets JSON from GitHub.",
-          } satisfies ReviewResult,
-          { status: 502 }
+    if (typeof getData.sha !== "string") {
+      return Response.json(
+        {
+          ok: false,
+          status: "github_error",
+          message: "Could not read file SHA from GitHub.",
+        } satisfies ReviewResult,
+        { status: 502 }
+      );
+    }
+    existingSha = getData.sha;
+
+    if (typeof getData.content !== "string") {
+      return Response.json(
+        {
+          ok: false,
+          status: "invalid_reference_assets_json",
+          message: "Reference assets metadata file could not be parsed.",
+        } satisfies ReviewResult,
+        { status: 422 }
+      );
+    }
+
+    try {
+      const decoded = Buffer.from(
+        getData.content.replace(/\n/g, ""),
+        "base64"
+      ).toString("utf8");
+      const parsed = JSON.parse(decoded) as Record<string, unknown>;
+      if (Array.isArray(parsed.assets)) {
+        existingAssets = parsed.assets.filter(
+          (a): a is UploadedReferenceAsset =>
+            isRecord(a) && typeof a.id === "string"
         );
       }
+    } catch {
+      return Response.json(
+        {
+          ok: false,
+          status: "invalid_reference_assets_json",
+          message: "Reference assets metadata file could not be parsed.",
+        } satisfies ReviewResult,
+        { status: 422 }
+      );
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
@@ -286,13 +372,13 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // ── Find asset by id ─────────────────────────────────────────────────────────
-  const assetIndex = existingAssets.findIndex((a) => a.id === assetId);
+  const assetIndex = existingAssets.findIndex((a) => a.id === cleanAssetId);
   if (assetIndex === -1) {
     return Response.json(
       {
         ok: false,
-        status: "not_found",
-        message: `Asset with id "${assetId}" not found.`,
+        status: "asset_not_found",
+        message: "Reference asset was not found.",
       } satisfies ReviewResult,
       { status: 404 }
     );
@@ -300,13 +386,14 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Build updated asset ──────────────────────────────────────────────────────
   const now = new Date().toISOString();
+  const existing = existingAssets[assetIndex];
   const updatedAsset: UploadedReferenceAsset = {
-    ...existingAssets[assetIndex],
+    ...existing,
     approvedForGeneration,
     requiresReview: reviewStatus === "needs-review",
     reviewStatus,
     reviewedAt: now,
-    reviewedBy: "admin",
+    reviewedBy: typeof body.reviewedBy === "string" ? body.reviewedBy.slice(0, 50) : "admin",
     generationUseAllowed,
     publicUseAllowed,
     isOfficialReference,
@@ -320,19 +407,27 @@ export async function POST(request: Request): Promise<Response> {
     ...existingAssets.slice(assetIndex + 1),
   ];
 
+  // ── Build commit message ──────────────────────────────────────────────────────
+  const assetTitle = existing.title || existing.id;
+  let action: string;
+  if (reviewStatus === "approved-for-generation") action = "Approve";
+  else if (reviewStatus === "rejected") action = "Reject";
+  else if (reviewStatus === "archived") action = "Archive";
+  else action = "Review";
+  const commitMessage = `${action} character reference asset: ${assetTitle}`;
+
   // ── Commit updated JSON to GitHub ────────────────────────────────────────────
-  const updatedJson =
-    JSON.stringify({ assets: updatedAssets }, null, 2) + "\n";
+  const updatedJson = JSON.stringify({ assets: updatedAssets }, null, 2) + "\n";
   const updatedBase64 = Buffer.from(updatedJson, "utf8").toString("base64");
 
-  const action = reviewStatus === "approved" ? "Approve" : reviewStatus === "rejected" ? "Reject" : reviewStatus === "archived" ? "Archive" : "Update";
-  const commitBody: Record<string, unknown> = {
-    message: `${action} reference asset: ${updatedAsset.characterSlug} — ${updatedAsset.title}`,
+  const commitBody = {
+    message: commitMessage,
     content: updatedBase64,
     branch,
     sha: existingSha,
   };
 
+  let htmlUrl = "";
   try {
     const putRes = await fetch(apiUrl, {
       method: "PUT",
@@ -351,6 +446,9 @@ export async function POST(request: Request): Promise<Response> {
         { status: 502 }
       );
     }
+
+    const putData = (await putRes.json()) as Record<string, unknown>;
+    htmlUrl = getHtmlUrl(putData);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     return Response.json(
@@ -364,7 +462,19 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   return Response.json(
-    { ok: true, status: "reviewed", asset: updatedAsset } satisfies ReviewResult,
+    {
+      ok: true,
+      status: "reference_asset_reviewed",
+      path: GITHUB_JSON_PATH,
+      commitMessage,
+      asset: updatedAsset,
+      htmlUrl,
+      notes: [
+        "Reference asset review metadata was updated.",
+        "The asset is not connected to generation yet.",
+        "Vercel redeploy is required before updated review status appears everywhere.",
+      ],
+    } satisfies ReviewResult,
     { status: 200 }
   );
 }

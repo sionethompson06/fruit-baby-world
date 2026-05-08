@@ -41,7 +41,7 @@ const GITHUB_JSON_PATH =
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type ReviewStatus = "needs-review" | "approved" | "rejected" | "archived";
+export type ReviewStatus = "needs-review" | "approved-for-generation" | "rejected" | "archived";
 
 export type UploadedReferenceAsset = {
   id: string;

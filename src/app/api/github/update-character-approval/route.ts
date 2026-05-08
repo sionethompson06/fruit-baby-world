@@ -85,7 +85,6 @@ function getHtmlUrl(putData: Record<string, unknown>): string {
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: Request): Promise<Response> {
-  // ── Check GitHub configuration ───────────────────────────────────────────────
   const ghToken = process.env.GITHUB_TOKEN;
   const owner = process.env.GITHUB_OWNER;
   const repo = process.env.GITHUB_REPO;
@@ -102,7 +101,6 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Parse request body ───────────────────────────────────────────────────────
   let body: unknown;
   try {
     body = await request.json();
@@ -128,7 +126,6 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Validate characterSlug ───────────────────────────────────────────────────
   if (!isValidSlug(body.characterSlug)) {
     return Response.json(
       {
@@ -142,7 +139,6 @@ export async function POST(request: Request): Promise<Response> {
   }
   const characterSlug = body.characterSlug as string;
 
-  // ── Validate approval object ─────────────────────────────────────────────────
   const approval = body.approval;
   if (!isRecord(approval)) {
     return Response.json(
@@ -196,7 +192,6 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
-  // Consistency: public requires stories approval
   if (publicUseAllowed === true && approvedForStories !== true) {
     return Response.json(
       {
@@ -209,7 +204,6 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── GitHub API setup ─────────────────────────────────────────────────────────
   const ghHeaders = {
     Authorization: `Bearer ${ghToken}`,
     Accept: "application/vnd.github+json",
@@ -218,7 +212,6 @@ export async function POST(request: Request): Promise<Response> {
   };
   const ref = `?ref=${encodeURIComponent(branch)}`;
 
-  // ── Fetch reference assets from GitHub ───────────────────────────────────────
   let approvedReferenceCount = 0;
 
   try {
@@ -239,19 +232,17 @@ export async function POST(request: Request): Promise<Response> {
           ).filter(
             (a) =>
               a.characterSlug === characterSlug &&
-              a.reviewStatus === "approved" &&
+              a.reviewStatus === "approved-for-generation" &&
               a.approvedForGeneration === true &&
               a.generationUseAllowed === true
           ).length;
         }
       }
     }
-    // If reference assets file doesn't exist, count stays at 0
   } catch {
     // Non-fatal — treat as 0 approved references
   }
 
-  // ── Gate generation approval on approved references ──────────────────────────
   if (
     (approvedForGeneration === true || generationUseAllowed === true) &&
     approvedReferenceCount === 0
@@ -267,7 +258,6 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Fetch character JSON from GitHub ─────────────────────────────────────────
   const charPath = `${CHARACTERS_PATH}/${characterSlug}.json`;
   const charUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${charPath}${ref}`;
 
@@ -347,7 +337,6 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Merge approval fields into existing character ─────────────────────────────
   const now = new Date().toISOString();
   const isMovingToApproved = existingChar.status === "draft" && apStatus === "approved";
 
@@ -372,7 +361,6 @@ export async function POST(request: Request): Promise<Response> {
     updatedChar.approvedAt = now;
   }
 
-  // ── Build commit message ──────────────────────────────────────────────────────
   const charName = typeof existingChar.name === "string" ? existingChar.name : characterSlug;
   let commitMessage: string;
   if (apStatus === "draft") {
@@ -387,7 +375,6 @@ export async function POST(request: Request): Promise<Response> {
     commitMessage = `Update character approval: ${charName}`;
   }
 
-  // ── Commit updated character JSON to GitHub ───────────────────────────────────
   const updatedJson = JSON.stringify(updatedChar, null, 2) + "\n";
   const updatedBase64 = Buffer.from(updatedJson, "utf8").toString("base64");
 
