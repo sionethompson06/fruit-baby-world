@@ -101,6 +101,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224941536-8a3ikl",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "kind sharing hopeful caring giving",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224940357-coconut-loving-kind-sharing-hopeful-joy-caring-giving-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1870091,
+      "uploadedAt": "2026-05-08T07:22:21.536Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
