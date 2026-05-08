@@ -20,7 +20,13 @@ type SubmitState =
   | { status: "success"; commitMessage: string; path: string; assetTitle: string; reviewStatus: ReviewStatus; generationUseAllowed: boolean }
   | { status: "error"; message: string };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+type AssignState =
+  | { status: "idle" }
+  | { status: "submitting" }
+  | { status: "success"; characterName: string }
+  | { status: "error"; message: string };
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────────
 
 function statusBadgeClass(s: ReviewStatus): string {
   switch (s) {
@@ -45,7 +51,7 @@ function formatBytes(n: number): string {
   return `${(n / 1024).toFixed(1)} KB`;
 }
 
-// ─── Per-asset review card ────────────────────────────────────────────────────
+// ─── Per-asset review card ──────────────────────────────────────────────────────────────
 
 function AssetReviewCard({
   asset,
@@ -57,6 +63,7 @@ function AssetReviewCard({
   onReviewed: (updated: UploadedReferenceAsset) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [assignState, setAssignState] = useState<AssignState>({ status: "idle" });
   const [form, setForm] = useState<ReviewFormState>({
     reviewStatus: asset.reviewStatus,
     approvedForGeneration: asset.approvedForGeneration,
@@ -122,6 +129,40 @@ function AssetReviewCard({
       });
     }
   }
+
+  async function handleAssignPrimary() {
+    setAssignState({ status: "submitting" });
+    try {
+      const res = await fetch("/api/github/assign-primary-character-reference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          characterSlug: asset.characterSlug,
+          assetId: asset.id,
+          referenceRole: "primary-profile",
+        }),
+      });
+      const data = (await res.json()) as
+        | { ok: true; character: { name?: string } }
+        | { ok: false; message: string };
+      if (data.ok) {
+        const name =
+          typeof data.character?.name === "string"
+            ? data.character.name
+            : asset.characterSlug;
+        setAssignState({ status: "success", characterName: name });
+      } else {
+        setAssignState({ status: "error", message: data.message });
+      }
+    } catch {
+      setAssignState({ status: "error", message: "Something went wrong while assigning." });
+    }
+  }
+
+  const isApproved =
+    asset.reviewStatus === "approved-for-generation" &&
+    asset.approvedForGeneration &&
+    asset.generationUseAllowed;
 
   return (
     <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
@@ -229,10 +270,41 @@ function AssetReviewCard({
                 Generation use: <strong>{submitState.generationUseAllowed ? "Allowed" : "Not allowed"}</strong>
               </p>
               <p className="text-xs font-mono text-tiki-brown/35">{submitState.path}</p>
-              <p className="text-xs text-tiki-brown/45 italic">
-                A future phase will connect approved reference assets to generation.
-              </p>
             </div>
+          </div>
+        )}
+
+        {/* ── Set as Primary Profile Reference ── */}
+        {isApproved && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+              Primary Profile Reference
+            </p>
+            {assignState.status === "success" ? (
+              <div className="flex items-center gap-2 text-xs font-bold text-tropical-green">
+                <span>✅</span>
+                Set as primary profile reference for {assignState.characterName}. Vercel redeploy required.
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleAssignPrimary}
+                  disabled={assignState.status === "submitting"}
+                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {assignState.status === "submitting"
+                    ? "Assigning…"
+                    : "Set as Primary Profile Reference"}
+                </button>
+                {assignState.status === "error" && (
+                  <p className="text-xs font-semibold text-warm-coral/80">{assignState.message}</p>
+                )}
+                <p className="text-xs text-tiki-brown/40">
+                  Sets <code className="font-mono bg-tiki-brown/8 px-1 rounded">image.profileSheet</code> on the character JSON
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -314,13 +386,12 @@ function AssetReviewCard({
             </div>
           </div>
 
-          {/* Checkboxes — always visible, some gated on approval */}
+          {/* Checkboxes */}
           <div className="flex flex-col gap-2.5">
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
               Reference Permissions
             </p>
 
-            {/* Official reference — always editable */}
             <label className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
@@ -337,7 +408,6 @@ function AssetReviewCard({
               </span>
             </label>
 
-            {/* Generation use — only when approved-for-generation */}
             <label className={`flex items-center gap-2.5 ${isApprovingForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
               <input
                 type="checkbox"
@@ -359,7 +429,6 @@ function AssetReviewCard({
               </span>
             </label>
 
-            {/* Public use — only when approved-for-generation */}
             <label className={`flex items-center gap-2.5 ${isApprovingForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
               <input
                 type="checkbox"
@@ -421,7 +490,7 @@ function AssetReviewCard({
   );
 }
 
-// ─── Main panel ───────────────────────────────────────────────────────────────
+// ─── Main panel ──────────────────────────────────────────────────────────────────────
 
 export default function ReferenceAssetReviewPanel({
   initialAssets,
