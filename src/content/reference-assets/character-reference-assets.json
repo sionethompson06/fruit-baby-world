@@ -50,6 +50,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224836430-6y3ee0",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "smile cute",
+      "description": "smiling cute fun welcoming",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224835483-coconut-smile-happy-welcoming-cute.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1902642,
+      "uploadedAt": "2026-05-08T07:20:36.430Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
