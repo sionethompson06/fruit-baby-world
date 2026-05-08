@@ -66,10 +66,10 @@
         "Keep Ube Baby's soft purple body and bright green top.",
         "Ensure Mango Baby's warm yellow-orange body and green leaf top are accurate."
       ],
-      "status": "archived",
+      "status": "active",
       "archivedAt": "2026-05-08T02:09:12.518Z",
       "archiveReason": "",
-      "updatedAt": "2026-05-08T02:09:12.518Z"
+      "updatedAt": "2026-05-08T02:14:41.900Z"
     },
     {
       "sceneNumber": 2,
@@ -128,7 +128,7 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-08T02:09:25.511Z",
+  "updatedAt": "2026-05-08T02:14:41.900Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
