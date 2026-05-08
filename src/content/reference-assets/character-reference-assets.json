@@ -84,6 +84,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778224905444-0l3fyq",
+      "characterSlug": "coconut-baby",
+      "assetType": "expression-sheet",
+      "title": "love heart kind warm sharing loving",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224904469-coconut-love-heart-kind-warm-sharing-loving-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1821362,
+      "uploadedAt": "2026-05-08T07:21:45.444Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
