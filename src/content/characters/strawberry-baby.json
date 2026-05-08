@@ -1,0 +1,75 @@
+{
+  "id": "strawberry-baby",
+  "slug": "strawberry-baby",
+  "name": "Strawberry Baby",
+  "shortName": "Strawberry",
+  "role": "Strawberry Baby is the heart of the group.",
+  "type": "fruit-baby",
+  "status": "draft",
+  "canonStatus": "draft",
+  "publicStatus": "private",
+  "approvedForStories": false,
+  "approvedForGeneration": false,
+  "requiresReferenceAssets": true,
+  "referenceAssetsReviewed": false,
+  "generationUseAllowed": false,
+  "publicUseAllowed": false,
+  "tagline": "",
+  "fruitType": "comforting friends including everyone noticing feelings helping friends",
+  "home": "Heartberrt Hallow",
+  "shortDescription": "Strawberry Baby is the sweet, heart-forward friend in the Fruit Baby world. They bring warmth, kindness, and emotional comfort to the group. Strawberry Baby notices when friends feel left out, nervous, sad, or unsure, and they are often the first to offer a hug, a helping hand, or a cheerful idea.\n\nStrawberry Baby is not boring or overly shy. They are bright, playful, and full of gentle joy. Their strength is making others feel loved, included, and safe.",
+  "about": "",
+  "personality": [
+    "Kind Always wants friends to feel cared ",
+    "happy energy to the group Helpful\tLoves "
+  ],
+  "visualIdentity": {
+    "primaryColors": [],
+    "accentColors": [],
+    "palette": [],
+    "styleNotes": "soft round strawberry-shaped body\nbright red or rosy pink fruit color\nsmall strawberry seed details\nleafy green top like a strawberry crown\nbig expressive eyes\nfriendly smile\nsoft baby-like proportions\nplush, huggable texture\ngentle heart-shaped design language\nColor Palette\nFeature\tColor Direction\nBody\tStrawberry red, rosy red, or soft pink-red\nSeeds\tTiny yellow, cream, or pale gold dots\nLeaf top\tFresh green\nCheeks\tSoft blush pink\nAccent details\tCream, white, pastel pink, or light green"
+  },
+  "expressions": [],
+  "posesAndActions": [],
+  "storyRole": "",
+  "characterRules": {
+    "always": [
+      "Strawberry Baby is the heart of the group.",
+      "include others",
+      "repair hurt feelings",
+      "share",
+      "listen",
+      "work together",
+      "celebrate friendship",
+      "remember to be kind",
+      "comforting friends",
+      "including everyone",
+      "noticing feelings",
+      "helping friends apologize",
+      "making shared spaces feel cozy",
+      "turning small acts of kindness into big moments of connection"
+    ],
+    "never": []
+  },
+  "signatureStyle": "",
+  "catchphrases": [],
+  "image": {
+    "main": "",
+    "profileSheet": "",
+    "alt": "Strawberry Baby character — draft, no official image yet"
+  },
+  "signatureQuote": "",
+  "favoriteQuote": "“Kindness grows here!”",
+  "voiceGuide": "loving, caring, gentle",
+  "generationRestrictions": [
+    "Not approved for generation until official reference assets are uploaded and reviewed."
+  ],
+  "trademarkNotes": [
+    "Character Type: Fruit Baby character\nFruit Inspiration: Strawberry\nCore Role: The heart-sweet helper of the Fruit Baby friend group\nPersonality Anchor: Kind, gentle, cheerful, emotionally aware, inclusive\nPrimary Environment: Strawberry Sweet Meadow\n\nOne-Sentence Canon Rule\n\nStrawberry Baby is the warm, sweet heart of the Fruit Baby world — a gentle strawberry friend who helps kindness, sharing, and friendship grow."
+  ],
+  "notes": "Cute baby strawberry character, soft round strawberry-shaped fruit body, bright red and rosy pink coloring, tiny seed details, green leafy strawberry top, big expressive eyes, friendly smile, soft plush-like texture, small childlike proportions, gentle cheerful personality, preschool cartoon style, warm strawberry meadow environment, bright safe colors, part of a colorful fruit baby character universe.\n\nNegative Prompt / Avoid\n\nNo realistic human baby, no scary features, no sharp teeth, no romantic heart theme, no overly candy-like dessert character, no cluttered accessories, no dark colors, no adult proportions, no aggressive expression.",
+  "referenceAssetIds": [],
+  "createdAt": "2026-05-08T07:15:51.730Z",
+  "updatedAt": "2026-05-08T07:15:51.730Z",
+  "merchPotential": []
+}
