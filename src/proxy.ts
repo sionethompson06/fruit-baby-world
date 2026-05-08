@@ -51,5 +51,6 @@ export const config = {
     "/api/reference-assets/review-character-reference",
     "/api/github/create-character-draft",
     "/api/github/update-character-approval",
+    "/api/github/assign-primary-character-reference",
   ],
 };

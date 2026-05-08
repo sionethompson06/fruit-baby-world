@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     "/admin/episodes/**": ["./src/content/episodes/**/*.json"],
     "/stories": ["./src/content/episodes/**/*.json"],
     "/stories/**": ["./src/content/episodes/**/*.json"],
+    "/characters": ["./src/content/characters/**/*.json"],
+    "/characters/**": ["./src/content/characters/**/*.json"],
+    "/admin/characters": ["./src/content/characters/**/*.json"],
+    "/admin/characters/**": ["./src/content/characters/**/*.json"],
   },
 };
 
