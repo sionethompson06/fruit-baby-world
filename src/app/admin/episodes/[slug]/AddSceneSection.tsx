@@ -126,9 +126,10 @@ export default function AddSceneSection({
         <div>
           <h2 className="text-base font-black text-tiki-brown">Add Scene to Episode</h2>
           <p className="text-sm text-tiki-brown/60 leading-relaxed mt-0.5">
-            Add a new scene to this saved episode. After saving to GitHub and redeploying,
-            the new scene will appear in the Story Panel Prompt Builder, Animation Prompt
-            Builder, Read-Aloud Builder, and media planning sections.
+            Add a new scene to this saved episode. New scenes are appended to the end to
+            protect existing scene numbers and saved media. After saving to GitHub and
+            redeploying, the new scene will appear in the Story Panel Prompt Builder,
+            Animation Prompt Builder, Read-Aloud Builder, and media planning sections.
           </p>
         </div>
       </div>
@@ -137,7 +138,8 @@ export default function AddSceneSection({
       <div className="flex items-start gap-2.5 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-4 py-3">
         <span className="text-sm flex-shrink-0">📌</span>
         <p className="text-xs text-tiki-brown/65 leading-relaxed">
-          New scenes are added to the end of the episode.
+          New scenes are added to the end of the episode in this phase. Middle insertion
+          and scene reordering will be handled later with stable scene IDs.
           {currentSceneCount > 0 && (
             <> This episode currently has <strong>{currentSceneCount}</strong> scene{currentSceneCount !== 1 ? "s" : ""}. The new scene will be Scene <strong>{currentSceneCount + 1}</strong>.</>
           )}
@@ -156,7 +158,7 @@ export default function AddSceneSection({
             type="text"
             value={title}
             onChange={(e) => { setTitle(e.target.value); setSaveStatus("idle"); }}
-            maxLength={200}
+            maxLength={120}
             placeholder="e.g. The Kind Apology"
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -171,7 +173,7 @@ export default function AddSceneSection({
             value={summary}
             onChange={(e) => { setSummary(e.target.value); setSaveStatus("idle"); }}
             rows={3}
-            maxLength={2000}
+            maxLength={800}
             placeholder="Describe what happens in this scene."
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 leading-relaxed resize-none focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -217,7 +219,7 @@ export default function AddSceneSection({
             value={visualNotes}
             onChange={(e) => { setVisualNotes(e.target.value); setSaveStatus("idle"); }}
             rows={2}
-            maxLength={1000}
+            maxLength={800}
             placeholder="Scene setting, mood, or visual direction."
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 leading-relaxed resize-none focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -232,7 +234,7 @@ export default function AddSceneSection({
             type="text"
             value={emotionalBeat}
             onChange={(e) => { setEmotionalBeat(e.target.value); setSaveStatus("idle"); }}
-            maxLength={500}
+            maxLength={400}
             placeholder="What children should feel or notice in this scene."
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -247,7 +249,7 @@ export default function AddSceneSection({
             value={dialogueDraft}
             onChange={(e) => { setDialogueDraft(e.target.value); setSaveStatus("idle"); }}
             rows={3}
-            maxLength={2000}
+            maxLength={1200}
             placeholder={"e.g. Pineapple Baby: Are you okay?\nMango Baby: I feel a little sad."}
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 leading-relaxed resize-none focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -262,7 +264,7 @@ export default function AddSceneSection({
             value={voiceoverNotes}
             onChange={(e) => { setVoiceoverNotes(e.target.value); setSaveStatus("idle"); }}
             rows={2}
-            maxLength={1000}
+            maxLength={1200}
             placeholder="Pacing, tone, or narration notes for the read-aloud."
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 leading-relaxed resize-none focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -277,7 +279,7 @@ export default function AddSceneSection({
             value={imagePromptDraft}
             onChange={(e) => { setImagePromptDraft(e.target.value); setSaveStatus("idle"); }}
             rows={2}
-            maxLength={1000}
+            maxLength={1500}
             placeholder="Custom image prompt, or leave blank to use a safe default."
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 leading-relaxed resize-none focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />
@@ -292,7 +294,7 @@ export default function AddSceneSection({
             value={animationPromptDraft}
             onChange={(e) => { setAnimationPromptDraft(e.target.value); setSaveStatus("idle"); }}
             rows={2}
-            maxLength={1000}
+            maxLength={1500}
             placeholder="Custom animation prompt, or leave blank to use a safe default."
             className="w-full text-sm text-tiki-brown/80 bg-white border border-tiki-brown/20 rounded-xl px-3 py-2.5 leading-relaxed resize-none focus:outline-none focus:border-ube-purple/40 focus:ring-1 focus:ring-ube-purple/20 transition-colors"
           />

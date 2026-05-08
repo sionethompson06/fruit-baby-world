@@ -187,7 +187,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const title = sanitize(rawScene.title, 200);
+  const title = sanitize(rawScene.title, 120);
   if (title.length < 2) {
     return Response.json(
       {
@@ -209,7 +209,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const summary = sanitize(rawScene.summary, 2000);
+  const summary = sanitize(rawScene.summary, 800);
   if (summary.length < 10) {
     return Response.json(
       {
@@ -267,18 +267,18 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  const visualNotes = sanitize(rawScene.visualNotes, 1000);
-  const emotionalBeat = sanitize(rawScene.emotionalBeat, 500);
+  const visualNotes = sanitize(rawScene.visualNotes, 800);
+  const emotionalBeat = sanitize(rawScene.emotionalBeat, 400);
   const dialogueDraftRaw = rawScene.dialogueDraft;
   const dialogueDraft: string | string[] = Array.isArray(dialogueDraftRaw)
     ? (dialogueDraftRaw as unknown[])
         .filter((l): l is string => typeof l === "string")
         .map((l) => l.trim())
         .filter(Boolean)
-    : sanitize(dialogueDraftRaw, 2000);
-  const voiceoverNotes = sanitize(rawScene.voiceoverNotes, 1000);
-  const imagePromptDraftInput = sanitize(rawScene.imagePromptDraft, 1000);
-  const animationPromptDraftInput = sanitize(rawScene.animationPromptDraft, 1000);
+    : sanitize(dialogueDraftRaw, 1200);
+  const voiceoverNotes = sanitize(rawScene.voiceoverNotes, 1200);
+  const imagePromptDraftInput = sanitize(rawScene.imagePromptDraft, 1500);
+  const animationPromptDraftInput = sanitize(rawScene.animationPromptDraft, 1500);
 
   // ── Build server-controlled file path ─────────────────────────────────────────
   const filePath = `src/content/episodes/${episodeSlug}.json`;
