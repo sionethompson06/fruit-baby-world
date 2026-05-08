@@ -8,17 +8,13 @@
 //          Does not modify official character files.
 
 import { put, BlobError } from "@vercel/blob";
+import fs from "fs";
+import path from "path";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const KNOWN_CHARACTER_SLUGS = new Set([
-  "pineapple-baby",
-  "ube-baby",
-  "mango-baby",
-  "kiwi-baby",
-  "coconut-baby",
-  "tiki",
-]);
+// Safe slug: lowercase letters, numbers, hyphens only — no slashes, dots, or spaces.
+const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 
 const VALID_ASSET_TYPES = [
   "profile-sheet",
@@ -76,6 +72,7 @@ type UploadResult =
       ok: false;
       status:
         | "validation_error"
+        | "character_not_found"
         | "setup_required"
         | "blob_error"
         | "github_error";
@@ -181,17 +178,39 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Validate characterSlug ───────────────────────────────────────────────────
   const characterSlug = formData.get("characterSlug");
+
+  // Format check first: lowercase, numbers, hyphens only, no path traversal
   if (
     typeof characterSlug !== "string" ||
-    !KNOWN_CHARACTER_SLUGS.has(characterSlug)
+    !SAFE_SLUG.test(characterSlug) ||
+    characterSlug.length > 80
   ) {
     return Response.json(
       {
         ok: false,
         status: "validation_error",
-        message: "characterSlug must be a known character slug.",
+        message:
+          "characterSlug must contain only lowercase letters, numbers, and hyphens.",
       } satisfies UploadResult,
       { status: 400 }
+    );
+  }
+
+  // Existence check: character JSON must exist on disk (covers both official and draft characters)
+  const charFilePath = path.join(
+    process.cwd(),
+    "src/content/characters",
+    `${characterSlug}.json`
+  );
+  if (!fs.existsSync(charFilePath)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "character_not_found",
+        message:
+          "Character was not found. Create the character draft before uploading reference assets.",
+      } satisfies UploadResult,
+      { status: 404 }
     );
   }
 

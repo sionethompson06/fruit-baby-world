@@ -199,6 +199,11 @@ export default function CharacterReferenceUploadForm({
             </option>
           ))}
         </select>
+        {characterSlug && characters.find((c) => c.slug === characterSlug)?.isDraft && (
+          <p className="text-xs text-tiki-brown/45 mt-1 leading-relaxed">
+            Draft character — uploads remain <strong className="font-semibold">needs-review</strong> and are not approved for generation automatically.
+          </p>
+        )}
       </div>
 
       {/* Asset type selector */}
