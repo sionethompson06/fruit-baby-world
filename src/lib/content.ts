@@ -85,6 +85,8 @@ export type Character = {
   generationRestrictions?: string[];
   notes?: string;
   referenceAssetIds?: string[];
+  approvalNotes?: string;
+  approvedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 };

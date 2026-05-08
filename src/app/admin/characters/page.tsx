@@ -16,6 +16,7 @@ import CharacterReferenceUploadForm, {
 } from "./CharacterReferenceUploadForm";
 import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
 import ReferenceAssetReviewPanel from "./ReferenceAssetReviewPanel";
+import CharacterApprovalPanel from "./CharacterApprovalPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -697,6 +698,15 @@ function CharacterReferenceCard({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const OFFICIAL_CHARACTER_SLUGS = new Set([
+  "pineapple-baby",
+  "ube-baby",
+  "mango-baby",
+  "kiwi-baby",
+  "coconut-baby",
+  "tiki",
+]);
+
 export default function AdminCharactersPage() {
   const characters = loadAllAdminCharacters();
   const assetSummaries = characters.map(checkCharacterAssets);
@@ -711,6 +721,18 @@ export default function AdminCharactersPage() {
     name: c.name,
     isDraft: c.status === "draft",
   }));
+
+  // Compute approved generation reference count per character
+  const approvedRefCounts: Record<string, number> = {};
+  for (const c of characters) {
+    approvedRefCounts[c.slug] = uploadedAssets.filter(
+      (a) =>
+        a.characterSlug === c.slug &&
+        a.reviewStatus === "approved" &&
+        a.approvedForGeneration === true &&
+        a.generationUseAllowed === true
+    ).length;
+  }
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -792,6 +814,13 @@ export default function AdminCharactersPage() {
 
         {/* ── Uploaded Reference Assets (review panel) ── */}
         <ReferenceAssetReviewPanel initialAssets={uploadedAssets} />
+
+        {/* ── Character Approval ── */}
+        <CharacterApprovalPanel
+          characters={characters}
+          approvedRefCounts={approvedRefCounts}
+          officialSlugs={OFFICIAL_CHARACTER_SLUGS}
+        />
 
         {/* ── Reference Asset Readiness Summary ── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
