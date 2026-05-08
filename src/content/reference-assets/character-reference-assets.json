@@ -13,13 +13,13 @@
       "uploadedAt": "2026-05-08T07:18:49.074Z",
       "approvedForGeneration": true,
       "requiresReview": false,
-      "reviewStatus": "approved",
-      "reviewedAt": "2026-05-08T08:04:26.671Z",
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-08T20:39:04.744Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": true,
       "isOfficialReference": true,
-      "updatedAt": "2026-05-08T08:04:26.671Z"
+      "updatedAt": "2026-05-08T20:39:04.744Z"
     },
     {
       "id": "ref-1778224774487-wft736",
