@@ -1,0 +1,76 @@
+{
+  "id": "dragonfruit-baby",
+  "slug": "dragonfruit-baby",
+  "name": "DragonFruit Baby",
+  "shortName": "Dragonfruit",
+  "role": "Supporting Friend",
+  "type": "fruit-baby",
+  "status": "draft",
+  "canonStatus": "draft",
+  "publicStatus": "private",
+  "approvedForStories": false,
+  "approvedForGeneration": false,
+  "requiresReferenceAssets": true,
+  "referenceAssetsReviewed": false,
+  "generationUseAllowed": false,
+  "publicUseAllowed": false,
+  "tagline": "",
+  "fruitType": "Dragon Fruit Baby is a bright, brave, and magical",
+  "home": "Dragon Fruit Haven",
+  "shortDescription": "Dragon Fruit Baby is bold, imaginative, and full of wonder. They love discovering hidden places, trying new things, and helping their friends see the magic in everyday moments. Dragon Fruit Baby can be a little dramatic in the cutest way, often turning simple adventures into big, exciting quests.\n\nThey are brave, expressive, and creative. When the group needs confidence or a spark of imagination, Dragon Fruit Baby is usually the one to say, “Let’s make it magical!”",
+  "about": "",
+  "personality": [
+    "encouraging friends to be brave imaginin",
+    "energy",
+    "and color to the group"
+  ],
+  "visualIdentity": {
+    "primaryColors": [],
+    "accentColors": [],
+    "palette": [],
+    "styleNotes": "Dragon Fruit Baby has a bright pink dragon fruit body with soft green leafy accents inspired by dragon fruit skin. Their look should feel tropical, playful, and slightly magical without being scary. They may have little leafy points, a round baby-like shape, big expressive eyes, and a cheerful face."
+  },
+  "expressions": [],
+  "posesAndActions": [],
+  "storyRole": "",
+  "characterRules": {
+    "always": [
+      "Trait\tDirection",
+      "Magical\tSparkly, glowing, wonder-filled, but still soft and kid-friendly",
+      "Brave\tLoves exploring and trying new things",
+      "Creative\tTurns ordinary moments into imaginative adventures",
+      "Expressive\tBig reactions, big ideas, playful drama",
+      "Kind\tUses imagination to help friends, not show off",
+      "imaginative",
+      "brave",
+      "playful",
+      "dramatic in a cute way",
+      "encouraging",
+      "curious",
+      "energetic",
+      "emotionally expressive"
+    ],
+    "never": []
+  },
+  "signatureStyle": "",
+  "catchphrases": [],
+  "image": {
+    "main": "",
+    "profileSheet": "",
+    "alt": "DragonFruit Baby character — draft, no official image yet"
+  },
+  "signatureQuote": "",
+  "favoriteQuote": "“Let’s make it magical!”",
+  "voiceGuide": "warm, magical, fun",
+  "generationRestrictions": [
+    "Not approved for generation until official reference assets are uploaded and reviewed."
+  ],
+  "trademarkNotes": [
+    "## Dragon Fruit Baby — Trademark + Canon Notes\n\n### Official Character Name\n\n**Dragon Fruit Baby**\n\nUse consistently as two words: **Dragon Fruit**, not Dragonfruit, unless we intentionally choose the closed version later.\n\n**Preferred brand spelling:**\n**Dragon Fruit Baby**\n\n**Avoid using interchangeably:**\n\n* Dragonfruit Baby\n* Dragon baby\n* Baby Dragon\n* Pitaya Baby, unless used as a secondary educational reference\n\n---\n\n## Canon Identity\n\n**Character Type:** Fruit Baby character\n**Fruit Inspiration:** Dragon fruit / pitaya\n**Core Role:** The spark of imagination in the Fruit Baby friend group\n**Personality Anchor:** Brave, magical, expressive, creative, kind\n**Primary Environment:** **Dragon Glow Grove**\n\n### One-Sentence Canon Rule\n\n**Dragon Fruit Baby is a bright, brave, magical"
+  ],
+  "notes": "",
+  "referenceAssetIds": [],
+  "createdAt": "2026-05-08T07:05:17.035Z",
+  "updatedAt": "2026-05-08T07:05:17.035Z",
+  "merchPotential": []
+}
