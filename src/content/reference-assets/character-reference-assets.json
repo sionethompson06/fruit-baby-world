@@ -245,12 +245,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-08T20:40:48.889Z",
+      "reviewedAt": "2026-05-08T20:43:58.993Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": true,
       "isOfficialReference": true,
-      "updatedAt": "2026-05-08T20:40:48.889Z"
+      "updatedAt": "2026-05-08T20:43:58.993Z"
     }
   ]
 }
