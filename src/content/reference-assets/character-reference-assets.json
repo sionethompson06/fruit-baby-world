@@ -226,6 +226,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778230069351-26wun4",
+      "characterSlug": "strawberry-baby",
+      "assetType": "profile-sheet",
+      "title": "Strawberry Baby",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778230068346-strawberry-baby-character-profile.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2234185,
+      "uploadedAt": "2026-05-08T08:47:49.351Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
