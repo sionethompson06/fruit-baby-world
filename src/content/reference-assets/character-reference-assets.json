@@ -200,11 +200,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1937200,
       "uploadedAt": "2026-05-08T07:23:55.218Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved",
+      "reviewedAt": "2026-05-08T08:06:14.700Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": true,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-08T08:06:14.700Z"
     }
   ]
 }
