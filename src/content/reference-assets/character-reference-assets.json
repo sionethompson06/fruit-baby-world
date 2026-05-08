@@ -209,6 +209,23 @@
       "publicUseAllowed": true,
       "isOfficialReference": true,
       "updatedAt": "2026-05-08T08:06:14.700Z"
+    },
+    {
+      "id": "ref-1778229978412-ju5m76",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "profile-sheet",
+      "title": "Dragonfruit Baby",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2150553,
+      "uploadedAt": "2026-05-08T08:46:18.413Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
