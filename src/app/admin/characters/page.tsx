@@ -719,7 +719,12 @@ export default function AdminCharactersPage() {
   const characterOptions: CharacterOption[] = characters.map((c) => ({
     slug: c.slug,
     name: c.name,
-    isDraft: c.status === "draft",
+    isDraft:
+      c.status === "draft" ||
+      c.approvalMode === "draft" ||
+      (!c.approvalMode &&
+        c.status !== "active" &&
+        c.publicUseAllowed !== true),
   }));
 
   // Compute approved generation reference count per character
@@ -732,6 +737,13 @@ export default function AdminCharactersPage() {
         a.approvedForGeneration === true &&
         a.generationUseAllowed === true
     ).length;
+  }
+
+  // Compute built-in reference validity per character (from file-checked asset summaries)
+  const builtInRefValid: Record<string, boolean> = {};
+  for (let i = 0; i < characters.length; i++) {
+    builtInRefValid[characters[i].slug] =
+      assetSummaries[i].hasAnyValidReference;
   }
 
   return (
@@ -822,6 +834,7 @@ export default function AdminCharactersPage() {
         <CharacterApprovalPanel
           characters={characters}
           approvedRefCounts={approvedRefCounts}
+          builtInRefValid={builtInRefValid}
           officialSlugs={OFFICIAL_CHARACTER_SLUGS}
         />
 

@@ -1,10 +1,15 @@
 // POST /api/github/update-character-approval
-// Admin-only: Update character approval metadata in GitHub JSON.
+// Admin-only: Update character approval mode in GitHub JSON.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
-// Safety:  Only updates approval metadata fields. Does not change character identity,
+// Safety:  Only updates approval metadata. Does not change character identity,
 //          visual data, image paths, or official asset files.
-//          Generation approval requires at least one approved generation reference asset.
+//
+// Approval modes:
+//   draft             → private, not approved for stories/generation
+//   official-internal → admin use, approved for story/media/generation, not public
+//   public            → visible on public character pages, fully approved
+//   archived          → inactive, private
 
 import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
 
@@ -15,19 +20,10 @@ const CHARACTERS_PATH = "src/content/characters";
 const REFERENCE_ASSETS_PATH =
   "src/content/reference-assets/character-reference-assets.json";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const VALID_MODES = ["draft", "official-internal", "public", "archived"] as const;
+type ApprovalMode = (typeof VALID_MODES)[number];
 
-type ApprovalData = {
-  status: "draft" | "approved";
-  canonStatus: string;
-  publicStatus: string;
-  approvedForStories: boolean;
-  approvedForGeneration: boolean;
-  referenceAssetsReviewed: boolean;
-  generationUseAllowed: boolean;
-  publicUseAllowed: boolean;
-  approvalNotes?: string;
-};
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type ApprovalResult =
   | {
@@ -36,7 +32,10 @@ type ApprovalResult =
       path: string;
       commitMessage: string;
       character: Record<string, unknown>;
+      approvalMode: ApprovalMode;
       approvedReferenceCount: number;
+      hasValidBuiltInReference: boolean;
+      generationReady: boolean;
       htmlUrl: string;
       notes: string[];
     }
@@ -44,10 +43,12 @@ type ApprovalResult =
       ok: false;
       status:
         | "validation_error"
+        | "unauthorized"
         | "setup_required"
         | "character_not_found"
         | "invalid_character_json"
         | "missing_approved_references"
+        | "missing_required_fields"
         | "github_error";
       message: string;
     };
@@ -82,6 +83,88 @@ function getHtmlUrl(putData: Record<string, unknown>): string {
   return "";
 }
 
+function hasDangerousContent(s: string): boolean {
+  return /<[a-z/]/i.test(s) || /javascript\s*:/i.test(s);
+}
+
+function hasBuiltInReference(char: Record<string, unknown>): boolean {
+  const image = char.image;
+  if (!isRecord(image)) return false;
+  return (
+    (typeof image.profileSheet === "string" &&
+      image.profileSheet.trim().length > 0) ||
+    (typeof image.main === "string" && image.main.trim().length > 0)
+  );
+}
+
+// ─── Mode → compatibility fields mapper ──────────────────────────────────────
+
+function mapModeToFields(
+  mode: ApprovalMode,
+  existing: Record<string, unknown>,
+  approvedReferenceCount: number,
+  now: string
+): Record<string, unknown> {
+  switch (mode) {
+    case "draft":
+      return {
+        status: "draft",
+        canonStatus: "draft",
+        publicStatus: "private",
+        approvedForStories: false,
+        approvedForGeneration: false,
+        referenceAssetsReviewed: approvedReferenceCount > 0,
+        generationUseAllowed: false,
+        publicUseAllowed: false,
+        approvalMode: "draft",
+      };
+    case "official-internal":
+      return {
+        status: "approved",
+        canonStatus: "official-internal",
+        publicStatus: "private",
+        approvedForStories: true,
+        approvedForGeneration: true,
+        referenceAssetsReviewed: true,
+        generationUseAllowed: true,
+        publicUseAllowed: false,
+        approvalMode: "official-internal",
+        approvedAt:
+          typeof existing.approvedAt === "string" ? existing.approvedAt : now,
+      };
+    case "public":
+      return {
+        status: "active",
+        canonStatus: "public",
+        publicStatus: "public",
+        approvedForStories: true,
+        approvedForGeneration: true,
+        referenceAssetsReviewed: true,
+        generationUseAllowed: true,
+        publicUseAllowed: true,
+        approvalMode: "public",
+        approvedAt:
+          typeof existing.approvedAt === "string" ? existing.approvedAt : now,
+        publishedAt:
+          typeof existing.publishedAt === "string"
+            ? existing.publishedAt
+            : now,
+      };
+    case "archived":
+      return {
+        status: "archived",
+        canonStatus: "archived",
+        publicStatus: "private",
+        approvedForStories: false,
+        approvedForGeneration: false,
+        generationUseAllowed: false,
+        publicUseAllowed: false,
+        approvalMode: "archived",
+        archivedAt: now,
+      };
+  }
+}
+
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: Request): Promise<Response> {
@@ -101,6 +184,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // ── Parse body ───────────────────────────────────────────────────────────────
   let body: unknown;
   try {
     body = await request.json();
@@ -126,6 +210,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // ── Validate characterSlug ───────────────────────────────────────────────────
   if (!isValidSlug(body.characterSlug)) {
     return Response.json(
       {
@@ -139,66 +224,29 @@ export async function POST(request: Request): Promise<Response> {
   }
   const characterSlug = body.characterSlug as string;
 
-  const approval = body.approval;
-  if (!isRecord(approval)) {
+  // ── Validate approvalMode ────────────────────────────────────────────────────
+  if (!(VALID_MODES as readonly string[]).includes(body.approvalMode as string)) {
     return Response.json(
       {
         ok: false,
         status: "validation_error",
-        message: "approval must be an object.",
+        message: `approvalMode must be one of: ${VALID_MODES.join(", ")}.`,
       } satisfies ApprovalResult,
       { status: 400 }
     );
   }
+  const approvalMode = body.approvalMode as ApprovalMode;
 
-  const {
-    status: apStatus,
-    canonStatus,
-    publicStatus,
-    approvedForStories,
-    approvedForGeneration,
-    referenceAssetsReviewed,
-    generationUseAllowed,
-    publicUseAllowed,
-    approvalNotes,
-  } = approval as Record<string, unknown>;
-
-  if (apStatus !== "draft" && apStatus !== "approved") {
+  // ── Validate approvalNotes ───────────────────────────────────────────────────
+  const rawNotes = body.approvalNotes;
+  const approvalNotes =
+    typeof rawNotes === "string" ? rawNotes.trim().slice(0, 1000) : "";
+  if (approvalNotes && hasDangerousContent(approvalNotes)) {
     return Response.json(
       {
         ok: false,
         status: "validation_error",
-        message: 'approval.status must be "draft" or "approved".',
-      } satisfies ApprovalResult,
-      { status: 400 }
-    );
-  }
-  for (const [key, val] of [
-    ["approvedForStories", approvedForStories],
-    ["approvedForGeneration", approvedForGeneration],
-    ["referenceAssetsReviewed", referenceAssetsReviewed],
-    ["generationUseAllowed", generationUseAllowed],
-    ["publicUseAllowed", publicUseAllowed],
-  ] as [string, unknown][]) {
-    if (typeof val !== "boolean") {
-      return Response.json(
-        {
-          ok: false,
-          status: "validation_error",
-          message: `approval.${key} must be a boolean.`,
-        } satisfies ApprovalResult,
-        { status: 400 }
-      );
-    }
-  }
-
-  if (publicUseAllowed === true && approvedForStories !== true) {
-    return Response.json(
-      {
-        ok: false,
-        status: "validation_error",
-        message:
-          "approvedForStories must be true before a character can be made public.",
+        message: "approvalNotes contains invalid content.",
       } satisfies ApprovalResult,
       { status: 400 }
     );
@@ -210,17 +258,13 @@ export async function POST(request: Request): Promise<Response> {
     "Content-Type": "application/json",
     "X-GitHub-Api-Version": "2022-11-28",
   };
-  const ref = `?ref=${encodeURIComponent(branch)}`;
+  const refParam = `?ref=${encodeURIComponent(branch)}`;
 
+  // ── Count approved reference assets ─────────────────────────────────────────
   let approvedReferenceCount = 0;
-
   try {
-    const refAssetsUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${REFERENCE_ASSETS_PATH}${ref}`;
-    const refRes = await fetch(refAssetsUrl, {
-      method: "GET",
-      headers: ghHeaders,
-    });
-
+    const refUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${REFERENCE_ASSETS_PATH}${refParam}`;
+    const refRes = await fetch(refUrl, { method: "GET", headers: ghHeaders });
     if (refRes.ok) {
       const refData = (await refRes.json()) as Record<string, unknown>;
       if (typeof refData.content === "string") {
@@ -243,23 +287,9 @@ export async function POST(request: Request): Promise<Response> {
     // Non-fatal — treat as 0 approved references
   }
 
-  if (
-    (approvedForGeneration === true || generationUseAllowed === true) &&
-    approvedReferenceCount === 0
-  ) {
-    return Response.json(
-      {
-        ok: false,
-        status: "missing_approved_references",
-        message:
-          "This character needs at least one approved generation reference asset before generation approval.",
-      } satisfies ApprovalResult,
-      { status: 422 }
-    );
-  }
-
+  // ── Fetch character JSON from GitHub ────────────────────────────────────────
   const charPath = `${CHARACTERS_PATH}/${characterSlug}.json`;
-  const charUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${charPath}${ref}`;
+  const charUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${charPath}${refParam}`;
 
   let charSha: string;
   let existingChar: Record<string, unknown>;
@@ -283,7 +313,7 @@ export async function POST(request: Request): Promise<Response> {
         {
           ok: false,
           status: "github_error",
-          message: `Failed to read character JSON from GitHub (${charRes.status}): ${errText.slice(0, 200)}`,
+          message: `Failed to read character from GitHub (${charRes.status}): ${errText.slice(0, 200)}`,
         } satisfies ApprovalResult,
         { status: 502 }
       );
@@ -314,7 +344,9 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     try {
-      existingChar = JSON.parse(decodeGitHubContent(charData.content)) as Record<string, unknown>;
+      existingChar = JSON.parse(
+        decodeGitHubContent(charData.content)
+      ) as Record<string, unknown>;
     } catch {
       return Response.json(
         {
@@ -337,61 +369,128 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  // ── Check valid built-in reference ───────────────────────────────────────────
+  const hasBuiltIn = hasBuiltInReference(existingChar);
+  const hasRef = approvedReferenceCount > 0 || hasBuiltIn;
+
+  // ── Approval guardrails ──────────────────────────────────────────────────────
+  if (approvalMode === "official-internal" && !hasRef) {
+    return Response.json(
+      {
+        ok: false,
+        status: "missing_approved_references",
+        message:
+          "This character needs at least one approved reference asset or valid official reference before becoming Official Internal.",
+      } satisfies ApprovalResult,
+      { status: 422 }
+    );
+  }
+
+  if (approvalMode === "public") {
+    if (!hasRef) {
+      return Response.json(
+        {
+          ok: false,
+          status: "missing_approved_references",
+          message:
+            "This character needs at least one approved reference asset or valid official reference before being published.",
+        } satisfies ApprovalResult,
+        { status: 422 }
+      );
+    }
+
+    const missingFields: string[] = [];
+    if (
+      !existingChar.shortDescription ||
+      (existingChar.shortDescription as string).trim().length === 0
+    ) {
+      missingFields.push("shortDescription");
+    }
+    const vi = existingChar.visualIdentity;
+    if (
+      !isRecord(vi) ||
+      !vi.styleNotes ||
+      (vi.styleNotes as string).trim().length === 0
+    ) {
+      missingFields.push("visualIdentity.styleNotes");
+    }
+    const cr = existingChar.characterRules;
+    if (
+      !isRecord(cr) ||
+      (!(Array.isArray(cr.always) && cr.always.length > 0) &&
+        !(Array.isArray(cr.never) && cr.never.length > 0))
+    ) {
+      missingFields.push("characterRules");
+    }
+
+    if (missingFields.length > 0) {
+      return Response.json(
+        {
+          ok: false,
+          status: "missing_required_fields",
+          message: `Character is missing required fields for public publishing: ${missingFields.join(", ")}.`,
+        } satisfies ApprovalResult,
+        { status: 422 }
+      );
+    }
+  }
+
+  // ── Build updated character ──────────────────────────────────────────────────
   const now = new Date().toISOString();
-  const isMovingToApproved = existingChar.status === "draft" && apStatus === "approved";
+  const modeFields = mapModeToFields(
+    approvalMode,
+    existingChar,
+    approvedReferenceCount,
+    now
+  );
 
   const updatedChar: Record<string, unknown> = {
     ...existingChar,
-    status: apStatus,
-    canonStatus: typeof canonStatus === "string" ? canonStatus : apStatus,
-    publicStatus: typeof publicStatus === "string" ? publicStatus : (publicUseAllowed ? "public" : "private"),
-    approvedForStories,
-    approvedForGeneration,
-    referenceAssetsReviewed,
-    generationUseAllowed,
-    publicUseAllowed,
+    ...modeFields,
     approvalNotes:
-      typeof approvalNotes === "string" && (approvalNotes as string).trim()
-        ? (approvalNotes as string).trim().slice(0, 500)
-        : existingChar.approvalNotes ?? undefined,
+      approvalNotes || existingChar.approvalNotes || undefined,
     updatedAt: now,
   };
 
-  if (isMovingToApproved) {
-    updatedChar.approvedAt = now;
-  }
+  const generationReady =
+    (approvalMode === "official-internal" || approvalMode === "public") &&
+    hasRef;
 
-  const charName = typeof existingChar.name === "string" ? existingChar.name : characterSlug;
+  // ── Commit message ───────────────────────────────────────────────────────────
+  const charName =
+    typeof existingChar.name === "string" ? existingChar.name : characterSlug;
   let commitMessage: string;
-  if (apStatus === "draft") {
-    commitMessage = `Set character private: ${charName}`;
-  } else if (publicUseAllowed === true) {
-    commitMessage = `Publish character: ${charName}`;
-  } else if (approvedForGeneration === true) {
-    commitMessage = `Approve character for stories + generation: ${charName}`;
-  } else if (approvedForStories === true) {
-    commitMessage = `Approve character for stories: ${charName}`;
-  } else {
-    commitMessage = `Update character approval: ${charName}`;
+  switch (approvalMode) {
+    case "draft":
+      commitMessage = `Set character draft: ${charName}`;
+      break;
+    case "official-internal":
+      commitMessage = `Set character official internal: ${charName}`;
+      break;
+    case "public":
+      commitMessage = `Publish character: ${charName}`;
+      break;
+    case "archived":
+      commitMessage = `Archive character: ${charName}`;
+      break;
   }
 
+  // ── Commit updated JSON to GitHub ────────────────────────────────────────────
   const updatedJson = JSON.stringify(updatedChar, null, 2) + "\n";
   const updatedBase64 = Buffer.from(updatedJson, "utf8").toString("base64");
-
   const charApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${charPath}`;
-  const commitBody = {
-    message: commitMessage,
-    content: updatedBase64,
-    branch,
-    sha: charSha,
-  };
 
   let htmlUrl = "";
   try {
     const putRes = await fetch(charApiUrl, {
       method: "PUT",
       headers: ghHeaders,
-      body: JSON.stringify(commitBody),
+      body: JSON.stringify({
+        message: commitMessage,
+        content: updatedBase64,
+        branch,
+        sha: charSha,
+      }),
     });
 
     if (!putRes.ok) {
@@ -400,7 +499,7 @@ export async function POST(request: Request): Promise<Response> {
         {
           ok: false,
           status: "github_error",
-          message: `Failed to commit character approval to GitHub (${putRes.status}): ${errText.slice(0, 200)}`,
+          message: `Failed to commit character to GitHub (${putRes.status}): ${errText.slice(0, 200)}`,
         } satisfies ApprovalResult,
         { status: 502 }
       );
@@ -427,7 +526,10 @@ export async function POST(request: Request): Promise<Response> {
       path: charPath,
       commitMessage,
       character: updatedChar,
+      approvalMode,
       approvedReferenceCount,
+      hasValidBuiltInReference: hasBuiltIn,
+      generationReady,
       htmlUrl,
       notes: [
         "Character approval metadata was updated.",

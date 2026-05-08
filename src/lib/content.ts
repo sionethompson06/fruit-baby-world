@@ -30,7 +30,7 @@ export type Character = {
   shortName: string;
   role: string;
   type: "fruit-baby" | "villain" | "other";
-  status: "active" | "draft";
+  status: "active" | "draft" | "approved" | "archived";
   tagline: string;
   shortDescription: string;
   // Extended official profile fields
@@ -86,7 +86,10 @@ export type Character = {
   notes?: string;
   referenceAssetIds?: string[];
   approvalNotes?: string;
+  approvalMode?: "draft" | "official-internal" | "public" | "archived";
   approvedAt?: string;
+  publishedAt?: string;
+  archivedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -189,11 +192,19 @@ export function getAllCharacters(): Character[] {
 }
 
 // Returns only characters safe for public display.
-// A character is public if it is active AND publicUseAllowed is not explicitly false.
+// New-style: approvalMode === "public" shows it; "draft"/"official-internal"/"archived" hides it.
+// Legacy: status === "active" && publicUseAllowed !== false (existing official characters).
 export function getPublicCharacters(): Character[] {
-  return characters.filter(
-    (c) => c.status === "active" && c.publicUseAllowed !== false
-  );
+  return characters.filter((c) => {
+    if (
+      c.approvalMode === "draft" ||
+      c.approvalMode === "official-internal" ||
+      c.approvalMode === "archived"
+    )
+      return false;
+    if (c.approvalMode === "public") return true;
+    return c.status === "active" && c.publicUseAllowed !== false;
+  });
 }
 
 export function getCharacterBySlug(slug: string): Character | undefined {
@@ -204,6 +215,13 @@ export function getCharacterBySlug(slug: string): Character | undefined {
 export function getPublicCharacterBySlug(slug: string): Character | undefined {
   const c = getCharacterBySlug(slug);
   if (!c) return undefined;
+  if (
+    c.approvalMode === "draft" ||
+    c.approvalMode === "official-internal" ||
+    c.approvalMode === "archived"
+  )
+    return undefined;
+  if (c.approvalMode === "public") return c;
   if (c.status !== "active" || c.publicUseAllowed === false) return undefined;
   return c;
 }
