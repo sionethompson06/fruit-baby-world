@@ -18,6 +18,7 @@ import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
 import ReferenceAssetReviewPanel from "./ReferenceAssetReviewPanel";
 import CharacterApprovalPanel from "./CharacterApprovalPanel";
 import PrimaryReferenceAssignPanel from "./PrimaryReferenceAssignPanel";
+import OfficialCharacterProfileBuilder from "./OfficialCharacterProfileBuilder";
 
 export const dynamic = "force-dynamic";
 
@@ -691,6 +692,12 @@ export default function AdminCharactersPage() {
 
         {/* Primary Official Reference Assignment */}
         <PrimaryReferenceAssignPanel
+          characters={characters}
+          approvedRefsBySlug={approvedRefsBySlug}
+        />
+
+        {/* Official Character Profile Builder */}
+        <OfficialCharacterProfileBuilder
           characters={characters}
           approvedRefsBySlug={approvedRefsBySlug}
         />
