@@ -56,7 +56,7 @@
   "catchphrases": [],
   "image": {
     "main": "",
-    "profileSheet": "",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
     "alt": "DragonFruit Baby character — draft, no official image yet"
   },
   "signatureQuote": "",
@@ -71,9 +71,12 @@
   "notes": "",
   "referenceAssetIds": [],
   "createdAt": "2026-05-08T07:05:17.035Z",
-  "updatedAt": "2026-05-08T23:19:47.502Z",
+  "updatedAt": "2026-05-09T02:35:38.525Z",
   "merchPotential": [],
   "approvalMode": "official-internal",
   "approvedAt": "2026-05-08T22:38:51.541Z",
-  "publishedAt": "2026-05-08T22:38:51.541Z"
+  "publishedAt": "2026-05-08T22:38:51.541Z",
+  "primaryReferenceAssetId": "ref-1778229978412-ju5m76",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
+  "primaryReferenceAssetType": "profile-sheet"
 }
