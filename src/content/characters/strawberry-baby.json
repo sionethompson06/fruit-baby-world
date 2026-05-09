@@ -55,7 +55,7 @@
   "catchphrases": [],
   "image": {
     "main": "",
-    "profileSheet": "",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778230068346-strawberry-baby-character-profile.png",
     "alt": "Strawberry Baby character — draft, no official image yet"
   },
   "signatureQuote": "",
@@ -70,6 +70,9 @@
   "notes": "Cute baby strawberry character, soft round strawberry-shaped fruit body, bright red and rosy pink coloring, tiny seed details, green leafy strawberry top, big expressive eyes, friendly smile, soft plush-like texture, small childlike proportions, gentle cheerful personality, preschool cartoon style, warm strawberry meadow environment, bright safe colors, part of a colorful fruit baby character universe.\n\nNegative Prompt / Avoid\n\nNo realistic human baby, no scary features, no sharp teeth, no romantic heart theme, no overly candy-like dessert character, no cluttered accessories, no dark colors, no adult proportions, no aggressive expression.",
   "referenceAssetIds": [],
   "createdAt": "2026-05-08T07:15:51.730Z",
-  "updatedAt": "2026-05-08T07:15:51.730Z",
-  "merchPotential": []
+  "updatedAt": "2026-05-09T02:35:42.688Z",
+  "merchPotential": [],
+  "primaryReferenceAssetId": "ref-1778230069351-26wun4",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778230068346-strawberry-baby-character-profile.png",
+  "primaryReferenceAssetType": "profile-sheet"
 }
