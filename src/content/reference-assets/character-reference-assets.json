@@ -421,6 +421,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378824126-zhhe6w",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "sleepy_tired_goodnight_dreaming",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378823013-dragon-fruit-tired-sleepy-goodnight-dreaming-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1694567,
+      "uploadedAt": "2026-05-10T02:07:04.126Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
