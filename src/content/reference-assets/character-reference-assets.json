@@ -336,6 +336,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378614895-yualnu",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "love_happy_caring_kind_giving_sharing",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378614203-dragon-fruit-love-happy-caring-kind-giving-sharing-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1710340,
+      "uploadedAt": "2026-05-10T02:03:34.895Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
