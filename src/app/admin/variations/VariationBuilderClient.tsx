@@ -131,7 +131,29 @@ function buildVariationPrompt(
   lines.push("");
 
   lines.push("D. CHARACTER-SPECIFIC FIDELITY RULES");
-  charRules.forEach((rule) => lines.push(`• ${rule}`));
+  if (charRules.length > 0) {
+    charRules.forEach((rule) => lines.push(`• ${rule}`));
+  } else {
+    // New character — fall back to character JSON profile data
+    if (character.visualIdentity?.styleNotes) {
+      lines.push(`• ${character.visualIdentity.styleNotes}`);
+    }
+    if (Array.isArray((character as { doNotChangeRules?: string[] }).doNotChangeRules)) {
+      ((character as { doNotChangeRules?: string[] }).doNotChangeRules ?? [])
+        .filter((r): r is string => typeof r === "string" && r.trim().length > 0)
+        .forEach((r) => lines.push(`• ${r}`));
+    }
+    if (Array.isArray(character.characterRules?.always)) {
+      character.characterRules.always
+        .filter((r): r is string => typeof r === "string" && r.trim().length > 0)
+        .slice(0, 5)
+        .forEach((r) => lines.push(`• Always: ${r}`));
+    }
+    if (charRules.length === 0 && !character.visualIdentity?.styleNotes) {
+      lines.push(`• Preserve all visual elements of ${character.name} exactly.`);
+      lines.push(`• Maintain ${character.name}'s signature fruit identity and baby-like design.`);
+    }
+  }
   lines.push("");
 
   lines.push("E. GLOBAL FIDELITY RULES");
