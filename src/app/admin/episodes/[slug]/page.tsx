@@ -13,11 +13,14 @@ import AddSceneSection from "./AddSceneSection";
 import EditSceneSection, { type SceneForEdit } from "./EditSceneSection";
 import ArchiveSceneSection, { type SceneForArchive } from "./ArchiveSceneSection";
 import SceneIdStabilitySection from "./SceneIdStabilitySection";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import type { Character } from "@/lib/content";
+import { isCharacterApprovedForAdminUse, characterHasPrimaryReference } from "@/lib/characterEligibility";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// ─── Metadata ────────────────────────────────────────────────────────────────
+// ─── Metadata ────────────────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -30,7 +33,7 @@ export async function generateMetadata({
   return { title: `${title.trim()} | Episode Studio` };
 }
 
-// ─── Safe field helpers ───────────────────────────────────────────────────────
+// ─── Safe field helpers ─────────────────────────────────────────────────────────────────────
 
 function isRec(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -64,7 +67,7 @@ function hasTiki(raw: Record<string, unknown>): boolean {
   return JSON.stringify(raw).toLowerCase().includes("tiki");
 }
 
-// ─── Badge helpers ────────────────────────────────────────────────────────────
+// ─── Badge helpers ──────────────────────────────────────────────────────────────────────────────
 
 function ReviewBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
@@ -97,7 +100,7 @@ function Pill({
   );
 }
 
-// ─── Layout primitives ────────────────────────────────────────────────────────
+// ─── Layout primitives ───────────────────────────────────────────────────────────────────────────
 
 function Section({
   title,
@@ -155,7 +158,7 @@ function Callout({
   );
 }
 
-// ─── Scene card ───────────────────────────────────────────────────────────────
+// ─── Scene card ────────────────────────────────────────────────────────────────────────────────
 
 function SceneCard({
   scene,
@@ -269,7 +272,7 @@ function SceneCard({
   );
 }
 
-// ─── Publish readiness checklist ─────────────────────────────────────────────
+// ─── Publish readiness checklist ───────────────────────────────────────────────────────────────────────────
 
 const CHECKLIST_CATEGORIES: {
   label: string;
@@ -431,7 +434,7 @@ function PublicStatusCard({
   );
 }
 
-// ─── Media Planning section ──────────────────────────────────────────────────
+// ─── Media Planning section ────────────────────────────────────────────────────────────────────────────
 
 function MediaStatusPill({
   label,
@@ -520,6 +523,8 @@ function ClipCard({ clip }: { clip: ClipPlan }) {
     </div>
   );
 }
+
+// ─── Media Planning section ──────────────────────────────────────────────────
 
 function MediaPlanningSection({
   plan,
@@ -765,8 +770,8 @@ function getCharacterFidelityNotes(
 ): { character: string; notes: string[] }[] {
   return characters
     .map((c) => {
-      const key = c.toLowerCase().trim();
-      const notes = CHARACTER_FIDELITY_NOTES[key];
+      const nameKey = c.toLowerCase().replace(/-/g, " ").trim();
+      const notes = CHARACTER_FIDELITY_NOTES[nameKey];
       return notes ? { character: c, notes } : null;
     })
     .filter((x): x is { character: string; notes: string[] } => x !== null);
@@ -779,6 +784,7 @@ function PanelPromptCard({
   episodeTone,
   episodeSlug,
   episodeFeaturedCharacters,
+  charBySlug,
 }: {
   scene: Record<string, unknown>;
   index: number;
@@ -786,6 +792,7 @@ function PanelPromptCard({
   episodeTone: string;
   episodeSlug: string;
   episodeFeaturedCharacters: string[];
+  charBySlug: Record<string, Character>;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const sceneNum = typeof num === "number" ? num : index + 1;
@@ -892,25 +899,35 @@ function PanelPromptCard({
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
             Character Fidelity Notes
           </p>
-          {fidelityNotes.map(({ character, notes }) => (
-            <div
-              key={character}
-              className="bg-warm-coral/6 border border-warm-coral/15 rounded-xl px-4 py-3"
-            >
-              <p className="text-xs font-bold text-tiki-brown/60 mb-1.5">{character}</p>
-              <ul className="space-y-1">
-                {notes.map((note, i) => (
-                  <li
-                    key={i}
-                    className="flex items-start gap-2 text-xs text-tiki-brown/65 leading-relaxed"
-                  >
-                    <span className="flex-shrink-0 text-warm-coral/50 mt-0.5">•</span>
-                    {note}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {fidelityNotes.map(({ character, notes }) => {
+            const nameSlug = character.toLowerCase().replace(/ /g, "-").trim();
+            const charObj = charBySlug[nameSlug];
+            const missingReference = charObj ? !characterHasPrimaryReference(charObj) : false;
+            return (
+              <div
+                key={character}
+                className="bg-warm-coral/6 border border-warm-coral/15 rounded-xl px-4 py-3"
+              >
+                {missingReference && (
+                  <p className="text-xs font-semibold text-warm-coral/80 mb-1.5">
+                    Reference readiness warning: {character} is approved for admin use but does not yet have a Primary Official Reference or approved reference asset.
+                  </p>
+                )}
+                <p className="text-xs font-bold text-tiki-brown/60 mb-1.5">{character}</p>
+                <ul className="space-y-1">
+                  {notes.map((note, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 text-xs text-tiki-brown/65 leading-relaxed"
+                    >
+                      <span className="flex-shrink-0 text-warm-coral/50 mt-0.5">•</span>
+                      {note}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -973,11 +990,13 @@ function StoryPanelPromptBuilder({
   raw,
   tikiFlagged,
   episodeSlug,
+  charBySlug,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
   episodeSlug: string;
+  charBySlug: Record<string, Character>;
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -1048,6 +1067,7 @@ function StoryPanelPromptBuilder({
               episodeTone={tone}
               episodeSlug={episodeSlug}
               episodeFeaturedCharacters={featuredCharacters}
+              charBySlug={charBySlug}
             />
           ))}
         </div>
@@ -3225,6 +3245,23 @@ export default async function EpisodeDetailPage({
   // Scenes available for active generation (excludes archived)
   const activeScenes = getActiveEpisodeScenes(raw);
 
+  // Load eligible characters from disk for scene builders
+  let allDiskChars: Character[] = [];
+  try {
+    allDiskChars = loadAllCharactersFromDisk();
+  } catch { /* fallback: empty, selectors will use their built-in fallback */ }
+  const eligibleChars = allDiskChars.filter(isCharacterApprovedForAdminUse);
+  const sceneCharacterOptions = eligibleChars.map((c) => ({
+    slug: c.slug === "tiki" ? "tiki-trouble" : c.slug,
+    label: c.name,
+    approvalMode: c.approvalMode,
+  }));
+  const charBySlug: Record<string, Character> = {};
+  for (const c of allDiskChars) {
+    charBySlug[c.slug] = c;
+    if (c.slug === "tiki") charBySlug["tiki-trouble"] = c;
+  }
+
   const sceneForArchiveList: SceneForArchive[] = scenes.map((s) => ({
     sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : 0,
     title: str(s.title),
@@ -3342,7 +3379,7 @@ export default async function EpisodeDetailPage({
         <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} />
 
         {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} />
+        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} />
 
         {/* ── Story Panel Asset Manifest Preview ── */}
         <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
@@ -3537,13 +3574,14 @@ export default async function EpisodeDetailPage({
         )}
 
         {/* ── Add Scene to Episode ── */}
-        <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} />
+        <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined} />
 
         {/* ── Edit Scene ── */}
         <EditSceneSection
           episodeSlug={normalised.slug}
           scenes={sceneForEditList}
           savedPanelSceneNumbers={savedPanelSceneNumbers}
+          characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined}
         />
 
         {/* ── Archive / Restore Scene ── */}
