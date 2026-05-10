@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
-const KNOWN_CHARACTERS: { slug: string; label: string }[] = [
+type CharacterOption = { slug: string; label: string; approvalMode?: string };
+
+const FALLBACK_CHARACTERS: CharacterOption[] = [
   { slug: "pineapple-baby", label: "Pineapple Baby" },
   { slug: "ube-baby", label: "Ube Baby" },
   { slug: "kiwi-baby", label: "Kiwi Baby" },
@@ -30,9 +32,11 @@ type AddSceneResult =
 export default function AddSceneSection({
   episodeSlug,
   currentSceneCount,
+  characterOptions,
 }: {
   episodeSlug: string;
   currentSceneCount: number;
+  characterOptions?: CharacterOption[];
 }) {
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
@@ -184,9 +188,13 @@ export default function AddSceneSection({
           <label className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
             Characters <span className="text-warm-coral/70">*</span>
           </label>
+          <p className="text-xs text-tiki-brown/40 leading-relaxed">
+            Only Official Internal and Public characters are available for active story builders. Draft characters stay private until approved.
+          </p>
           <div className="flex flex-wrap gap-2">
-            {KNOWN_CHARACTERS.map(({ slug, label }) => {
+            {(characterOptions ?? FALLBACK_CHARACTERS).map(({ slug, label, approvalMode }) => {
               const selected = characters.includes(slug);
+              const isInternal = approvalMode === "official-internal";
               return (
                 <button
                   key={slug}
@@ -199,6 +207,7 @@ export default function AddSceneSection({
                   }`}
                 >
                   {label}
+                  {isInternal && <span className="ml-1 font-normal opacity-60">(Internal)</span>}
                 </button>
               );
             })}
