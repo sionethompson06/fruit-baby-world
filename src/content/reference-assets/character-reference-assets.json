@@ -268,6 +268,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378437385-phgo8b",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "welcome_joy_fun",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378436789-dragon-fruit-happy-welcome-joy-fun-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1654643,
+      "uploadedAt": "2026-05-10T02:00:37.385Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
