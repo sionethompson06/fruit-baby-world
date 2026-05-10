@@ -370,6 +370,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378689567-z32way",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "scared_curious_wondering_thinking_afraid",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378688774-dragon-fruit-scared-currious-wondering-thinking-afraid-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1698538,
+      "uploadedAt": "2026-05-10T02:04:49.567Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
