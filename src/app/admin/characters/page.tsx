@@ -18,6 +18,7 @@ import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
 import ReferenceAssetReviewPanel from "./ReferenceAssetReviewPanel";
 import CharacterApprovalPanel from "./CharacterApprovalPanel";
 import PrimaryReferenceAssignPanel from "./PrimaryReferenceAssignPanel";
+import OfficialProfileBuilderPanel from "./OfficialProfileBuilderPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
   title: "Character Canon Library | Story Studio",
 };
 
-// ─── Per-character visual fidelity notes ──────────────────────────────────────────────
+// ─── Per-character visual fidelity notes ──────────────────────────────────────────────────────
 
 const CHARACTER_FIDELITY: Record<string, string[]> = {
   "pineapple-baby": [
@@ -66,7 +67,7 @@ const GLOBAL_FIDELITY_RULES = [
   "Human review is required before generated media is published.",
 ];
 
-// ─── Reference asset loader ─────────────────────────────────────────────────────────────
+// ─── Reference asset loader ───────────────────────────────────────────────────────────────────
 
 function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
   const filePath = path.join(
@@ -86,7 +87,7 @@ function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
   }
 }
 
-// ─── Admin character loader (includes drafts from disk) ─────────────────────────────────
+// ─── Admin character loader (includes drafts from disk) ────────────────────────────────────────────
 
 function loadAllAdminCharacters(): Character[] {
   const dir = path.join(process.cwd(), "src/content/characters");
@@ -100,7 +101,6 @@ function loadAllAdminCharacters(): Character[] {
       return JSON.parse(raw) as Character;
     });
   } catch {
-    // Fallback: read each known official file individually
     const known = [
       "pineapple-baby",
       "ube-baby",
@@ -123,7 +123,7 @@ function loadAllAdminCharacters(): Character[] {
   }
 }
 
-// ─── Layout primitives ──────────────────────────────────────────────────────────────────
+// ─── Layout primitives ──────────────────────────────────────────────────────────────────────
 
 function Pill({
   children,
@@ -168,8 +168,6 @@ function StatusRow({
   );
 }
 
-// ─── Asset status badge ────────────────────────────────────────────────────────────────────
-
 function recommendedUseLabel(use: AssetRecommendedUse): string {
   switch (use) {
     case "primary-reference": return "Primary Reference";
@@ -201,8 +199,6 @@ function AssetBadge({ use }: { use: AssetRecommendedUse }) {
     </span>
   );
 }
-
-// ─── Asset integrity table ────────────────────────────────────────────────────────────────
 
 function AssetIntegrityTable({ assets }: { assets: AssetStatus[] }) {
   return (
@@ -240,19 +236,16 @@ function AssetIntegrityTable({ assets }: { assets: AssetStatus[] }) {
               <AssetBadge use={asset.recommendedUse} />
             </div>
           </div>
-
           {asset.path ? (
             <p className="text-xs font-mono text-tiki-brown/45 break-all">{asset.path}</p>
           ) : (
             <p className="text-xs text-tiki-brown/30 italic">No path configured</p>
           )}
-
           {asset.sizeBytes !== undefined && (
             <p className="text-xs text-tiki-brown/40">
               {asset.sizeBytes.toLocaleString()} bytes
             </p>
           )}
-
           {asset.issue && (
             <p className="text-xs text-warm-coral/80 font-semibold">{asset.issue}</p>
           )}
@@ -261,8 +254,6 @@ function AssetIntegrityTable({ assets }: { assets: AssetStatus[] }) {
     </div>
   );
 }
-
-// ─── Character reference card ─────────────────────────────────────────────────────────────────
 
 function CharacterReferenceCard({
   character,
@@ -273,14 +264,11 @@ function CharacterReferenceCard({
 }) {
   const isTiki = character.type === "villain";
   const fidelityNotes = CHARACTER_FIDELITY[character.id] ?? [];
-
   const profileAsset = assetSummary.assets.find((a) => a.field === "image.profileSheet");
   const mainAsset = assetSummary.assets.find((a) => a.field === "image.main");
 
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden">
-
-      {/* Card header */}
       <div
         className={`px-6 py-5 border-b border-tiki-brown/8 ${
           isTiki ? "bg-warm-coral/6" : "bg-pineapple-yellow/8"
@@ -289,13 +277,7 @@ function CharacterReferenceCard({
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <Pill
-                className={
-                  isTiki
-                    ? "bg-warm-coral/20 text-tiki-brown"
-                    : "bg-tropical-green/15 text-tropical-green"
-                }
-              >
+              <Pill className={isTiki ? "bg-warm-coral/20 text-tiki-brown" : "bg-tropical-green/15 text-tropical-green"}>
                 {isTiki ? "Rival Character" : "Fruit Baby"}
               </Pill>
               <Pill className="bg-tiki-brown/8 text-tiki-brown/55">{character.status}</Pill>
@@ -306,13 +288,9 @@ function CharacterReferenceCard({
                 </>
               )}
               {assetSummary.readyForReferenceAnchoredGeneration ? (
-                <Pill className="bg-tropical-green/15 text-tropical-green">
-                  Reference-Ready
-                </Pill>
+                <Pill className="bg-tropical-green/15 text-tropical-green">Reference-Ready</Pill>
               ) : (
-                <Pill className="bg-warm-coral/20 text-warm-coral/80">
-                  Missing References
-                </Pill>
+                <Pill className="bg-warm-coral/20 text-warm-coral/80">Missing References</Pill>
               )}
             </div>
             <h2 className="text-xl font-black text-tiki-brown leading-tight">{character.name}</h2>
@@ -328,20 +306,15 @@ function CharacterReferenceCard({
           </Link>
         </div>
         {character.tagline && (
-          <p className="text-xs italic text-tiki-brown/50 mt-2">"{character.tagline}"</p>
+          <p className="text-xs italic text-tiki-brown/50 mt-2">&ldquo;{character.tagline}&rdquo;</p>
         )}
       </div>
 
       <div className="p-6 flex flex-col gap-6">
-
-        {/* Warnings */}
         {assetSummary.warnings.length > 0 && (
           <div className="flex flex-col gap-2">
             {assetSummary.warnings.map((w) => (
-              <div
-                key={w}
-                className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3"
-              >
+              <div key={w} className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3">
                 <span className="text-base flex-shrink-0">⚠️</span>
                 <p className="text-xs font-semibold text-tiki-brown/75 leading-relaxed">{w}</p>
               </div>
@@ -349,77 +322,46 @@ function CharacterReferenceCard({
           </div>
         )}
 
-        {/* Profile sheet */}
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-            Official Profile Sheet Reference
-          </p>
+          <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Official Profile Sheet Reference</p>
           {profileAsset?.valid ? (
             <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden bg-bg-cream p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={character.image.profileSheet!}
-                alt={character.image.alt}
-                className="w-full max-h-[28rem] object-contain"
-              />
-              <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">
-                {character.image.profileSheet}
-              </p>
+              <img src={character.image.profileSheet!} alt={character.image.alt} className="w-full max-h-[28rem] object-contain" />
+              <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">{character.image.profileSheet}</p>
             </div>
           ) : (
             <div className="border border-tiki-brown/10 rounded-2xl bg-tiki-brown/3 flex flex-col items-center justify-center h-36 gap-2">
               <span className="text-2xl select-none opacity-30">🖼️</span>
-              <p className="text-xs font-bold text-tiki-brown/35 uppercase tracking-wide">
-                {profileAsset?.issue ?? "Profile sheet not added yet"}
-              </p>
+              <p className="text-xs font-bold text-tiki-brown/35 uppercase tracking-wide">{profileAsset?.issue ?? "Profile sheet not added yet"}</p>
             </div>
           )}
         </div>
 
-        {/* Main image */}
         {mainAsset && mainAsset.path && (
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Isolated Main Image
-            </p>
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Isolated Main Image</p>
             {mainAsset.valid ? (
               <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden bg-bg-cream p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={character.image.main}
-                  alt={character.image.alt}
-                  className="w-full max-h-60 object-contain"
-                />
-                <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">
-                  {character.image.main}
-                </p>
+                <img src={character.image.main} alt={character.image.alt} className="w-full max-h-60 object-contain" />
+                <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">{character.image.main}</p>
               </div>
             ) : (
               <div className="border border-warm-coral/20 rounded-2xl bg-warm-coral/5 flex flex-col items-center justify-center h-28 gap-2 px-4">
                 <span className="text-xl select-none">🚫</span>
-                <p className="text-xs font-bold text-warm-coral/70 uppercase tracking-wide text-center">
-                  Invalid image — not rendered
-                </p>
-                <p className="text-xs text-tiki-brown/50 font-mono text-center truncate max-w-full">
-                  {character.image.main}
-                </p>
-                {mainAsset.issue && (
-                  <p className="text-xs text-warm-coral/65 text-center leading-snug">
-                    {mainAsset.issue}
-                  </p>
-                )}
+                <p className="text-xs font-bold text-warm-coral/70 uppercase tracking-wide text-center">Invalid image — not rendered</p>
+                <p className="text-xs text-tiki-brown/50 font-mono text-center truncate max-w-full">{character.image.main}</p>
+                {mainAsset.issue && <p className="text-xs text-warm-coral/65 text-center leading-snug">{mainAsset.issue}</p>}
               </div>
             )}
           </div>
         )}
 
-        {/* Reference Asset Integrity */}
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <span className="text-base">🔍</span>
-            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
-              Reference Asset Integrity
-            </p>
+            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Reference Asset Integrity</p>
           </div>
           <dl className="flex flex-col border border-tiki-brown/8 rounded-xl overflow-hidden">
             <StatusRow label="Valid Main Image" value={assetSummary.hasValidMainImage ? "Yes" : "No"} positive={assetSummary.hasValidMainImage} />
@@ -432,7 +374,6 @@ function CharacterReferenceCard({
           <AssetIntegrityTable assets={assetSummary.assets} />
         </div>
 
-        {/* Legacy asset status */}
         <div>
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">Asset Status</p>
           <dl className="flex flex-col">
@@ -443,7 +384,6 @@ function CharacterReferenceCard({
           </dl>
         </div>
 
-        {/* Visual identity */}
         {character.visualIdentity?.styleNotes && (
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">Visual Identity</p>
@@ -461,7 +401,6 @@ function CharacterReferenceCard({
           </div>
         )}
 
-        {/* Personality */}
         {character.personality?.length > 0 && (
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">Personality</p>
@@ -473,7 +412,6 @@ function CharacterReferenceCard({
           </div>
         )}
 
-        {/* Expressions */}
         {character.expressions && character.expressions.length > 0 && (
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">Expressions</p>
@@ -485,7 +423,6 @@ function CharacterReferenceCard({
           </div>
         )}
 
-        {/* Description */}
         {character.shortDescription && (
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">Description</p>
@@ -493,7 +430,6 @@ function CharacterReferenceCard({
           </div>
         )}
 
-        {/* Character rules */}
         <div className="grid gap-3 sm:grid-cols-2">
           {(character.characterRules?.always?.length ?? 0) > 0 && (
             <div className="bg-tropical-green/6 border border-tropical-green/15 rounded-xl p-4">
@@ -523,7 +459,6 @@ function CharacterReferenceCard({
           )}
         </div>
 
-        {/* Visual fidelity reminder */}
         {fidelityNotes.length > 0 && (
           <div className="bg-pineapple-yellow/10 border border-pineapple-yellow/30 rounded-xl p-4">
             <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide mb-2">Visual Fidelity Reminder</p>
@@ -546,7 +481,6 @@ function CharacterReferenceCard({
           </div>
         )}
 
-        {/* Future generation readiness */}
         <div>
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">Future Generation Readiness</p>
           <dl className="flex flex-col">
@@ -558,11 +492,10 @@ function CharacterReferenceCard({
           </dl>
         </div>
 
-        {/* Signature quote */}
         {(character.signatureQuote || character.favoriteQuote) && (
           <div className="text-center px-2 pt-1">
             <p className="text-sm italic text-tiki-brown/50 leading-relaxed">
-              "{character.signatureQuote ?? character.favoriteQuote}"
+              &ldquo;{character.signatureQuote ?? character.favoriteQuote}&rdquo;
             </p>
           </div>
         )}
@@ -571,7 +504,7 @@ function CharacterReferenceCard({
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────────────────────
 
 const OFFICIAL_CHARACTER_SLUGS = new Set([
   "pineapple-baby",
@@ -624,7 +557,6 @@ export default function AdminCharactersPage() {
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
-      {/* Header */}
       <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-12 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -651,7 +583,6 @@ export default function AdminCharactersPage() {
           </p>
         </div>
 
-        {/* Create New Character Draft */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
           <div className="flex items-center gap-2">
             <span className="text-lg">✨</span>
@@ -667,7 +598,6 @@ export default function AdminCharactersPage() {
           <CreateCharacterDraftForm />
         </div>
 
-        {/* Upload Character Reference File */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
           <div className="flex items-center gap-2">
             <span className="text-lg">⬆️</span>
@@ -683,19 +613,19 @@ export default function AdminCharactersPage() {
           <CharacterReferenceUploadForm characters={characterOptions} />
         </div>
 
-        {/* Review Uploaded Reference Assets */}
         <ReferenceAssetReviewPanel
           initialAssets={uploadedAssets}
           draftSlugs={new Set(draftCharacters.map((c) => c.slug))}
         />
 
-        {/* Primary Official Reference Assignment */}
         <PrimaryReferenceAssignPanel
           characters={characters}
           approvedRefsBySlug={approvedRefsBySlug}
         />
 
-        {/* Character Approval */}
+        {/* Official Profile Builder */}
+        <OfficialProfileBuilderPanel characters={characters} />
+
         <CharacterApprovalPanel
           characters={characters}
           approvedRefCounts={approvedRefCounts}
@@ -703,7 +633,6 @@ export default function AdminCharactersPage() {
           officialSlugs={OFFICIAL_CHARACTER_SLUGS}
         />
 
-        {/* Reference Asset Readiness Summary */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
           <div className="flex items-center gap-2">
             <span className="text-lg">🔍</span>
@@ -748,7 +677,6 @@ export default function AdminCharactersPage() {
           )}
         </div>
 
-        {/* Legacy summary stats */}
         <div className="flex flex-wrap gap-3">
           {([
             ["Characters", String(characters.length)],
@@ -763,7 +691,6 @@ export default function AdminCharactersPage() {
           ))}
         </div>
 
-        {/* Official character reference cards */}
         {officialCharacters.length > 0 && (
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2">
@@ -777,7 +704,6 @@ export default function AdminCharactersPage() {
           </div>
         )}
 
-        {/* Draft character cards */}
         {draftCharacters.length > 0 && (
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-3">
@@ -796,7 +722,6 @@ export default function AdminCharactersPage() {
           </div>
         )}
 
-        {/* Global character fidelity rules */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
           <div className="flex items-center gap-2">
             <span className="text-lg">🔒</span>
@@ -818,7 +743,6 @@ export default function AdminCharactersPage() {
           </div>
         </div>
 
-        {/* Future use */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
           <h2 className="text-base font-black text-tiki-brown">Future Use</h2>
           <ul className="space-y-2">
