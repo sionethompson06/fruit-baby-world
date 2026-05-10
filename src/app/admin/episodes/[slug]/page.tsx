@@ -13,6 +13,9 @@ import AddSceneSection from "./AddSceneSection";
 import EditSceneSection, { type SceneForEdit } from "./EditSceneSection";
 import ArchiveSceneSection, { type SceneForArchive } from "./ArchiveSceneSection";
 import SceneIdStabilitySection from "./SceneIdStabilitySection";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import { isCharacterApprovedForAdminUse, characterHasPrimaryReference } from "@/lib/characterEligibility";
+import type { Character } from "@/lib/content";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -761,15 +764,40 @@ function buildDeterministicPrompt({
 }
 
 function getCharacterFidelityNotes(
-  characters: string[]
-): { character: string; notes: string[] }[] {
-  return characters
-    .map((c) => {
-      const key = c.toLowerCase().trim();
-      const notes = CHARACTER_FIDELITY_NOTES[key];
-      return notes ? { character: c, notes } : null;
-    })
-    .filter((x): x is { character: string; notes: string[] } => x !== null);
+  characters: string[],
+  charBySlug: Record<string, Character> = {}
+): { character: string; notes: string[]; missingReference?: boolean }[] {
+  return characters.map((c) => {
+    // Slugs stored as "pineapple-baby"; hardcoded keys are "pineapple baby"
+    const nameKey = c.toLowerCase().replace(/-/g, " ").trim();
+    const hardcodedNotes = CHARACTER_FIDELITY_NOTES[nameKey];
+    const charData = charBySlug[c.toLowerCase().trim()];
+
+    if (hardcodedNotes) {
+      return { character: c, notes: hardcodedNotes };
+    }
+
+    // New character — use profile data from JSON
+    if (charData) {
+      const notes: string[] = [];
+      if (charData.visualIdentity?.styleNotes) {
+        notes.push(charData.visualIdentity.styleNotes);
+      }
+      if (Array.isArray(charData.characterRules?.always)) {
+        charData.characterRules.always
+          .filter((r): r is string => typeof r === "string" && r.trim().length > 0)
+          .forEach((r) => notes.push(r));
+      }
+      const missingReference = !characterHasPrimaryReference(charData);
+      return {
+        character: charData.name ?? c,
+        notes: notes.length > 0 ? notes : [`${charData.name ?? c} — check character profile for fidelity rules.`],
+        missingReference,
+      };
+    }
+
+    return null;
+  }).filter((x): x is { character: string; notes: string[]; missingReference?: boolean } => x !== null);
 }
 
 function PanelPromptCard({
@@ -779,6 +807,7 @@ function PanelPromptCard({
   episodeTone,
   episodeSlug,
   episodeFeaturedCharacters,
+  charBySlug,
 }: {
   scene: Record<string, unknown>;
   index: number;
@@ -786,6 +815,7 @@ function PanelPromptCard({
   episodeTone: string;
   episodeSlug: string;
   episodeFeaturedCharacters: string[];
+  charBySlug: Record<string, Character>;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const sceneNum = typeof num === "number" ? num : index + 1;
@@ -810,7 +840,7 @@ function PanelPromptCard({
       visualNotes,
     });
 
-  const fidelityNotes = getCharacterFidelityNotes(characters);
+  const fidelityNotes = getCharacterFidelityNotes(characters, charBySlug);
 
   return (
     <div id={`panel-prompt-scene-${sceneNum}`} className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
@@ -892,12 +922,17 @@ function PanelPromptCard({
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
             Character Fidelity Notes
           </p>
-          {fidelityNotes.map(({ character, notes }) => (
+          {fidelityNotes.map(({ character, notes, missingReference }) => (
             <div
               key={character}
               className="bg-warm-coral/6 border border-warm-coral/15 rounded-xl px-4 py-3"
             >
               <p className="text-xs font-bold text-tiki-brown/60 mb-1.5">{character}</p>
+              {missingReference && (
+                <p className="text-xs font-semibold text-warm-coral/80 mb-1.5">
+                  Reference readiness warning: {character} is approved for admin use but does not yet have a Primary Official Reference or approved reference asset.
+                </p>
+              )}
               <ul className="space-y-1">
                 {notes.map((note, i) => (
                   <li
@@ -973,11 +1008,13 @@ function StoryPanelPromptBuilder({
   raw,
   tikiFlagged,
   episodeSlug,
+  charBySlug,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
   episodeSlug: string;
+  charBySlug: Record<string, Character>;
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -1048,6 +1085,7 @@ function StoryPanelPromptBuilder({
               episodeTone={tone}
               episodeSlug={episodeSlug}
               episodeFeaturedCharacters={featuredCharacters}
+              charBySlug={charBySlug}
             />
           ))}
         </div>
@@ -1822,7 +1860,7 @@ function AnimationPromptCard({
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
             Character Fidelity Notes
           </p>
-          {fidelityNotes.map(({ character, notes }) => (
+          {fidelityNotes.map(({ character, notes, missingReference }) => (
             <div
               key={character}
               className="bg-warm-coral/6 border border-warm-coral/15 rounded-xl px-4 py-3"
@@ -3163,6 +3201,27 @@ export default async function EpisodeDetailPage({
 
   const mediaPlan = deriveMediaPlan(raw);
 
+  // Load eligible characters for scene selectors
+  let allDiskChars: Character[] = [];
+  try {
+    allDiskChars = loadAllCharactersFromDisk();
+  } catch { /* fallback: empty, selectors will use their built-in fallback */ }
+
+  const eligibleChars = allDiskChars.filter(isCharacterApprovedForAdminUse);
+  // "tiki" slug in JSON but scenes store "tiki-trouble" — preserve legacy slug
+  const sceneCharacterOptions = eligibleChars.map((c) => ({
+    slug: c.slug === "tiki" ? "tiki-trouble" : c.slug,
+    label: c.name,
+    approvalMode: c.approvalMode,
+  }));
+
+  // Lookup map for prompt builder (by slug and legacy tiki-trouble)
+  const charBySlug: Record<string, Character> = {};
+  for (const c of allDiskChars) {
+    charBySlug[c.slug] = c;
+    if (c.slug === "tiki") charBySlug["tiki-trouble"] = c;
+  }
+
   const sceneForEditList: SceneForEdit[] = scenes.map((s) => {
     const rawDialogue = s.dialogueDraft;
     const dialogueDraft = Array.isArray(rawDialogue)
@@ -3342,7 +3401,7 @@ export default async function EpisodeDetailPage({
         <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} />
 
         {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} />
+        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} />
 
         {/* ── Story Panel Asset Manifest Preview ── */}
         <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
@@ -3537,13 +3596,18 @@ export default async function EpisodeDetailPage({
         )}
 
         {/* ── Add Scene to Episode ── */}
-        <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} />
+        <AddSceneSection
+          episodeSlug={normalised.slug}
+          currentSceneCount={scenes.length}
+          characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined}
+        />
 
         {/* ── Edit Scene ── */}
         <EditSceneSection
           episodeSlug={normalised.slug}
           scenes={sceneForEditList}
           savedPanelSceneNumbers={savedPanelSceneNumbers}
+          characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined}
         />
 
         {/* ── Archive / Restore Scene ── */}

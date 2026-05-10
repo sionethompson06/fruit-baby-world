@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 
-const KNOWN_CHARACTERS: { slug: string; label: string }[] = [
+type CharacterOption = { slug: string; label: string; approvalMode?: string };
+
+const FALLBACK_CHARACTERS: CharacterOption[] = [
   { slug: "pineapple-baby", label: "Pineapple Baby" },
   { slug: "ube-baby", label: "Ube Baby" },
   { slug: "kiwi-baby", label: "Kiwi Baby" },
@@ -45,10 +47,12 @@ export default function EditSceneSection({
   episodeSlug,
   scenes,
   savedPanelSceneNumbers,
+  characterOptions,
 }: {
   episodeSlug: string;
   scenes: SceneForEdit[];
   savedPanelSceneNumbers: number[];
+  characterOptions?: CharacterOption[];
 }) {
   const [selectedSceneNumber, setSelectedSceneNumber] = useState<number | null>(
     scenes.length > 0 ? scenes[0].sceneNumber : null
@@ -261,24 +265,50 @@ export default function EditSceneSection({
             <label className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
               Characters <span className="text-warm-coral/70">*</span>
             </label>
+            <p className="text-xs text-tiki-brown/40 leading-relaxed">
+              Only Official Internal and Public characters are available for active story builders. Draft characters stay private until approved.
+            </p>
             <div className="flex flex-wrap gap-2">
-              {KNOWN_CHARACTERS.map(({ slug, label }) => {
-                const selected = characters.includes(slug);
+              {(() => {
+                const activeOptions = characterOptions ?? FALLBACK_CHARACTERS;
+                const activeSlugs = new Set(activeOptions.map((o) => o.slug));
+                // Inactive chars already in this scene (not in active options)
+                const inactiveSlugs = characters.filter((s) => !activeSlugs.has(s));
+
                 return (
-                  <button
-                    key={slug}
-                    type="button"
-                    onClick={() => toggleCharacter(slug)}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
-                      selected
-                        ? "bg-ube-purple text-white border-ube-purple"
-                        : "bg-white text-tiki-brown/60 border-tiki-brown/20 hover:border-ube-purple/40"
-                    }`}
-                  >
-                    {label}
-                  </button>
+                  <>
+                    {activeOptions.map(({ slug, label, approvalMode }) => {
+                      const selected = characters.includes(slug);
+                      const isInternal = approvalMode === "official-internal";
+                      return (
+                        <button
+                          key={slug}
+                          type="button"
+                          onClick={() => toggleCharacter(slug)}
+                          className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                            selected
+                              ? "bg-ube-purple text-white border-ube-purple"
+                              : "bg-white text-tiki-brown/60 border-tiki-brown/20 hover:border-ube-purple/40"
+                          }`}
+                        >
+                          {label}
+                          {isInternal && <span className="ml-1 font-normal opacity-60">(Internal)</span>}
+                        </button>
+                      );
+                    })}
+                    {inactiveSlugs.map((slug) => (
+                      <button
+                        key={slug}
+                        type="button"
+                        onClick={() => toggleCharacter(slug)}
+                        className="text-xs font-bold px-3 py-1.5 rounded-full border bg-warm-coral/10 text-warm-coral/70 border-warm-coral/25 hover:border-warm-coral/50 transition-colors"
+                      >
+                        {slug} <span className="font-normal">(Archived/inactive)</span>
+                      </button>
+                    ))}
+                  </>
                 );
-              })}
+              })()}
             </div>
             {characters.length > 0 && (
               <p className="text-xs text-tiki-brown/45 leading-tight">

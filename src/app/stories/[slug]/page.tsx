@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import { getAllCharacters, type Character } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
 import {
   getActiveEpisodeScenes,
@@ -514,9 +515,10 @@ export default async function StoryDetailPage({
 
   const { raw } = result;
 
-  // Character lookup
-  const allChars = getAllCharacters();
-  const charMap = Object.fromEntries(allChars.map((c) => [c.id, c]));
+  // Character lookup — prefer disk-loaded chars so new approved characters resolve correctly
+  let diskChars: Character[] = [];
+  try { diskChars = loadAllCharactersFromDisk(); } catch { diskChars = getAllCharacters(); }
+  const charMap = Object.fromEntries(diskChars.map((c) => [c.id, c]));
 
   // Field extraction
   const title = str(raw.title) || "Untitled Episode";
