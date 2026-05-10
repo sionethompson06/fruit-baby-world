@@ -353,6 +353,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378650809-3t9gu5",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "music_singing_jumping_playing",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378649755-dragon-fruit-music-singing-happy-fun-skipping-jumping-leapin.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1770599,
+      "uploadedAt": "2026-05-10T02:04:10.809Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
