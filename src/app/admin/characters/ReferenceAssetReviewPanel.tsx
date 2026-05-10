@@ -2,6 +2,12 @@
 
 import { useState } from "react";
 import type { UploadedReferenceAsset, ReviewStatus } from "@/app/api/reference-assets/upload-character-reference/route";
+import {
+  getReferenceAssetStatus,
+  getReferenceAssetStatusLabel,
+  getReferenceAssetStatusBadgeClass,
+  isReferenceAssetApproved,
+} from "@/lib/characterReadiness";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -28,24 +34,6 @@ type AssignState =
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────────
 
-function statusBadgeClass(s: ReviewStatus): string {
-  switch (s) {
-    case "approved-for-generation": return "bg-tropical-green/15 text-tropical-green";
-    case "rejected": return "bg-warm-coral/20 text-warm-coral/80";
-    case "archived": return "bg-tiki-brown/12 text-tiki-brown/50";
-    default: return "bg-pineapple-yellow/25 text-tiki-brown/65";
-  }
-}
-
-function statusLabel(s: ReviewStatus): string {
-  switch (s) {
-    case "approved-for-generation": return "Approved for Generation";
-    case "rejected": return "Rejected";
-    case "archived": return "Archived";
-    default: return "Needs Review";
-  }
-}
-
 function formatBytes(n: number): string {
   if (n >= 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   return `${(n / 1024).toFixed(1)} KB`;
@@ -63,6 +51,7 @@ function AssetReviewCard({
   onReviewed: (updated: UploadedReferenceAsset) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [techDetailsOpen, setTechDetailsOpen] = useState(false);
   const [assignState, setAssignState] = useState<AssignState>({ status: "idle" });
   const [form, setForm] = useState<ReviewFormState>({
     reviewStatus: asset.reviewStatus,
@@ -200,27 +189,12 @@ function AssetReviewCard({
 
           {/* Status badges + actions */}
           <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${statusBadgeClass(asset.reviewStatus)}`}>
-              {statusLabel(asset.reviewStatus)}
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${getReferenceAssetStatusBadgeClass(asset as UploadedReferenceAsset & { reviewStatus?: string })}`}>
+              {getReferenceAssetStatusLabel(asset as UploadedReferenceAsset & { reviewStatus?: string })}
             </span>
-            {asset.approvedForGeneration && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green uppercase tracking-wide">
-                Gen OK
-              </span>
-            )}
-            {asset.generationUseAllowed && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-blue/20 text-tiki-brown/60 uppercase tracking-wide">
-                Gen Use ✓
-              </span>
-            )}
-            {asset.isOfficialReference && (
+            {isReferenceAssetApproved(asset as UploadedReferenceAsset & { reviewStatus?: string }) && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ube-purple/12 text-ube-purple uppercase tracking-wide">
-                Official Ref
-              </span>
-            )}
-            {!asset.publicUseAllowed && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/6 text-tiki-brown/40 uppercase tracking-wide">
-                Public: No
+                Primary Ready
               </span>
             )}
             <a
@@ -241,6 +215,13 @@ function AssetReviewCard({
             >
               {expanded ? "Close" : "Review"}
             </button>
+            <button
+              type="button"
+              onClick={() => setTechDetailsOpen((v) => !v)}
+              className="text-xs font-bold px-2 py-1 rounded-lg bg-tiki-brown/4 text-tiki-brown/40 hover:bg-tiki-brown/6 transition-colors"
+            >
+              {techDetailsOpen ? "Hide" : "Tech"}
+            </button>
           </div>
         </div>
 
@@ -259,6 +240,35 @@ function AssetReviewCard({
           </p>
         )}
 
+        {/* Technical details (collapsed by default) */}
+        {techDetailsOpen && (
+          <div className="border-t border-tiki-brown/8 pt-3 mt-2">
+            <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-2">Technical Details</p>
+            <div className="bg-white border border-tiki-brown/8 rounded-xl px-3 py-2 flex flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-mono text-tiki-brown/45">approvedForGeneration</span>
+                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.approvedForGeneration)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-mono text-tiki-brown/45">generationUseAllowed</span>
+                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.generationUseAllowed)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-mono text-tiki-brown/45">publicUseAllowed</span>
+                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.publicUseAllowed)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-mono text-tiki-brown/45">isOfficialReference</span>
+                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.isOfficialReference)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-mono text-tiki-brown/45">requiresReview</span>
+                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.requiresReview)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Success summary */}
         {submitState.status === "success" && !expanded && (
           <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2">
@@ -266,8 +276,7 @@ function AssetReviewCard({
             <div className="flex flex-col gap-0.5">
               <p className="text-xs font-bold text-tiki-brown/75">Reference review saved.</p>
               <p className="text-xs text-tiki-brown/55">
-                Status: <strong>{statusLabel(submitState.reviewStatus)}</strong> ·{" "}
-                Generation use: <strong>{submitState.generationUseAllowed ? "Allowed" : "Not allowed"}</strong>
+                Status: <strong>{getReferenceAssetStatusLabel(asset as UploadedReferenceAsset & { reviewStatus?: string })}</strong>
               </p>
               <p className="text-xs font-mono text-tiki-brown/35">{submitState.path}</p>
             </div>
@@ -275,15 +284,15 @@ function AssetReviewCard({
         )}
 
         {/* ── Set as Primary Profile Reference ── */}
-        {isApproved && (
+        {isReferenceAssetApproved(asset as UploadedReferenceAsset & { reviewStatus?: string }) && (
           <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Primary Profile Reference
+              Set as Primary Official Reference
             </p>
             {assignState.status === "success" ? (
               <div className="flex items-center gap-2 text-xs font-bold text-tropical-green">
                 <span>✅</span>
-                Set as primary profile reference for {assignState.characterName}. Vercel redeploy required.
+                Assigned as primary official reference for {assignState.characterName}. Vercel redeploy required.
               </div>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
@@ -295,7 +304,7 @@ function AssetReviewCard({
                 >
                   {assignState.status === "submitting"
                     ? "Assigning…"
-                    : "Set as Primary Profile Reference"}
+                    : "Set as Primary"}
                 </button>
                 {assignState.status === "error" && (
                   <p className="text-xs font-semibold text-warm-coral/80">{assignState.message}</p>
@@ -359,37 +368,40 @@ function AssetReviewCard({
           {/* Review decision */}
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
-              Review Decision
+              Reference Asset Status
             </p>
             <div className="flex flex-wrap gap-2">
-              {(["needs-review", "approved-for-generation", "rejected", "archived"] as ReviewStatus[]).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => setReviewStatus(s)}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50 ${
-                    form.reviewStatus === s
-                      ? s === "approved-for-generation"
-                        ? "bg-tropical-green text-white border-tropical-green"
-                        : s === "rejected"
-                        ? "bg-warm-coral/80 text-white border-warm-coral/80"
-                        : s === "archived"
-                        ? "bg-tiki-brown/50 text-white border-tiki-brown/50"
-                        : "bg-pineapple-yellow/60 text-tiki-brown border-pineapple-yellow"
-                      : "bg-white text-tiki-brown/55 border-tiki-brown/15 hover:border-tiki-brown/30"
-                  }`}
-                >
-                  {statusLabel(s)}
-                </button>
-              ))}
+              {(["needs-review", "approved-for-generation", "rejected", "archived"] as ReviewStatus[]).map((s) => {
+                const label = s === "needs-review" ? "Needs Review" : s === "approved-for-generation" ? "Approve" : s === "rejected" ? "Reject" : "Archive";
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => setReviewStatus(s)}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50 ${
+                      form.reviewStatus === s
+                        ? s === "approved-for-generation"
+                          ? "bg-tropical-green text-white border-tropical-green"
+                          : s === "rejected"
+                          ? "bg-warm-coral/80 text-white border-warm-coral/80"
+                          : s === "archived"
+                          ? "bg-tiki-brown/50 text-white border-tiki-brown/50"
+                          : "bg-pineapple-yellow/60 text-tiki-brown border-pineapple-yellow"
+                        : "bg-white text-tiki-brown/55 border-tiki-brown/15 hover:border-tiki-brown/30"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Checkboxes */}
+          {/* Reference permissions (simplified) */}
           <div className="flex flex-col gap-2.5">
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Reference Permissions
+              Reference Metadata
             </p>
 
             <label className="flex items-center gap-2.5 cursor-pointer">
@@ -401,9 +413,9 @@ function AssetReviewCard({
                 className="w-4 h-4 accent-ube-purple"
               />
               <span className="text-xs font-semibold text-tiki-brown/70">
-                Official Reference
+                Mark as Official Reference
                 <span className="font-normal text-tiki-brown/45 ml-1">
-                  — part of official Fruit Baby Universe canon
+                  — part of canon
                 </span>
               </span>
             </label>
@@ -419,29 +431,13 @@ function AssetReviewCard({
               <span className="text-xs font-semibold text-tiki-brown/70">
                 Allow Generation Use
                 <span className="font-normal text-tiki-brown/45 ml-1">
-                  — confirmed for reference-anchored generation
+                  — usable for reference-anchored generation
                 </span>
                 {!isApprovingForGeneration && (
                   <span className="font-normal text-warm-coral/60 ml-1">
-                    — requires Approve for Generation
+                    — requires Approve status
                   </span>
                 )}
-              </span>
-            </label>
-
-            <label className={`flex items-center gap-2.5 ${isApprovingForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
-              <input
-                type="checkbox"
-                checked={form.publicUseAllowed}
-                onChange={(e) => setForm((f) => ({ ...f, publicUseAllowed: e.target.checked }))}
-                disabled={isSubmitting || !isApprovingForGeneration}
-                className="w-4 h-4 accent-tropical-green"
-              />
-              <span className="text-xs font-semibold text-tiki-brown/70">
-                Allow Public Use
-                <span className="font-normal text-tiki-brown/45 ml-1">
-                  — may appear in public-facing contexts (default: off)
-                </span>
               </span>
             </label>
           </div>

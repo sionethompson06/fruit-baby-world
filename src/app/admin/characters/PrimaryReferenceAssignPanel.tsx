@@ -3,6 +3,10 @@
 import { useState } from "react";
 import type { Character } from "@/lib/content";
 import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
+import {
+  characterHasPrimaryReference,
+  getCharacterApprovalMode,
+} from "@/lib/characterReadiness";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,12 +22,6 @@ type SubmitState =
     }
   | { status: "error"; message: string };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────────
-
-function isBlobUrl(url?: string): boolean {
-  return typeof url === "string" && url.startsWith("https://");
-}
-
 // ─── Per-character row ──────────────────────────────────────────────────────────────
 
 function PrimaryReferenceRow({
@@ -37,18 +35,10 @@ function PrimaryReferenceRow({
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
-  const currentProfileSheet = character.image?.profileSheet;
-  const currentPrimaryId = character.primaryReferenceAssetId;
-  const hasBlob = isBlobUrl(currentProfileSheet);
-  const hasLocal = !!currentProfileSheet && !hasBlob;
+  const hasPrimaryRef = characterHasPrimaryReference(character);
   const hasAny = approvedAssets.length > 0;
-
-  const isDraft =
-    character.approvalMode === "draft" ||
-    (!character.approvalMode && character.status === "draft") ||
-    (!character.approvalMode &&
-      character.status !== "active" &&
-      character.publicUseAllowed !== true);
+  const currentPrimaryId = character.primaryReferenceAssetId;
+  const isDraft = getCharacterApprovalMode(character) === "draft";
 
   async function handleAssign(
     asset: UploadedReferenceAsset,
@@ -102,33 +92,19 @@ function PrimaryReferenceRow({
             <p className="text-sm font-bold text-tiki-brown leading-tight">
               {character.name}
             </p>
-            {hasBlob ? (
+            {hasPrimaryRef ? (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
-                Blob Ref ✓
-              </span>
-            ) : hasLocal ? (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-blue/20 text-tiki-brown/65 uppercase tracking-wide">
-                Local Ref
+                Primary Assigned ✓
               </span>
             ) : (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/40 uppercase tracking-wide">
-                No Profile Ref
+                No Primary Reference
               </span>
             )}
             <span className="text-xs font-mono text-tiki-brown/35">
               {character.slug}
             </span>
           </div>
-          {currentProfileSheet && (
-            <p className="text-xs font-mono text-tiki-brown/40 truncate max-w-sm">
-              {currentProfileSheet}
-            </p>
-          )}
-          {currentPrimaryId && (
-            <p className="text-xs text-tiki-brown/40 font-mono truncate max-w-sm">
-              Primary ID: {currentPrimaryId}
-            </p>
-          )}
           <p className="text-xs text-tiki-brown/50">
             Approved assets:{" "}
             <strong

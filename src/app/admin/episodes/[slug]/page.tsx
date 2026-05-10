@@ -523,3 +523,14 @@ function ClipCard({ clip }: { clip: ClipPlan }) {
     </div>
   );
 }
+
+// ─── Page component ─────────────────────────────────────────────────────────────────────────
+
+export default async function EpisodeStudioPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return <div className="min-h-screen flex items-center justify-center text-tiki-brown">Episode page stub</div>;
+}
