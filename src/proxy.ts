@@ -52,5 +52,7 @@ export const config = {
     "/api/github/create-character-draft",
     "/api/github/update-character-approval",
     "/api/github/assign-primary-character-reference",
+    "/api/characters/generate-official-profile-draft",
+    "/api/github/save-character-profile-draft",
   ],
 };
