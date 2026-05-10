@@ -285,6 +285,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378475005-bsmvde",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "Kind_caring_hopeful_shy_bashful",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378474321-dragon-fruit-kind-caring-hopeful-shy-bashful-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1682900,
+      "uploadedAt": "2026-05-10T02:01:15.005Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
