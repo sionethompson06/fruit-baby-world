@@ -302,6 +302,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378505596-tq1jfk",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "laughing_smile_fun_singing",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378504635-dragon-fruit-laughing-smile-fun-happy-singing-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1774366,
+      "uploadedAt": "2026-05-10T02:01:45.596Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
