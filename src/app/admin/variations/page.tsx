@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
 import type { Metadata } from "next";
-import { getAllCharacters } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import { isCharacterApprovedForAdminUse } from "@/lib/characterEligibility";
 import {
   checkCharacterAssets,
   buildClientReadinessMap,
@@ -34,7 +35,11 @@ function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
 }
 
 export default function VariationsPage() {
-  const characters = getAllCharacters();
+  let allChars: import("@/lib/content").Character[] = [];
+  try {
+    allChars = loadAllCharactersFromDisk();
+  } catch { /* fallback to empty */ }
+  const characters = allChars.filter(isCharacterApprovedForAdminUse);
   const assetReadiness = buildClientReadinessMap(
     characters.map(checkCharacterAssets)
   );
