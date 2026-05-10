@@ -438,6 +438,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778378876108-zb50l2",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "expression-sheet",
+      "title": "winking_flirting_funnny_mischevious",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778378875397-dragon-fruit-winking-flirting-funny-mischevious-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1705149,
+      "uploadedAt": "2026-05-10T02:07:56.108Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
