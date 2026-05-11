@@ -766,13 +766,30 @@ function buildDeterministicPrompt({
 }
 
 function getCharacterFidelityNotes(
-  characters: string[]
+  characters: string[],
+  charBySlug?: Record<string, Character>
 ): { character: string; notes: string[] }[] {
   return characters
     .map((c) => {
       const nameKey = c.toLowerCase().replace(/-/g, " ").trim();
-      const notes = CHARACTER_FIDELITY_NOTES[nameKey];
-      return notes ? { character: c, notes } : null;
+      const hardcoded = CHARACTER_FIDELITY_NOTES[nameKey];
+      if (hardcoded) return { character: c, notes: hardcoded };
+      if (charBySlug) {
+        const slug = nameKey.replace(/ /g, "-");
+        const charObj = charBySlug[slug];
+        if (charObj) {
+          const notes: string[] = [];
+          if (charObj.visualIdentity?.styleNotes) notes.push(charObj.visualIdentity.styleNotes);
+          if (Array.isArray(charObj.characterRules?.always)) {
+            (charObj.characterRules.always as string[]).slice(0, 5).forEach((r) => notes.push(r));
+          }
+          if (Array.isArray(charObj.generationRestrictions)) {
+            (charObj.generationRestrictions as string[]).slice(0, 2).forEach((r) => notes.push(`Note: ${r}`));
+          }
+          if (notes.length > 0) return { character: c, notes };
+        }
+      }
+      return null;
     })
     .filter((x): x is { character: string; notes: string[] } => x !== null);
 }
@@ -817,7 +834,7 @@ function PanelPromptCard({
       visualNotes,
     });
 
-  const fidelityNotes = getCharacterFidelityNotes(characters);
+  const fidelityNotes = getCharacterFidelityNotes(characters, charBySlug);
 
   return (
     <div id={`panel-prompt-scene-${sceneNum}`} className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
@@ -1712,11 +1729,13 @@ function AnimationPromptCard({
   index,
   episodeSetting,
   episodeTone,
+  charBySlug,
 }: {
   scene: Record<string, unknown>;
   index: number;
   episodeSetting: string;
   episodeTone: string;
+  charBySlug?: Record<string, Character>;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const title = str(scene.title);
@@ -1739,7 +1758,7 @@ function AnimationPromptCard({
       visualNotes,
     });
 
-  const fidelityNotes = getCharacterFidelityNotes(characters);
+  const fidelityNotes = getCharacterFidelityNotes(characters, charBySlug);
 
   return (
     <div className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
@@ -1912,10 +1931,12 @@ function AnimationPromptBuilder({
   scenes,
   raw,
   tikiFlagged,
+  charBySlug,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
+  charBySlug?: Record<string, Character>;
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -1995,6 +2016,7 @@ function AnimationPromptBuilder({
               index={i}
               episodeSetting={setting}
               episodeTone={tone}
+              charBySlug={charBySlug}
             />
           ))}
         </div>
@@ -2086,12 +2108,31 @@ function buildDeterministicNarration({
   return parts.join(" ");
 }
 
-function getVoiceGuidance(characters: string[]): { character: string; guidance: string }[] {
+function getVoiceGuidance(
+  characters: string[],
+  charBySlug?: Record<string, Character>
+): { character: string; guidance: string }[] {
   return characters
     .map((c) => {
-      const key = c.toLowerCase().trim();
-      const guidance = CHARACTER_VOICE_GUIDANCE[key];
-      return guidance ? { character: c, guidance } : null;
+      const nameKey = c.toLowerCase().replace(/-/g, " ").trim();
+      const hardcoded = CHARACTER_VOICE_GUIDANCE[nameKey];
+      if (hardcoded) return { character: c, guidance: hardcoded };
+      if (charBySlug) {
+        const slug = nameKey.replace(/ /g, "-");
+        const charObj = charBySlug[slug];
+        if (charObj?.voiceGuide) {
+          const parts: string[] = [];
+          if (typeof charObj.voiceGuide === "string") parts.push(charObj.voiceGuide);
+          else if (typeof charObj.voiceGuide === "object" && charObj.voiceGuide !== null) {
+            const vg = charObj.voiceGuide as Record<string, unknown>;
+            if (typeof vg.tone === "string") parts.push(`Tone: ${vg.tone}`);
+            if (typeof vg.pacing === "string") parts.push(`Pacing: ${vg.pacing}`);
+            if (typeof vg.emotion === "string") parts.push(`Emotion: ${vg.emotion}`);
+          }
+          if (parts.length > 0) return { character: c, guidance: parts.join(" ") };
+        }
+      }
+      return null;
     })
     .filter((x): x is { character: string; guidance: string } => x !== null);
 }
@@ -2101,11 +2142,13 @@ function ReadAloudCard({
   index,
   episodeTone,
   episodeLesson,
+  charBySlug,
 }: {
   scene: Record<string, unknown>;
   index: number;
   episodeTone: string;
   episodeLesson: string;
+  charBySlug?: Record<string, Character>;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const title = str(scene.title);
@@ -2126,7 +2169,7 @@ function ReadAloudCard({
       tone: episodeTone,
     });
 
-  const voiceGuidance = getVoiceGuidance(characters);
+  const voiceGuidance = getVoiceGuidance(characters, charBySlug);
 
   return (
     <div className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
@@ -2286,10 +2329,12 @@ function ReadAloudPromptBuilder({
   scenes,
   raw,
   tikiFlagged,
+  charBySlug,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
+  charBySlug?: Record<string, Character>;
 }) {
   const tone = str(raw.tone);
   const lesson = str(raw.lesson);
@@ -2384,6 +2429,7 @@ function ReadAloudPromptBuilder({
               index={i}
               episodeTone={tone}
               episodeLesson={lesson}
+              charBySlug={charBySlug}
             />
           ))}
         </div>
@@ -3388,7 +3434,7 @@ export default async function EpisodeDetailPage({
         <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
 
         {/* ── Animation Prompt Builder ── */}
-        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} />
 
         {/* ── Animation Route Test ── */}
         <AnimationRouteTestPanel
@@ -3402,7 +3448,7 @@ export default async function EpisodeDetailPage({
         <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
-        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">
