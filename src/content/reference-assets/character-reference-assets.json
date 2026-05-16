@@ -1412,6 +1412,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967052797-2b1xyy",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "waving, hello, goodbye, joy, fun, happy",
+      "description": "waving, hello, goodbye, joy, fun, happy",
+      "notes": "waving, hello, goodbye, joy, fun, happy",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967052014-mango-waving-hello-goodbye-joy-fun.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1631454,
+      "uploadedAt": "2026-05-16T21:30:52.797Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
