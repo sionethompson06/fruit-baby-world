@@ -860,6 +860,23 @@
       "publicUseAllowed": false,
       "isOfficialReference": false,
       "updatedAt": "2026-05-16T20:35:22.974Z"
+    },
+    {
+      "id": "ref-1778965201310-z0tlua",
+      "characterSlug": "coconut-baby",
+      "assetType": "isolated-character-reference",
+      "title": "Coconut Baby Main Character Image",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965200167-coconut-smile-happy-welcoming-cute.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1902642,
+      "uploadedAt": "2026-05-16T21:00:01.310Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
