@@ -1327,6 +1327,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966704509-1q8kiq",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "laughing, giggling, fun, smile, playing",
+      "description": "laughing, giggling, fun, smile, playing",
+      "notes": "laughing, giggling, fun, smile, playing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966703841-mango-laughing-giggling-lol.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1612379,
+      "uploadedAt": "2026-05-16T21:25:04.509Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
