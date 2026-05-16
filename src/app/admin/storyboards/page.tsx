@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAllCharacters } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import StoryboardBuilder from "@/components/StoryboardBuilder";
 
 export const metadata: Metadata = {
@@ -7,6 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function StoryboardsPage() {
-  const characters = getAllCharacters();
+  let characters: import("@/lib/content").Character[] = [];
+  try {
+    characters = loadAllCharactersFromDisk();
+  } catch { /* fallback to empty */ }
   return <StoryboardBuilder characters={characters} />;
 }

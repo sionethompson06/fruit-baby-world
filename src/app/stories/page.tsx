@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import fs from "fs";
 import path from "path";
-import { getPublicEpisodes, getAllCharacters } from "@/lib/content";
+import { getPublicEpisodes } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import { loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import StoryCard from "@/components/StoryCard";
 import { getApprovedPublicStoryPanels } from "@/lib/episodeScenes";
@@ -97,8 +98,15 @@ export default function StoriesPage() {
     ...savedEpisodes.filter((e) => !staticSlugs.has(e.slug)),
   ];
 
-  const characters = getAllCharacters();
-  const characterMap = Object.fromEntries(characters.map((c) => [c.id, c]));
+  let allChars: import("@/lib/content").Character[] = [];
+  try { allChars = loadAllCharactersFromDisk(); } catch { /* fallback to empty */ }
+  // Key by both id and slug so lookups succeed regardless of how episodes reference characters
+  const characterMap: Record<string, import("@/lib/content").Character> = {};
+  for (const c of allChars) {
+    if (c.id) characterMap[c.id] = c;
+    characterMap[c.slug] = c;
+    if (c.slug === "tiki") characterMap["tiki-trouble"] = c;
+  }
   const thumbnailMap = buildThumbnailMap();
 
   const episodeGridClass =

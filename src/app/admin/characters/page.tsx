@@ -3,6 +3,7 @@ import path from "path";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { type Character } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import {
   checkCharacterAssets,
   buildReadinessSummary,
@@ -84,42 +85,6 @@ function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
     );
   } catch {
     return [];
-  }
-}
-
-// ─── Admin character loader (includes drafts from disk) ────────────────────────────────────────────
-
-function loadAllAdminCharacters(): Character[] {
-  const dir = path.join(process.cwd(), "src/content/characters");
-  try {
-    const files = fs
-      .readdirSync(dir)
-      .filter((f) => f.endsWith(".json"))
-      .sort();
-    return files.map((f) => {
-      const raw = fs.readFileSync(path.join(dir, f), "utf8");
-      return JSON.parse(raw) as Character;
-    });
-  } catch {
-    const known = [
-      "pineapple-baby",
-      "ube-baby",
-      "mango-baby",
-      "kiwi-baby",
-      "coconut-baby",
-      "tiki",
-    ];
-    return known.flatMap((slug) => {
-      try {
-        const raw = fs.readFileSync(
-          path.join(process.cwd(), "src/content/characters", `${slug}.json`),
-          "utf8"
-        );
-        return [JSON.parse(raw) as Character];
-      } catch {
-        return [];
-      }
-    });
   }
 }
 
@@ -516,7 +481,7 @@ const OFFICIAL_CHARACTER_SLUGS = new Set([
 ]);
 
 export default function AdminCharactersPage() {
-  const characters = loadAllAdminCharacters();
+  const characters = loadAllCharactersFromDisk();
   const assetSummaries = characters.map(checkCharacterAssets);
   const readiness = buildReadinessSummary(assetSummaries);
   const uploadedAssets = loadUploadedReferenceAssets();

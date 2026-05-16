@@ -170,6 +170,11 @@ export type EpisodePackageTemplate = {
 };
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
+//
+// NOTE: The static `characters` array below contains only the original six
+// canonical characters. It exists for client-safe imports (no fs) and as a
+// fallback. Server-side pages and builders should use characterRegistry.ts
+// (via characterContent.ts) to load ALL characters from disk dynamically.
 
 const characters: Character[] = [
   pineappleBaby as Character,
