@@ -8,6 +8,8 @@ import {
   getCharacterApprovalMode,
 } from "@/lib/characterReadiness";
 
+const PROFILE_SHEET_TYPES = new Set(["official-profile-reference", "profile-sheet"]);
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type SubmitState =
@@ -36,9 +38,16 @@ function PrimaryReferenceRow({
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   const hasPrimaryRef = characterHasPrimaryReference(character);
-  const hasAny = approvedAssets.length > 0;
   const currentPrimaryId = character.primaryReferenceAssetId;
   const isDraft = getCharacterApprovalMode(character) === "draft";
+
+  const profileSheetAssets = approvedAssets.filter((a) =>
+    PROFILE_SHEET_TYPES.has(a.assetType ?? "")
+  );
+  const supplementalAssets = approvedAssets.filter(
+    (a) => !PROFILE_SHEET_TYPES.has(a.assetType ?? "")
+  );
+  const hasAny = approvedAssets.length > 0;
 
   async function handleAssign(
     asset: UploadedReferenceAsset,
@@ -180,74 +189,121 @@ function PrimaryReferenceRow({
             </div>
           )}
 
-          {/* Asset list */}
+          {/* Official Profile Sheet assets */}
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
-              Approved Reference Assets
+              Official Profile Sheet
             </p>
-            <div className="flex flex-col gap-2">
-              {approvedAssets.map((asset) => {
-                const isSubmitting = submittingId === asset.id;
-                const assetUrl =
-                  asset.blobUrl ||
-                  (asset as unknown as Record<string, string>).url ||
-                  "";
-                const isCurrentPrimary = currentPrimaryId === asset.id;
+            {profileSheetAssets.length === 0 ? (
+              <div className="bg-tiki-brown/4 rounded-xl px-4 py-4 text-center">
+                <p className="text-xs text-tiki-brown/40 italic leading-relaxed">
+                  No approved Official Profile Reference available.<br />
+                  Upload and approve an asset with type{" "}
+                  <span className="font-mono not-italic">profile-sheet</span> or{" "}
+                  <span className="font-mono not-italic">official-profile-reference</span>.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {profileSheetAssets.map((asset) => {
+                  const isSubmitting = submittingId === asset.id;
+                  const assetUrl =
+                    asset.blobUrl ||
+                    (asset as unknown as Record<string, string>).url ||
+                    "";
+                  const isCurrentPrimary = currentPrimaryId === asset.id;
+                  return (
+                    <div
+                      key={asset.id}
+                      className={`border rounded-xl p-3 flex flex-col gap-2 bg-white ${
+                        isCurrentPrimary
+                          ? "border-tropical-green/30 bg-tropical-green/3"
+                          : "border-tiki-brown/10"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        {assetUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={assetUrl}
+                            alt={asset.title}
+                            className="w-14 h-14 object-cover rounded-lg flex-shrink-0 border border-tiki-brown/10"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-xs font-bold text-tiki-brown">{asset.title}</p>
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-tropical-green/10 text-tropical-green/80 font-mono">
+                              {asset.assetType}
+                            </span>
+                            {isCurrentPrimary && (
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                                Current Primary ✓
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-mono text-tiki-brown/30 truncate mt-0.5">{asset.id}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleAssign(asset, "primary-profile")}
+                          disabled={isSubmitting}
+                          className="text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {isSubmitting ? "Assigning…" : "Set as Primary Profile Sheet"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
 
-                return (
-                  <div
-                    key={asset.id}
-                    className={`border rounded-xl p-3 flex flex-col gap-2 bg-white ${
-                      isCurrentPrimary
-                        ? "border-tropical-green/30 bg-tropical-green/3"
-                        : "border-tiki-brown/10"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
+          {/* Supplemental reference assets — view only, not assignable as profile sheet */}
+          {supplementalAssets.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
+                Supplemental References
+              </p>
+              <div className="flex flex-col gap-2">
+                {supplementalAssets.map((asset) => {
+                  const assetUrl =
+                    asset.blobUrl ||
+                    (asset as unknown as Record<string, string>).url ||
+                    "";
+                  return (
+                    <div
+                      key={asset.id}
+                      className="border border-tiki-brown/8 rounded-xl p-3 flex items-start gap-3 bg-white"
+                    >
                       {assetUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={assetUrl}
                           alt={asset.title}
-                          className="w-14 h-14 object-cover rounded-lg flex-shrink-0 border border-tiki-brown/10"
+                          className="w-12 h-12 object-cover rounded-lg flex-shrink-0 border border-tiki-brown/10"
                         />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-xs font-bold text-tiki-brown">
-                            {asset.title}
-                          </p>
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-tiki-brown/8 text-tiki-brown/50 font-mono">
+                          <p className="text-xs font-semibold text-tiki-brown/70">{asset.title}</p>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-tiki-brown/8 text-tiki-brown/45 font-mono">
                             {asset.assetType}
                           </span>
-                          {isCurrentPrimary && (
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
-                              Current Primary
-                            </span>
-                          )}
                         </div>
-                        <p className="text-xs font-mono text-tiki-brown/30 truncate mt-0.5">
-                          {asset.id}
+                        <p className="text-xs text-tiki-brown/35 mt-0.5 italic">
+                          Supplemental reference — not assignable as profile sheet
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => handleAssign(asset, "primary-profile")}
-                        disabled={isSubmitting}
-                        className="text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        {isSubmitting
-                          ? "Assigning…"
-                          : "Set as Primary Profile Reference"}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Success */}
           {submitState.status === "success" && (

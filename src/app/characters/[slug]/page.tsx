@@ -10,6 +10,7 @@ import {
   getPublicCharactersFromDisk,
   getPublicCharacterBySlugFromDisk,
 } from "@/lib/characterContent";
+import { getOfficialProfileSheetUrl } from "@/lib/characterProfileAssets";
 import CharacterImage from "@/components/CharacterImage";
 import ProfileSheetImage from "@/components/ProfileSheetImage";
 
@@ -188,7 +189,7 @@ export default async function CharacterPage({
           </div>
           <div className="p-5 sm:p-8">
             <ProfileSheetImage
-              src={char.image.profileSheet}
+              src={getOfficialProfileSheetUrl(char)}
               alt={char.image.alt}
               accentColor={accentColor}
               characterName={char.name}

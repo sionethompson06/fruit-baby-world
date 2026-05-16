@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import { getOfficialProfileSheetUrl } from "@/lib/characterProfileAssets";
 import {
   checkCharacterAssets,
   buildReadinessSummary,
@@ -292,8 +293,8 @@ function CharacterReferenceCard({
           {profileAsset?.valid ? (
             <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden bg-bg-cream p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={character.image.profileSheet!} alt={character.image.alt} className="w-full max-h-[28rem] object-contain" />
-              <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">{character.image.profileSheet}</p>
+              <img src={getOfficialProfileSheetUrl(character)} alt={character.image.alt} className="w-full max-h-[28rem] object-contain" />
+              <p className="text-xs text-tiki-brown/30 font-mono mt-2 text-center truncate">{getOfficialProfileSheetUrl(character)}</p>
             </div>
           ) : (
             <div className="border border-tiki-brown/10 rounded-2xl bg-tiki-brown/3 flex flex-col items-center justify-center h-36 gap-2">

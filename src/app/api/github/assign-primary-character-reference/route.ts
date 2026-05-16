@@ -40,6 +40,7 @@ type AssignResult =
         | "character_not_found"
         | "asset_not_found"
         | "asset_not_approved"
+        | "invalid_primary_profile_asset_type"
         | "invalid_asset_url"
         | "invalid_character_json"
         | "github_error";
@@ -246,6 +247,42 @@ export async function POST(request: Request): Promise<Response> {
         status: "asset_not_approved",
         message:
           "Only approved reference assets can be assigned as a primary character reference.",
+      } satisfies AssignResult,
+      { status: 422 }
+    );
+  }
+
+  // ── Asset type must match role ────────────────────────────────────────────────────────
+  const assetType =
+    typeof selectedAsset.assetType === "string" ? selectedAsset.assetType.trim() : "";
+
+  const PROFILE_SHEET_TYPES = new Set(["official-profile-reference", "profile-sheet"]);
+  const MAIN_REFERENCE_TYPES = new Set([
+    "isolated-character-reference",
+    "main-character-reference",
+    "official-profile-reference",
+    "profile-sheet",
+  ]);
+
+  if (referenceRole === "primary-profile" && !PROFILE_SHEET_TYPES.has(assetType)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "invalid_primary_profile_asset_type",
+        message:
+          "This asset is approved as a supplemental reference, not an official profile sheet. Upload or select an Official Profile Reference (type: profile-sheet or official-profile-reference) to use as the primary profile sheet.",
+      } satisfies AssignResult,
+      { status: 422 }
+    );
+  }
+
+  if (referenceRole === "primary-main" && !MAIN_REFERENCE_TYPES.has(assetType)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "invalid_primary_profile_asset_type",
+        message:
+          "This asset type cannot be used as the main character image. Use an isolated-character-reference or official-profile-reference asset.",
       } satisfies AssignResult,
       { status: 422 }
     );

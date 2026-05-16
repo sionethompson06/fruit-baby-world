@@ -5,6 +5,12 @@
 
 import type { Character, ColorSwatch } from "@/lib/content";
 import { formatCharacterSlug } from "@/lib/characterRegistry";
+import {
+  getOfficialProfileSheetUrl,
+  getMainCharacterImageUrl,
+  getCharacterCardImageUrl,
+  getCharacterProfileAssetSummary,
+} from "@/lib/characterProfileAssets";
 
 // ─── Shared reference asset type ──────────────────────────────────────────────
 
@@ -65,6 +71,10 @@ export type NormalizedCharacterProfile = {
   profileImageUrl: string;
   mainImageUrl: string;
   profileSheetUrl: string;
+  officialProfileSheetUrl: string;
+  mainCharacterImageUrl: string;
+  characterCardImageUrl: string;
+  profileAssetWarnings: string[];
   primaryReferenceAssetId: string;
   primaryReferenceAssetUrl: string;
   primaryReferenceAssetType: string;
@@ -275,22 +285,9 @@ export function getCharacterGenerationRestrictions(c: Character): string[] {
   return safeStrArr(c.generationRestrictions);
 }
 
-/** Resolve the best profile image URL. */
+/** Resolve the best profile image URL using the canonical resolver. */
 export function getCharacterProfileImage(c: Character): string {
-  const img = c.image as Record<string, string | undefined> | undefined;
-  // 1. profileSheet (official profile image)
-  const profileSheet = img?.profileSheet?.trim() ?? "";
-  if (profileSheet) return profileSheet;
-  // 2. primaryReferenceAssetUrl (uploaded primary reference)
-  const primaryRef = c.primaryReferenceAssetUrl?.trim() ?? "";
-  if (primaryRef) return primaryRef;
-  // 3. main image
-  const main = img?.main?.trim() ?? "";
-  if (main) return main;
-  // 4. characterSheet (extra field)
-  const sheet = (img?.characterSheet as string | undefined)?.trim() ?? "";
-  if (sheet) return sheet;
-  return "";
+  return getOfficialProfileSheetUrl(c);
 }
 
 /** Resolve the best main display image URL. */
@@ -424,10 +421,11 @@ export function normalizeCharacterProfile(
 
   const img = c.image as Record<string, string | undefined> | undefined;
   const profileSheetUrl = img?.profileSheet?.trim() ?? "";
-  const mainImageUrl = img?.main?.trim() ?? "";
   const primaryReferenceAssetUrl = c.primaryReferenceAssetUrl?.trim() ?? "";
-  const profileImageUrl = getCharacterProfileImage(c);
+  const profileImageUrl = getOfficialProfileSheetUrl(c);
+  const mainImageUrl = getMainCharacterImageUrl(c);
   const imageAlt = img?.alt?.trim() ?? `${name} character`;
+  const assetSummary = getCharacterProfileAssetSummary(c);
 
   const colorPalette = getCharacterColorPalette(c);
   const visualIdentitySummary = getCharacterVisualIdentitySummary(c);
@@ -496,6 +494,10 @@ export function normalizeCharacterProfile(
     profileImageUrl,
     mainImageUrl,
     profileSheetUrl,
+    officialProfileSheetUrl: profileImageUrl,
+    mainCharacterImageUrl: mainImageUrl,
+    characterCardImageUrl: getCharacterCardImageUrl(c),
+    profileAssetWarnings: assetSummary.profileAssetWarnings,
     primaryReferenceAssetId: safeStr(c.primaryReferenceAssetId),
     primaryReferenceAssetUrl,
     primaryReferenceAssetType: safeStr(c.primaryReferenceAssetType),
