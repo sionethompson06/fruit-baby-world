@@ -881,6 +881,23 @@
       "publicUseAllowed": false,
       "isOfficialReference": true,
       "updatedAt": "2026-05-16T21:01:07.373Z"
+    },
+    {
+      "id": "ref-1778965533600-228vd2",
+      "characterSlug": "coconut-baby",
+      "assetType": "character-environment-reference",
+      "title": "Coconut Grove Evening",
+      "description": "Coconut Grove Evening , sunset,",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965532780-coconut-grove-evening-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2100576,
+      "uploadedAt": "2026-05-16T21:05:33.600Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
