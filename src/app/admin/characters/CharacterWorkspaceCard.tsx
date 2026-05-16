@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Character } from "@/lib/content";
 import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
 import type { CharacterAssetSummary, AssetRecommendedUse } from "@/lib/characterAssets";
-import { getOfficialProfileSheetUrl, PROFILE_SHEET_TYPES, MAIN_REFERENCE_TYPES } from "@/lib/characterProfileAssets";
+import { getOfficialProfileSheetUrl, PROFILE_SHEET_TYPES, MAIN_REFERENCE_TYPES, ENVIRONMENT_REFERENCE_TYPES } from "@/lib/characterProfileAssets";
 import {
   getCharacterApprovalMode,
   getCharacterStatusBadgeClass,
@@ -127,11 +127,23 @@ export default function CharacterWorkspaceCard({
 
   const profileSheetAssets = assets.filter((a) => PROFILE_SHEET_TYPES.has(a.assetType ?? ""));
   const mainRefAssets = assets.filter((a) => MAIN_REFERENCE_TYPES.has(a.assetType ?? ""));
+  const environmentAssets = assets.filter(
+    (a) =>
+      !PROFILE_SHEET_TYPES.has(a.assetType ?? "") &&
+      !MAIN_REFERENCE_TYPES.has(a.assetType ?? "") &&
+      ENVIRONMENT_REFERENCE_TYPES.has(a.assetType ?? "")
+  );
   const supportingAssets = assets.filter(
-    (a) => !PROFILE_SHEET_TYPES.has(a.assetType ?? "") && !MAIN_REFERENCE_TYPES.has(a.assetType ?? "")
+    (a) =>
+      !PROFILE_SHEET_TYPES.has(a.assetType ?? "") &&
+      !MAIN_REFERENCE_TYPES.has(a.assetType ?? "") &&
+      !ENVIRONMENT_REFERENCE_TYPES.has(a.assetType ?? "")
   );
   const pendingCount = assets.filter((a) => a.reviewStatus === "needs-review").length;
   const approvedSupportingCount = supportingAssets.filter((a) =>
+    isReferenceAssetApproved(a as UploadedReferenceAsset & { reviewStatus?: string })
+  ).length;
+  const approvedEnvironmentCount = environmentAssets.filter((a) =>
     isReferenceAssetApproved(a as UploadedReferenceAsset & { reviewStatus?: string })
   ).length;
   const rejectedArchivedCount = assets.filter(
@@ -321,10 +333,13 @@ export default function CharacterWorkspaceCard({
           {assets.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${hasPrimaryRef_ ? "bg-tropical-green/8 border-tropical-green/20 text-tropical-green font-bold" : "bg-tiki-brown/6 border-tiki-brown/10 text-tiki-brown/45 font-semibold"}`}>
-                Primary Official Reference: {hasPrimaryRef_ ? "Yes ✓" : "No"}
+                Primary Ref: {hasPrimaryRef_ ? "Yes ✓" : "No"}
               </div>
               <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${approvedSupportingCount > 0 ? "bg-tropical-green/8 border-tropical-green/20 text-tropical-green font-bold" : "bg-tiki-brown/6 border-tiki-brown/10 text-tiki-brown/45 font-semibold"}`}>
-                Supporting References: {approvedSupportingCount}
+                Supporting: {approvedSupportingCount}
+              </div>
+              <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${approvedEnvironmentCount > 0 ? "bg-sky-blue/15 border-sky-blue/25 text-tiki-brown/65 font-bold" : "bg-tiki-brown/6 border-tiki-brown/10 text-tiki-brown/45 font-semibold"}`}>
+                Environment: {approvedEnvironmentCount}
               </div>
               {pendingCount > 0 && (
                 <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border bg-pineapple-yellow/15 border-pineapple-yellow/30 text-tiki-brown/65 font-semibold">
@@ -344,8 +359,9 @@ export default function CharacterWorkspaceCard({
             <div className="flex items-start gap-2.5 bg-sky-blue/8 border border-sky-blue/15 rounded-xl px-3 py-2.5">
               <span className="text-sm flex-shrink-0">💡</span>
               <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                <strong className="font-semibold">The Primary Official Reference</strong> is the one official profile/profile-sheet image for this character.{" "}
-                <strong className="font-semibold">Approved Supporting References</strong> are not shown as the main character profile image, but they will be used later to help AI preserve poses, expressions, style, mood, and trademark fidelity. Most uploaded assets should remain Supporting References.
+                <strong className="font-semibold">The Primary Official Reference</strong> is the one official profile sheet for this character.{" "}
+                <strong className="font-semibold">Supporting References</strong> help AI preserve expressions, poses, style, and trademark fidelity.{" "}
+                <strong className="font-semibold">Environment/Home References</strong> describe where the character lives and appears — used for story settings and scene planning.
               </p>
             </div>
           )}
@@ -392,9 +408,27 @@ export default function CharacterWorkspaceCard({
                     Supporting References
                   </p>
                   <p className="text-xs text-tiki-brown/40 leading-relaxed -mt-1">
-                    These assets (expressions, poses, style, mood) will be used to help AI generation stay faithful to this character. They are not shown as the profile image.
+                    These references help future AI generation preserve expressions, poses, mood, proportions, style, and trademark fidelity.
                   </p>
                   {supportingAssets.map((asset) => (
+                    <AssetReviewCard
+                      key={asset.id}
+                      asset={asset}
+                      isDraftCharacter={isDraft}
+                      onReviewed={handleReviewed}
+                    />
+                  ))}
+                </div>
+              )}
+              {environmentAssets.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                    Environment / Home References
+                  </p>
+                  <p className="text-xs text-tiki-brown/40 leading-relaxed -mt-1">
+                    These references help the story builder describe where this character lives, plays, learns, and appears. They support future story settings, background prompts, animation locations, and environment consistency.
+                  </p>
+                  {environmentAssets.map((asset) => (
                     <AssetReviewCard
                       key={asset.id}
                       asset={asset}

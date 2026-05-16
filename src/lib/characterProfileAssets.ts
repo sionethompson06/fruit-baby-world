@@ -17,6 +17,7 @@ export const MAIN_REFERENCE_TYPES = new Set([
 ]);
 
 export const SUPPLEMENTAL_REFERENCE_TYPES = new Set([
+  "supporting-reference",
   "expression-sheet",
   "pose-reference",
   "turnaround-reference",
@@ -25,6 +26,13 @@ export const SUPPLEMENTAL_REFERENCE_TYPES = new Set([
   "scene-style-reference",
   "supplemental-reference",
   "other",
+]);
+
+export const ENVIRONMENT_REFERENCE_TYPES = new Set([
+  "character-environment-reference",
+  "environment-reference",
+  "home-reference",
+  "scene-style-reference",
 ]);
 
 // ─── Original canonical fallback profile sheets ────────────────────────────────
@@ -82,15 +90,53 @@ export function isSupplementalReferenceAssetType(assetType: string | undefined):
     (!PROFILE_SHEET_TYPES.has(assetType) && !MAIN_REFERENCE_TYPES.has(assetType));
 }
 
+export function isEnvironmentReferenceAssetType(assetType: string | undefined): boolean {
+  return ENVIRONMENT_REFERENCE_TYPES.has(assetType ?? "");
+}
+
+export function isSceneStyleReferenceAssetType(assetType: string | undefined): boolean {
+  return assetType === "scene-style-reference";
+}
+
+/** Canonical normalization — maps legacy/alias types to their canonical form. */
+export function normalizeReferenceAssetType(assetType: string | undefined): string {
+  const t = assetType?.trim() ?? "";
+  if (t === "environment-reference" || t === "home-reference") return "character-environment-reference";
+  if (t === "character-sheet" || t === "reference-guide") return "supplemental-reference";
+  return t;
+}
+
+/** Returns a semantic purpose category for use in prompt/story planning. */
+export function getReferenceAssetPurpose(
+  asset: ReferenceAssetLike
+): "character-profile" | "character-main" | "character-support" | "character-environment" | "scene-style" | "product" | "brand" | "other" {
+  const t = safeStr(asset.assetType);
+  if (PROFILE_SHEET_TYPES.has(t)) return "character-profile";
+  if (MAIN_REFERENCE_TYPES.has(t)) return "character-main";
+  if (t === "character-environment-reference" || t === "environment-reference" || t === "home-reference") return "character-environment";
+  if (t === "scene-style-reference") return "scene-style";
+  if (t === "product-reference") return "product";
+  if (t === "brand-guide") return "brand";
+  if (
+    t === "supporting-reference" || t === "expression-sheet" || t === "pose-reference" ||
+    t === "turnaround-reference" || t === "supplemental-reference"
+  ) return "character-support";
+  return "other";
+}
+
 export function getReferenceAssetDisplayRole(asset: ReferenceAssetLike): string {
   const t = safeStr(asset.assetType);
   if (PROFILE_SHEET_TYPES.has(t)) return "Official Profile Sheet";
   if (MAIN_REFERENCE_TYPES.has(t)) return "Main Character Image";
+  if (t === "supporting-reference") return "Supporting Reference";
   if (t === "expression-sheet") return "Expression Reference";
   if (t === "pose-reference") return "Pose Reference";
   if (t === "turnaround-reference") return "Turnaround Reference";
   if (t === "brand-guide") return "Brand Guide";
   if (t === "product-reference") return "Product Reference";
+  if (t === "character-environment-reference") return "Character Environment / Home Reference";
+  if (t === "environment-reference") return "Environment Reference";
+  if (t === "home-reference") return "Home Reference";
   if (t === "scene-style-reference") return "Scene / Style Reference";
   return "Supplemental Reference";
 }

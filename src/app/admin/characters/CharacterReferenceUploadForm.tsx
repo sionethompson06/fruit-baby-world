@@ -11,10 +11,16 @@ export type CharacterOption = {
 };
 
 const ASSET_TYPE_OPTIONS = [
-  { value: "profile-sheet", label: "Profile Sheet" },
-  { value: "character-sheet", label: "Character Sheet" },
+  { value: "official-profile-reference", label: "Official Profile Sheet" },
+  { value: "isolated-character-reference", label: "Main Character Image" },
+  { value: "supporting-reference", label: "Supporting Reference" },
   { value: "expression-sheet", label: "Expression Sheet" },
-  { value: "reference-guide", label: "Reference Guide" },
+  { value: "pose-reference", label: "Pose Reference" },
+  { value: "turnaround-reference", label: "Turnaround Reference" },
+  { value: "character-environment-reference", label: "Character Environment / Home Reference" },
+  { value: "scene-style-reference", label: "Scene / Style Reference" },
+  { value: "product-reference", label: "Product Reference" },
+  { value: "brand-guide", label: "Brand Guide" },
   { value: "other", label: "Other" },
 ];
 
@@ -223,6 +229,10 @@ export default function CharacterReferenceUploadForm({
             </option>
           ))}
         </select>
+        <p className="text-xs text-tiki-brown/40 mt-1.5 leading-relaxed">
+          Choose how this file should help the character system. Most action, mood, expression, and detail images should be{" "}
+          <strong className="font-semibold text-tiki-brown/55">Supporting References</strong>. Environment/Home references describe where the character lives or where stories happen.
+        </p>
       </div>
 
       {/* Title */}

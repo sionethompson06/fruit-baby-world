@@ -10,6 +10,9 @@ import {
   getMainCharacterImageUrl,
   getCharacterCardImageUrl,
   getCharacterProfileAssetSummary,
+  PROFILE_SHEET_TYPES,
+  MAIN_REFERENCE_TYPES,
+  ENVIRONMENT_REFERENCE_TYPES,
 } from "@/lib/characterProfileAssets";
 
 // ─── Shared reference asset type ──────────────────────────────────────────────
@@ -81,6 +84,10 @@ export type NormalizedCharacterProfile = {
   imageAlt: string;
 
   approvedReferenceCount: number;
+  approvedSupportingReferences: ReferenceAssetInput[];
+  approvedEnvironmentReferences: ReferenceAssetInput[];
+  supportingReferenceCount: number;
+  environmentReferenceCount: number;
   hasPrimaryReference: boolean;
   hasProfileImage: boolean;
   hasColorPalette: boolean;
@@ -300,15 +307,33 @@ export function getCharacterPrimaryReference(c: Character): string {
   return img?.profileSheet?.trim() ?? "";
 }
 
+function isApprovedRef(a: ReferenceAssetInput): boolean {
+  return (
+    a.reviewStatus === "approved-for-generation" ||
+    a.approvedForGeneration === true ||
+    a.generationUseAllowed === true
+  );
+}
+
 /** Count approved reference assets for a character. */
 function countApprovedRefs(slug: string, refs: ReferenceAssetInput[]): number {
-  return refs.filter(
-    (a) =>
-      a.characterSlug === slug &&
-      (a.reviewStatus === "approved-for-generation" ||
-        a.approvedForGeneration === true ||
-        a.generationUseAllowed === true)
-  ).length;
+  return refs.filter((a) => a.characterSlug === slug && isApprovedRef(a)).length;
+}
+
+function getApprovedSupportingRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    const t = typeof a.assetType === "string" ? a.assetType : "";
+    return !PROFILE_SHEET_TYPES.has(t) && !MAIN_REFERENCE_TYPES.has(t) && !ENVIRONMENT_REFERENCE_TYPES.has(t);
+  });
+}
+
+function getApprovedEnvironmentRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    const t = typeof a.assetType === "string" ? a.assetType : "";
+    return ENVIRONMENT_REFERENCE_TYPES.has(t);
+  });
 }
 
 // ─── Profile completeness ─────────────────────────────────────────────────────
@@ -436,6 +461,12 @@ export function normalizeCharacterProfile(
   const approvedReferenceCount = referenceAssets
     ? countApprovedRefs(slug, referenceAssets)
     : 0;
+  const approvedSupportingReferences = referenceAssets
+    ? getApprovedSupportingRefs(slug, referenceAssets)
+    : [];
+  const approvedEnvironmentReferences = referenceAssets
+    ? getApprovedEnvironmentRefs(slug, referenceAssets)
+    : [];
   const hasPrimaryReference = Boolean(primaryReferenceAssetUrl) || Boolean(profileSheetUrl);
 
   const trademarkNotesRaw = c.trademarkNotes;
@@ -504,6 +535,10 @@ export function normalizeCharacterProfile(
     imageAlt,
 
     approvedReferenceCount,
+    approvedSupportingReferences,
+    approvedEnvironmentReferences,
+    supportingReferenceCount: approvedSupportingReferences.length,
+    environmentReferenceCount: approvedEnvironmentReferences.length,
     hasPrimaryReference,
     hasProfileImage: Boolean(profileImageUrl),
     hasColorPalette: colorPalette.length > 0,

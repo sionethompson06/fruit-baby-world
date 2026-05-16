@@ -10,6 +10,7 @@ import {
   PROFILE_SHEET_TYPES,
   MAIN_REFERENCE_TYPES,
   getReferenceAssetDisplayRole,
+  isEnvironmentReferenceAssetType,
 } from "@/lib/characterProfileAssets";
 
 // ─── Asset type helpers ───────────────────────────────────────────────────────
@@ -80,7 +81,8 @@ export function AssetReviewCard({
   const assetType = localAsset.assetType ?? "";
   const isProfileSheet = isProfileSheetType(assetType);
   const isMainRef = isMainRefType(assetType);
-  const isSupporting = !isProfileSheet && !isMainRef;
+  const isEnvironmentRef = !isProfileSheet && !isMainRef && isEnvironmentReferenceAssetType(assetType);
+  const isSupporting = !isProfileSheet && !isMainRef && !isEnvironmentRef;
   const displayRole = getReferenceAssetDisplayRole(localAsset as { assetType?: string });
 
   const reviewStatus = localAsset.reviewStatus as string | undefined;
@@ -154,6 +156,26 @@ export function AssetReviewCard({
       }
     } catch {
       setQuickState({ status: "error", action: "supporting", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleApproveAsEnvironmentRef() {
+    setQuickState({ status: "submitting", action: "environment" });
+    try {
+      const data = await callReviewAPI({
+        reviewStatus: "approved-for-generation",
+        approvedForGeneration: true,
+        generationUseAllowed: true,
+        isOfficialReference: false,
+      });
+      if (data.ok) {
+        applyReviewedAsset(data.asset);
+        setQuickState({ status: "success", action: "environment", message: "Approved as Environment/Home Reference." });
+      } else {
+        setQuickState({ status: "error", action: "environment", message: data.message });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "environment", message: "Network error — please try again." });
     }
   }
 
@@ -443,24 +465,40 @@ export function AssetReviewCard({
               </button>
             )}
 
-            {/* Supporting ref approve (always available) */}
-            <div className="flex flex-wrap gap-2">
+            {/* Environment ref approve (primary button for environment types) */}
+            {isEnvironmentRef && (
               <button
                 type="button"
-                onClick={handleApproveAsSupporting}
+                onClick={handleApproveAsEnvironmentRef}
                 disabled={isBusy}
-                className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                  isSupporting
-                    ? "bg-tropical-green text-white hover:bg-tropical-green/85"
-                    : "bg-tiki-brown/10 text-tiki-brown/65 hover:bg-tiki-brown/15"
-                }`}
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-tropical-green text-white hover:bg-tropical-green/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left leading-snug"
               >
-                {quickState.status === "submitting" && quickState.action === "supporting"
+                {quickState.status === "submitting" && quickState.action === "environment"
                   ? "Approving…"
-                  : isSupporting
-                  ? "✓ Approve as Supporting Reference"
-                  : "Approve as Supporting Reference"}
+                  : "✓ Approve as Environment/Home Reference"}
               </button>
+            )}
+
+            {/* Supporting ref approve (always available, primary for supporting types) */}
+            <div className="flex flex-wrap gap-2">
+              {!isEnvironmentRef && (
+                <button
+                  type="button"
+                  onClick={handleApproveAsSupporting}
+                  disabled={isBusy}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                    isSupporting
+                      ? "bg-tropical-green text-white hover:bg-tropical-green/85"
+                      : "bg-tiki-brown/10 text-tiki-brown/65 hover:bg-tiki-brown/15"
+                  }`}
+                >
+                  {quickState.status === "submitting" && quickState.action === "supporting"
+                    ? "Approving…"
+                    : isSupporting
+                    ? "✓ Approve as Supporting Reference"
+                    : "Approve as Supporting Reference"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleReject}
@@ -479,7 +517,12 @@ export function AssetReviewCard({
               </button>
             </div>
 
-            {/* Context note for supplemental type */}
+            {/* Context note */}
+            {isEnvironmentRef && (
+              <p className="text-xs text-tiki-brown/40 leading-relaxed">
+                <strong className="font-semibold">{displayRole}</strong> — helps story builder describe where this character lives, plays, or appears. Used for setting, background, and environment references.
+              </p>
+            )}
             {isSupporting && (
               <p className="text-xs text-tiki-brown/40 leading-relaxed">
                 <strong className="font-semibold">{displayRole}</strong> — will be available as a supporting reference for future AI generation, not as the primary profile image.
@@ -499,6 +542,21 @@ export function AssetReviewCard({
             </div>
             <p className="text-xs text-tiki-brown/55 leading-relaxed">
               This asset will be available for future character-faithful AI generation — helping preserve poses, expressions, style, and fidelity.
+            </p>
+          </div>
+        )}
+
+        {/* ── Approved status: Environment / Home Reference ── */}
+        {isApproved && isEnvironmentRef && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                ✓ Approved Environment/Home Reference
+              </span>
+              <span className="text-xs text-tiki-brown/45 font-mono">{displayRole}</span>
+            </div>
+            <p className="text-xs text-tiki-brown/55 leading-relaxed">
+              This asset will help the story builder describe where this character lives, plays, and appears — used for setting, background, and environment consistency.
             </p>
           </div>
         )}
