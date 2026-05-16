@@ -898,6 +898,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965563317-5lxm26",
+      "characterSlug": "coconut-baby",
+      "assetType": "character-environment-reference",
+      "title": "Coconut Grove Market",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965561354-coconut-grove-market-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1973029,
+      "uploadedAt": "2026-05-16T21:06:03.317Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
