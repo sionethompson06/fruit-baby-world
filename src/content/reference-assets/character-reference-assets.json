@@ -1310,6 +1310,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966670959-zbp2gu",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "hiking, adventure, traveling",
+      "description": "Mango - hiking, adventure, traveling",
+      "notes": "hiking, adventure, traveling",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966670243-mango-hiking-adventure-traveling.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1593774,
+      "uploadedAt": "2026-05-16T21:24:30.959Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
