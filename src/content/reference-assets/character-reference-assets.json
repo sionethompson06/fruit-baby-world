@@ -1566,10 +1566,14 @@
       "fileSizeBytes": 2492555,
       "uploadedAt": "2026-05-16T21:33:21.141Z",
       "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "requiresReview": false,
+      "reviewStatus": "archived",
+      "reviewedAt": "2026-05-16T21:46:43.394Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": false,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T21:46:43.394Z"
     },
     {
       "id": "ref-1778967231579-77ycgw",
