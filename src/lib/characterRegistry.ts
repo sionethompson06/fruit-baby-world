@@ -5,6 +5,14 @@
 import fs from "fs";
 import path from "path";
 import type { Character } from "@/lib/content";
+import {
+  normalizeCharacterProfile,
+  normalizeCharacterProfiles,
+  type NormalizedCharacterProfile,
+  type ReferenceAssetInput,
+} from "@/lib/characterProfileNormalizer";
+
+export type { NormalizedCharacterProfile, ReferenceAssetInput };
 
 const CHARACTERS_DIR = path.join(process.cwd(), "src/content/characters");
 
@@ -135,6 +143,35 @@ export function getCharacterDisplayName(slugOrName: string): string {
   const char = getCharacterMap()[slugOrName];
   if (char) return char.shortName ?? char.name ?? formatCharacterSlug(slugOrName);
   return formatCharacterSlug(slugOrName);
+}
+
+// ─── Normalized profile variants (via characterProfileNormalizer) ───────────────
+
+export function getAllNormalizedCharacterProfiles(
+  referenceAssets?: ReferenceAssetInput[]
+): NormalizedCharacterProfile[] {
+  return normalizeCharacterProfiles(getAllCharacterProfiles(), referenceAssets);
+}
+
+export function getPublicNormalizedCharacterProfiles(
+  referenceAssets?: ReferenceAssetInput[]
+): NormalizedCharacterProfile[] {
+  return normalizeCharacterProfiles(getPublicCharacterProfiles(), referenceAssets);
+}
+
+export function getAdminUsableNormalizedCharacterProfiles(
+  referenceAssets?: ReferenceAssetInput[]
+): NormalizedCharacterProfile[] {
+  return normalizeCharacterProfiles(getAdminUsableCharacterProfiles(), referenceAssets);
+}
+
+export function getNormalizedCharacterBySlug(
+  slug: string,
+  referenceAssets?: ReferenceAssetInput[]
+): NormalizedCharacterProfile | undefined {
+  const c = getCharacterBySlug(slug);
+  if (!c) return undefined;
+  return normalizeCharacterProfile(c, referenceAssets);
 }
 
 // ─── Normalization ─────────────────────────────────────────────────────────────
