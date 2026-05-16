@@ -3,11 +3,24 @@
 import { useState } from "react";
 import type { UploadedReferenceAsset, ReviewStatus } from "@/app/api/reference-assets/upload-character-reference/route";
 import {
-  getReferenceAssetStatus,
   getReferenceAssetStatusLabel,
   getReferenceAssetStatusBadgeClass,
-  isReferenceAssetApproved,
 } from "@/lib/characterReadiness";
+import {
+  PROFILE_SHEET_TYPES,
+  MAIN_REFERENCE_TYPES,
+  getReferenceAssetDisplayRole,
+} from "@/lib/characterProfileAssets";
+
+// ─── Asset type helpers ───────────────────────────────────────────────────────
+
+function isProfileSheetType(assetType: string | undefined): boolean {
+  return PROFILE_SHEET_TYPES.has(assetType ?? "");
+}
+
+function isMainRefType(assetType: string | undefined): boolean {
+  return MAIN_REFERENCE_TYPES.has(assetType ?? "");
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,20 +39,20 @@ type SubmitState =
   | { status: "success"; commitMessage: string; path: string; assetTitle: string; reviewStatus: ReviewStatus; generationUseAllowed: boolean }
   | { status: "error"; message: string };
 
-type AssignState =
+type QuickState =
   | { status: "idle" }
-  | { status: "submitting" }
-  | { status: "success"; characterName: string }
-  | { status: "error"; message: string };
+  | { status: "submitting"; action: string }
+  | { status: "success"; action: string; message: string }
+  | { status: "error"; action: string; message: string };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatBytes(n: number): string {
   if (n >= 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   return `${(n / 1024).toFixed(1)} KB`;
 }
 
-// ─── Per-asset review card ──────────────────────────────────────────────────────────────
+// ─── Per-asset review card ────────────────────────────────────────────────────
 
 export function AssetReviewCard({
   asset,
@@ -50,9 +63,10 @@ export function AssetReviewCard({
   isDraftCharacter: boolean;
   onReviewed: (updated: UploadedReferenceAsset) => void;
 }) {
+  const [localAsset, setLocalAsset] = useState(asset);
   const [expanded, setExpanded] = useState(false);
   const [techDetailsOpen, setTechDetailsOpen] = useState(false);
-  const [assignState, setAssignState] = useState<AssignState>({ status: "idle" });
+  const [quickState, setQuickState] = useState<QuickState>({ status: "idle" });
   const [form, setForm] = useState<ReviewFormState>({
     reviewStatus: asset.reviewStatus,
     approvedForGeneration: asset.approvedForGeneration,
@@ -63,8 +77,207 @@ export function AssetReviewCard({
   });
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
 
-  const isApprovingForGeneration = form.reviewStatus === "approved-for-generation";
-  const isSubmitting = submitState.status === "submitting";
+  const assetType = localAsset.assetType ?? "";
+  const isProfileSheet = isProfileSheetType(assetType);
+  const isMainRef = isMainRefType(assetType);
+  const isSupporting = !isProfileSheet && !isMainRef;
+  const displayRole = getReferenceAssetDisplayRole(localAsset as { assetType?: string });
+
+  const reviewStatus = localAsset.reviewStatus as string | undefined;
+  const isApproved = reviewStatus === "approved-for-generation";
+  const needsReview = !reviewStatus || reviewStatus === "needs-review";
+  const isRejected = reviewStatus === "rejected";
+  const isArchived = reviewStatus === "archived";
+
+  const isBusy = quickState.status === "submitting" || submitState.status === "submitting";
+
+  // ── API helpers ──────────────────────────────────────────────────────────────
+
+  async function callReviewAPI(params: {
+    reviewStatus: ReviewStatus;
+    approvedForGeneration: boolean;
+    generationUseAllowed: boolean;
+    isOfficialReference: boolean;
+    reviewNotes?: string;
+  }): Promise<{ ok: true; asset: UploadedReferenceAsset } | { ok: false; message: string }> {
+    const res = await fetch("/api/reference-assets/review-character-reference", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        assetId: localAsset.id,
+        publicUseAllowed: false,
+        reviewNotes: localAsset.reviewNotes ?? "",
+        ...params,
+      }),
+    });
+    return res.json() as Promise<{ ok: true; asset: UploadedReferenceAsset } | { ok: false; message: string }>;
+  }
+
+  async function callAssignAPI(
+    referenceRole: "primary-profile" | "primary-main"
+  ): Promise<{ ok: true; commitMessage: string; path: string } | { ok: false; message: string }> {
+    const res = await fetch("/api/github/assign-primary-character-reference", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        characterSlug: localAsset.characterSlug,
+        assetId: localAsset.id,
+        referenceRole,
+      }),
+    });
+    return res.json() as Promise<{ ok: true; commitMessage: string; path: string } | { ok: false; message: string }>;
+  }
+
+  function applyReviewedAsset(updated: UploadedReferenceAsset) {
+    setLocalAsset(updated);
+    onReviewed(updated);
+    // sync the advanced form status too
+    setForm((f) => ({ ...f, reviewStatus: updated.reviewStatus }));
+  }
+
+  // ── Quick action handlers ────────────────────────────────────────────────────
+
+  async function handleApproveAsSupporting() {
+    setQuickState({ status: "submitting", action: "supporting" });
+    try {
+      const data = await callReviewAPI({
+        reviewStatus: "approved-for-generation",
+        approvedForGeneration: true,
+        generationUseAllowed: true,
+        isOfficialReference: false,
+      });
+      if (data.ok) {
+        applyReviewedAsset(data.asset);
+        setQuickState({ status: "success", action: "supporting", message: "Approved as Supporting Reference." });
+      } else {
+        setQuickState({ status: "error", action: "supporting", message: data.message });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "supporting", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleApproveAsProfileSheet() {
+    setQuickState({ status: "submitting", action: "profile-sheet" });
+    try {
+      // Step 1: approve
+      const approveData = await callReviewAPI({
+        reviewStatus: "approved-for-generation",
+        approvedForGeneration: true,
+        generationUseAllowed: true,
+        isOfficialReference: true,
+      });
+      if (!approveData.ok) {
+        setQuickState({ status: "error", action: "profile-sheet", message: approveData.message });
+        return;
+      }
+      applyReviewedAsset(approveData.asset);
+      // Step 2: assign as primary profile
+      const assignData = await callAssignAPI("primary-profile");
+      if (assignData.ok) {
+        setQuickState({ status: "success", action: "profile-sheet", message: "Approved and set as Official Profile Sheet. Redeploy required." });
+      } else {
+        setQuickState({ status: "error", action: "profile-sheet", message: `Approved, but assign failed: ${assignData.message}` });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "profile-sheet", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleApproveAsMainImage() {
+    setQuickState({ status: "submitting", action: "main-image" });
+    try {
+      const approveData = await callReviewAPI({
+        reviewStatus: "approved-for-generation",
+        approvedForGeneration: true,
+        generationUseAllowed: true,
+        isOfficialReference: true,
+      });
+      if (!approveData.ok) {
+        setQuickState({ status: "error", action: "main-image", message: approveData.message });
+        return;
+      }
+      applyReviewedAsset(approveData.asset);
+      const assignData = await callAssignAPI("primary-main");
+      if (assignData.ok) {
+        setQuickState({ status: "success", action: "main-image", message: "Approved and set as Main Character Image. Redeploy required." });
+      } else {
+        setQuickState({ status: "error", action: "main-image", message: `Approved, but assign failed: ${assignData.message}` });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "main-image", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleReject() {
+    setQuickState({ status: "submitting", action: "reject" });
+    try {
+      const data = await callReviewAPI({
+        reviewStatus: "rejected",
+        approvedForGeneration: false,
+        generationUseAllowed: false,
+        isOfficialReference: false,
+      });
+      if (data.ok) {
+        applyReviewedAsset(data.asset);
+        setQuickState({ status: "success", action: "reject", message: "Asset rejected." });
+      } else {
+        setQuickState({ status: "error", action: "reject", message: data.message });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "reject", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleArchive() {
+    setQuickState({ status: "submitting", action: "archive" });
+    try {
+      const data = await callReviewAPI({
+        reviewStatus: "archived",
+        approvedForGeneration: false,
+        generationUseAllowed: false,
+        isOfficialReference: false,
+      });
+      if (data.ok) {
+        applyReviewedAsset(data.asset);
+        setQuickState({ status: "success", action: "archive", message: "Asset archived." });
+      } else {
+        setQuickState({ status: "error", action: "archive", message: data.message });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "archive", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleAssignProfileSheet() {
+    setQuickState({ status: "submitting", action: "assign-profile-sheet" });
+    try {
+      const data = await callAssignAPI("primary-profile");
+      if (data.ok) {
+        setQuickState({ status: "success", action: "assign-profile-sheet", message: "Set as Official Profile Sheet. Redeploy required." });
+      } else {
+        setQuickState({ status: "error", action: "assign-profile-sheet", message: data.message });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "assign-profile-sheet", message: "Network error — please try again." });
+    }
+  }
+
+  async function handleAssignMainImage() {
+    setQuickState({ status: "submitting", action: "assign-main-image" });
+    try {
+      const data = await callAssignAPI("primary-main");
+      if (data.ok) {
+        setQuickState({ status: "success", action: "assign-main-image", message: "Set as Main Character Image. Redeploy required." });
+      } else {
+        setQuickState({ status: "error", action: "assign-main-image", message: data.message });
+      }
+    } catch {
+      setQuickState({ status: "error", action: "assign-main-image", message: "Network error — please try again." });
+    }
+  }
+
+  // ── Advanced form handlers ───────────────────────────────────────────────────
 
   function setReviewStatus(s: ReviewStatus) {
     const genAllowed = s === "approved-for-generation";
@@ -77,14 +290,14 @@ export function AssetReviewCard({
     }));
   }
 
-  async function handleSubmit() {
+  async function handleDetailedSubmit() {
     setSubmitState({ status: "submitting" });
     try {
       const res = await fetch("/api/reference-assets/review-character-reference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          assetId: asset.id,
+          assetId: localAsset.id,
           reviewStatus: form.reviewStatus,
           approvedForGeneration: form.approvedForGeneration,
           generationUseAllowed: form.generationUseAllowed,
@@ -102,70 +315,37 @@ export function AssetReviewCard({
           status: "success",
           commitMessage: data.commitMessage,
           path: data.path,
-          assetTitle: data.asset.title || asset.title,
+          assetTitle: data.asset.title || localAsset.title,
           reviewStatus: data.asset.reviewStatus,
           generationUseAllowed: data.asset.generationUseAllowed ?? false,
         });
-        onReviewed(data.asset);
+        applyReviewedAsset(data.asset);
         setExpanded(false);
       } else {
         setSubmitState({ status: "error", message: data.message });
       }
     } catch {
-      setSubmitState({
-        status: "error",
-        message: "Something went wrong while saving the reference review.",
-      });
+      setSubmitState({ status: "error", message: "Something went wrong while saving the reference review." });
     }
   }
 
-  async function handleAssignPrimary() {
-    setAssignState({ status: "submitting" });
-    try {
-      const res = await fetch("/api/github/assign-primary-character-reference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          characterSlug: asset.characterSlug,
-          assetId: asset.id,
-          referenceRole: "primary-profile",
-        }),
-      });
-      const data = (await res.json()) as
-        | { ok: true; character: { name?: string } }
-        | { ok: false; message: string };
-      if (data.ok) {
-        const name =
-          typeof data.character?.name === "string"
-            ? data.character.name
-            : asset.characterSlug;
-        setAssignState({ status: "success", characterName: name });
-      } else {
-        setAssignState({ status: "error", message: data.message });
-      }
-    } catch {
-      setAssignState({ status: "error", message: "Something went wrong while assigning." });
-    }
-  }
-
-  const isApproved =
-    asset.reviewStatus === "approved-for-generation" &&
-    asset.approvedForGeneration &&
-    asset.generationUseAllowed;
+  // ── Status badge class for localAsset ────────────────────────────────────────
+  const statusBadgeClass = getReferenceAssetStatusBadgeClass(localAsset as UploadedReferenceAsset & { reviewStatus?: string });
+  const statusLabel = getReferenceAssetStatusLabel(localAsset as UploadedReferenceAsset & { reviewStatus?: string });
 
   return (
     <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
 
-      {/* Asset header row */}
+      {/* ── Asset header row ── */}
       <div className="p-4 flex flex-col gap-3 bg-white">
         <div className="flex items-start gap-3 flex-wrap">
 
-          {/* Preview thumbnail */}
+          {/* Thumbnail */}
           <div className="w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border border-tiki-brown/10 bg-tiki-brown/4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={asset.blobUrl}
-              alt={asset.title}
+              src={localAsset.blobUrl}
+              alt={localAsset.title}
               className="w-full h-full object-cover"
               loading="lazy"
             />
@@ -173,32 +353,27 @@ export function AssetReviewCard({
 
           {/* Info */}
           <div className="flex-1 flex flex-col gap-1 min-w-0">
-            <p className="text-sm font-bold text-tiki-brown leading-tight">{asset.title}</p>
+            <p className="text-sm font-bold text-tiki-brown leading-tight">{localAsset.title}</p>
             <p className="text-xs text-tiki-brown/50">
-              {asset.characterSlug} · {asset.assetType}
+              {localAsset.characterSlug} · <span className="font-mono">{localAsset.assetType}</span>
             </p>
             <p className="text-xs font-mono text-tiki-brown/35">
-              {formatBytes(asset.fileSizeBytes)} · {asset.mimeType.replace("image/", "").toUpperCase()}
+              {formatBytes(localAsset.fileSizeBytes)} · {localAsset.mimeType.replace("image/", "").toUpperCase()}
             </p>
-            {asset.uploadedAt && (
+            {localAsset.uploadedAt && (
               <p className="text-xs text-tiki-brown/30">
-                Uploaded {new Date(asset.uploadedAt).toLocaleDateString()}
+                {new Date(localAsset.uploadedAt).toLocaleDateString()}
               </p>
             )}
           </div>
 
-          {/* Status badges + actions */}
+          {/* Actions */}
           <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
-            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${getReferenceAssetStatusBadgeClass(asset as UploadedReferenceAsset & { reviewStatus?: string })}`}>
-              {getReferenceAssetStatusLabel(asset as UploadedReferenceAsset & { reviewStatus?: string })}
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${statusBadgeClass}`}>
+              {statusLabel}
             </span>
-            {isReferenceAssetApproved(asset as UploadedReferenceAsset & { reviewStatus?: string }) && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ube-purple/12 text-ube-purple uppercase tracking-wide">
-                Primary Ready
-              </span>
-            )}
             <a
-              href={asset.blobUrl}
+              href={localAsset.blobUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
@@ -211,135 +386,260 @@ export function AssetReviewCard({
                 setExpanded((v) => !v);
                 if (submitState.status === "error") setSubmitState({ status: "idle" });
               }}
-              className="text-xs font-bold px-2 py-1 rounded-lg bg-tiki-brown/6 text-tiki-brown/60 hover:bg-tiki-brown/10 transition-colors"
+              className="text-xs font-bold px-2 py-1 rounded-lg bg-tiki-brown/6 text-tiki-brown/50 hover:bg-tiki-brown/10 transition-colors"
             >
-              {expanded ? "Close" : "Review"}
+              {expanded ? "Close" : "Advanced"}
             </button>
             <button
               type="button"
               onClick={() => setTechDetailsOpen((v) => !v)}
-              className="text-xs font-bold px-2 py-1 rounded-lg bg-tiki-brown/4 text-tiki-brown/40 hover:bg-tiki-brown/6 transition-colors"
+              className="text-xs font-bold px-2 py-1 rounded-lg bg-tiki-brown/4 text-tiki-brown/35 hover:bg-tiki-brown/6 transition-colors"
             >
               {techDetailsOpen ? "Hide" : "Tech"}
             </button>
           </div>
         </div>
 
-        {/* Description / review notes / review date */}
-        {asset.description && (
-          <p className="text-xs text-tiki-brown/55 leading-relaxed">{asset.description}</p>
+        {/* Description */}
+        {localAsset.description && (
+          <p className="text-xs text-tiki-brown/55 leading-relaxed">{localAsset.description}</p>
         )}
-        {asset.reviewNotes && (
+
+        {/* Review notes */}
+        {localAsset.reviewNotes && (
           <p className="text-xs text-tiki-brown/45 italic leading-relaxed border-t border-tiki-brown/6 pt-2">
-            Review notes: {asset.reviewNotes}
-          </p>
-        )}
-        {asset.reviewedAt && (
-          <p className="text-xs text-tiki-brown/30">
-            Reviewed {new Date(asset.reviewedAt).toLocaleString()}
+            Notes: {localAsset.reviewNotes}
           </p>
         )}
 
-        {/* Technical details (collapsed by default) */}
-        {techDetailsOpen && (
-          <div className="border-t border-tiki-brown/8 pt-3 mt-2">
-            <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-2">Technical Details</p>
-            <div className="bg-white border border-tiki-brown/8 rounded-xl px-3 py-2 flex flex-col gap-1">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-tiki-brown/45">approvedForGeneration</span>
-                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.approvedForGeneration)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-tiki-brown/45">generationUseAllowed</span>
-                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.generationUseAllowed)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-tiki-brown/45">publicUseAllowed</span>
-                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.publicUseAllowed)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-tiki-brown/45">isOfficialReference</span>
-                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.isOfficialReference)}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-mono text-tiki-brown/45">requiresReview</span>
-                <span className="text-xs font-mono font-bold text-tiki-brown/65">{String(asset.requiresReview)}</span>
-              </div>
+        {/* ── Quick actions: Needs Review ── */}
+        {needsReview && quickState.status !== "success" && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2.5">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Review Actions</p>
+
+            {/* Primary approve button — type-specific */}
+            {isProfileSheet && (
+              <button
+                type="button"
+                onClick={handleApproveAsProfileSheet}
+                disabled={isBusy}
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-tropical-green text-white hover:bg-tropical-green/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left leading-snug"
+              >
+                {quickState.status === "submitting" && quickState.action === "profile-sheet"
+                  ? "Approving…"
+                  : "✓ Approve as Official Profile Sheet"}
+              </button>
+            )}
+            {isMainRef && (
+              <button
+                type="button"
+                onClick={handleApproveAsMainImage}
+                disabled={isBusy}
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-tropical-green text-white hover:bg-tropical-green/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left leading-snug"
+              >
+                {quickState.status === "submitting" && quickState.action === "main-image"
+                  ? "Approving…"
+                  : "✓ Approve as Main Character Image"}
+              </button>
+            )}
+
+            {/* Supporting ref approve (always available) */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleApproveAsSupporting}
+                disabled={isBusy}
+                className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isSupporting
+                    ? "bg-tropical-green text-white hover:bg-tropical-green/85"
+                    : "bg-tiki-brown/10 text-tiki-brown/65 hover:bg-tiki-brown/15"
+                }`}
+              >
+                {quickState.status === "submitting" && quickState.action === "supporting"
+                  ? "Approving…"
+                  : isSupporting
+                  ? "✓ Approve as Supporting Reference"
+                  : "Approve as Supporting Reference"}
+              </button>
+              <button
+                type="button"
+                onClick={handleReject}
+                disabled={isBusy}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-warm-coral/15 text-warm-coral/80 hover:bg-warm-coral/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {quickState.status === "submitting" && quickState.action === "reject" ? "Rejecting…" : "Reject"}
+              </button>
+              <button
+                type="button"
+                onClick={handleArchive}
+                disabled={isBusy}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/50 hover:bg-tiki-brown/12 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {quickState.status === "submitting" && quickState.action === "archive" ? "Archiving…" : "Archive"}
+              </button>
             </div>
+
+            {/* Context note for supplemental type */}
+            {isSupporting && (
+              <p className="text-xs text-tiki-brown/40 leading-relaxed">
+                <strong className="font-semibold">{displayRole}</strong> — will be available as a supporting reference for future AI generation, not as the primary profile image.
+              </p>
+            )}
           </div>
         )}
 
-        {/* Success summary */}
+        {/* ── Approved status: Supporting Reference ── */}
+        {isApproved && isSupporting && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                ✓ Approved Supporting Reference
+              </span>
+              <span className="text-xs text-tiki-brown/45 font-mono">{displayRole}</span>
+            </div>
+            <p className="text-xs text-tiki-brown/55 leading-relaxed">
+              This asset will be available for future character-faithful AI generation — helping preserve poses, expressions, style, and fidelity.
+            </p>
+          </div>
+        )}
+
+        {/* ── Approved status: Profile Sheet ── */}
+        {isApproved && isProfileSheet && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                ✓ Approved — {displayRole}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleAssignProfileSheet}
+              disabled={isBusy}
+              className="self-start text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {quickState.status === "submitting" && quickState.action === "assign-profile-sheet"
+                ? "Setting…"
+                : "Set as Official Profile Sheet"}
+            </button>
+          </div>
+        )}
+
+        {/* ── Approved status: Main Reference ── */}
+        {isApproved && isMainRef && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                ✓ Approved — {displayRole}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleAssignMainImage}
+              disabled={isBusy}
+              className="self-start text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {quickState.status === "submitting" && quickState.action === "assign-main-image"
+                ? "Setting…"
+                : "Set as Main Character Image"}
+            </button>
+          </div>
+        )}
+
+        {/* ── Rejected status ── */}
+        {isRejected && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+              ✕ Rejected
+            </span>
+            <button
+              type="button"
+              onClick={handleApproveAsSupporting}
+              disabled={isBusy}
+              className="text-xs font-bold px-3 py-1 rounded-xl bg-tiki-brown/8 text-tiki-brown/55 hover:bg-tiki-brown/12 transition-colors disabled:opacity-40"
+            >
+              {quickState.status === "submitting" ? "Restoring…" : "Restore as Supporting Reference"}
+            </button>
+          </div>
+        )}
+
+        {/* ── Archived status ── */}
+        {isArchived && (
+          <div className="border-t border-tiki-brown/8 pt-3 flex flex-wrap items-center gap-3">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/12 text-tiki-brown/50 uppercase tracking-wide">
+              Archived
+            </span>
+            <button
+              type="button"
+              onClick={handleApproveAsSupporting}
+              disabled={isBusy}
+              className="text-xs font-bold px-3 py-1 rounded-xl bg-tiki-brown/8 text-tiki-brown/55 hover:bg-tiki-brown/12 transition-colors disabled:opacity-40"
+            >
+              {quickState.status === "submitting" ? "Restoring…" : "Restore as Supporting Reference"}
+            </button>
+          </div>
+        )}
+
+        {/* ── Quick action feedback ── */}
+        {quickState.status === "success" && (
+          <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2">
+            <span className="text-sm flex-shrink-0">✅</span>
+            <p className="text-xs font-bold text-tiki-brown/75">{quickState.message}</p>
+          </div>
+        )}
+        {quickState.status === "error" && (
+          <div className="flex items-start gap-2 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2">
+            <span className="text-sm flex-shrink-0">⚠️</span>
+            <p className="text-xs font-semibold text-tiki-brown/75">{quickState.message}</p>
+          </div>
+        )}
+
+        {/* ── Advanced form success summary ── */}
         {submitState.status === "success" && !expanded && (
           <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2">
             <span className="text-sm flex-shrink-0">✅</span>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-bold text-tiki-brown/75">Reference review saved.</p>
-              <p className="text-xs text-tiki-brown/55">
-                Status: <strong>{getReferenceAssetStatusLabel(asset as UploadedReferenceAsset & { reviewStatus?: string })}</strong>
-              </p>
-              <p className="text-xs font-mono text-tiki-brown/35">{submitState.path}</p>
-            </div>
+            <p className="text-xs font-bold text-tiki-brown/75">Review saved.</p>
           </div>
         )}
 
-        {/* ── Set as Primary Profile Reference ── */}
-        {isReferenceAssetApproved(asset as UploadedReferenceAsset & { reviewStatus?: string }) && (
-          <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Set as Primary Official Reference
-            </p>
-            {assignState.status === "success" ? (
-              <div className="flex items-center gap-2 text-xs font-bold text-tropical-green">
-                <span>✅</span>
-                Assigned as primary official reference for {assignState.characterName}. Vercel redeploy required.
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleAssignPrimary}
-                  disabled={assignState.status === "submitting"}
-                  className="text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  {assignState.status === "submitting"
-                    ? "Assigning…"
-                    : "Set as Primary"}
-                </button>
-                {assignState.status === "error" && (
-                  <p className="text-xs font-semibold text-warm-coral/80">{assignState.message}</p>
-                )}
-                <p className="text-xs text-tiki-brown/40">
-                  Sets <code className="font-mono bg-tiki-brown/8 px-1 rounded">image.profileSheet</code> on the character JSON
-                </p>
-              </div>
-            )}
+        {/* ── Tech details ── */}
+        {techDetailsOpen && (
+          <div className="border-t border-tiki-brown/8 pt-3 mt-1">
+            <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-2">Technical Fields</p>
+            <div className="bg-white border border-tiki-brown/8 rounded-xl px-3 py-2 flex flex-col gap-1">
+              {[
+                ["approvedForGeneration", String(localAsset.approvedForGeneration)],
+                ["generationUseAllowed", String(localAsset.generationUseAllowed)],
+                ["publicUseAllowed", String(localAsset.publicUseAllowed)],
+                ["isOfficialReference", String(localAsset.isOfficialReference)],
+                ["requiresReview", String(localAsset.requiresReview)],
+              ].map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-mono text-tiki-brown/45">{k}</span>
+                  <span className="text-xs font-mono font-bold text-tiki-brown/65">{v}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Inline review form */}
+      {/* ── Advanced review form ── */}
       {expanded && (
         <div className="border-t border-tiki-brown/8 bg-tiki-brown/3 p-4 flex flex-col gap-4">
 
-          {/* Fidelity guidance */}
-          <div className="flex items-start gap-2.5 bg-pineapple-yellow/12 border border-pineapple-yellow/30 rounded-xl px-3 py-2.5">
-            <span className="text-sm flex-shrink-0">⚠️</span>
-            <p className="text-xs text-tiki-brown/70 leading-relaxed">
-              Only approve assets that are creator-provided, brand-approved, and visually faithful to
-              the official Fruit Baby character. Do not approve random AI interpretations as official
-              generation references.
+          <div className="flex items-start gap-2.5 bg-sky-blue/10 border border-sky-blue/20 rounded-xl px-3 py-2.5">
+            <span className="text-sm flex-shrink-0">⚙️</span>
+            <p className="text-xs text-tiki-brown/65 leading-relaxed">
+              <strong className="font-semibold">Advanced.</strong> Use the quick actions above for most approvals. This form gives full control over approval flags and review notes.
             </p>
           </div>
 
-          {/* Tiki-specific warning */}
-          {(asset.characterSlug === "tiki" || asset.characterSlug === "tiki-trouble") && (
+          {/* Tiki warning */}
+          {(localAsset.characterSlug === "tiki" || localAsset.characterSlug === "tiki-trouble") && (
             <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/20 rounded-xl px-3 py-2.5">
               <span className="text-sm flex-shrink-0">⚡</span>
               <p className="text-xs text-tiki-brown/70 leading-relaxed">
-                <strong className="font-bold">Tiki Trouble:</strong> References must remain mischievous,
-                funny, dramatic, and kid-friendly. Do not approve references that make Tiki scary,
-                violent, horror-like, cruel, evil, or too intense.
+                <strong className="font-bold">Tiki Trouble:</strong> References must remain mischievous, funny, dramatic, and kid-friendly.
               </p>
             </div>
           )}
@@ -349,27 +649,22 @@ export function AssetReviewCard({
             <div className="flex items-start gap-2.5 bg-sky-blue/12 border border-sky-blue/25 rounded-xl px-3 py-2.5">
               <span className="text-sm flex-shrink-0">📝</span>
               <p className="text-xs text-tiki-brown/70 leading-relaxed">
-                <strong className="font-bold">Draft character.</strong> Approving this reference asset
-                does not approve or publish the character. Character approval is handled separately.
+                <strong className="font-bold">Draft character.</strong> Approving this reference does not approve or publish the character.
               </p>
             </div>
           )}
 
-          {/* Error state */}
+          {/* Error */}
           {submitState.status === "error" && (
             <div className="flex items-start gap-2 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
               <span className="text-sm flex-shrink-0">⚠️</span>
-              <p className="text-xs font-semibold text-tiki-brown/75 leading-relaxed">
-                {submitState.message}
-              </p>
+              <p className="text-xs font-semibold text-tiki-brown/75">{submitState.message}</p>
             </div>
           )}
 
-          {/* Review decision */}
+          {/* Status */}
           <div>
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
-              Reference Asset Status
-            </p>
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">Reference Status</p>
             <div className="flex flex-wrap gap-2">
               {(["needs-review", "approved-for-generation", "rejected", "archived"] as ReviewStatus[]).map((s) => {
                 const label = s === "needs-review" ? "Needs Review" : s === "approved-for-generation" ? "Approve" : s === "rejected" ? "Reject" : "Archive";
@@ -377,17 +672,14 @@ export function AssetReviewCard({
                   <button
                     key={s}
                     type="button"
-                    disabled={isSubmitting}
+                    disabled={submitState.status === "submitting"}
                     onClick={() => setReviewStatus(s)}
                     className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-colors disabled:opacity-50 ${
                       form.reviewStatus === s
-                        ? s === "approved-for-generation"
-                          ? "bg-tropical-green text-white border-tropical-green"
-                          : s === "rejected"
-                          ? "bg-warm-coral/80 text-white border-warm-coral/80"
-                          : s === "archived"
-                          ? "bg-tiki-brown/50 text-white border-tiki-brown/50"
-                          : "bg-pineapple-yellow/60 text-tiki-brown border-pineapple-yellow"
+                        ? s === "approved-for-generation" ? "bg-tropical-green text-white border-tropical-green"
+                        : s === "rejected" ? "bg-warm-coral/80 text-white border-warm-coral/80"
+                        : s === "archived" ? "bg-tiki-brown/50 text-white border-tiki-brown/50"
+                        : "bg-pineapple-yellow/60 text-tiki-brown border-pineapple-yellow"
                         : "bg-white text-tiki-brown/55 border-tiki-brown/15 hover:border-tiki-brown/30"
                     }`}
                   >
@@ -398,62 +690,47 @@ export function AssetReviewCard({
             </div>
           </div>
 
-          {/* Reference permissions (simplified) */}
+          {/* Metadata */}
           <div className="flex flex-col gap-2.5">
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Reference Metadata
-            </p>
-
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Reference Metadata</p>
             <label className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.isOfficialReference}
                 onChange={(e) => setForm((f) => ({ ...f, isOfficialReference: e.target.checked }))}
-                disabled={isSubmitting}
+                disabled={submitState.status === "submitting"}
                 className="w-4 h-4 accent-ube-purple"
               />
               <span className="text-xs font-semibold text-tiki-brown/70">
                 Mark as Official Reference
-                <span className="font-normal text-tiki-brown/45 ml-1">
-                  — part of canon
-                </span>
+                <span className="font-normal text-tiki-brown/45 ml-1">— part of canon</span>
               </span>
             </label>
-
-            <label className={`flex items-center gap-2.5 ${isApprovingForGeneration ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
+            <label className={`flex items-center gap-2.5 ${form.reviewStatus === "approved-for-generation" ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}`}>
               <input
                 type="checkbox"
                 checked={form.generationUseAllowed}
                 onChange={(e) => setForm((f) => ({ ...f, generationUseAllowed: e.target.checked }))}
-                disabled={isSubmitting || !isApprovingForGeneration}
+                disabled={submitState.status === "submitting" || form.reviewStatus !== "approved-for-generation"}
                 className="w-4 h-4 accent-tropical-green"
               />
               <span className="text-xs font-semibold text-tiki-brown/70">
                 Allow Generation Use
-                <span className="font-normal text-tiki-brown/45 ml-1">
-                  — usable for reference-anchored generation
-                </span>
-                {!isApprovingForGeneration && (
-                  <span className="font-normal text-warm-coral/60 ml-1">
-                    — requires Approve status
-                  </span>
-                )}
+                <span className="font-normal text-tiki-brown/45 ml-1">— usable for reference-anchored generation</span>
               </span>
             </label>
           </div>
 
           {/* Review notes */}
           <div>
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">
-              Review Notes (optional)
-            </p>
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1.5">Review Notes (optional)</p>
             <textarea
               value={form.reviewNotes}
               onChange={(e) => setForm((f) => ({ ...f, reviewNotes: e.target.value }))}
-              placeholder="Notes about this review decision, fidelity issues, or intended use"
+              placeholder="Notes about this review decision"
               maxLength={1000}
               rows={2}
-              disabled={isSubmitting}
+              disabled={submitState.status === "submitting"}
               className="w-full text-xs text-tiki-brown bg-white border border-tiki-brown/15 rounded-xl px-3 py-2 focus:outline-none focus:border-ube-purple/50 placeholder:text-tiki-brown/25 resize-none disabled:opacity-50"
             />
           </div>
@@ -462,19 +739,16 @@ export function AssetReviewCard({
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting}
+              onClick={handleDetailedSubmit}
+              disabled={submitState.status === "submitting"}
               className="text-sm font-bold px-4 py-2 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Saving reference review…" : "Save Reference Review"}
+              {submitState.status === "submitting" ? "Saving…" : "Save Review"}
             </button>
             <button
               type="button"
-              onClick={() => {
-                setExpanded(false);
-                setSubmitState({ status: "idle" });
-              }}
-              disabled={isSubmitting}
+              onClick={() => { setExpanded(false); setSubmitState({ status: "idle" }); }}
+              disabled={submitState.status === "submitting"}
               className="text-sm font-bold px-4 py-2 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/12 transition-colors disabled:opacity-40"
             >
               Cancel
@@ -486,7 +760,7 @@ export function AssetReviewCard({
   );
 }
 
-// ─── Main panel ──────────────────────────────────────────────────────────────────────
+// ─── Main panel (kept for backward compatibility) ──────────────────────────────
 
 export default function ReferenceAssetReviewPanel({
   initialAssets,
@@ -501,14 +775,6 @@ export default function ReferenceAssetReviewPanel({
     setAssets((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
   }
 
-  const total = assets.length;
-  const approvedCount = assets.filter((a) => a.reviewStatus === "approved-for-generation").length;
-  const needsReviewCount = assets.filter((a) => a.reviewStatus === "needs-review").length;
-  const rejectedCount = assets.filter((a) => a.reviewStatus === "rejected").length;
-  const archivedCount = assets.filter((a) => a.reviewStatus === "archived").length;
-  const officialCount = assets.filter((a) => a.isOfficialReference).length;
-  const genUseCount = assets.filter((a) => a.generationUseAllowed).length;
-
   const byCharacter = assets.reduce<Record<string, UploadedReferenceAsset[]>>(
     (acc, a) => { (acc[a.characterSlug] ??= []).push(a); return acc; },
     {}
@@ -516,118 +782,22 @@ export default function ReferenceAssetReviewPanel({
 
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
-
-      {/* Header */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2">
         <span className="text-lg">🗂️</span>
-        <h2 className="text-base font-black text-tiki-brown">
-          Review Uploaded Reference Assets
-        </h2>
-        <span className="ml-1 text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
-          {total} file{total !== 1 ? "s" : ""}
-        </span>
-        <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
-          Admin Only
-        </span>
+        <h2 className="text-base font-black text-tiki-brown">Review Uploaded Reference Assets</h2>
+        <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">Admin Only</span>
       </div>
-
-      {/* Summary stats */}
-      {total > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          {(
-            [
-              ["Total", total, undefined],
-              ["Approved", approvedCount, approvedCount > 0],
-              ["Needs Review", needsReviewCount, needsReviewCount === 0 ? true : false],
-              ["Rejected", rejectedCount, rejectedCount === 0 ? true : false],
-              ["Official Ref", officialCount, officialCount > 0],
-              ["Gen Use OK", genUseCount, genUseCount > 0],
-            ] as [string, number, boolean | undefined][]
-          ).map(([label, value, positive]) => (
-            <div
-              key={label}
-              className={`flex flex-col items-center gap-0.5 rounded-xl px-2 py-2 text-center border ${
-                positive === true
-                  ? "bg-tropical-green/8 border-tropical-green/20"
-                  : positive === false && value > 0
-                  ? "bg-warm-coral/8 border-warm-coral/20"
-                  : "bg-tiki-brown/4 border-tiki-brown/8"
-              }`}
-            >
-              <span className={`text-base font-black ${
-                positive === true ? "text-tropical-green" : positive === false && value > 0 ? "text-warm-coral/80" : "text-tiki-brown"
-              }`}>
-                {value}
-              </span>
-              <span className="text-xs font-semibold text-tiki-brown/40 uppercase tracking-wide leading-tight">
-                {label}
-              </span>
-            </div>
+      {Object.entries(byCharacter).map(([slug, charAssets]) => (
+        <div key={slug} className="flex flex-col gap-3">
+          <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">{slug}</p>
+          {charAssets.map((a) => (
+            <AssetReviewCard key={a.id} asset={a} isDraftCharacter={draftSlugs.has(slug)} onReviewed={handleReviewed} />
           ))}
         </div>
+      ))}
+      {assets.length === 0 && (
+        <p className="text-sm text-tiki-brown/40 italic text-center py-4">No reference assets uploaded yet.</p>
       )}
-
-      {/* Archived count note */}
-      {archivedCount > 0 && (
-        <p className="text-xs text-tiki-brown/40">
-          {archivedCount} archived asset{archivedCount !== 1 ? "s" : ""} (not shown in summary counts above).
-        </p>
-      )}
-
-      {/* Empty state */}
-      {total === 0 && (
-        <div className="bg-tiki-brown/4 rounded-2xl px-5 py-6 text-center">
-          <p className="text-sm text-tiki-brown/40 italic">
-            No reference assets uploaded yet. Use the upload form above to add the first one.
-          </p>
-        </div>
-      )}
-
-      {/* Assets grouped by character */}
-      {Object.entries(byCharacter).map(([slug, charAssets]) => {
-        const approvedInGroup = charAssets.filter((a) => a.reviewStatus === "approved-for-generation").length;
-        const pendingInGroup = charAssets.filter((a) => a.reviewStatus === "needs-review").length;
-        return (
-          <div key={slug} className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">{slug}</p>
-              <span className="text-xs text-tiki-brown/35">{charAssets.length} asset{charAssets.length !== 1 ? "s" : ""}</span>
-              {draftSlugs.has(slug) && (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/70 uppercase tracking-wide">Draft</span>
-              )}
-              {approvedInGroup > 0 && (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green uppercase tracking-wide">
-                  {approvedInGroup} approved
-                </span>
-              )}
-              {pendingInGroup > 0 && (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 uppercase tracking-wide">
-                  {pendingInGroup} pending
-                </span>
-              )}
-            </div>
-            {charAssets.map((asset) => (
-              <AssetReviewCard
-                key={asset.id}
-                asset={asset}
-                isDraftCharacter={draftSlugs.has(slug)}
-                onReviewed={handleReviewed}
-              />
-            ))}
-          </div>
-        );
-      })}
-
-      {/* Safety note */}
-      <div className="flex items-start gap-2.5 bg-tiki-brown/4 rounded-xl px-4 py-3">
-        <span className="text-sm flex-shrink-0">🔒</span>
-        <p className="text-xs text-tiki-brown/55 leading-relaxed">
-          Uploaded reference assets are stored in Vercel Blob and recorded in GitHub. They are not
-          used for generation until approved here. Approving saves review metadata to GitHub — no
-          files are moved or deleted. Approving a reference asset does not approve or publish the
-          character.
-        </p>
-      </div>
     </div>
   );
 }

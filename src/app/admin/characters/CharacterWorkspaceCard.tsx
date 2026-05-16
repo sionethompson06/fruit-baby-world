@@ -5,12 +5,13 @@ import Link from "next/link";
 import type { Character } from "@/lib/content";
 import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
 import type { CharacterAssetSummary, AssetRecommendedUse } from "@/lib/characterAssets";
-import { getOfficialProfileSheetUrl, PROFILE_SHEET_TYPES } from "@/lib/characterProfileAssets";
+import { getOfficialProfileSheetUrl, PROFILE_SHEET_TYPES, MAIN_REFERENCE_TYPES } from "@/lib/characterProfileAssets";
 import {
   getCharacterApprovalMode,
   getCharacterStatusBadgeClass,
   getCharacterStatusLabel,
   characterHasPrimaryReference,
+  isReferenceAssetApproved,
 } from "@/lib/characterReadiness";
 import { AssetReviewCard } from "./ReferenceAssetReviewPanel";
 import { CharacterBuilderRow, hasPrimaryRef } from "./OfficialProfileBuilderPanel";
@@ -125,8 +126,17 @@ export default function CharacterWorkspaceCard({
   const hasPrimaryRef_ = characterHasPrimaryReference(character);
 
   const profileSheetAssets = assets.filter((a) => PROFILE_SHEET_TYPES.has(a.assetType ?? ""));
-  const supplementalAssets = assets.filter((a) => !PROFILE_SHEET_TYPES.has(a.assetType ?? ""));
+  const mainRefAssets = assets.filter((a) => MAIN_REFERENCE_TYPES.has(a.assetType ?? ""));
+  const supportingAssets = assets.filter(
+    (a) => !PROFILE_SHEET_TYPES.has(a.assetType ?? "") && !MAIN_REFERENCE_TYPES.has(a.assetType ?? "")
+  );
   const pendingCount = assets.filter((a) => a.reviewStatus === "needs-review").length;
+  const approvedSupportingCount = supportingAssets.filter((a) =>
+    isReferenceAssetApproved(a as UploadedReferenceAsset & { reviewStatus?: string })
+  ).length;
+  const rejectedArchivedCount = assets.filter(
+    (a) => a.reviewStatus === "rejected" || a.reviewStatus === "archived"
+  ).length;
   const fidelityNotes = CHARACTER_FIDELITY[character.slug] ?? [];
 
   const [imagesOpen, setImagesOpen] = useState(true);
@@ -306,6 +316,40 @@ export default function CharacterWorkspaceCard({
       />
       {refsOpen && (
         <div className="px-4 py-4 flex flex-col gap-4 bg-tiki-brown/2">
+
+          {/* Reference summary counts */}
+          {assets.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${hasPrimaryRef_ ? "bg-tropical-green/8 border-tropical-green/20 text-tropical-green font-bold" : "bg-tiki-brown/6 border-tiki-brown/10 text-tiki-brown/45 font-semibold"}`}>
+                Primary Official Reference: {hasPrimaryRef_ ? "Yes ✓" : "No"}
+              </div>
+              <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border ${approvedSupportingCount > 0 ? "bg-tropical-green/8 border-tropical-green/20 text-tropical-green font-bold" : "bg-tiki-brown/6 border-tiki-brown/10 text-tiki-brown/45 font-semibold"}`}>
+                Supporting References: {approvedSupportingCount}
+              </div>
+              {pendingCount > 0 && (
+                <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border bg-pineapple-yellow/15 border-pineapple-yellow/30 text-tiki-brown/65 font-semibold">
+                  Needs Review: {pendingCount}
+                </div>
+              )}
+              {rejectedArchivedCount > 0 && (
+                <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg border bg-tiki-brown/6 border-tiki-brown/10 text-tiki-brown/40 font-semibold">
+                  Rejected / Archived: {rejectedArchivedCount}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Explanatory copy */}
+          {assets.length > 0 && (
+            <div className="flex items-start gap-2.5 bg-sky-blue/8 border border-sky-blue/15 rounded-xl px-3 py-2.5">
+              <span className="text-sm flex-shrink-0">💡</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                <strong className="font-semibold">The Primary Official Reference</strong> is the one official profile/profile-sheet image for this character.{" "}
+                <strong className="font-semibold">Approved Supporting References</strong> are not shown as the main character profile image, but they will be used later to help AI preserve poses, expressions, style, mood, and trademark fidelity. Most uploaded assets should remain Supporting References.
+              </p>
+            </div>
+          )}
+
           {assets.length === 0 ? (
             <p className="text-xs text-tiki-brown/40 italic text-center py-6">
               No reference assets uploaded for this character yet.
@@ -315,7 +359,7 @@ export default function CharacterWorkspaceCard({
               {profileSheetAssets.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                    Profile Sheet Assets
+                    Official Profile Sheet
                   </p>
                   {profileSheetAssets.map((asset) => (
                     <AssetReviewCard
@@ -327,12 +371,30 @@ export default function CharacterWorkspaceCard({
                   ))}
                 </div>
               )}
-              {supplementalAssets.length > 0 && (
+              {mainRefAssets.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                    Supplemental References
+                    Main Character Image
                   </p>
-                  {supplementalAssets.map((asset) => (
+                  {mainRefAssets.map((asset) => (
+                    <AssetReviewCard
+                      key={asset.id}
+                      asset={asset}
+                      isDraftCharacter={isDraft}
+                      onReviewed={handleReviewed}
+                    />
+                  ))}
+                </div>
+              )}
+              {supportingAssets.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                    Supporting References
+                  </p>
+                  <p className="text-xs text-tiki-brown/40 leading-relaxed -mt-1">
+                    These assets (expressions, poses, style, mood) will be used to help AI generation stay faithful to this character. They are not shown as the profile image.
+                  </p>
+                  {supportingAssets.map((asset) => (
                     <AssetReviewCard
                       key={asset.id}
                       asset={asset}
