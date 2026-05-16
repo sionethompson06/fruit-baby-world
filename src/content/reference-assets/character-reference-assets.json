@@ -639,6 +639,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963093975-54ntf1",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "thinking, scared, worried, afraid",
+      "description": "thinking, scared, worried, afraid",
+      "notes": "thinking, scared, worried, afraid",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963093095-kiwi-thinking-scared-worried-afraid-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1972642,
+      "uploadedAt": "2026-05-16T20:24:53.975Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
