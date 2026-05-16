@@ -1841,12 +1841,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-16T22:17:31.948Z",
+      "reviewedAt": "2026-05-16T22:20:58.772Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-16T22:17:31.948Z"
+      "updatedAt": "2026-05-16T22:20:58.772Z"
     },
     {
       "id": "ref-1778968569741-te7rcr",
