@@ -724,6 +724,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963374939-uth0bs",
+      "characterSlug": "kiwi-baby",
+      "assetType": "character-environment-reference",
+      "title": "Kiwi Canopy Cove Marketplace",
+      "description": "Kiwi Canopy Cove Marketplace",
+      "notes": "Kiwi Canopy Cove Marketplace",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963374002-kiwi-canopy-cove-marketplace.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2670946,
+      "uploadedAt": "2026-05-16T20:29:34.939Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
