@@ -1722,6 +1722,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968392122-r9y8x0",
+      "characterSlug": "pineapple-baby",
+      "assetType": "supporting-reference",
+      "title": "hug, open, holding, sharing, kind, accepting, welcoming, peaceful",
+      "description": "hug, open, holding, sharing, kind, accepting, welcoming, peaceful",
+      "notes": "hug, open, holding, sharing, kind, accepting, welcoming, peaceful",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968391489-pineapple-hug-open-holding-sharing-kind-accepting.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1669209,
+      "uploadedAt": "2026-05-16T21:53:12.122Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
