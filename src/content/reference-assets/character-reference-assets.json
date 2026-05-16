@@ -622,6 +622,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963054448-fsi97d",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "sleeping, sad, thinking, resting, praying",
+      "description": "sleeping, sad, thinking, resting, praying",
+      "notes": "sleeping, sad, thinking, resting, praying",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963053584-kiwi-sleeping-sad-thinking-resting-praying-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1946591,
+      "uploadedAt": "2026-05-16T20:24:14.448Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
