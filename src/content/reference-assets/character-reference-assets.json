@@ -1271,11 +1271,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1920243,
       "uploadedAt": "2026-05-16T21:21:06.424Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T21:37:51.946Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-16T21:37:51.946Z"
     },
     {
       "id": "ref-1778966554128-xv62qr",
