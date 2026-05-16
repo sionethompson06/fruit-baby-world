@@ -571,6 +571,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778962912990-eb836j",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "scared, worried, oh_no, surprised",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778962912157-kiwi-scared-worried-oh-no-supprised.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1840317,
+      "uploadedAt": "2026-05-16T20:21:52.990Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
