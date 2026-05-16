@@ -1395,6 +1395,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967012184-me30bs",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "music, performing, theater, singing, fun",
+      "description": "music, performing, theater, singing, fun",
+      "notes": "music, performing, theater, singing, fun",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967011482-mango-singing-music-performing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1588008,
+      "uploadedAt": "2026-05-16T21:30:12.184Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
