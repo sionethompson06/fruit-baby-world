@@ -775,6 +775,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963627279-3jks4i",
+      "characterSlug": "kiwi-baby",
+      "assetType": "character-environment-reference",
+      "title": "Kiwi Canopy Cove River Bridge",
+      "description": "Kiwi Canopy Cove River Bridge",
+      "notes": "Kiwi Canopy Cove River Bridge",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963626220-kiwi-canopy-cove-river-bridge.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2852896,
+      "uploadedAt": "2026-05-16T20:33:47.279Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
