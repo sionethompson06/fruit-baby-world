@@ -9,7 +9,7 @@
 
 import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────────────────
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 const CHARACTERS_PATH = "src/content/characters";
@@ -40,13 +40,14 @@ type AssignResult =
         | "character_not_found"
         | "asset_not_found"
         | "asset_not_approved"
+        | "invalid_primary_profile_asset_type"
         | "invalid_asset_url"
         | "invalid_character_json"
         | "github_error";
       message: string;
     };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -76,7 +77,7 @@ function getHtmlUrl(putData: Record<string, unknown>): string {
   return "";
 }
 
-// ─── Route handler ────────────────────────────────────────────────────────────
+// ─── Route handler ────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request): Promise<Response> {
   const ghToken = process.env.GITHUB_TOKEN;
@@ -95,7 +96,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Parse body ───────────────────────────────────────────────────────────────
+  // ── Parse body ───────────────────────────────────────────────────────────────────────
   let body: unknown;
   try {
     body = await request.json();
@@ -121,7 +122,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Validate characterSlug ───────────────────────────────────────────────────
+  // ── Validate characterSlug ──────────────────────────────────────────────────────────────
   if (!isValidSlug(body.characterSlug)) {
     return Response.json(
       {
@@ -135,7 +136,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   const characterSlug = body.characterSlug as string;
 
-  // ── Validate assetId ─────────────────────────────────────────────────────────
+  // ── Validate assetId ──────────────────────────────────────────────────────────────────
   if (!isValidSlug(body.assetId)) {
     return Response.json(
       {
@@ -148,7 +149,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   const assetId = body.assetId as string;
 
-  // ── Validate referenceRole ───────────────────────────────────────────────────
+  // ── Validate referenceRole ─────────────────────────────────────────────────────────────
   if (!(VALID_ROLES as readonly string[]).includes(body.referenceRole as string)) {
     return Response.json(
       {
@@ -169,7 +170,7 @@ export async function POST(request: Request): Promise<Response> {
   };
   const refParam = `?ref=${encodeURIComponent(branch)}`;
 
-  // ── Fetch reference assets JSON from GitHub ──────────────────────────────────
+  // ── Fetch reference assets JSON from GitHub ──────────────────────────────────────────
   let selectedAsset: UploadedReferenceAsset | undefined;
   try {
     const refUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${REFERENCE_ASSETS_PATH}${refParam}`;
@@ -222,7 +223,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Asset must exist ─────────────────────────────────────────────────────────
+  // ── Asset must exist ──────────────────────────────────────────────────────────────────
   if (!selectedAsset) {
     return Response.json(
       {
@@ -234,7 +235,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Asset must be approved ───────────────────────────────────────────────────
+  // ── Asset must be approved ──────────────────────────────────────────────────────────────
   if (
     selectedAsset.reviewStatus !== "approved-for-generation" ||
     selectedAsset.approvedForGeneration !== true ||
@@ -251,7 +252,43 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Get asset URL ────────────────────────────────────────────────────────────
+  // ── Asset type must match role ────────────────────────────────────────────────────────
+  const assetType =
+    typeof selectedAsset.assetType === "string" ? selectedAsset.assetType.trim() : "";
+
+  const PROFILE_SHEET_TYPES = new Set(["official-profile-reference", "profile-sheet"]);
+  const MAIN_REFERENCE_TYPES = new Set([
+    "isolated-character-reference",
+    "main-character-reference",
+    "official-profile-reference",
+    "profile-sheet",
+  ]);
+
+  if (referenceRole === "primary-profile" && !PROFILE_SHEET_TYPES.has(assetType)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "invalid_primary_profile_asset_type",
+        message:
+          "This asset is approved as a supplemental reference, not an official profile sheet. Upload or select an Official Profile Reference (type: profile-sheet or official-profile-reference) to use as the primary profile sheet.",
+      } satisfies AssignResult,
+      { status: 422 }
+    );
+  }
+
+  if (referenceRole === "primary-main" && !MAIN_REFERENCE_TYPES.has(assetType)) {
+    return Response.json(
+      {
+        ok: false,
+        status: "invalid_primary_profile_asset_type",
+        message:
+          "This asset type cannot be used as the main character image. Use an isolated-character-reference or official-profile-reference asset.",
+      } satisfies AssignResult,
+      { status: 422 }
+    );
+  }
+
+  // ── Get asset URL ──────────────────────────────────────────────────────────────────────
   const assetRaw = selectedAsset as unknown as Record<string, unknown>;
   const assetUrl =
     typeof assetRaw.blobUrl === "string" && assetRaw.blobUrl
@@ -271,7 +308,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Fetch character JSON from GitHub ─────────────────────────────────────────
+  // ── Fetch character JSON from GitHub ─────────────────────────────────────────────
   const charPath = `${CHARACTERS_PATH}/${characterSlug}.json`;
   const charUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${charPath}${refParam}`;
 
@@ -349,7 +386,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Build updated character ──────────────────────────────────────────────────
+  // ── Build updated character ──────────────────────────────────────────────────────────────
   const now = new Date().toISOString();
   const charName =
     typeof existingChar.name === "string" ? existingChar.name : characterSlug;
@@ -392,7 +429,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const commitMessage = `Assign primary character reference: ${charName}`;
 
-  // ── Commit to GitHub ─────────────────────────────────────────────────────────
+  // ── Commit to GitHub ──────────────────────────────────────────────────────────────────
   const updatedJson = JSON.stringify(updatedChar, null, 2) + "\n";
   const updatedBase64 = Buffer.from(updatedJson, "utf8").toString("base64");
   const charApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${charPath}`;

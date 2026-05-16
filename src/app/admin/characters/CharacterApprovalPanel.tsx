@@ -2,10 +2,14 @@
 
 import { useState } from "react";
 import type { Character } from "@/lib/content";
+import {
+  getCharacterApprovalMode,
+  getCharacterStatusLabel,
+  getCharacterStatusBadgeClass,
+  type CharacterApprovalMode,
+} from "@/lib/characterReadiness";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type ApprovalMode = "draft" | "official-internal" | "public" | "archived";
 
 type SubmitState =
   | { status: "idle" }
@@ -15,63 +19,23 @@ type SubmitState =
       commitMessage: string;
       path: string;
       characterName: string;
-      approvalMode: ApprovalMode;
+      approvalMode: CharacterApprovalMode;
       generationReady: boolean;
     }
   | { status: "error"; message: string };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const MODE_LABELS: Record<ApprovalMode, string> = {
-  draft: "Draft / Private",
-  "official-internal": "Official Internal",
-  public: "Public",
-  archived: "Archived",
+const MODE_DESCRIPTIONS: Record<CharacterApprovalMode, string> = {
+  draft: "Private, not active. Hidden from public and admin generation.",
+  "official-internal": "Protected. Usable by admin in generation workflows, but not visible publicly.",
+  public: "Visible on public pages. Available for approved generation workflows.",
+  archived: "Inactive. Hidden from all views.",
 };
-
-const MODE_DESCRIPTIONS: Record<ApprovalMode, string> = {
-  draft: "Not public and not approved for generation.",
-  "official-internal":
-    "Approved for admin story/media generation workflows, but not public.",
-  public:
-    "Visible on public character pages and available for approved story/media workflows.",
-  archived: "Hidden from active use.",
-};
-
-function modeFromCharacter(c: Character): ApprovalMode {
-  // New-style: explicit approvalMode field takes precedence
-  if (c.approvalMode === "official-internal") return "official-internal";
-  if (c.approvalMode === "public") return "public";
-  if (c.approvalMode === "archived") return "archived";
-  if (c.approvalMode === "draft") return "draft";
-  // Legacy: derive from existing fields
-  if (
-    c.publicUseAllowed === true ||
-    c.publicStatus === "public" ||
-    c.status === "active"
-  )
-    return "public";
-  if (c.approvedForGeneration === true || c.generationUseAllowed === true)
-    return "official-internal";
-  return "draft";
-}
-
-function modeBadgeClass(m: ApprovalMode): string {
-  switch (m) {
-    case "public":
-      return "bg-tropical-green/15 text-tropical-green";
-    case "official-internal":
-      return "bg-sky-blue/20 text-tiki-brown/65";
-    case "archived":
-      return "bg-tiki-brown/12 text-tiki-brown/50";
-    default:
-      return "bg-warm-coral/15 text-warm-coral/80";
-  }
-}
 
 // ─── Per-character approval row ───────────────────────────────────────────────
 
-function CharacterApprovalRow({
+export function CharacterApprovalRow({
   character,
   approvedRefCount,
   builtInRefValid,
@@ -83,7 +47,9 @@ function CharacterApprovalRow({
   isOfficialCharacter: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const [mode, setMode] = useState<ApprovalMode>(modeFromCharacter(character));
+  const [mode, setMode] = useState<CharacterApprovalMode>(
+    getCharacterApprovalMode(character)
+  );
   const [approvalNotes, setApprovalNotes] = useState(
     character.approvalNotes ?? ""
   );
@@ -93,7 +59,7 @@ function CharacterApprovalRow({
 
   const isSubmitting = submitState.status === "submitting";
   const hasRef = approvedRefCount > 0 || builtInRefValid;
-  const currentMode = modeFromCharacter(character);
+  const currentMode = getCharacterApprovalMode(character);
   const generationReady =
     (currentMode === "official-internal" || currentMode === "public") && hasRef;
 
@@ -117,7 +83,7 @@ function CharacterApprovalRow({
             ok: true;
             commitMessage: string;
             path: string;
-            approvalMode: ApprovalMode;
+            approvalMode: CharacterApprovalMode;
             generationReady: boolean;
           }
         | { ok: false; message: string };
@@ -154,9 +120,9 @@ function CharacterApprovalRow({
               {character.name}
             </p>
             <span
-              className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${modeBadgeClass(currentMode)}`}
+              className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${getCharacterStatusBadgeClass(character)}`}
             >
-              {MODE_LABELS[currentMode]}
+              {getCharacterStatusLabel(character)}
             </span>
             {isOfficialCharacter && (
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/65 uppercase tracking-wide">
@@ -269,7 +235,7 @@ function CharacterApprovalRow({
           {/* Mode selector */}
           <div>
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-2">
-              Approval Mode
+              Character Status
             </p>
             <div className="flex flex-col gap-2">
               {(
@@ -278,7 +244,7 @@ function CharacterApprovalRow({
                   "official-internal",
                   "public",
                   "archived",
-                ] as ApprovalMode[]
+                ] as CharacterApprovalMode[]
               ).map((m) => {
                 const requiresRef =
                   m === "official-internal" || m === "public";
@@ -301,14 +267,15 @@ function CharacterApprovalRow({
                         : "bg-white border-tiki-brown/15 text-tiki-brown/60 hover:border-tiki-brown/25"
                     }`}
                   >
-                    <span className="font-bold block">{MODE_LABELS[m]}</span>
+                    <span className="font-bold block">{getCharacterStatusLabel({
+                      approvalMode: m,
+                    } as Character)}</span>
                     <span className="font-normal text-tiki-brown/45 block leading-snug mt-0.5">
                       {MODE_DESCRIPTIONS[m]}
                     </span>
                     {blocked && (
                       <span className="block text-warm-coral/70 font-normal mt-0.5">
-                        — requires approved reference asset or valid built-in
-                        reference
+                        — requires approved reference or built-in reference
                       </span>
                     )}
                   </button>
@@ -432,12 +399,16 @@ function CharacterApprovalRow({
               <span className="text-sm flex-shrink-0">✅</span>
               <div className="flex flex-col gap-0.5">
                 <p className="text-xs font-bold text-tiki-brown/80">
-                  Character approval saved.
+                  Character status saved.
                 </p>
                 <p className="text-xs text-tiki-brown/60">
-                  {submitState.characterName} —{" "}
-                  <strong>{MODE_LABELS[submitState.approvalMode]}</strong> ·
-                  Generation:{" "}
+                  {submitState.characterName} —
+                  {submitState.approvalMode === "draft" && " Draft"}
+                  {submitState.approvalMode === "official-internal" && " Official Internal"}
+                  {submitState.approvalMode === "public" && " Public"}
+                  {submitState.approvalMode === "archived" && " Archived"}
+                  <span className="ml-1">·</span>
+                  {" "}Generation:{" "}
                   {submitState.generationReady ? (
                     <span className="text-tropical-green font-bold">
                       Ready ✓
@@ -480,7 +451,7 @@ export default function CharacterApprovalPanel({
 }) {
   const stats = characters.reduce(
     (acc, c) => {
-      const m = modeFromCharacter(c);
+      const m = getCharacterApprovalMode(c);
       acc[m] = (acc[m] ?? 0) + 1;
       const hasRef =
         (approvedRefCounts[c.slug] ?? 0) > 0 ||

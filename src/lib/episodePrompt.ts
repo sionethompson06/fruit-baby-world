@@ -5,6 +5,17 @@
 import type { Character } from "@/lib/content";
 import type { StoryboardDraft } from "@/lib/storyboard";
 
+// ─── Reference asset metadata (planning only — no images passed to generation) ─
+
+export type ReferenceAssetMeta = {
+  characterSlug: string;
+  assetType?: string;
+  title?: string;
+  reviewStatus?: string;
+  approvedForGeneration?: boolean;
+  generationUseAllowed?: boolean;
+};
+
 // ─── Fidelity rules embedded in every prompt ─────────────────────────────────
 
 const VISUAL_FIDELITY_RULES = [
@@ -22,9 +33,28 @@ const VISUAL_FIDELITY_RULES = [
   "All generated character variations require human approval before publishing.",
 ];
 
+// ─── Reference asset type helpers (local, no fs) ─────────────────────────────
+
+const ENV_TYPES = new Set([
+  "character-environment-reference", "environment-reference",
+  "home-reference", "scene-style-reference",
+]);
+const PROFILE_TYPES = new Set(["official-profile-reference", "profile-sheet"]);
+const MAIN_TYPES = new Set(["isolated-character-reference", "main-character-reference"]);
+
+function approvedRefs(slug: string, refs: ReferenceAssetMeta[]): ReferenceAssetMeta[] {
+  return refs.filter(
+    (a) =>
+      a.characterSlug === slug &&
+      (a.reviewStatus === "approved-for-generation" ||
+        a.approvedForGeneration === true ||
+        a.generationUseAllowed === true)
+  );
+}
+
 // ─── Per-character canon summary ──────────────────────────────────────────────
 
-function buildCharacterCanonSummary(c: Character): string {
+function buildCharacterCanonSummary(c: Character, refs?: ReferenceAssetMeta[]): string {
   const lines: string[] = [];
 
   lines.push(`## ${c.name} — ${c.role}`);
@@ -48,6 +78,30 @@ function buildCharacterCanonSummary(c: Character): string {
 
   if (c.rivalry) lines.push(`Rivalry: ${c.rivalry}`);
 
+  // ── Reference planning notes (metadata only — no images passed to generation) ──
+  if (refs) {
+    const approved = approvedRefs(c.slug, refs);
+    const primaryRef = approved.find((a) => PROFILE_TYPES.has(a.assetType ?? "") || MAIN_TYPES.has(a.assetType ?? ""));
+    const supportingRefs = approved.filter(
+      (a) => !PROFILE_TYPES.has(a.assetType ?? "") && !MAIN_TYPES.has(a.assetType ?? "") && !ENV_TYPES.has(a.assetType ?? "")
+    );
+    const envRefs = approved.filter((a) => ENV_TYPES.has(a.assetType ?? ""));
+
+    if (primaryRef?.title) {
+      lines.push(`Primary Visual Reference: "${primaryRef.title}" (approved official reference — use as visual source of truth)`);
+    }
+    if (supportingRefs.length > 0) {
+      const titles = supportingRefs.map((a) => a.title ?? a.assetType ?? "reference").filter(Boolean);
+      lines.push(`Character Fidelity References Available (${supportingRefs.length}): ${titles.join(", ")}`);
+      lines.push(`Use approved supporting references for ${c.name} when generating expressions, poses, style details, and character fidelity.`);
+    }
+    if (envRefs.length > 0) {
+      const titles = envRefs.map((a) => a.title ?? a.assetType ?? "environment").filter(Boolean);
+      lines.push(`Character Environment References Available (${envRefs.length}): ${titles.join(", ")}`);
+      lines.push(`Use approved environment/home references for ${c.name} when describing setting, background, home space, props, and mood.`);
+    }
+  }
+
   return lines.join("\n");
 }
 
@@ -55,7 +109,8 @@ function buildCharacterCanonSummary(c: Character): string {
 
 export function buildEpisodePrompt(
   draft: StoryboardDraft,
-  allCharacters: Character[]
+  allCharacters: Character[],
+  referenceAssets?: ReferenceAssetMeta[]
 ): string {
   const selectedChars = allCharacters.filter((c) =>
     draft.featuredCharacters.includes(c.id)
@@ -122,7 +177,7 @@ ${sceneLines.join("\n\n") || "  (no scenes added yet)"}`
   if (selectedChars.length > 0) {
     parts.push(
       `=== CHARACTER CANON SUMMARIES ===\n` +
-        selectedChars.map(buildCharacterCanonSummary).join("\n\n")
+        selectedChars.map((c) => buildCharacterCanonSummary(c, referenceAssets)).join("\n\n")
     );
   } else {
     parts.push(

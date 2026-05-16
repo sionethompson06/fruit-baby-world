@@ -272,7 +272,7 @@ type RowState =
   | { phase: "generateError"; message: string }
   | { phase: "saveError"; form: EditableForm; referenceUrl: string; message: string };
 
-function hasPrimaryRef(character: Character): boolean {
+export function hasPrimaryRef(character: Character): boolean {
   const refUrl = (character as Record<string, unknown>).primaryReferenceAssetUrl;
   if (typeof refUrl === "string" && refUrl.startsWith("http")) return true;
   const profileSheet = character.image?.profileSheet;
@@ -281,7 +281,7 @@ function hasPrimaryRef(character: Character): boolean {
   return false;
 }
 
-function CharacterBuilderRow({ character }: { character: Character }) {
+export function CharacterBuilderRow({ character }: { character: Character }) {
   const [expanded, setExpanded] = useState(false);
   const [state, setState] = useState<RowState>({ phase: "idle" });
 

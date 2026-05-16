@@ -47,7 +47,7 @@ export type OverallReadinessSummary = {
   profileSheetsAvailable: number;
 };
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────────────────────────────
 
 const MIN_IMAGE_BYTES = 100;
 const VALID_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
@@ -58,7 +58,7 @@ const JPEG_SIG = [0xff, 0xd8, 0xff];
 const RIFF_SIG = [0x52, 0x49, 0x46, 0x46]; // "RIFF"
 const WEBP_SIG = [0x57, 0x45, 0x42, 0x50]; // "WEBP"
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
+// ─── Internal helpers ───────────────────────────────────────────────────────────
 
 function isSafeCharacterPath(urlPath: string): boolean {
   if (!urlPath.startsWith("/characters/")) return false;
@@ -86,7 +86,7 @@ function hasValidMagicBytes(buf: Buffer, ext: string): boolean {
   }
 }
 
-// ─── Single asset check ───────────────────────────────────────────────────────
+// ─── Single asset check ──────────────────────────────────────────────────────────────
 
 export function checkAsset(
   urlPath: string | undefined,
@@ -195,7 +195,7 @@ export function checkAsset(
   };
 }
 
-// ─── Character-level check ────────────────────────────────────────────────────
+// ─── Character-level check ──────────────────────────────────────────────────────────
 
 export function checkCharacterAssets(character: Character): CharacterAssetSummary {
   const { id, image } = character;
@@ -252,7 +252,7 @@ export function checkCharacterAssets(character: Character): CharacterAssetSummar
   };
 }
 
-// ─── Overall readiness summary ────────────────────────────────────────────────
+// ─── Overall readiness summary ─────────────────────────────────────────────────────
 
 export function buildReadinessSummary(
   summaries: CharacterAssetSummary[]
@@ -280,7 +280,7 @@ export function buildReadinessSummary(
   };
 }
 
-// ─── Serializable readiness map (safe to pass to client components) ───────────
+// ─── Serializable readiness map (safe to pass to client components) ───────────────────
 
 export type ClientCharacterReadiness = {
   ready: boolean;

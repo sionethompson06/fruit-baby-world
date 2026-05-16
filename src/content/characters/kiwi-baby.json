@@ -16,17 +16,50 @@
     "Gentle & Caring — a sweet companion who brings comfort and joy"
   ],
   "visualIdentity": {
-    "primaryColors": ["#7CC64A", "#8A6E3B"],
-    "accentColors": ["#B8E46A", "#6B4A25", "#FFB1C1", "#FFF6E0", "#FFD56A"],
+    "primaryColors": [
+      "#7CC64A",
+      "#8A6E3B"
+    ],
+    "accentColors": [
+      "#B8E46A",
+      "#6B4A25",
+      "#FFB1C1",
+      "#FFF6E0",
+      "#FFD56A"
+    ],
     "palette": [
-      { "name": "Kiwi Green", "hex": "#7CC64A" },
-      { "name": "Kiwi Flesh Green", "hex": "#B8E46A" },
-      { "name": "Mossy Kiwi Brown", "hex": "#8A6E3B" },
-      { "name": "Deep Kiwi Brown", "hex": "#6B4A25" },
-      { "name": "Seed Brown", "hex": "#3A2A16" },
-      { "name": "Blush Pink", "hex": "#FFB1C1" },
-      { "name": "Blossom Cream", "hex": "#FFF6E0" },
-      { "name": "Blossom Yellow", "hex": "#FFD56A" }
+      {
+        "name": "Kiwi Green",
+        "hex": "#7CC64A"
+      },
+      {
+        "name": "Kiwi Flesh Green",
+        "hex": "#B8E46A"
+      },
+      {
+        "name": "Mossy Kiwi Brown",
+        "hex": "#8A6E3B"
+      },
+      {
+        "name": "Deep Kiwi Brown",
+        "hex": "#6B4A25"
+      },
+      {
+        "name": "Seed Brown",
+        "hex": "#3A2A16"
+      },
+      {
+        "name": "Blush Pink",
+        "hex": "#FFB1C1"
+      },
+      {
+        "name": "Blossom Cream",
+        "hex": "#FFF6E0"
+      },
+      {
+        "name": "Blossom Yellow",
+        "hex": "#FFD56A"
+      }
     ],
     "styleNotes": "Fuzzy kiwi-brown body with a subtle green undertone for a fresh, natural look. Sliced kiwi top showing vibrant green flesh with black seeds. Leaf crown and white kiwi blossom accent. Large warm brown eyes with highlights. Pink blush cheeks and a small smiling mouth."
   },
@@ -84,7 +117,7 @@
     "We can figure it out together — slowly and sweetly."
   ],
   "image": {
-    "main": "",
+    "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778966465650-kiwi-waving-hello-goodbye-raising-hand.png",
     "profileSheet": "/characters/kiwi-baby/Kiwi Profile.png",
     "alt": "Official Kiwi Baby character profile sheet"
   },
@@ -97,5 +130,7 @@
     "printed goods",
     "digital artwork",
     "collectible figure"
-  ]
+  ],
+  "mainReferenceAssetId": "ref-1778966466424-6veaqw",
+  "updatedAt": "2026-05-16T21:41:31.071Z"
 }

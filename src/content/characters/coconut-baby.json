@@ -35,14 +35,36 @@
   ],
   "favoriteQuote": "Take a deep breath — we can do this together!",
   "visualIdentity": {
-    "primaryColors": ["#8A6E3B", "#5C3A1E"],
-    "accentColors": ["#FFF4D6", "#7AC943", "#FFB8C8"],
+    "primaryColors": [
+      "#8A6E3B",
+      "#5C3A1E"
+    ],
+    "accentColors": [
+      "#FFF4D6",
+      "#7AC943",
+      "#FFB8C8"
+    ],
     "palette": [
-      { "name": "Warm Brown", "hex": "#8A6E3B" },
-      { "name": "Deep Brown", "hex": "#5C3A1E" },
-      { "name": "Coconut Cream", "hex": "#FFF4D6" },
-      { "name": "Leaf Green", "hex": "#7AC943" },
-      { "name": "Tropical Pink", "hex": "#FFB8C8" }
+      {
+        "name": "Warm Brown",
+        "hex": "#8A6E3B"
+      },
+      {
+        "name": "Deep Brown",
+        "hex": "#5C3A1E"
+      },
+      {
+        "name": "Coconut Cream",
+        "hex": "#FFF4D6"
+      },
+      {
+        "name": "Leaf Green",
+        "hex": "#7AC943"
+      },
+      {
+        "name": "Tropical Pink",
+        "hex": "#FFB8C8"
+      }
     ],
     "styleNotes": "Round warm coconut-brown body with a natural textured look. Tall green leafy palm crown on top. Large soft brown eyes, pink blush cheeks, and a gentle calm expression. Cozy, grounded, and full of tropical warmth."
   },
@@ -61,11 +83,26 @@
     "Adventure Ready"
   ],
   "relationships": [
-    { "character": "Pineapple Baby", "description": "Best Friend" },
-    { "character": "Mango Baby", "description": "Sunny Buddy" },
-    { "character": "Kiwi Baby", "description": "Gentle Pal" },
-    { "character": "Ube Baby", "description": "Creative Friend" },
-    { "character": "Tiki Trouble", "description": "Mischievous Rival" }
+    {
+      "character": "Pineapple Baby",
+      "description": "Best Friend"
+    },
+    {
+      "character": "Mango Baby",
+      "description": "Sunny Buddy"
+    },
+    {
+      "character": "Kiwi Baby",
+      "description": "Gentle Pal"
+    },
+    {
+      "character": "Ube Baby",
+      "description": "Creative Friend"
+    },
+    {
+      "character": "Tiki Trouble",
+      "description": "Mischievous Rival"
+    }
   ],
   "storyRole": "The group's anchor and emotional support. When things get chaotic or feelings run high, Coconut Baby is the one who helps everyone breathe, slow down, and find a kind solution.",
   "characterRules": {
@@ -89,9 +126,20 @@
     "Everything's going to be okay."
   ],
   "image": {
-    "main": "",
+    "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965200167-coconut-smile-happy-welcoming-cute.png",
     "profileSheet": "/characters/coconut-baby/Coconut Profile.png",
     "alt": "Official Coconut Baby character profile sheet"
   },
-  "merchPotential": ["plush", "squish", "sticker", "comfort toy", "collectible figure"]
+  "merchPotential": [
+    "plush",
+    "squish",
+    "sticker",
+    "comfort toy",
+    "collectible figure"
+  ],
+  "primaryReferenceAssetId": "ref-1778224729074-ulkm15",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778224727679-coconut-joy-skipping-leap-jump-happy-excited.png",
+  "primaryReferenceAssetType": "expression-sheet",
+  "updatedAt": "2026-05-16T21:01:10.694Z",
+  "mainReferenceAssetId": "ref-1778965201310-z0tlua"
 }

@@ -17,9 +17,28 @@ import path from "path";
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*[a-z0-9]$|^[a-z0-9]$/;
 
 const VALID_ASSET_TYPES = [
+  // Profile sheet types
+  "official-profile-reference",
   "profile-sheet",
-  "character-sheet",
+  // Main character image types
+  "isolated-character-reference",
+  "main-character-reference",
+  // Supporting reference types
+  "supporting-reference",
   "expression-sheet",
+  "pose-reference",
+  "turnaround-reference",
+  "supplemental-reference",
+  // Environment / home reference types
+  "character-environment-reference",
+  "environment-reference",
+  "home-reference",
+  "scene-style-reference",
+  // Other
+  "product-reference",
+  "brand-guide",
+  // Legacy / backward-compat
+  "character-sheet",
   "reference-guide",
   "other",
 ] as const;

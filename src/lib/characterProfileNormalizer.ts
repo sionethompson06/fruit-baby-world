@@ -5,15 +5,28 @@
 
 import type { Character, ColorSwatch } from "@/lib/content";
 import { formatCharacterSlug } from "@/lib/characterRegistry";
+import {
+  getOfficialProfileSheetUrl,
+  getMainCharacterImageUrl,
+  getCharacterCardImageUrl,
+  getCharacterProfileAssetSummary,
+  PROFILE_SHEET_TYPES,
+  MAIN_REFERENCE_TYPES,
+  ENVIRONMENT_REFERENCE_TYPES,
+} from "@/lib/characterProfileAssets";
 
 // ─── Shared reference asset type ──────────────────────────────────────────────
 
 export type ReferenceAssetInput = {
   characterSlug: string;
+  assetType?: string;
+  title?: string;
+  description?: string;
   reviewStatus?: string;
   approvedForGeneration?: boolean;
   generationUseAllowed?: boolean;
   isOfficialReference?: boolean;
+  requiresReview?: boolean;
   blobUrl?: string;
   [key: string]: unknown;
 };
@@ -21,6 +34,7 @@ export type ReferenceAssetInput = {
 // ─── Normalized profile type ──────────────────────────────────────────────────
 
 export type NormalizedCharacterProfile = {
+  // ── Identity ──────────────────────────────────────────────────────────────
   slug: string;
   name: string;
   shortName: string;
@@ -29,55 +43,85 @@ export type NormalizedCharacterProfile = {
   type: string;
   fruitType: string;
   home: string;
+  storyRole: string;
+
+  // ── Status ────────────────────────────────────────────────────────────────
   approvalMode: "draft" | "official-internal" | "public" | "archived" | string;
   statusLabel: string;
   publicStatus: string;
   isOriginalCanonical: boolean;
   isPublic: boolean;
   isAdminUsable: boolean;
+  isDraft: boolean;
+  isArchived: boolean;
 
+  // ── Profile copy ──────────────────────────────────────────────────────────
   tagline: string;
   shortDescription: string;
-  storyRole: string;
   about: string;
   personalityTraits: string[];
   personalitySummary: string;
   voiceGuide: string;
   favoriteQuote: string;
   signatureQuote: string;
+  trademarkNotes: string;
 
+  // ── Visual identity ───────────────────────────────────────────────────────
   visualIdentitySummary: string;
   colorPalette: Array<{ name: string; hex?: string; usage?: string }>;
-
   bodyShapeRules: string[];
   faceAndExpressionRules: string[];
   textureAndSurfaceRules: string[];
   leafCrownAccessoryRules: string[];
   poseAndGestureRules: string[];
 
+  // ── Rules ─────────────────────────────────────────────────────────────────
   alwaysRules: string[];
   neverRules: string[];
   characterRules: string[];
   doNotChangeRules: string[];
   generationRestrictions: string[];
-  trademarkNotes: string;
 
-  profileImageUrl: string;
-  mainImageUrl: string;
-  profileSheetUrl: string;
+  // ── Images / references ───────────────────────────────────────────────────
+  profileImageUrl: string;        // alias for officialProfileSheetUrl
+  mainImageUrl: string;           // alias for mainCharacterImageUrl
+  profileSheetUrl: string;        // raw image.profileSheet value
+  officialProfileSheetUrl: string;
+  mainCharacterImageUrl: string;
+  characterCardImageUrl: string;
+  profileAssetWarnings: string[];
   primaryReferenceAssetId: string;
   primaryReferenceAssetUrl: string;
   primaryReferenceAssetType: string;
   imageAlt: string;
 
+  // ── Reference groups ──────────────────────────────────────────────────────
   approvedReferenceCount: number;
+  approvedSupportingReferences: ReferenceAssetInput[];
+  approvedEnvironmentReferences: ReferenceAssetInput[];
+  approvedProductReferences: ReferenceAssetInput[];
+  approvedBrandReferences: ReferenceAssetInput[];
+  needsReviewReferences: ReferenceAssetInput[];
+  rejectedOrArchivedReferences: ReferenceAssetInput[];
+  supportingReferenceCount: number;
+  environmentReferenceCount: number;
+  needsReviewReferenceCount: number;
+
+  // ── Readiness booleans ────────────────────────────────────────────────────
+  hasOfficialProfileSheet: boolean;  // = hasProfileImage (kept for compat)
+  hasProfileImage: boolean;          // legacy alias
+  hasMainCharacterImage: boolean;
   hasPrimaryReference: boolean;
-  hasProfileImage: boolean;
+  hasApprovedReference: boolean;
+  hasSupportingReferences: boolean;
+  hasEnvironmentReferences: boolean;
   hasColorPalette: boolean;
   hasVisualIdentity: boolean;
   hasCharacterRules: boolean;
   hasGenerationRestrictions: boolean;
   profileComplete: boolean;
+  generationReady: boolean;
+  publicReady: boolean;
   readinessWarnings: string[];
 };
 
@@ -180,12 +224,23 @@ export function getCharacterColorPalette(
   return [];
 }
 
-/** Extract visual identity summary string. */
+/** Extract visual identity summary string. Supports multiple field shapes. */
 export function getCharacterVisualIdentitySummary(c: Character): string {
   const vi = c.visualIdentity as Record<string, unknown> | undefined;
   if (!vi) return "";
   if (typeof vi === "string") return vi;
+
+  // styleNotes is the canonical field for original characters
   if (typeof vi.styleNotes === "string" && vi.styleNotes.trim()) return vi.styleNotes.trim();
+
+  // New character schemas may use bodyShape, face, texture subfields
+  const parts: string[] = [];
+  for (const key of ["bodyShape", "face", "texture", "accessories", "notes", "description"] as const) {
+    const v = vi[key];
+    if (typeof v === "string" && v.trim()) parts.push(v.trim());
+  }
+  if (parts.length > 0) return parts.join(" ");
+
   return "";
 }
 
@@ -275,22 +330,9 @@ export function getCharacterGenerationRestrictions(c: Character): string[] {
   return safeStrArr(c.generationRestrictions);
 }
 
-/** Resolve the best profile image URL. */
+/** Resolve the best profile image URL using the canonical resolver. */
 export function getCharacterProfileImage(c: Character): string {
-  const img = c.image as Record<string, string | undefined> | undefined;
-  // 1. profileSheet (official profile image)
-  const profileSheet = img?.profileSheet?.trim() ?? "";
-  if (profileSheet) return profileSheet;
-  // 2. primaryReferenceAssetUrl (uploaded primary reference)
-  const primaryRef = c.primaryReferenceAssetUrl?.trim() ?? "";
-  if (primaryRef) return primaryRef;
-  // 3. main image
-  const main = img?.main?.trim() ?? "";
-  if (main) return main;
-  // 4. characterSheet (extra field)
-  const sheet = (img?.characterSheet as string | undefined)?.trim() ?? "";
-  if (sheet) return sheet;
-  return "";
+  return getOfficialProfileSheetUrl(c);
 }
 
 /** Resolve the best main display image URL. */
@@ -303,15 +345,65 @@ export function getCharacterPrimaryReference(c: Character): string {
   return img?.profileSheet?.trim() ?? "";
 }
 
+function isApprovedRef(a: ReferenceAssetInput): boolean {
+  return (
+    a.reviewStatus === "approved-for-generation" ||
+    a.approvedForGeneration === true ||
+    a.generationUseAllowed === true
+  );
+}
+
 /** Count approved reference assets for a character. */
 function countApprovedRefs(slug: string, refs: ReferenceAssetInput[]): number {
+  return refs.filter((a) => a.characterSlug === slug && isApprovedRef(a)).length;
+}
+
+function getApprovedSupportingRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    const t = typeof a.assetType === "string" ? a.assetType : "";
+    return !PROFILE_SHEET_TYPES.has(t) && !MAIN_REFERENCE_TYPES.has(t) && !ENVIRONMENT_REFERENCE_TYPES.has(t);
+  });
+}
+
+function getApprovedEnvironmentRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    const t = typeof a.assetType === "string" ? a.assetType : "";
+    return ENVIRONMENT_REFERENCE_TYPES.has(t);
+  });
+}
+
+function getApprovedProductRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    return a.assetType === "product-reference";
+  });
+}
+
+function getApprovedBrandRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    return a.assetType === "brand-guide";
+  });
+}
+
+function getNeedsReviewRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
   return refs.filter(
     (a) =>
       a.characterSlug === slug &&
-      (a.reviewStatus === "approved-for-generation" ||
-        a.approvedForGeneration === true ||
-        a.generationUseAllowed === true)
-  ).length;
+      (!a.reviewStatus || a.reviewStatus === "needs-review" || a.requiresReview === true) &&
+      a.reviewStatus !== "rejected" &&
+      a.reviewStatus !== "archived"
+  );
+}
+
+function getRejectedOrArchivedRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter(
+    (a) =>
+      a.characterSlug === slug &&
+      (a.reviewStatus === "rejected" || a.reviewStatus === "archived")
+  );
 }
 
 // ─── Profile completeness ─────────────────────────────────────────────────────
@@ -421,13 +513,16 @@ export function normalizeCharacterProfile(
   const isPublic = deriveIsPublic(c);
   const isAdminUsable = deriveIsAdminUsable(c);
   const isOriginalCanonical = ORIGINAL_SLUGS.has(slug);
+  const isDraft = approvalMode === "draft";
+  const isArchived = approvalMode === "archived";
 
   const img = c.image as Record<string, string | undefined> | undefined;
   const profileSheetUrl = img?.profileSheet?.trim() ?? "";
-  const mainImageUrl = img?.main?.trim() ?? "";
   const primaryReferenceAssetUrl = c.primaryReferenceAssetUrl?.trim() ?? "";
-  const profileImageUrl = getCharacterProfileImage(c);
+  const profileImageUrl = getOfficialProfileSheetUrl(c);
+  const mainImageUrl = getMainCharacterImageUrl(c);
   const imageAlt = img?.alt?.trim() ?? `${name} character`;
+  const assetSummary = getCharacterProfileAssetSummary(c);
 
   const colorPalette = getCharacterColorPalette(c);
   const visualIdentitySummary = getCharacterVisualIdentitySummary(c);
@@ -438,6 +533,24 @@ export function normalizeCharacterProfile(
   const approvedReferenceCount = referenceAssets
     ? countApprovedRefs(slug, referenceAssets)
     : 0;
+  const approvedSupportingReferences = referenceAssets
+    ? getApprovedSupportingRefs(slug, referenceAssets)
+    : [];
+  const approvedEnvironmentReferences = referenceAssets
+    ? getApprovedEnvironmentRefs(slug, referenceAssets)
+    : [];
+  const approvedProductReferences = referenceAssets
+    ? getApprovedProductRefs(slug, referenceAssets)
+    : [];
+  const approvedBrandReferences = referenceAssets
+    ? getApprovedBrandRefs(slug, referenceAssets)
+    : [];
+  const needsReviewReferences = referenceAssets
+    ? getNeedsReviewRefs(slug, referenceAssets)
+    : [];
+  const rejectedOrArchivedReferences = referenceAssets
+    ? getRejectedOrArchivedRefs(slug, referenceAssets)
+    : [];
   const hasPrimaryReference = Boolean(primaryReferenceAssetUrl) || Boolean(profileSheetUrl);
 
   const trademarkNotesRaw = c.trademarkNotes;
@@ -450,7 +563,28 @@ export function normalizeCharacterProfile(
     referenceAssets
   );
 
+  const hasOfficialProfileSheet = Boolean(profileImageUrl);
+  const hasMainCharacterImage = Boolean(
+    c.image?.main?.trim() || safeStr(raw.mainReferenceAssetUrl)
+  );
+  const hasApprovedReference = approvedReferenceCount > 0 || isOriginalCanonical;
+  const hasSupportingReferences = approvedSupportingReferences.length > 0;
+  const hasEnvironmentReferences = approvedEnvironmentReferences.length > 0;
+
+  // generationReady: original canonicals always ready; new chars need profile sheet + profileComplete
+  const generationReady =
+    isOriginalCanonical ||
+    (isAdminUsable && hasOfficialProfileSheet && profileComplete);
+
+  // publicReady: must be public (or original canonical), have profile sheet, description, and visual identity
+  const publicReady =
+    (isPublic || isOriginalCanonical) &&
+    hasOfficialProfileSheet &&
+    Boolean(safeStr(c.shortDescription)) &&
+    Boolean(visualIdentitySummary);
+
   return {
+    // Identity
     slug,
     name,
     shortName,
@@ -458,57 +592,86 @@ export function normalizeCharacterProfile(
     role: safeStr(c.role),
     type: safeStr(c.type) || "fruit-baby",
     fruitType: safeStr(c.fruitType),
-    home: safeStr(c.home),
+    home: safeStr(c.home) || safeStr(raw.world),
+    storyRole: safeStr(c.storyRole),
+
+    // Status
     approvalMode,
     statusLabel,
     publicStatus: safeStr(c.publicStatus),
     isOriginalCanonical,
     isPublic,
     isAdminUsable,
+    isDraft,
+    isArchived,
 
+    // Profile copy
     tagline: safeStr(c.tagline),
     shortDescription: safeStr(c.shortDescription),
-    storyRole: safeStr(c.storyRole),
     about: safeStr(c.about),
     personalityTraits,
     personalitySummary: personalityTraits.join(", "),
     voiceGuide: safeStr(c.voiceGuide),
     favoriteQuote: safeStr(c.favoriteQuote),
     signatureQuote: safeStr(c.signatureQuote),
+    trademarkNotes,
 
+    // Visual identity
     visualIdentitySummary,
     colorPalette,
-
-    // These fields don't exist in current JSON — return empty arrays as safe defaults
     bodyShapeRules: safeStrArr(raw.bodyShapeRules),
     faceAndExpressionRules: safeStrArr(raw.faceAndExpressionRules),
     textureAndSurfaceRules: safeStrArr(raw.textureAndSurfaceRules),
     leafCrownAccessoryRules: safeStrArr(raw.leafCrownAccessoryRules),
     poseAndGestureRules: safeStrArr(raw.poseAndGestureRules),
 
+    // Rules
     alwaysRules,
     neverRules,
     characterRules,
     doNotChangeRules,
     generationRestrictions,
-    trademarkNotes,
 
+    // Images / references
     profileImageUrl,
     mainImageUrl,
     profileSheetUrl,
+    officialProfileSheetUrl: profileImageUrl,
+    mainCharacterImageUrl: mainImageUrl,
+    characterCardImageUrl: getCharacterCardImageUrl(c),
+    profileAssetWarnings: assetSummary.profileAssetWarnings,
     primaryReferenceAssetId: safeStr(c.primaryReferenceAssetId),
     primaryReferenceAssetUrl,
     primaryReferenceAssetType: safeStr(c.primaryReferenceAssetType),
     imageAlt,
 
+    // Reference groups
     approvedReferenceCount,
+    approvedSupportingReferences,
+    approvedEnvironmentReferences,
+    approvedProductReferences,
+    approvedBrandReferences,
+    needsReviewReferences,
+    rejectedOrArchivedReferences,
+    supportingReferenceCount: approvedSupportingReferences.length,
+    environmentReferenceCount: approvedEnvironmentReferences.length,
+    needsReviewReferenceCount: needsReviewReferences.length,
+
+    // Readiness booleans
+    hasOfficialProfileSheet,
+    hasProfileImage: hasOfficialProfileSheet,
+    hasMainCharacterImage,
     hasPrimaryReference,
-    hasProfileImage: Boolean(profileImageUrl),
+    hasApprovedReference,
+    hasSupportingReferences,
+    hasEnvironmentReferences,
     hasColorPalette: colorPalette.length > 0,
     hasVisualIdentity: Boolean(visualIdentitySummary),
     hasCharacterRules: alwaysRules.length > 0 || doNotChangeRules.length > 0,
     hasGenerationRestrictions: generationRestrictions.length > 0,
     profileComplete,
+    generationReady,
+    publicReady,
     readinessWarnings,
   };
 }
