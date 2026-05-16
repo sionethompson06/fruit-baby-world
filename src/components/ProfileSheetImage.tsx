@@ -50,11 +50,8 @@ export default function ProfileSheetImage({
           Official {characterName} profile sheet coming soon
         </p>
         <p className="text-xs text-tiki-brown/40">
-          Drop the file at:
+          Check back soon for the full character reference!
         </p>
-        <code className="text-xs font-mono text-tiki-brown/55 bg-white/70 px-3 py-2 rounded-xl border border-tiki-brown/10">
-          public/characters/{slug}/profile-sheet.png
-        </code>
       </div>
     </div>
   );

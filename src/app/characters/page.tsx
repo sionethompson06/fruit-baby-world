@@ -1,10 +1,10 @@
-import { getPublicCharactersFromDisk } from "@/lib/characterContent";
+import { getPublicNormalizedCharacterProfiles } from "@/lib/characterRegistry";
 import CharacterCard from "@/components/CharacterCard";
 
 export const dynamic = "force-dynamic";
 
 export default function CharactersPage() {
-  const allCharacters = getPublicCharactersFromDisk();
+  const allCharacters = getPublicNormalizedCharacterProfiles();
   const fruitBabies = allCharacters.filter((c) => c.type === "fruit-baby");
   const rivals = allCharacters.filter((c) => c.type === "villain");
 
@@ -24,12 +24,31 @@ export default function CharactersPage() {
         </div>
       </section>
 
-      {/* Info banner */}
-      <section className="bg-coconut-cream border-y border-pineapple-yellow/30 py-4 px-4 text-center">
-        <p className="text-sm font-semibold text-tiki-brown/70 max-w-xl mx-auto">
-          ✨ Each character is designed for stories, plushies, collectibles, and
-          animated adventures.
-        </p>
+      {/* Value strip */}
+      <section className="bg-white border-y border-pineapple-yellow/30 py-5 px-4">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5 text-center">
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-2xl">📚</span>
+            <p className="text-xs font-bold text-tiki-brown uppercase tracking-wide">For Educators</p>
+            <p className="text-xs text-tiki-brown/60 leading-relaxed">
+              Each character teaches real values — kindness, confidence, and creativity.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-2xl">🧸</span>
+            <p className="text-xs font-bold text-tiki-brown uppercase tracking-wide">For Collectors</p>
+            <p className="text-xs text-tiki-brown/60 leading-relaxed">
+              Designed for plushies, art prints, enamel pins, and limited collectibles.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-2xl">🎬</span>
+            <p className="text-xs font-bold text-tiki-brown uppercase tracking-wide">Story-First Design</p>
+            <p className="text-xs text-tiki-brown/60 leading-relaxed">
+              Built for animated adventures, picture books, and kids&apos; content creators.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Fruit Baby Friends */}
@@ -45,7 +64,7 @@ export default function CharactersPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {fruitBabies.map((character) => (
-            <CharacterCard key={character.id} character={character} />
+            <CharacterCard key={character.slug} character={character} />
           ))}
         </div>
       </section>
@@ -63,14 +82,13 @@ export default function CharactersPage() {
               ⚡ Rivals &amp; Troublemakers
             </h2>
             <p className="text-sm text-tiki-brown/60">
-              Not all characters play nice — but they keep every story
-              exciting!
+              Not all characters play nice — but they keep every story exciting!
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
             {rivals.map((character) => (
-              <CharacterCard key={character.id} character={character} />
+              <CharacterCard key={character.slug} character={character} />
             ))}
           </div>
         </section>
