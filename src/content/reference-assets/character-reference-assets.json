@@ -1480,6 +1480,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967177312-vbv0ym",
+      "characterSlug": "mango-baby",
+      "assetType": "character-environment-reference",
+      "title": "Mango Grove Beach",
+      "description": "Mango Grove Beach",
+      "notes": "Mango Grove Beach",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967176364-mango-grove-beach.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2507741,
+      "uploadedAt": "2026-05-16T21:32:57.312Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
