@@ -1068,6 +1068,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965937604-i3krgh",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "character-environment-reference",
+      "title": "Dragon Fruit Haven Home Neighborhood",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778965936854-dragon-fruit-haven-house-neighborhood.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2327057,
+      "uploadedAt": "2026-05-16T21:12:17.604Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
