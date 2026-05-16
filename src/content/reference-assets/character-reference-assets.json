@@ -1892,6 +1892,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968745828-e9sseq",
+      "characterSlug": "pineapple-baby",
+      "assetType": "character-environment-reference",
+      "title": "Pineapple Grove Playground",
+      "description": "Pineapple Grove Playground",
+      "notes": "Pineapple Grove Playground",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968745039-pineapple-grove-playground.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2461454,
+      "uploadedAt": "2026-05-16T21:59:05.828Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
