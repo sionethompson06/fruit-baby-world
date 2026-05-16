@@ -605,6 +605,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963002335-f07qj3",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "skipping, leaping, fun, playing",
+      "description": "skipping, leaping, fun, playing",
+      "notes": "skipping, leaping, fun, playing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963001636-kiwi-skipping-leaping-fun-playing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1866392,
+      "uploadedAt": "2026-05-16T20:23:22.335Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
