@@ -1694,12 +1694,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-16T22:09:45.126Z",
+      "reviewedAt": "2026-05-16T22:15:35.152Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-16T22:09:45.126Z"
+      "updatedAt": "2026-05-16T22:15:35.152Z"
     },
     {
       "id": "ref-1778968307333-im4eq1",
