@@ -1841,6 +1841,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968658788-05n3gw",
+      "characterSlug": "pineapple-baby",
+      "assetType": "character-environment-reference",
+      "title": "Pineapple Grove Beach",
+      "description": "Pineapple Grove Beach",
+      "notes": "Pineapple Grove Beach",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968658069-pineapple-grove-bearch.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2148957,
+      "uploadedAt": "2026-05-16T21:57:38.788Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
