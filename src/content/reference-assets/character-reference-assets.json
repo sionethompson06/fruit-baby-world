@@ -1691,11 +1691,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1656699,
       "uploadedAt": "2026-05-16T21:50:53.313Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T22:04:05.325Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T22:04:05.325Z"
     },
     {
       "id": "ref-1778968307333-im4eq1",
