@@ -707,6 +707,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963302063-te8qnm",
+      "characterSlug": "kiwi-baby",
+      "assetType": "character-environment-reference",
+      "title": "Kiwi Canopy Cove Market",
+      "description": "Kiwi Canopy Cove Market",
+      "notes": "Kiwi Canopy Cove Market",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963301257-kiwi-canopy-cove-market.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2866348,
+      "uploadedAt": "2026-05-16T20:28:22.063Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
