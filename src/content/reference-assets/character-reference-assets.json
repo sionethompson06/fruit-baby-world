@@ -1378,6 +1378,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966851359-yu095g",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "playing, beach, beach ball, fun,",
+      "description": "playing, beach, beach ball, fun,",
+      "notes": "playing, beach, beach ball, fun,",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966850517-mango-playing-ball-fun.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1399096,
+      "uploadedAt": "2026-05-16T21:27:31.359Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
