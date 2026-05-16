@@ -1259,6 +1259,23 @@
       "publicUseAllowed": false,
       "isOfficialReference": false,
       "updatedAt": "2026-05-16T21:18:06.348Z"
+    },
+    {
+      "id": "ref-1778966466424-6veaqw",
+      "characterSlug": "kiwi-baby",
+      "assetType": "isolated-character-reference",
+      "title": "Kiwi Baby Main Image",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778966465650-kiwi-waving-hello-goodbye-raising-hand.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1920243,
+      "uploadedAt": "2026-05-16T21:21:06.424Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
