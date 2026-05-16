@@ -588,6 +588,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778962964765-wwzdvs",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "skipping, eyes closed, laughing, playing, fun",
+      "description": "skipping, eyes closed, laughing, playing, fun",
+      "notes": "skipping, eyes closed, laughing, playing, fun",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778962963926-kiwi-skipping-eyes-closed-laughing-playing-fun-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1900776,
+      "uploadedAt": "2026-05-16T20:22:44.765Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
