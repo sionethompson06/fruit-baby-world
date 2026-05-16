@@ -29,15 +29,41 @@
   ],
   "signatureQuote": "Kindness makes hearts grow!",
   "visualIdentity": {
-    "primaryColors": ["#FFD84D", "#FFB347"],
-    "accentColors": ["#7AC943", "#5C3A1E", "#FFB8C8", "#FFFBE8"],
+    "primaryColors": [
+      "#FFD84D",
+      "#FFB347"
+    ],
+    "accentColors": [
+      "#7AC943",
+      "#5C3A1E",
+      "#FFB8C8",
+      "#FFFBE8"
+    ],
     "palette": [
-      { "name": "Sunshine Yellow", "hex": "#FFD84D" },
-      { "name": "Golden Orange", "hex": "#FFB347" },
-      { "name": "Leaf Green", "hex": "#7AC943" },
-      { "name": "Warm Brown", "hex": "#5C3A1E" },
-      { "name": "Blush Pink", "hex": "#FFB8C8" },
-      { "name": "Cream Glow", "hex": "#FFFBE8" }
+      {
+        "name": "Sunshine Yellow",
+        "hex": "#FFD84D"
+      },
+      {
+        "name": "Golden Orange",
+        "hex": "#FFB347"
+      },
+      {
+        "name": "Leaf Green",
+        "hex": "#7AC943"
+      },
+      {
+        "name": "Warm Brown",
+        "hex": "#5C3A1E"
+      },
+      {
+        "name": "Blush Pink",
+        "hex": "#FFB8C8"
+      },
+      {
+        "name": "Cream Glow",
+        "hex": "#FFFBE8"
+      }
     ],
     "styleNotes": "Bright sunshine yellow body with a bold green leafy crown. Warm brown eyes, pink blush cheeks, and a diamond pattern on the front. Soft, rounded, and cheerful."
   },
@@ -68,9 +94,17 @@
     "We can do it together!"
   ],
   "image": {
-    "main": "",
+    "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968207308-pineapple-happy-smile-fun-playing.png",
     "profileSheet": "/characters/pineapple-baby/Pineapple Profile.png",
     "alt": "Official Pineapple Baby character profile sheet"
   },
-  "merchPotential": ["plush", "squish", "sticker", "book", "collectible figure"]
+  "merchPotential": [
+    "plush",
+    "squish",
+    "sticker",
+    "book",
+    "collectible figure"
+  ],
+  "mainReferenceAssetId": "ref-1778968208156-hh21so",
+  "updatedAt": "2026-05-16T22:03:51.853Z"
 }
