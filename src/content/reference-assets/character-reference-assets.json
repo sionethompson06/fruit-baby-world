@@ -983,6 +983,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965736786-p1vm6o",
+      "characterSlug": "coconut-baby",
+      "assetType": "character-environment-reference",
+      "title": "Coconut Grove Canoe",
+      "description": "out on the water in a canoe looking at Coconut Grove",
+      "notes": "out on the water in a canoe looking at Coconut Grove",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965736017-coconut-grove-water-canoe-village-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1871753,
+      "uploadedAt": "2026-05-16T21:08:56.786Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
