@@ -41,7 +41,7 @@ function formatBytes(n: number): string {
 
 // ─── Per-asset review card ──────────────────────────────────────────────────────────────
 
-function AssetReviewCard({
+export function AssetReviewCard({
   asset,
   isDraftCharacter,
   onReviewed,

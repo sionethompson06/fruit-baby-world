@@ -35,7 +35,7 @@ const MODE_DESCRIPTIONS: Record<CharacterApprovalMode, string> = {
 
 // ─── Per-character approval row ───────────────────────────────────────────────
 
-function CharacterApprovalRow({
+export function CharacterApprovalRow({
   character,
   approvedRefCount,
   builtInRefValid,
