@@ -1295,12 +1295,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-16T21:38:37.346Z",
+      "reviewedAt": "2026-05-16T21:41:50.189Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": true,
-      "updatedAt": "2026-05-16T21:38:37.346Z"
+      "updatedAt": "2026-05-16T21:41:50.189Z"
     },
     {
       "id": "ref-1778966633307-fhcf36",
