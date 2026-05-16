@@ -1429,6 +1429,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967099991-q9tyg7",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "wink, silly, mischievous, sneaky,",
+      "description": "wink, silly, mischievous, sneaky,",
+      "notes": "wink, silly, mischievous, sneaky,",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967099409-mango-wink-sly-mischivious.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1439721,
+      "uploadedAt": "2026-05-16T21:31:39.991Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
