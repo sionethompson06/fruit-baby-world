@@ -1589,6 +1589,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967895199-y2nu4m",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "leaping, happy , working out",
+      "description": "leaping, happy , working out",
+      "notes": "leaping, happy , working out",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967894428-mango-leaping-happy-working-out.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1690464,
+      "uploadedAt": "2026-05-16T21:44:55.199Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
