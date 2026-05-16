@@ -1153,6 +1153,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966108119-i6s1xa",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "character-environment-reference",
+      "title": "Dragon Fruit Haven Theater",
+      "description": "Dragon Fruit Haven Theater",
+      "notes": "Dragon Fruit Haven Theater",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778966107380-dragon-fruit-haven-theater.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2356580,
+      "uploadedAt": "2026-05-16T21:15:08.119Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
