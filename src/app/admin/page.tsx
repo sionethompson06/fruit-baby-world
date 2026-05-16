@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getAllCharacters, getAllEpisodes, getAllProducts } from "@/lib/content";
+import { getAllEpisodes, getAllProducts } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 
 export const metadata: Metadata = {
   title: "Story Studio | Fruit Baby World Admin",
@@ -109,7 +110,8 @@ const canonRules = {
 };
 
 export default function AdminPage() {
-  const characterCount = getAllCharacters().length;
+  let characterCount = 0;
+  try { characterCount = loadAllCharactersFromDisk().length; } catch { characterCount = 0; }
   const episodeCount = getAllEpisodes().length;
   const productCount = getAllProducts().length;
 

@@ -1,43 +1,22 @@
-// Server-only dynamic character loader.
-// Reads all *.json files from src/content/characters/ at request time.
+// Server-only character content helpers.
+// Delegates to characterRegistry — the canonical character loader.
 // Do not import this in client components.
 
-import fs from "fs";
-import path from "path";
+import {
+  getAllCharacterProfiles,
+  getPublicCharacterProfiles,
+} from "@/lib/characterRegistry";
 import type { Character } from "@/lib/content";
 
-const CHARACTERS_DIR = path.join(process.cwd(), "src/content/characters");
-
+// Original export name — used throughout the app
 export function loadAllCharactersFromDisk(): Character[] {
-  const files = fs
-    .readdirSync(CHARACTERS_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .sort();
-  return files.map(
-    (f) =>
-      JSON.parse(
-        fs.readFileSync(path.join(CHARACTERS_DIR, f), "utf8")
-      ) as Character
-  );
-}
-
-function isPublicCharacter(c: Character): boolean {
-  if (
-    c.approvalMode === "draft" ||
-    c.approvalMode === "official-internal" ||
-    c.approvalMode === "archived"
-  )
-    return false;
-  if (c.approvalMode === "public") return true;
-  return c.status === "active" && c.publicUseAllowed !== false;
+  return getAllCharacterProfiles();
 }
 
 export function getPublicCharactersFromDisk(): Character[] {
-  return loadAllCharactersFromDisk().filter(isPublicCharacter);
+  return getPublicCharacterProfiles();
 }
 
-export function getPublicCharacterBySlugFromDisk(
-  slug: string
-): Character | undefined {
-  return getPublicCharactersFromDisk().find((c) => c.slug === slug);
+export function getPublicCharacterBySlugFromDisk(slug: string): Character | undefined {
+  return getPublicCharacterProfiles().find((c) => c.slug === slug);
 }
