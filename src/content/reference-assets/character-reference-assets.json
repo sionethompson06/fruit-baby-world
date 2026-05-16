@@ -1756,6 +1756,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968464269-opg4a1",
+      "characterSlug": "pineapple-baby",
+      "assetType": "character-environment-reference",
+      "title": "love, kind, hope, caring",
+      "description": "love, kind, hope, caring",
+      "notes": "love, kind, hope, caring",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968463653-pineapple-love-kind-hope-caring.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1636849,
+      "uploadedAt": "2026-05-16T21:54:24.269Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
