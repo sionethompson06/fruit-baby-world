@@ -977,11 +977,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2012059,
       "uploadedAt": "2026-05-16T21:07:35.280Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T21:17:29.559Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T21:17:29.559Z"
     },
     {
       "id": "ref-1778965686740-pa54sb",
