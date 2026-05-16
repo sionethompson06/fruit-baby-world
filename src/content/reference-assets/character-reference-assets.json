@@ -1085,6 +1085,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965963097-dzmsi5",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "character-environment-reference",
+      "title": "Dragon Fruit Haven Market",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778965962284-dragon-fruit-haven-market-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2304354,
+      "uploadedAt": "2026-05-16T21:12:43.097Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
