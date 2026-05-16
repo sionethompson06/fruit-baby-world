@@ -1344,6 +1344,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966745627-z5zkog",
+      "characterSlug": "mango-baby",
+      "assetType": "supporting-reference",
+      "title": "laughing, smile, winking, pointing",
+      "description": "laughing, smile, winking, pointing",
+      "notes": "laughing, smile, winking, pointing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966745017-mango-laughing-smile-winking-pointing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1537019,
+      "uploadedAt": "2026-05-16T21:25:45.627Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
