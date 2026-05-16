@@ -1773,6 +1773,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968508235-c3mocq",
+      "characterSlug": "pineapple-baby",
+      "assetType": "supporting-reference",
+      "title": "travel, adventure, excursion, hiking",
+      "description": "travel, adventure, excursion, hiking",
+      "notes": "travel, adventure, excursion, hiking",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968507112-pineapple-travel-adventure-excursion-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1712525,
+      "uploadedAt": "2026-05-16T21:55:08.235Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
