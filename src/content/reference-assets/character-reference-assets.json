@@ -1673,12 +1673,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-16T22:07:50.437Z",
+      "reviewedAt": "2026-05-16T22:09:41.860Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
-      "isOfficialReference": true,
-      "updatedAt": "2026-05-16T22:07:50.437Z"
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T22:09:41.860Z"
     },
     {
       "id": "ref-1778968253313-7yh9o6",
