@@ -520,6 +520,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778962740781-3y5q0a",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "love, loving, kind, caring, sweet",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778962740113-kiwi-love-loving-kind-caring-sweet.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1968742,
+      "uploadedAt": "2026-05-16T20:19:00.781Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
