@@ -473,11 +473,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1694567,
       "uploadedAt": "2026-05-10T02:07:04.126Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T19:55:28.795Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T19:55:28.795Z"
     },
     {
       "id": "ref-1778378876108-zb50l2",
