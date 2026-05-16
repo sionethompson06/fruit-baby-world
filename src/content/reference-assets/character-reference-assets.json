@@ -1136,6 +1136,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966074961-g9i3kj",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "character-environment-reference",
+      "title": "Dragon Fruit Haven Playground",
+      "description": "Dragon Fruit Haven Playground",
+      "notes": "Dragon Fruit Haven Playground",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778966074013-dragon-fruit-haven-playground.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2290263,
+      "uploadedAt": "2026-05-16T21:14:34.961Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
