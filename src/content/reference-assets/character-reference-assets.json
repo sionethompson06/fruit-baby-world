@@ -758,6 +758,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963487792-d5z281",
+      "characterSlug": "kiwi-baby",
+      "assetType": "character-environment-reference",
+      "title": "Kiwi Canopy Cove Playground",
+      "description": "Kiwi Canopy Cove Playground",
+      "notes": "Kiwi Canopy Cove Playground",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963486521-kiwi-canopy-cove-playground.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2717340,
+      "uploadedAt": "2026-05-16T20:31:27.792Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
