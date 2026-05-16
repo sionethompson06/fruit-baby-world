@@ -872,11 +872,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1902642,
       "uploadedAt": "2026-05-16T21:00:01.310Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T21:01:07.373Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-16T21:01:07.373Z"
     }
   ]
 }
