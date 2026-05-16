@@ -1497,6 +1497,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967201141-filn0g",
+      "characterSlug": "mango-baby",
+      "assetType": "character-environment-reference",
+      "title": "Mango Grove Market",
+      "description": "Mango Grove Market",
+      "notes": "Mango Grove Market",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967200182-mango-grove-market.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2492555,
+      "uploadedAt": "2026-05-16T21:33:21.141Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
