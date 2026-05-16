@@ -1671,6 +1671,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968253313-7yh9o6",
+      "characterSlug": "pineapple-baby",
+      "assetType": "supporting-reference",
+      "title": "Bashful, sleepy, resting , tired, pray, meditating",
+      "description": "Bashful, sleepy, resting , tired, pray, meditating",
+      "notes": "Bashful, sleepy, resting , tired, pray, meditating",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968252525-pineapple-bashful-sleep-rest-tired.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1656699,
+      "uploadedAt": "2026-05-16T21:50:53.313Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
