@@ -966,6 +966,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965686740-pa54sb",
+      "characterSlug": "coconut-baby",
+      "assetType": "character-environment-reference",
+      "title": "Coconut Grove Beach Volleyball",
+      "description": "Coconut Grove Beach Volleyball",
+      "notes": "Coconut Grove Beach Volleyball",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965685922-coconut-grove-volleyball-beach-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1782370,
+      "uploadedAt": "2026-05-16T21:08:06.740Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
