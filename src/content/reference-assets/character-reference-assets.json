@@ -554,6 +554,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778962839221-dz3xl1",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "sad, afraid, worried, caring, praying, cute, cuddling",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778962838353-kiwi-sad-afraid-worried-carring-praying-cute-cuddling.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1915523,
+      "uploadedAt": "2026-05-16T20:20:39.221Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
