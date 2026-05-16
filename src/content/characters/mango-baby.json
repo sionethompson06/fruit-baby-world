@@ -35,14 +35,36 @@
   ],
   "favoriteQuote": "Let's make today super fun!",
   "visualIdentity": {
-    "primaryColors": ["#FFB347", "#FFD84D"],
-    "accentColors": ["#7AC943", "#5C3A1E", "#FFB8C8"],
+    "primaryColors": [
+      "#FFB347",
+      "#FFD84D"
+    ],
+    "accentColors": [
+      "#7AC943",
+      "#5C3A1E",
+      "#FFB8C8"
+    ],
     "palette": [
-      { "name": "Mango Orange", "hex": "#FFB347" },
-      { "name": "Mango Yellow", "hex": "#FFD84D" },
-      { "name": "Tropical Green", "hex": "#7AC943" },
-      { "name": "Warm Brown", "hex": "#5C3A1E" },
-      { "name": "Blush Pink", "hex": "#FFB8C8" }
+      {
+        "name": "Mango Orange",
+        "hex": "#FFB347"
+      },
+      {
+        "name": "Mango Yellow",
+        "hex": "#FFD84D"
+      },
+      {
+        "name": "Tropical Green",
+        "hex": "#7AC943"
+      },
+      {
+        "name": "Warm Brown",
+        "hex": "#5C3A1E"
+      },
+      {
+        "name": "Blush Pink",
+        "hex": "#FFB8C8"
+      }
     ],
     "styleNotes": "Warm mango yellow-orange body with a rich gradient. Green leaf top, bright brown eyes, and pink blush cheeks. Radiates tropical warmth and cheerful energy."
   },
@@ -61,11 +83,26 @@
     "Adventure Ready"
   ],
   "relationships": [
-    { "character": "Pineapple Baby", "description": "Bestie and Adventure Buddy" },
-    { "character": "Coconut Baby", "description": "Big Hug Buddy" },
-    { "character": "Kiwi Baby", "description": "Calm Down Partner" },
-    { "character": "Ube Baby", "description": "Creative Sidekick" },
-    { "character": "Tiki Trouble", "description": "Mischievous Rival" }
+    {
+      "character": "Pineapple Baby",
+      "description": "Bestie and Adventure Buddy"
+    },
+    {
+      "character": "Coconut Baby",
+      "description": "Big Hug Buddy"
+    },
+    {
+      "character": "Kiwi Baby",
+      "description": "Calm Down Partner"
+    },
+    {
+      "character": "Ube Baby",
+      "description": "Creative Sidekick"
+    },
+    {
+      "character": "Tiki Trouble",
+      "description": "Mischievous Rival"
+    }
   ],
   "storyRole": "The comic spark and adventure instigator. Mango Baby gets the gang into fun (and occasionally chaotic) situations, bringing joy and laughter to every episode.",
   "characterRules": {
@@ -89,9 +126,17 @@
     "Adventure time — let's GO!"
   ],
   "image": {
-    "main": "",
+    "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966553575-mango-happy-fun-enjoy-playing.png",
     "profileSheet": "/characters/mango-baby/Mango Profile.png",
     "alt": "Official Mango Baby character profile sheet"
   },
-  "merchPotential": ["plush", "squish", "sticker", "activity book", "collectible figure"]
+  "merchPotential": [
+    "plush",
+    "squish",
+    "sticker",
+    "activity book",
+    "collectible figure"
+  ],
+  "mainReferenceAssetId": "ref-1778966554128-xv62qr",
+  "updatedAt": "2026-05-16T21:35:19.410Z"
 }
