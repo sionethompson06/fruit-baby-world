@@ -893,11 +893,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2100576,
       "uploadedAt": "2026-05-16T21:05:33.600Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T21:17:22.239Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T21:17:22.239Z"
     },
     {
       "id": "ref-1778965563317-5lxm26",
