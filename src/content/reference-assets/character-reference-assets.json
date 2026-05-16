@@ -949,6 +949,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965655280-5efldw",
+      "characterSlug": "coconut-baby",
+      "assetType": "character-environment-reference",
+      "title": "Coconut Grove Village 2",
+      "description": "Coconut Grove Village 2",
+      "notes": "Coconut Grove Village 2",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965654404-coconut-grove-village.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2012059,
+      "uploadedAt": "2026-05-16T21:07:35.280Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
