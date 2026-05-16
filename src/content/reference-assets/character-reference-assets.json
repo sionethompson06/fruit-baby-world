@@ -515,11 +515,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1900673,
       "uploadedAt": "2026-05-16T20:18:28.975Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T20:34:44.793Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-16T20:34:44.793Z"
     },
     {
       "id": "ref-1778962740781-3y5q0a",
