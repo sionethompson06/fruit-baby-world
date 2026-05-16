@@ -1824,6 +1824,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968591537-ty5zy3",
+      "characterSlug": "pineapple-baby",
+      "assetType": "character-environment-reference",
+      "title": "Pineapple Grove",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968590668-pineapple-grove-1.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2435668,
+      "uploadedAt": "2026-05-16T21:56:31.537Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
