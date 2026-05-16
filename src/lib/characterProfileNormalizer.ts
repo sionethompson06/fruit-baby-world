@@ -19,10 +19,14 @@ import {
 
 export type ReferenceAssetInput = {
   characterSlug: string;
+  assetType?: string;
+  title?: string;
+  description?: string;
   reviewStatus?: string;
   approvedForGeneration?: boolean;
   generationUseAllowed?: boolean;
   isOfficialReference?: boolean;
+  requiresReview?: boolean;
   blobUrl?: string;
   [key: string]: unknown;
 };
@@ -30,6 +34,7 @@ export type ReferenceAssetInput = {
 // ─── Normalized profile type ──────────────────────────────────────────────────
 
 export type NormalizedCharacterProfile = {
+  // ── Identity ──────────────────────────────────────────────────────────────
   slug: string;
   name: string;
   shortName: string;
@@ -38,42 +43,49 @@ export type NormalizedCharacterProfile = {
   type: string;
   fruitType: string;
   home: string;
+  storyRole: string;
+
+  // ── Status ────────────────────────────────────────────────────────────────
   approvalMode: "draft" | "official-internal" | "public" | "archived" | string;
   statusLabel: string;
   publicStatus: string;
   isOriginalCanonical: boolean;
   isPublic: boolean;
   isAdminUsable: boolean;
+  isDraft: boolean;
+  isArchived: boolean;
 
+  // ── Profile copy ──────────────────────────────────────────────────────────
   tagline: string;
   shortDescription: string;
-  storyRole: string;
   about: string;
   personalityTraits: string[];
   personalitySummary: string;
   voiceGuide: string;
   favoriteQuote: string;
   signatureQuote: string;
+  trademarkNotes: string;
 
+  // ── Visual identity ───────────────────────────────────────────────────────
   visualIdentitySummary: string;
   colorPalette: Array<{ name: string; hex?: string; usage?: string }>;
-
   bodyShapeRules: string[];
   faceAndExpressionRules: string[];
   textureAndSurfaceRules: string[];
   leafCrownAccessoryRules: string[];
   poseAndGestureRules: string[];
 
+  // ── Rules ─────────────────────────────────────────────────────────────────
   alwaysRules: string[];
   neverRules: string[];
   characterRules: string[];
   doNotChangeRules: string[];
   generationRestrictions: string[];
-  trademarkNotes: string;
 
-  profileImageUrl: string;
-  mainImageUrl: string;
-  profileSheetUrl: string;
+  // ── Images / references ───────────────────────────────────────────────────
+  profileImageUrl: string;        // alias for officialProfileSheetUrl
+  mainImageUrl: string;           // alias for mainCharacterImageUrl
+  profileSheetUrl: string;        // raw image.profileSheet value
   officialProfileSheetUrl: string;
   mainCharacterImageUrl: string;
   characterCardImageUrl: string;
@@ -83,18 +95,33 @@ export type NormalizedCharacterProfile = {
   primaryReferenceAssetType: string;
   imageAlt: string;
 
+  // ── Reference groups ──────────────────────────────────────────────────────
   approvedReferenceCount: number;
   approvedSupportingReferences: ReferenceAssetInput[];
   approvedEnvironmentReferences: ReferenceAssetInput[];
+  approvedProductReferences: ReferenceAssetInput[];
+  approvedBrandReferences: ReferenceAssetInput[];
+  needsReviewReferences: ReferenceAssetInput[];
+  rejectedOrArchivedReferences: ReferenceAssetInput[];
   supportingReferenceCount: number;
   environmentReferenceCount: number;
+  needsReviewReferenceCount: number;
+
+  // ── Readiness booleans ────────────────────────────────────────────────────
+  hasOfficialProfileSheet: boolean;  // = hasProfileImage (kept for compat)
+  hasProfileImage: boolean;          // legacy alias
+  hasMainCharacterImage: boolean;
   hasPrimaryReference: boolean;
-  hasProfileImage: boolean;
+  hasApprovedReference: boolean;
+  hasSupportingReferences: boolean;
+  hasEnvironmentReferences: boolean;
   hasColorPalette: boolean;
   hasVisualIdentity: boolean;
   hasCharacterRules: boolean;
   hasGenerationRestrictions: boolean;
   profileComplete: boolean;
+  generationReady: boolean;
+  publicReady: boolean;
   readinessWarnings: string[];
 };
 
@@ -197,12 +224,23 @@ export function getCharacterColorPalette(
   return [];
 }
 
-/** Extract visual identity summary string. */
+/** Extract visual identity summary string. Supports multiple field shapes. */
 export function getCharacterVisualIdentitySummary(c: Character): string {
   const vi = c.visualIdentity as Record<string, unknown> | undefined;
   if (!vi) return "";
   if (typeof vi === "string") return vi;
+
+  // styleNotes is the canonical field for original characters
   if (typeof vi.styleNotes === "string" && vi.styleNotes.trim()) return vi.styleNotes.trim();
+
+  // New character schemas may use bodyShape, face, texture subfields
+  const parts: string[] = [];
+  for (const key of ["bodyShape", "face", "texture", "accessories", "notes", "description"] as const) {
+    const v = vi[key];
+    if (typeof v === "string" && v.trim()) parts.push(v.trim());
+  }
+  if (parts.length > 0) return parts.join(" ");
+
   return "";
 }
 
@@ -336,6 +374,38 @@ function getApprovedEnvironmentRefs(slug: string, refs: ReferenceAssetInput[]): 
   });
 }
 
+function getApprovedProductRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    return a.assetType === "product-reference";
+  });
+}
+
+function getApprovedBrandRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter((a) => {
+    if (a.characterSlug !== slug || !isApprovedRef(a)) return false;
+    return a.assetType === "brand-guide";
+  });
+}
+
+function getNeedsReviewRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter(
+    (a) =>
+      a.characterSlug === slug &&
+      (!a.reviewStatus || a.reviewStatus === "needs-review" || a.requiresReview === true) &&
+      a.reviewStatus !== "rejected" &&
+      a.reviewStatus !== "archived"
+  );
+}
+
+function getRejectedOrArchivedRefs(slug: string, refs: ReferenceAssetInput[]): ReferenceAssetInput[] {
+  return refs.filter(
+    (a) =>
+      a.characterSlug === slug &&
+      (a.reviewStatus === "rejected" || a.reviewStatus === "archived")
+  );
+}
+
 // ─── Profile completeness ─────────────────────────────────────────────────────
 
 export type ProfileCompleteness = {
@@ -443,6 +513,8 @@ export function normalizeCharacterProfile(
   const isPublic = deriveIsPublic(c);
   const isAdminUsable = deriveIsAdminUsable(c);
   const isOriginalCanonical = ORIGINAL_SLUGS.has(slug);
+  const isDraft = approvalMode === "draft";
+  const isArchived = approvalMode === "archived";
 
   const img = c.image as Record<string, string | undefined> | undefined;
   const profileSheetUrl = img?.profileSheet?.trim() ?? "";
@@ -467,6 +539,18 @@ export function normalizeCharacterProfile(
   const approvedEnvironmentReferences = referenceAssets
     ? getApprovedEnvironmentRefs(slug, referenceAssets)
     : [];
+  const approvedProductReferences = referenceAssets
+    ? getApprovedProductRefs(slug, referenceAssets)
+    : [];
+  const approvedBrandReferences = referenceAssets
+    ? getApprovedBrandRefs(slug, referenceAssets)
+    : [];
+  const needsReviewReferences = referenceAssets
+    ? getNeedsReviewRefs(slug, referenceAssets)
+    : [];
+  const rejectedOrArchivedReferences = referenceAssets
+    ? getRejectedOrArchivedRefs(slug, referenceAssets)
+    : [];
   const hasPrimaryReference = Boolean(primaryReferenceAssetUrl) || Boolean(profileSheetUrl);
 
   const trademarkNotesRaw = c.trademarkNotes;
@@ -479,7 +563,28 @@ export function normalizeCharacterProfile(
     referenceAssets
   );
 
+  const hasOfficialProfileSheet = Boolean(profileImageUrl);
+  const hasMainCharacterImage = Boolean(
+    c.image?.main?.trim() || safeStr(raw.mainReferenceAssetUrl)
+  );
+  const hasApprovedReference = approvedReferenceCount > 0 || isOriginalCanonical;
+  const hasSupportingReferences = approvedSupportingReferences.length > 0;
+  const hasEnvironmentReferences = approvedEnvironmentReferences.length > 0;
+
+  // generationReady: original canonicals always ready; new chars need profile sheet + profileComplete
+  const generationReady =
+    isOriginalCanonical ||
+    (isAdminUsable && hasOfficialProfileSheet && profileComplete);
+
+  // publicReady: must be public (or original canonical), have profile sheet, description, and visual identity
+  const publicReady =
+    (isPublic || isOriginalCanonical) &&
+    hasOfficialProfileSheet &&
+    Boolean(safeStr(c.shortDescription)) &&
+    Boolean(visualIdentitySummary);
+
   return {
+    // Identity
     slug,
     name,
     shortName,
@@ -487,41 +592,47 @@ export function normalizeCharacterProfile(
     role: safeStr(c.role),
     type: safeStr(c.type) || "fruit-baby",
     fruitType: safeStr(c.fruitType),
-    home: safeStr(c.home),
+    home: safeStr(c.home) || safeStr(raw.world),
+    storyRole: safeStr(c.storyRole),
+
+    // Status
     approvalMode,
     statusLabel,
     publicStatus: safeStr(c.publicStatus),
     isOriginalCanonical,
     isPublic,
     isAdminUsable,
+    isDraft,
+    isArchived,
 
+    // Profile copy
     tagline: safeStr(c.tagline),
     shortDescription: safeStr(c.shortDescription),
-    storyRole: safeStr(c.storyRole),
     about: safeStr(c.about),
     personalityTraits,
     personalitySummary: personalityTraits.join(", "),
     voiceGuide: safeStr(c.voiceGuide),
     favoriteQuote: safeStr(c.favoriteQuote),
     signatureQuote: safeStr(c.signatureQuote),
+    trademarkNotes,
 
+    // Visual identity
     visualIdentitySummary,
     colorPalette,
-
-    // These fields don't exist in current JSON — return empty arrays as safe defaults
     bodyShapeRules: safeStrArr(raw.bodyShapeRules),
     faceAndExpressionRules: safeStrArr(raw.faceAndExpressionRules),
     textureAndSurfaceRules: safeStrArr(raw.textureAndSurfaceRules),
     leafCrownAccessoryRules: safeStrArr(raw.leafCrownAccessoryRules),
     poseAndGestureRules: safeStrArr(raw.poseAndGestureRules),
 
+    // Rules
     alwaysRules,
     neverRules,
     characterRules,
     doNotChangeRules,
     generationRestrictions,
-    trademarkNotes,
 
+    // Images / references
     profileImageUrl,
     mainImageUrl,
     profileSheetUrl,
@@ -534,18 +645,33 @@ export function normalizeCharacterProfile(
     primaryReferenceAssetType: safeStr(c.primaryReferenceAssetType),
     imageAlt,
 
+    // Reference groups
     approvedReferenceCount,
     approvedSupportingReferences,
     approvedEnvironmentReferences,
+    approvedProductReferences,
+    approvedBrandReferences,
+    needsReviewReferences,
+    rejectedOrArchivedReferences,
     supportingReferenceCount: approvedSupportingReferences.length,
     environmentReferenceCount: approvedEnvironmentReferences.length,
+    needsReviewReferenceCount: needsReviewReferences.length,
+
+    // Readiness booleans
+    hasOfficialProfileSheet,
+    hasProfileImage: hasOfficialProfileSheet,
+    hasMainCharacterImage,
     hasPrimaryReference,
-    hasProfileImage: Boolean(profileImageUrl),
+    hasApprovedReference,
+    hasSupportingReferences,
+    hasEnvironmentReferences,
     hasColorPalette: colorPalette.length > 0,
     hasVisualIdentity: Boolean(visualIdentitySummary),
     hasCharacterRules: alwaysRules.length > 0 || doNotChangeRules.length > 0,
     hasGenerationRestrictions: generationRestrictions.length > 0,
     profileComplete,
+    generationReady,
+    publicReady,
     readinessWarnings,
   };
 }

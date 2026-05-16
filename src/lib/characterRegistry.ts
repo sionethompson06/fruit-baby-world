@@ -174,6 +174,18 @@ export function getNormalizedCharacterBySlug(
   return normalizeCharacterProfile(c, referenceAssets);
 }
 
+export function getNormalizedCharacterMap(
+  referenceAssets?: ReferenceAssetInput[]
+): Record<string, NormalizedCharacterProfile> {
+  const profiles = getAllNormalizedCharacterProfiles(referenceAssets);
+  const map: Record<string, NormalizedCharacterProfile> = {};
+  for (const p of profiles) {
+    map[p.slug] = p;
+    if (p.slug === "tiki") map["tiki-trouble"] = p;
+  }
+  return map;
+}
+
 // ─── Normalization ─────────────────────────────────────────────────────────────
 
 export type NormalizedCharacter = {

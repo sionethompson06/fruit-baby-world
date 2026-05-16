@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import { getCharacterApprovalMode } from "@/lib/characterReadiness";
 import {
   checkCharacterAssets,
   buildReadinessSummary,
@@ -73,8 +74,13 @@ export default function AdminCharactersPage() {
   const readiness = buildReadinessSummary(assetSummaries);
   const uploadedAssets = loadUploadedReferenceAssets();
 
-  const officialCharacters = characters.filter((c) => c.status === "active");
-  const draftCharacters = characters.filter((c) => c.status === "draft");
+  const officialCharacters = characters.filter((c) => {
+    const mode = getCharacterApprovalMode(c);
+    return mode !== "draft" && mode !== "archived";
+  });
+  const draftCharacters = characters.filter(
+    (c) => getCharacterApprovalMode(c) === "draft"
+  );
 
   const characterOptions: CharacterOption[] = characters.map((c) => ({
     slug: c.slug,
