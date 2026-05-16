@@ -537,6 +537,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778962766036-fd22io",
+      "characterSlug": "kiwi-baby",
+      "assetType": "pose-reference",
+      "title": "playful, joyful, running, fun",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778962765308-kiwi-playful-joyful-running-fun.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1829320,
+      "uploadedAt": "2026-05-16T20:19:26.036Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
