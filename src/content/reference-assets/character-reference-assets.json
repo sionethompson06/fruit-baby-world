@@ -1652,12 +1652,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-16T22:03:38.221Z",
+      "reviewedAt": "2026-05-16T22:07:44.486Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-16T22:03:38.221Z"
+      "updatedAt": "2026-05-16T22:07:44.486Z"
     },
     {
       "id": "ref-1778968208156-hh21so",
