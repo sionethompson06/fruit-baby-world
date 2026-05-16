@@ -1705,6 +1705,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968345908-ndqshh",
+      "characterSlug": "pineapple-baby",
+      "assetType": "supporting-reference",
+      "title": "happy, smile, fun, playing",
+      "description": "happy, smile, fun, playing",
+      "notes": "happy, smile, fun, playing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968345228-pineapple-happy-smile-fun-playing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1602080,
+      "uploadedAt": "2026-05-16T21:52:25.908Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
