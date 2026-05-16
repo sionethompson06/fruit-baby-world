@@ -1739,6 +1739,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968434133-59k93l",
+      "characterSlug": "pineapple-baby",
+      "assetType": "character-environment-reference",
+      "title": "leaning, cute, happy, fun",
+      "description": "leaning, cute, happy, fun",
+      "notes": "leaning, cute, happy, fun",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968433179-pineapple-lean-cute-happy.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1615090,
+      "uploadedAt": "2026-05-16T21:53:54.133Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
