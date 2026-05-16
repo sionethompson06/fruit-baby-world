@@ -1688,6 +1688,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778968307333-im4eq1",
+      "characterSlug": "pineapple-baby",
+      "assetType": "supporting-reference",
+      "title": "happy, yelling, skipping, running, fun, playing",
+      "description": "happy, yelling, skipping, running, fun, playing",
+      "notes": "happy, yelling, skipping, running, fun, playing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968306633-pineapple-cheer-happy-yelling-skipping-running.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1604206,
+      "uploadedAt": "2026-05-16T21:51:47.333Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
