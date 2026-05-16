@@ -1276,6 +1276,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966554128-xv62qr",
+      "characterSlug": "mango-baby",
+      "assetType": "isolated-character-reference",
+      "title": "Main Character Image",
+      "description": "Main Character Image",
+      "notes": "Main Character Image",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966553575-mango-happy-fun-enjoy-playing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1617671,
+      "uploadedAt": "2026-05-16T21:22:34.128Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
