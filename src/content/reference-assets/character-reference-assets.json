@@ -1463,6 +1463,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967155098-u0zys0",
+      "characterSlug": "mango-baby",
+      "assetType": "character-environment-reference",
+      "title": "Mango Grove",
+      "description": "Mango Grove",
+      "notes": "Mango Grove",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967154291-mango-grove-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2710582,
+      "uploadedAt": "2026-05-16T21:32:35.098Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
