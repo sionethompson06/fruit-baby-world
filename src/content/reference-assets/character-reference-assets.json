@@ -741,6 +741,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778963414035-q71q1e",
+      "characterSlug": "kiwi-baby",
+      "assetType": "character-environment-reference",
+      "title": "Kiwi Canopy Cove Park",
+      "description": "Kiwi Canopy Cove Park",
+      "notes": "Kiwi Canopy Cove Park",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778963413054-kiwi-canopy-cove-park-picnic.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2754572,
+      "uploadedAt": "2026-05-16T20:30:14.035Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
