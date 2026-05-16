@@ -1514,6 +1514,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778967231579-77ycgw",
+      "characterSlug": "mango-baby",
+      "assetType": "character-environment-reference",
+      "title": "Mango Grove Park",
+      "description": "Mango Grove Park",
+      "notes": "Mango Grove Park",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778967230844-mango-grove-park-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2713910,
+      "uploadedAt": "2026-05-16T21:33:51.579Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
