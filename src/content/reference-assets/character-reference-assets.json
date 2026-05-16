@@ -1119,6 +1119,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778966041187-1pvre1",
+      "characterSlug": "dragonfruit-baby",
+      "assetType": "character-environment-reference",
+      "title": "Dragon Fruit Haven Park",
+      "description": "Dragon Fruit Haven Park",
+      "notes": "Dragon Fruit Haven Park",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778966040447-dragon-fruit-haven-park-picknic.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2410451,
+      "uploadedAt": "2026-05-16T21:14:01.187Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
