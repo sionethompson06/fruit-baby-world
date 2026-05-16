@@ -1670,11 +1670,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1602080,
       "uploadedAt": "2026-05-16T21:50:08.156Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-16T22:03:50.634Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-16T22:03:50.634Z"
     },
     {
       "id": "ref-1778968253313-7yh9o6",
