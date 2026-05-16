@@ -915,6 +915,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778965593396-3g38zg",
+      "characterSlug": "coconut-baby",
+      "assetType": "character-environment-reference",
+      "title": "Coconut Grove Playground",
+      "description": "Coconut Grove Playground",
+      "notes": "Coconut Grove Playground",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/coconut-baby/1778965592751-coconut-grove-playground-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2070019,
+      "uploadedAt": "2026-05-16T21:06:33.396Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
