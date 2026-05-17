@@ -24,12 +24,25 @@ import AnimationPromptBuilder, { buildDeterministicAnimationPrompt } from "./Ani
 import ReadAloudPromptBuilder from "./ReadAloudPromptBuilderSection";
 import SavedStoryPanelAssetLibrary from "./SavedStoryPanelAssetsSection";
 import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
+import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
   buildCharacterReferencePackage,
   type CharacterReferencePackage,
 } from "@/lib/referenceAssetLoader";
+import {
+  getActiveScenesMissingStoryPanels,
+  getStoryPanelCoverageForEpisode,
+  type MissingPanelSceneInfo,
+} from "@/lib/storyPanelCoverage";
+import {
+  getFidelityReferenceThumbnails,
+  buildFidelityChecklist,
+  hasTikiInScene as checkHasTikiInScene,
+  getFidelityWarnings,
+} from "@/lib/storyPanelFidelityReview";
+import { buildReferenceAwareStoryPanelPrompt } from "@/lib/storyPanelPromptBuilder";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -454,6 +467,69 @@ export default async function EpisodeDetailPage({
     return { sceneNumber: num, title, characters, prompt };
   });
 
+  // Panel coverage and missing panel scene infos for batch generation
+  const panelCoverage = getStoryPanelCoverageForEpisode(raw);
+  const rawMissingScenes = getActiveScenesMissingStoryPanels(raw);
+  const missingPanelSceneInfos: MissingPanelSceneInfo[] = rawMissingScenes.map((scene) => {
+    const sceneNum = typeof scene.sceneNumber === "number" ? scene.sceneNumber : 0;
+    const sceneId = str(scene.sceneId);
+    const title = str(scene.title);
+    const summary = str(scene.summary);
+    const characters = strArr(scene.characters);
+    const referenceCharacters = strArr(scene.referenceCharacters);
+    const scenePkg = episodeRefPackages.scenePackages.find((p) => p.sceneNumber === sceneNum);
+    const hasTikiScene = scenePkg
+      ? checkHasTikiInScene(scenePkg)
+      : characters.some((c) => c.toLowerCase().includes("tiki"));
+    const fidelityThumbnails = scenePkg ? getFidelityReferenceThumbnails(scenePkg, charBySlug) : [];
+    const fidelityChecklist = buildFidelityChecklist(hasTikiScene);
+    const panelPrompt =
+      scenePkg && Object.keys(charBySlug).length > 0
+        ? buildReferenceAwareStoryPanelPrompt(scenePkg, charBySlug, {
+            sceneNumber: sceneNum,
+            title,
+            summary,
+            setting: episodeSetting,
+            mood: episodeTone,
+            emotionalBeat: str(scene.emotionalBeat),
+            visualNotes: str(scene.visualNotes),
+          })
+        : `Create a kid-friendly still storybook panel for Scene ${sceneNum}${title ? ` — "${title}"` : ""}. ${summary}`.trim();
+    let readinessBadge: MissingPanelSceneInfo["readinessBadge"] = "prompt-only";
+    let totalApprovedRefs = 0;
+    if (scenePkg && scenePkg.characterPackages.length > 0) {
+      const pkgs = scenePkg.characterPackages;
+      totalApprovedRefs = pkgs.reduce((sum, cp) => sum + cp.totalApprovedCount, 0);
+      const allReady = pkgs.every((cp) => cp.isGenerationReady);
+      const allHaveSheets = pkgs.every((cp) => cp.profileSheets.length > 0);
+      if (allReady && allHaveSheets) {
+        readinessBadge = "reference-ready";
+      } else if (allReady) {
+        readinessBadge = "needs-official-ref";
+      } else {
+        readinessBadge = "no-approved-refs";
+      }
+    }
+    const referenceWarnings = scenePkg
+      ? getFidelityWarnings(scenePkg, charBySlug).map((w) => `${w.characterName}: ${w.message}`)
+      : [];
+    return {
+      sceneNumber: sceneNum,
+      sceneId,
+      title,
+      summary,
+      characters,
+      referenceCharacters,
+      panelPrompt,
+      readinessBadge,
+      referenceWarnings,
+      fidelityThumbnails,
+      fidelityChecklist,
+      hasTiki: hasTikiScene,
+      totalApprovedRefs,
+    };
+  });
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -547,6 +623,9 @@ export default async function EpisodeDetailPage({
 
         {/* ── Story Panel Prompt Builder ── */}
         <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+
+        {/* ── Batch Missing Panel Drafts ── */}
+        <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
 
         {/* ── Story Panel Asset Manifest Preview ── */}
         <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
