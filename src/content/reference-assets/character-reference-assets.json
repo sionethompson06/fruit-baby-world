@@ -2164,6 +2164,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996217875-nhmiwg",
+      "characterSlug": "strawberry-baby",
+      "assetType": "supporting-reference",
+      "title": "waiving, hello, goodbye, happy",
+      "description": "waiving, hello, goodbye, happy",
+      "notes": "waiving, hello, goodbye, happy",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996217077-strawberry-waiving-hello-goodbye-happy.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1448718,
+      "uploadedAt": "2026-05-17T05:36:57.875Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
