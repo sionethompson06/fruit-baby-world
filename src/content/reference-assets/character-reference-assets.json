@@ -2615,11 +2615,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1778624,
       "uploadedAt": "2026-05-17T05:47:32.051Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:26:13.287Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T06:26:13.287Z"
     },
     {
       "id": "ref-1778996887259-hzycbv",
