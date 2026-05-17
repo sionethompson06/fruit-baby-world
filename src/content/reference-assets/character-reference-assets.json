@@ -2725,6 +2725,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997350893-cbk0pp",
+      "characterSlug": "tiki",
+      "assetType": "supporting-reference",
+      "title": "laughing, funny, teasing",
+      "description": "laughing, funny, teasing",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997350131-tiki-laughing-funny-teasing-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2416020,
+      "uploadedAt": "2026-05-17T05:55:50.893Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
