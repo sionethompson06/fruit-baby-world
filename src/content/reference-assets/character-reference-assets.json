@@ -2232,6 +2232,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996341908-2hzktj",
+      "characterSlug": "strawberry-baby",
+      "assetType": "character-environment-reference",
+      "title": "Heartberry Hallow Market",
+      "description": "Heartberry Hallow Market",
+      "notes": "Heartberry Hallow Market",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996341035-heartberry-hallow-market.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2178924,
+      "uploadedAt": "2026-05-17T05:39:01.908Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
