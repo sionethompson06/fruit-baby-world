@@ -2113,6 +2113,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996113513-mu86r2",
+      "characterSlug": "strawberry-baby",
+      "assetType": "supporting-reference",
+      "title": "playful, funning, happy, playing",
+      "description": "playful, funning, happy, playing",
+      "notes": "playful, funning, happy, playing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996112108-strawberry-playful-running-happy-playing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1455887,
+      "uploadedAt": "2026-05-17T05:35:13.513Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
