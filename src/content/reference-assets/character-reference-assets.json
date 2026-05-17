@@ -2878,6 +2878,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997664449-njbcyh",
+      "characterSlug": "tiki",
+      "assetType": "character-environment-reference",
+      "title": "Trouble Island Playground",
+      "description": "Trouble Island Playground",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997663610-trouble-island-playground.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2587894,
+      "uploadedAt": "2026-05-17T06:01:04.449Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
