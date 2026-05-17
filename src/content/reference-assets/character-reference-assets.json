@@ -2844,6 +2844,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997595038-n4ospv",
+      "characterSlug": "tiki",
+      "assetType": "character-environment-reference",
+      "title": "Trouble Island Market",
+      "description": "Trouble Island Market",
+      "notes": "Trouble Island Market",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997594422-trouble-island-market.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2747179,
+      "uploadedAt": "2026-05-17T05:59:55.038Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
