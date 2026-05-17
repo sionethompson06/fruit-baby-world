@@ -3119,11 +3119,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2555313,
       "uploadedAt": "2026-05-17T06:01:34.164Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T16:44:06.174Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T16:44:06.174Z"
     },
     {
       "id": "ref-1778997726440-msjto8",
