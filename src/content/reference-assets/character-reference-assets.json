@@ -2708,6 +2708,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997323423-c6aq2y",
+      "characterSlug": "tiki",
+      "assetType": "supporting-reference",
+      "title": "hiding, spying, listening",
+      "description": "hiding, spying, listening",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997322797-tiki-hiding-spying-listening.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2446035,
+      "uploadedAt": "2026-05-17T05:55:23.423Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
