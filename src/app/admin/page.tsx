@@ -64,6 +64,15 @@ const modules = [
     href: "/admin/publishing",
   },
   {
+    title: "Media Health Dashboard",
+    description:
+      "Review character, reference, episode, and story panel readiness before publishing. Identifies missing profile sheets, incomplete panels, broken URLs, and production blockers.",
+    status: "Available",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    emoji: "🩺",
+    href: "/admin/media-health",
+  },
+  {
     title: "GitHub Content Saver",
     description:
       "Commit approved episode packages, character variation assets, and product content directly to the repository as canonical JSON and media files.",
