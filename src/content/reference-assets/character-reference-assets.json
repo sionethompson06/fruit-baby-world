@@ -2674,6 +2674,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997236791-gftgyk",
+      "characterSlug": "tiki",
+      "assetType": "supporting-reference",
+      "title": "angry, winning, running",
+      "description": "angry, winning, running",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997235471-tiki-angry-winning-runing-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2428167,
+      "uploadedAt": "2026-05-17T05:53:56.791Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
