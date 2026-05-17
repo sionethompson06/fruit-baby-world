@@ -2419,6 +2419,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996715549-x04vc8",
+      "characterSlug": "ube-baby",
+      "assetType": "supporting-reference",
+      "title": "magic, healing, fun, happy",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996714815-ube-magic-healing-fun-happy.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1835043,
+      "uploadedAt": "2026-05-17T05:45:15.549Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
