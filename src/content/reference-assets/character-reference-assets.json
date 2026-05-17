@@ -2589,6 +2589,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997054488-isoa04",
+      "characterSlug": "ube-baby",
+      "assetType": "character-environment-reference",
+      "title": "Cozy Garden Riverwalk",
+      "description": "Cozy Garden Riverwalk",
+      "notes": "Cozy Garden Riverwalk",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778997053779-cozy-garden-riverwalk-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2464309,
+      "uploadedAt": "2026-05-17T05:50:54.488Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
