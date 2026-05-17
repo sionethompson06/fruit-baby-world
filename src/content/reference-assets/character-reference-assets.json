@@ -2929,6 +2929,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997752214-ygnnkz",
+      "characterSlug": "tiki",
+      "assetType": "character-environment-reference",
+      "title": "Trouble Island Waterfall",
+      "description": "Trouble Island Waterfall",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997751573-trouble-island-waterfall.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2819299,
+      "uploadedAt": "2026-05-17T06:02:32.214Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
