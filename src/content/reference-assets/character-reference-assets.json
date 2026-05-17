@@ -2436,6 +2436,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996741504-a007lr",
+      "characterSlug": "ube-baby",
+      "assetType": "supporting-reference",
+      "title": "running, playing, skipping",
+      "description": "running, playing, skipping",
+      "notes": "running, playing, skipping",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996740879-ube-running-playing-skipping.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1776171,
+      "uploadedAt": "2026-05-17T05:45:41.504Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
