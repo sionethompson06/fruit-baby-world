@@ -34,14 +34,36 @@
   ],
   "favoriteQuote": "Let's make a tiny wish!",
   "visualIdentity": {
-    "primaryColors": ["#8E44AD", "#6A2E99"],
-    "accentColors": ["#FFB8C8", "#7BC943", "#4A8C3C"],
+    "primaryColors": [
+      "#8E44AD",
+      "#6A2E99"
+    ],
+    "accentColors": [
+      "#FFB8C8",
+      "#7BC943",
+      "#4A8C3C"
+    ],
     "palette": [
-      { "name": "Bright Purple", "hex": "#8E44AD" },
-      { "name": "Deep Purple", "hex": "#6A2E99" },
-      { "name": "Blush Pink", "hex": "#FFB8C8" },
-      { "name": "Leaf Green", "hex": "#7BC943" },
-      { "name": "Dark Green", "hex": "#4A8C3C" }
+      {
+        "name": "Bright Purple",
+        "hex": "#8E44AD"
+      },
+      {
+        "name": "Deep Purple",
+        "hex": "#6A2E99"
+      },
+      {
+        "name": "Blush Pink",
+        "hex": "#FFB8C8"
+      },
+      {
+        "name": "Leaf Green",
+        "hex": "#7BC943"
+      },
+      {
+        "name": "Dark Green",
+        "hex": "#4A8C3C"
+      }
     ],
     "styleNotes": "Round, soft purple body with a bright green leafy top. Big sparkly eyes, pink blush cheeks, and a gentle dreamy expression. Radiates cozy, magical warmth."
   },
@@ -59,10 +81,22 @@
     "Hugging Pineapple Baby"
   ],
   "relationships": [
-    { "character": "Pineapple Baby", "description": "Sunshine Bestie" },
-    { "character": "Mango Baby", "description": "Playful Pal" },
-    { "character": "Coconut Baby", "description": "Cozy Comfort Friend" },
-    { "character": "Kiwi Baby", "description": "Gentle Nature Pal" }
+    {
+      "character": "Pineapple Baby",
+      "description": "Sunshine Bestie"
+    },
+    {
+      "character": "Mango Baby",
+      "description": "Playful Pal"
+    },
+    {
+      "character": "Coconut Baby",
+      "description": "Cozy Comfort Friend"
+    },
+    {
+      "character": "Kiwi Baby",
+      "description": "Gentle Nature Pal"
+    }
   ],
   "storyRole": "The emotional heart of the group. Ube Baby brings creativity, empathy, and calm to difficult moments. Often the one who finds a gentle solution.",
   "characterRules": {
@@ -85,9 +119,17 @@
     "I believe in you — and in us."
   ],
   "image": {
-    "main": "",
+    "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996538093-ube-happy-fun-listening.png",
     "profileSheet": "/characters/ube-baby/Ube Profile.png",
     "alt": "Official Ube Baby character profile sheet"
   },
-  "merchPotential": ["plush", "squish", "sticker", "nightlight", "collectible figure"]
+  "merchPotential": [
+    "plush",
+    "squish",
+    "sticker",
+    "nightlight",
+    "collectible figure"
+  ],
+  "mainReferenceAssetId": "ref-1778996538911-w5r8jb",
+  "updatedAt": "2026-05-17T06:25:43.672Z"
 }
