@@ -2351,6 +2351,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996575249-6dzszy",
+      "characterSlug": "ube-baby",
+      "assetType": "supporting-reference",
+      "title": "bashful, shy, caring, cuddle",
+      "description": "bashful, shy, caring, cuddle",
+      "notes": "bashful, shy, caring, cuddle",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996574569-ube-bashful-shy-caring-cuddle.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1778897,
+      "uploadedAt": "2026-05-17T05:42:55.249Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
