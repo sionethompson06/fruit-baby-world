@@ -2487,6 +2487,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996852051-nlj42v",
+      "characterSlug": "ube-baby",
+      "assetType": "supporting-reference",
+      "title": "winking, waving, hello, cute",
+      "description": "winking, waving, hello, cute",
+      "notes": "winking, waving, hello, cute",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996851247-ube-winking-waving-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1778624,
+      "uploadedAt": "2026-05-17T05:47:32.051Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
