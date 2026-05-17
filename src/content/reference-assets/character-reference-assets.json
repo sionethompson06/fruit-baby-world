@@ -2470,6 +2470,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996820726-c975n6",
+      "characterSlug": "ube-baby",
+      "assetType": "supporting-reference",
+      "title": "waving, hello, goodbye, reaching, hand up",
+      "description": "waving, hello, goodbye, reaching, hand up",
+      "notes": "waving, hello, goodbye, reaching, hand up",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996820137-ube-waving-hello-goodbye-reaching.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1746825,
+      "uploadedAt": "2026-05-17T05:47:00.726Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
