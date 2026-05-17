@@ -2062,6 +2062,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778995987124-0m30ag",
+      "characterSlug": "strawberry-baby",
+      "assetType": "supporting-reference",
+      "title": "happy, yelling, fun, playing",
+      "description": "happy, yelling, fun, playing",
+      "notes": "happy, yelling, fun, playing",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778995986319-strawberry-happy-yelling-fun-playing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1499742,
+      "uploadedAt": "2026-05-17T05:33:07.124Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
