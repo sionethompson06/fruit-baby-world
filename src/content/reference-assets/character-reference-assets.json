@@ -1994,6 +1994,23 @@
       "publicUseAllowed": false,
       "isOfficialReference": false,
       "updatedAt": "2026-05-17T05:28:03.730Z"
+    },
+    {
+      "id": "ref-1778995822627-yts1gs",
+      "characterSlug": "strawberry-baby",
+      "assetType": "isolated-character-reference",
+      "title": "Strawberry Baby Main Character Image",
+      "description": "Strawberry Baby Main Character Image",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778995821846-strawberry-love-kind-caring-healing.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1458046,
+      "uploadedAt": "2026-05-17T05:30:22.627Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
