@@ -1,9 +1,9 @@
 {
   "id": "dragonfruit-baby",
   "slug": "dragonfruit-baby",
-  "name": "DragonFruit Baby",
-  "shortName": "Dragonfruit",
-  "role": "Supporting Friend",
+  "name": "Dragon Fruit Baby",
+  "shortName": "Dragon",
+  "role": "The Colorful Encourager",
   "type": "fruit-baby",
   "status": "active",
   "canonStatus": "public",
@@ -15,63 +15,90 @@
   "generationUseAllowed": true,
   "publicUseAllowed": true,
   "tagline": "",
-  "fruitType": "Dragon Fruit Baby is a bright, brave, and magical",
-  "home": "Dragon Fruit Haven",
-  "shortDescription": "Dragon Fruit Baby is bold, imaginative, and full of wonder. They love discovering hidden places, trying new things, and helping their friends see the magic in everyday moments. Dragon Fruit Baby can be a little dramatic in the cutest way, often turning simple adventures into big, exciting quests.\n\nThey are brave, expressive, and creative. When the group needs confidence or a spark of imagination, Dragon Fruit Baby is usually the one to say, “Let’s make it magical!”",
+  "fruitType": "Dragon Fruit / Pitaya",
+  "home": "Dragon Fruit Dream Garden",
+  "shortDescription": "Dragon Fruit Baby is the bright, bold, heart-spark of the Fruit Baby Universe! With a colorful outside and a sweet center, Dragon Fruit Baby celebrates being unique and helps friends feel brave enough to shine.",
   "about": "",
   "personality": [
-    "encouraging friends to be brave imaginin",
-    "energy",
-    "and color to the group"
+    "Creative",
+    "Encouraging",
+    "Expressive",
+    "Brave",
+    "Joyful"
   ],
   "visualIdentity": {
     "primaryColors": [],
     "accentColors": [],
-    "palette": [],
-    "styleNotes": "Dragon Fruit Baby has a bright pink dragon fruit body with soft green leafy accents inspired by dragon fruit skin. Their look should feel tropical, playful, and slightly magical without being scary. They may have little leafy points, a round baby-like shape, big expressive eyes, and a cheerful face."
+    "palette": [
+      {
+        "name": "Hot Pink",
+        "hex": "#FD2D8B"
+      },
+      {
+        "name": "Soft Pink",
+        "hex": "#FFB6D5"
+      },
+      {
+        "name": "Cream White",
+        "hex": "#FFF7F9"
+      },
+      {
+        "name": "Black Seed Dots",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Leaf Green",
+        "hex": "#78C943"
+      },
+      {
+        "name": "Lime Green",
+        "hex": "#B9E64D"
+      },
+      {
+        "name": "Golden Yellow",
+        "hex": "#FFC84D"
+      },
+      {
+        "name": "Warm Brown",
+        "hex": "#8A4B24"
+      }
+    ],
+    "styleNotes": "Dragon Fruit Baby is instantly recognizable with its vibrant pink body, green leafy crown, and adorable black seed dots. Its cheerful expression and colorful design make it stand out."
   },
   "expressions": [],
   "posesAndActions": [],
-  "storyRole": "",
+  "storyRole": "Dragon Fruit Baby encourages friends to embrace their uniqueness and be brave in trying new things.",
   "characterRules": {
     "always": [
-      "Trait\tDirection",
-      "Magical\tSparkly, glowing, wonder-filled, but still soft and kid-friendly",
-      "Brave\tLoves exploring and trying new things",
-      "Creative\tTurns ordinary moments into imaginative adventures",
-      "Expressive\tBig reactions, big ideas, playful drama",
-      "Kind\tUses imagination to help friends, not show off",
-      "imaginative",
-      "brave",
-      "playful",
-      "dramatic in a cute way",
-      "encouraging",
-      "curious",
-      "energetic",
-      "emotionally expressive"
+      "Encourages others",
+      "Celebrates uniqueness",
+      "Spreads joy"
     ],
-    "never": []
+    "never": [
+      "Makes others feel left out",
+      "Gives up easily"
+    ]
   },
   "signatureStyle": "",
   "catchphrases": [],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778965810979-dragon-fruit-music-singing-happy-fun-skipping-jumping-leapin.png",
     "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
-    "alt": "DragonFruit Baby character — draft, no official image yet"
+    "alt": "Dragon Fruit Baby character with a vibrant pink body, green leafy crown, and cheerful expression, surrounded by colorful accents and seed dots."
   },
   "signatureQuote": "",
-  "favoriteQuote": "“Let’s make it magical!”",
-  "voiceGuide": "warm, magical, fun",
+  "favoriteQuote": "\"Be bold, be you, let your colors shine!\"",
+  "voiceGuide": "Speaks with enthusiasm and warmth, using simple, encouraging words. Catchphrases are uplifting and colorful.",
   "generationRestrictions": [
-    "Not approved for generation until official reference assets are uploaded and reviewed."
+    "Must always have a leafy crown and black seed dots"
   ],
   "trademarkNotes": [
-    "## Dragon Fruit Baby — Trademark + Canon Notes\n\n### Official Character Name\n\n**Dragon Fruit Baby**\n\nUse consistently as two words: **Dragon Fruit**, not Dragonfruit, unless we intentionally choose the closed version later.\n\n**Preferred brand spelling:**\n**Dragon Fruit Baby**\n\n**Avoid using interchangeably:**\n\n* Dragonfruit Baby\n* Dragon baby\n* Baby Dragon\n* Pitaya Baby, unless used as a secondary educational reference\n\n---\n\n## Canon Identity\n\n**Character Type:** Fruit Baby character\n**Fruit Inspiration:** Dragon fruit / pitaya\n**Core Role:** The spark of imagination in the Fruit Baby friend group\n**Personality Anchor:** Brave, magical, expressive, creative, kind\n**Primary Environment:** **Dragon Glow Grove**\n\n### One-Sentence Canon Rule\n\n**Dragon Fruit Baby is a bright, brave, magical"
+    "The combination of vibrant pink, green leafy crown, and black seed dots are trademark elements."
   ],
   "notes": "",
   "referenceAssetIds": [],
   "createdAt": "2026-05-08T07:05:17.035Z",
-  "updatedAt": "2026-05-16T21:18:18.862Z",
+  "updatedAt": "2026-05-17T16:55:22.351Z",
   "merchPotential": [],
   "approvalMode": "public",
   "approvedAt": "2026-05-08T22:38:51.541Z",
@@ -79,5 +106,26 @@
   "primaryReferenceAssetId": "ref-1778229978412-ju5m76",
   "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
   "primaryReferenceAssetType": "profile-sheet",
-  "mainReferenceAssetId": "ref-1778965811733-p7ojsm"
+  "mainReferenceAssetId": "ref-1778965811733-p7ojsm",
+  "profileCompletenessNotes": "Profile information was confidently inferred from the character reference image.",
+  "bodyShapeRules": [
+    "Round and plump body with a smooth surface and small, rounded limbs"
+  ],
+  "faceAndExpressionRules": [
+    "Large, expressive eyes with a joyful smile; capable of happy, excited, and thoughtful expressions"
+  ],
+  "textureAndSurfaceRules": [
+    "Smooth, shiny surface with small black seed dots scattered across the body"
+  ],
+  "leafCrownAccessoryRules": [
+    "Green leafy crown with gradient colors from green to yellow at the tips"
+  ],
+  "poseAndGestureRules": [
+    "Often seen waving, dancing, or jumping for joy; movements are lively and expressive"
+  ],
+  "doNotChangeRules": [
+    "The vibrant pink color and leafy crown must remain consistent"
+  ],
+  "profileCompletedAt": "2026-05-17T16:55:22.351Z",
+  "profileGeneratedFromPrimaryReferenceAt": "2026-05-17T16:55:22.351Z"
 }
