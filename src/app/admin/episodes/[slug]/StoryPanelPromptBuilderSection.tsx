@@ -3,6 +3,7 @@ import { characterHasPrimaryReference } from "@/lib/characterEligibility";
 import { str, strArr } from "./helpers";
 import { GLOBAL_FIDELITY_RULES, getCharacterFidelityNotes } from "./characterFidelityHelpers";
 import PanelDraftGenerator from "./PanelDraftGenerator";
+import type { CharacterReferencePackage } from "@/lib/referenceAssetLoader";
 
 function buildDeterministicPrompt({
   sceneNum,
@@ -44,6 +45,7 @@ function PanelPromptCard({
   episodeSlug,
   episodeFeaturedCharacters,
   charBySlug,
+  characterPackages,
 }: {
   scene: Record<string, unknown>;
   index: number;
@@ -52,6 +54,7 @@ function PanelPromptCard({
   episodeSlug: string;
   episodeFeaturedCharacters: string[];
   charBySlug: Record<string, Character>;
+  characterPackages?: CharacterReferencePackage[];
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const sceneNum = typeof num === "number" ? num : index + 1;
@@ -100,14 +103,20 @@ function PanelPromptCard({
             Reference Characters
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {characters.map((c) => (
-              <span
-                key={c}
-                className="text-xs px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold"
-              >
-                {c}
-              </span>
-            ))}
+            {characters.map((c) => {
+              const pkg = characterPackages?.find((p) => p.characterSlug === c);
+              return (
+                <span
+                  key={c}
+                  className="text-xs px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold"
+                >
+                  {c}
+                  {pkg && pkg.totalApprovedCount > 0 && (
+                    <span className="ml-1 text-ube-purple/60">({pkg.totalApprovedCount})</span>
+                  )}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
@@ -250,12 +259,14 @@ export default function StoryPanelPromptBuilder({
   tikiFlagged,
   episodeSlug,
   charBySlug,
+  characterPackages,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
   episodeSlug: string;
   charBySlug: Record<string, Character>;
+  characterPackages?: CharacterReferencePackage[];
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -327,6 +338,7 @@ export default function StoryPanelPromptBuilder({
               episodeSlug={episodeSlug}
               episodeFeaturedCharacters={featuredCharacters}
               charBySlug={charBySlug}
+              characterPackages={characterPackages}
             />
           ))}
         </div>

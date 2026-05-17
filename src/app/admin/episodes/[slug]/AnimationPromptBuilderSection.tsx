@@ -1,6 +1,7 @@
 import type { Character } from "@/lib/content";
 import { str, strArr } from "./helpers";
 import { getCharacterFidelityNotes } from "./characterFidelityHelpers";
+import type { CharacterReferencePackage } from "@/lib/referenceAssetLoader";
 
 const GLOBAL_ANIMATION_FIDELITY_RULES = [
   "Preserve official body shape and silhouette in motion.",
@@ -56,12 +57,14 @@ function AnimationPromptCard({
   episodeSetting,
   episodeTone,
   charBySlug,
+  characterPackages,
 }: {
   scene: Record<string, unknown>;
   index: number;
   episodeSetting: string;
   episodeTone: string;
   charBySlug?: Record<string, Character>;
+  characterPackages?: CharacterReferencePackage[];
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const title = str(scene.title);
@@ -108,14 +111,20 @@ function AnimationPromptCard({
             Reference Characters
           </p>
           <div className="flex flex-wrap gap-1.5">
-            {characters.map((c) => (
-              <span
-                key={c}
-                className="text-xs px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold"
-              >
-                {c}
-              </span>
-            ))}
+            {characters.map((c) => {
+              const pkg = characterPackages?.find((p) => p.characterSlug === c);
+              return (
+                <span
+                  key={c}
+                  className="text-xs px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold"
+                >
+                  {c}
+                  {pkg && pkg.totalApprovedCount > 0 && (
+                    <span className="ml-1 text-ube-purple/60">({pkg.totalApprovedCount})</span>
+                  )}
+                </span>
+              );
+            })}
           </div>
         </div>
       )}
@@ -258,11 +267,13 @@ export default function AnimationPromptBuilder({
   raw,
   tikiFlagged,
   charBySlug,
+  characterPackages,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
   charBySlug?: Record<string, Character>;
+  characterPackages?: CharacterReferencePackage[];
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -343,6 +354,7 @@ export default function AnimationPromptBuilder({
               episodeSetting={setting}
               episodeTone={tone}
               charBySlug={charBySlug}
+              characterPackages={characterPackages}
             />
           ))}
         </div>

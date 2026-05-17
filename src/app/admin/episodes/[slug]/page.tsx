@@ -23,6 +23,13 @@ import AnimationClipManifestPreview from "./AnimationClipManifestSection";
 import AnimationPromptBuilder, { buildDeterministicAnimationPrompt } from "./AnimationPromptBuilderSection";
 import ReadAloudPromptBuilder from "./ReadAloudPromptBuilderSection";
 import SavedStoryPanelAssetLibrary from "./SavedStoryPanelAssetsSection";
+import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
+import {
+  loadReferenceAssets,
+  buildEpisodeReferencePackages,
+  buildCharacterReferencePackage,
+  type CharacterReferencePackage,
+} from "@/lib/referenceAssetLoader";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -391,6 +398,34 @@ export default async function EpisodeDetailPage({
     if (c.slug === "tiki") charBySlug["tiki-trouble"] = c;
   }
 
+  // Load reference assets and build episode reference packages
+  let referenceAssets: ReturnType<typeof loadReferenceAssets> = [];
+  try {
+    referenceAssets = loadReferenceAssets();
+  } catch { /* fallback: empty */ }
+  const episodeRefPackages = buildEpisodeReferencePackages(
+    normalised.slug,
+    activeScenes,
+    referenceAssets,
+    charBySlug
+  );
+  // Deduplicated per-character packages for section components
+  const characterPackageMap = new Map<string, CharacterReferencePackage>();
+  for (const sp of episodeRefPackages.scenePackages) {
+    for (const cp of sp.characterPackages) {
+      if (!characterPackageMap.has(cp.characterSlug)) {
+        characterPackageMap.set(cp.characterSlug, cp);
+      }
+    }
+  }
+  // Also include all eligible chars that may not appear in scenes
+  for (const c of allDiskChars) {
+    if (!characterPackageMap.has(c.slug)) {
+      characterPackageMap.set(c.slug, buildCharacterReferencePackage(c, referenceAssets));
+    }
+  }
+  const characterPackages = Array.from(characterPackageMap.values());
+
   const sceneForArchiveList: SceneForArchive[] = scenes.map((s) => ({
     sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : 0,
     title: str(s.title),
@@ -507,8 +542,11 @@ export default async function EpisodeDetailPage({
         {/* ── Media Production Overview ── */}
         <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} />
 
+        {/* ── Reference Asset Packages ── */}
+        <ReferencePackagePreviewSection summary={episodeRefPackages} />
+
         {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} />
+        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} />
 
         {/* ── Story Panel Asset Manifest Preview ── */}
         <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
@@ -517,7 +555,7 @@ export default async function EpisodeDetailPage({
         <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
 
         {/* ── Animation Prompt Builder ── */}
-        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} />
+        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} />
 
         {/* ── Animation Route Test ── */}
         <AnimationRouteTestPanel
@@ -531,7 +569,7 @@ export default async function EpisodeDetailPage({
         <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
-        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} />
+        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">
