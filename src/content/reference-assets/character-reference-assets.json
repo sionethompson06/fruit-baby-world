@@ -2741,11 +2741,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2464309,
       "uploadedAt": "2026-05-17T05:50:54.488Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:27:25.559Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T06:27:25.559Z"
     },
     {
       "id": "ref-1778997089633-p3514x",
