@@ -2317,6 +2317,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996483155-92ygmu",
+      "characterSlug": "strawberry-baby",
+      "assetType": "character-environment-reference",
+      "title": "Heartberry Hallow Waterfall",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996482581-heartberry-hallow-waterfall.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2277513,
+      "uploadedAt": "2026-05-17T05:41:23.155Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
