@@ -2765,12 +2765,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T06:27:26.408Z",
+      "reviewedAt": "2026-05-17T16:44:41.284Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-17T06:27:26.408Z"
+      "updatedAt": "2026-05-17T16:44:41.284Z"
     },
     {
       "id": "ref-1778997148476-ov437d",
