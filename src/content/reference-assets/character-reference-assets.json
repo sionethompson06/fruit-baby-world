@@ -2521,6 +2521,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996922056-f63fgk",
+      "characterSlug": "ube-baby",
+      "assetType": "character-environment-reference",
+      "title": "Cozy Magical Garden",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996921273-cozy-garden-home1.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2551761,
+      "uploadedAt": "2026-05-17T05:48:42.056Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
