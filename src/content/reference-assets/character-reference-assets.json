@@ -2786,12 +2786,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T06:25:14.041Z",
+      "reviewedAt": "2026-05-17T16:43:29.170Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": true,
-      "updatedAt": "2026-05-17T06:25:14.041Z"
+      "updatedAt": "2026-05-17T16:43:29.170Z"
     },
     {
       "id": "ref-1778997177987-nxcebu",
