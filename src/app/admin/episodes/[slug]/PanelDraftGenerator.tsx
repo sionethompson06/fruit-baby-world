@@ -32,12 +32,24 @@ type GenStatus = "idle" | "loading" | "done" | "not_configured" | "error";
 type UploadStatus = "idle" | "loading" | "success" | "error";
 type AttachStatus = "idle" | "loading" | "success" | "error";
 
+type ReferenceMetaItem = {
+  characterSlug: string;
+  characterName: string;
+  title: string;
+  type: string;
+  priority: string;
+};
+
 type GenApiResult = {
   ok: boolean;
   status: string;
   message?: string;
   generationPrompt?: string;
   referenceCharacters?: string[];
+  referenceMode?: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
+  referencesUsed?: ReferenceMetaItem[];
+  referencesOmitted?: ReferenceMetaItem[];
+  warnings?: string[];
   notes?: string[];
   image?: { mimeType: string; base64: string };
 };
@@ -160,6 +172,79 @@ function ReferenceCharactersBlock({ chars }: { chars: string[] }) {
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+const REFERENCE_MODE_LABELS: Record<string, { label: string; className: string }> = {
+  "reference-images-attached": {
+    label: "Reference Images Attached",
+    className: "bg-tropical-green/15 text-tropical-green border-tropical-green/30",
+  },
+  "prompt-only-reference-summary": {
+    label: "Prompt-Only Reference Summary",
+    className: "bg-ube-purple/12 text-ube-purple border-ube-purple/25",
+  },
+  "no-references-available": {
+    label: "No References Available",
+    className: "bg-tiki-brown/8 text-tiki-brown/55 border-tiki-brown/15",
+  },
+};
+
+function ReferenceModeBlock({ result }: { result: GenApiResult }) {
+  const mode = result.referenceMode;
+  if (!mode) return null;
+  const modeStyle = REFERENCE_MODE_LABELS[mode] ?? REFERENCE_MODE_LABELS["no-references-available"];
+  const used = result.referencesUsed ?? [];
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+          Reference Mode
+        </p>
+        <span
+          className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${modeStyle.className}`}
+        >
+          {modeStyle.label}
+        </span>
+      </div>
+      {used.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-tiki-brown/40 font-semibold">
+            {used.length} reference asset{used.length !== 1 ? "s" : ""} included in prompt context:
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {used.map((r, i) => (
+              <span key={i} className="text-xs text-tiki-brown/55 leading-relaxed">
+                <span className="font-semibold text-tiki-brown/65">{r.characterName}</span>
+                {" — "}
+                {r.title}
+                <span className="text-tiki-brown/35"> [{r.priority}]</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {mode === "prompt-only-reference-summary" && (
+        <p className="text-xs text-tiki-brown/35 italic">
+          Reference asset context injected into prompt text. DALL-E 3 is text-only; image inputs are a future upgrade.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ReferenceWarningsBlock({ warnings }: { warnings: string[] }) {
+  if (warnings.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1.5 bg-pineapple-yellow/10 border border-pineapple-yellow/30 rounded-xl px-3 py-2.5">
+      <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Reference Warnings</p>
+      {warnings.map((w, i) => (
+        <p key={i} className="text-xs text-tiki-brown/65 leading-relaxed">
+          ⚠ {w}
+        </p>
+      ))}
     </div>
   );
 }
@@ -696,6 +781,10 @@ export default function PanelDraftGenerator({
           {result.referenceCharacters && result.referenceCharacters.length > 0 && (
             <ReferenceCharactersBlock chars={result.referenceCharacters} />
           )}
+          <ReferenceModeBlock result={result} />
+          {result.warnings && result.warnings.length > 0 && (
+            <ReferenceWarningsBlock warnings={result.warnings} />
+          )}
         </div>
       )}
 
@@ -748,6 +837,14 @@ export default function PanelDraftGenerator({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Reference mode and assets used */}
+          <ReferenceModeBlock result={result} />
+
+          {/* Reference warnings */}
+          {result.warnings && result.warnings.length > 0 && (
+            <ReferenceWarningsBlock warnings={result.warnings} />
           )}
 
           {/* Tiki-specific warning */}

@@ -1,11 +1,17 @@
 // POST /api/generate-story-panel-image
 // Protected route that validates a story panel generation request, loads canonical
-// character data, builds a strict reference-anchored prompt, and — if OPENAI_API_KEY
-// is present — calls DALL-E 3 and returns a base64 draft image in the response.
+// character data and approved reference assets, builds a reference-aware prompt,
+// and — if OPENAI_API_KEY is present — calls DALL-E 3 and returns a base64 draft.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
 // Safety:  Generated images are never saved, uploaded, or written to JSON.
-// Phase:   6A — foundation only. Not connected to frontend yet.
+// Phase:   11D — reference-anchored prompt metadata added.
+//
+// NOTE: DALL-E 3 only accepts text prompts. Reference images are included in
+// prompt text (as titles/descriptions) but cannot be passed as image inputs.
+// referenceMode is always "prompt-only-reference-summary" when references exist.
+// TODO: Upgrade to an image-input-capable provider and set
+// referenceMode = "reference-images-attached" when that is available.
 
 import OpenAI from "openai";
 import {
@@ -13,8 +19,26 @@ import {
   loadCharacterRefs,
   buildGenerationPrompt,
 } from "@/lib/storyPanelImageGeneration";
+import {
+  loadReferenceAssets,
+  buildSceneReferencePackage,
+} from "@/lib/referenceAssetLoader";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import {
+  buildStoryPanelGenerationPackage,
+  buildFinalStoryPanelPrompt,
+} from "@/lib/storyPanelGenerationPackage";
+import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type ReferenceMetaItem = {
+  characterSlug: string;
+  characterName: string;
+  title: string;
+  type: string;
+  priority: string;
+};
 
 type GenerateResult =
   | {
@@ -23,6 +47,10 @@ type GenerateResult =
       image: { mimeType: string; base64: string };
       generationPrompt: string;
       referenceCharacters: string[];
+      referenceMode: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
+      referencesUsed: ReferenceMetaItem[];
+      referencesOmitted: ReferenceMetaItem[];
+      warnings: string[];
       notes: string[];
     }
   | {
@@ -31,12 +59,29 @@ type GenerateResult =
       message: string;
       generationPrompt?: string;
       referenceCharacters?: string[];
+      referenceMode?: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
+      referencesUsed?: ReferenceMetaItem[];
+      warnings?: string[];
     };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function buildCharBySlug(chars: Character[]): Record<string, Character> {
+  const map: Record<string, Character> = {};
+  for (const c of chars) {
+    map[c.slug] = c;
+    if ((c as Character & { id?: string }).id) {
+      map[(c as Character & { id?: string }).id!] = c;
+    }
+  }
+  // tiki alias — both slugs resolve to the same character
+  if (map["tiki"] && !map["tiki-trouble"]) map["tiki-trouble"] = map["tiki"];
+  if (map["tiki-trouble"] && !map["tiki"]) map["tiki"] = map["tiki-trouble"];
+  return map;
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -112,7 +157,11 @@ export async function POST(request: Request): Promise<Response> {
   // ── Validate optional sceneNumber ─────────────────────────────────────────────
   let sceneNumber: number | undefined;
   if (body.sceneNumber !== undefined) {
-    if (typeof body.sceneNumber !== "number" || body.sceneNumber < 1 || !Number.isFinite(body.sceneNumber)) {
+    if (
+      typeof body.sceneNumber !== "number" ||
+      body.sceneNumber < 1 ||
+      !Number.isFinite(body.sceneNumber)
+    ) {
       return Response.json(
         {
           ok: false,
@@ -138,7 +187,7 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Load canonical character data ─────────────────────────────────────────────
+  // ── Load canonical character data (slug validation) ───────────────────────────
   const { refs, missing } = loadCharacterRefs(referenceCharacters);
   if (missing.length > 0) {
     return Response.json(
@@ -152,8 +201,39 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  // ── Build strict generation prompt ────────────────────────────────────────────
-  const generationPrompt = buildGenerationPrompt(panelPrompt, refs, sceneNumber);
+  // ── Load reference assets and build generation package ────────────────────────
+  // Attempt to load approved reference assets and build scene reference package.
+  // On failure, fall back to the legacy prompt builder gracefully.
+  let generationPrompt: string;
+  let referenceMode: GenerateResult["referenceMode"] = "no-references-available";
+  let referencesUsed: ReferenceMetaItem[] = [];
+  let referencesOmitted: ReferenceMetaItem[] = [];
+  let refWarnings: string[] = [];
+
+  try {
+    const allAssets = loadReferenceAssets();
+    const allChars = loadAllCharactersFromDisk();
+    const charBySlug = buildCharBySlug(allChars);
+
+    const sceneRefPkg = buildSceneReferencePackage(
+      sceneNumber ?? 1,
+      referenceCharacters,
+      allAssets,
+      charBySlug
+    );
+
+    const genPkg = buildStoryPanelGenerationPackage(sceneRefPkg, panelPrompt, { sceneNumber });
+    generationPrompt = buildFinalStoryPanelPrompt(genPkg);
+    referenceMode = genPkg.referenceMode;
+    referencesUsed = genPkg.referencesUsed;
+    referencesOmitted = genPkg.referencesOmitted;
+    refWarnings = genPkg.warnings;
+  } catch {
+    // Fall back to legacy prompt builder if reference loading fails
+    generationPrompt = buildGenerationPrompt(panelPrompt, refs, sceneNumber);
+    referenceMode = "no-references-available";
+    refWarnings = ["Reference asset loading failed — using legacy prompt builder as fallback."];
+  }
 
   // ── Image generation ──────────────────────────────────────────────────────────
   const apiKey = process.env.OPENAI_API_KEY;
@@ -168,6 +248,9 @@ export async function POST(request: Request): Promise<Response> {
           "Set OPENAI_API_KEY to enable generation.",
         generationPrompt,
         referenceCharacters,
+        referenceMode,
+        referencesUsed,
+        warnings: refWarnings,
       } satisfies GenerateResult,
       { status: 200 }
     );
@@ -193,6 +276,9 @@ export async function POST(request: Request): Promise<Response> {
           message: "Image generation returned an empty response.",
           generationPrompt,
           referenceCharacters,
+          referenceMode,
+          referencesUsed,
+          warnings: refWarnings,
         } satisfies GenerateResult,
         { status: 502 }
       );
@@ -208,11 +294,15 @@ export async function POST(request: Request): Promise<Response> {
         },
         generationPrompt,
         referenceCharacters,
+        referenceMode,
+        referencesUsed,
+        referencesOmitted,
+        warnings: refWarnings,
         notes: [
           "Generated image is a draft only.",
           "Image is not saved.",
           "Human review is required before use.",
-          "Reference-image anchoring via uploaded profile sheets is planned for a future phase.",
+          "Reference context injected into prompt text (DALL-E 3 is text-only; image-reference inputs are a future upgrade).",
         ],
       } satisfies GenerateResult,
       { status: 200 }
@@ -228,6 +318,9 @@ export async function POST(request: Request): Promise<Response> {
         message: "Image generation failed. See server logs for details.",
         generationPrompt,
         referenceCharacters,
+        referenceMode,
+        referencesUsed,
+        warnings: refWarnings,
       } satisfies GenerateResult,
       { status: 502 }
     );
