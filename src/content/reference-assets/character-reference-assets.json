@@ -2895,6 +2895,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997694164-j7o58r",
+      "characterSlug": "tiki",
+      "assetType": "character-environment-reference",
+      "title": "Trouble Island Volcano",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997693082-trouble-island-volcano.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2555313,
+      "uploadedAt": "2026-05-17T06:01:34.164Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
