@@ -2027,11 +2027,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1590243,
       "uploadedAt": "2026-05-17T05:31:16.429Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:24:15.990Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T06:24:15.990Z"
     },
     {
       "id": "ref-1778995915239-osozyt",
