@@ -23,6 +23,7 @@ export type ProfileDraft = {
   home: string;
   shortDescription: string;
   personalityTraits: string[];
+  personalitySummary?: string;
   visualIdentity: string;
   colorPalette: { name: string; hex: string; usage: string }[];
   bodyShapeRules: string[];
@@ -131,9 +132,11 @@ IMPORTANT RULES:
 2. Be visually specific — describe what you actually see in the image with precision.
 3. All rules must be specific enough to reliably guide AI image generation consistency.
 4. Keep everything appropriate for children (ages 2-8) — no scary, violent, or adult content.
-5. Hex colors must be real hex codes extracted from the image (e.g., "#FFD84D").
-6. String arrays should have 3-8 items unless the concept naturally has fewer.
-7. If you cannot determine a value from the image, use an empty string or empty array and note it in adminReviewNotes.
+5. COLOR HEX VALUES: Provide your best approximate hex values based on the dominant colors visible in the image (e.g., "#F35BA7" for bright pink). You cannot extract pixel-perfect hex values from a JPEG, so provide reasonable approximations and add a note to adminReviewNotes: "Color hex values are approximate and should be verified by admin against the official reference image."
+6. You MUST populate colorPalette with at least the 3-5 most prominent colors you can identify in the image. Do not leave colorPalette empty.
+7. String arrays should have 3-8 items unless the concept naturally has fewer.
+8. If you cannot determine a value from the image, use an empty string or empty array and note it in adminReviewNotes.
+9. You MUST provide values for: visualIdentity, colorPalette, favoriteQuote, personalityTraits, storyRole, and characterRules. These are required for public character profiles.
 
 REQUIRED JSON SCHEMA — return this exact shape:
 {
@@ -298,6 +301,30 @@ export async function POST(request: Request): Promise<Response> {
         } satisfies GenerateProfileResult,
         { status: 200 }
       );
+    }
+
+    // Validate completeness and add warnings for missing required fields
+    const missingFields: string[] = [];
+    if (!profileDraft.visualIdentity?.trim()) missingFields.push("visualIdentity");
+    if (!Array.isArray(profileDraft.colorPalette) || profileDraft.colorPalette.length === 0)
+      missingFields.push("colorPalette");
+    if (!profileDraft.favoriteQuote?.trim()) missingFields.push("favoriteQuote");
+    if (!Array.isArray(profileDraft.personalityTraits) || profileDraft.personalityTraits.length === 0)
+      missingFields.push("personalityTraits");
+    if (!profileDraft.storyRole?.trim()) missingFields.push("storyRole");
+    if (
+      (!Array.isArray(profileDraft.characterRules?.always) || profileDraft.characterRules.always.length === 0) &&
+      (!Array.isArray(profileDraft.characterRules?.never) || profileDraft.characterRules.never.length === 0)
+    )
+      missingFields.push("characterRules");
+
+    if (missingFields.length > 0) {
+      const warn = `Admin review required: missing profile fields — ${missingFields.join(", ")}. Please fill these manually in the Profile Details Editor before saving.`;
+      if (!Array.isArray(profileDraft.adminReviewNotes)) {
+        profileDraft.adminReviewNotes = [warn];
+      } else {
+        profileDraft.adminReviewNotes = [warn, ...profileDraft.adminReviewNotes];
+      }
     }
 
     return Response.json(

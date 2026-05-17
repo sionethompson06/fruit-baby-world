@@ -252,6 +252,7 @@ export async function POST(request: Request): Promise<Response> {
     "voiceGuide",
     "favoriteQuote",
     "profileCompletenessNotes",
+    "personalitySummary",
   ] as const) {
     const val = safeString(profileDraft[key]);
     if (val !== undefined) updatedChar[key] = val;
@@ -314,13 +315,21 @@ export async function POST(request: Request): Promise<Response> {
     Array.isArray(profileDraft.colorPalette) &&
     profileDraft.colorPalette.length > 0
   ) {
+    const HEX_PATTERN = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
     const palette = (
-      profileDraft.colorPalette as { name?: unknown; hex?: unknown }[]
+      profileDraft.colorPalette as { name?: unknown; hex?: unknown; usage?: unknown }[]
     )
-      .filter(
-        (s) => typeof s.name === "string" && typeof s.hex === "string"
-      )
-      .map((s) => ({ name: s.name as string, hex: s.hex as string }));
+      .filter((s) => typeof s.name === "string" && (s.name as string).trim())
+      .map((s) => {
+        const hex = typeof s.hex === "string" ? s.hex.trim() : "";
+        const entry: Record<string, string> = {
+          name: (s.name as string).trim(),
+          hex: HEX_PATTERN.test(hex) ? hex : "",
+        };
+        const usage = typeof s.usage === "string" ? s.usage.trim() : "";
+        if (usage) entry.usage = usage;
+        return entry;
+      });
     if (palette.length > 0) viUpdate.palette = palette;
   }
 

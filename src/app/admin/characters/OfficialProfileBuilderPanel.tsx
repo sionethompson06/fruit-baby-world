@@ -16,6 +16,7 @@ type EditableForm = {
   home: string;
   shortDescription: string;
   personalityTraits: string;
+  personalitySummary: string;
   visualIdentity: string;
   colorPalette: { name: string; hex: string; usage: string }[];
   bodyShapeRules: string;
@@ -59,6 +60,7 @@ function draftToForm(draft: ProfileDraft): EditableForm {
     home: draft.home ?? "",
     shortDescription: draft.shortDescription ?? "",
     personalityTraits: joinLines(draft.personalityTraits),
+    personalitySummary: draft.personalitySummary ?? "",
     visualIdentity: draft.visualIdentity ?? "",
     colorPalette: Array.isArray(draft.colorPalette) ? draft.colorPalette : [],
     bodyShapeRules: joinLines(draft.bodyShapeRules),
@@ -80,6 +82,90 @@ function draftToForm(draft: ProfileDraft): EditableForm {
   };
 }
 
+function characterToForm(character: Character): EditableForm {
+  const raw = character as Character & Record<string, unknown>;
+  const vi = character.visualIdentity as Record<string, unknown> | undefined;
+
+  // Extract colorPalette from visualIdentity.palette
+  const colorPalette: { name: string; hex: string; usage: string }[] = [];
+  if (vi && Array.isArray(vi.palette)) {
+    for (const s of vi.palette as unknown[]) {
+      if (typeof s === "object" && s !== null) {
+        const sw = s as Record<string, unknown>;
+        colorPalette.push({
+          name: typeof sw.name === "string" ? sw.name : "",
+          hex: typeof sw.hex === "string" ? sw.hex : "",
+          usage: typeof sw.usage === "string" ? sw.usage : "",
+        });
+      }
+    }
+  }
+
+  // Clean personality traits — skip garbled tab-separated table rows
+  const rawPersonality = Array.isArray(character.personality) ? character.personality : [];
+  const cleanTraits = rawPersonality.filter((t): t is string => typeof t === "string" && !t.includes("\t"));
+
+  // Clean character rules — skip garbled rows
+  const rules = character.characterRules as Record<string, unknown> | undefined;
+  const rawAlways = Array.isArray(rules?.always) ? (rules!.always as string[]) : [];
+  const rawNever = Array.isArray(rules?.never) ? (rules!.never as string[]) : [];
+  const cleanAlways = rawAlways.filter((r) => typeof r === "string" && !r.includes("\t"));
+  const cleanNever = rawNever.filter((r) => typeof r === "string" && !r.includes("\t"));
+
+  // Visual identity styleNotes — skip if contains tab-separated table content
+  const styleNotes = typeof vi?.styleNotes === "string" ? vi.styleNotes : "";
+  const cleanStyleNotes = styleNotes.includes("\t") ? "" : styleNotes;
+
+  // trademarkNotes — if it's an array of long markdown strings, skip (garbled)
+  const tn = character.trademarkNotes;
+  const trademarkStr =
+    typeof tn === "string"
+      ? tn
+      : Array.isArray(tn) && tn.length === 1 && tn[0].length < 200
+      ? tn[0]
+      : "";
+
+  const genRestrictions = Array.isArray(character.generationRestrictions)
+    ? (character.generationRestrictions as string[]).filter((r) => typeof r === "string")
+    : [];
+
+  return {
+    name: character.name ?? "",
+    shortName: character.shortName ?? "",
+    role: character.role ?? "",
+    type: character.type ?? "",
+    fruitType: character.fruitType ?? "",
+    home: character.home ?? "",
+    shortDescription: character.shortDescription ?? "",
+    personalityTraits: joinLines(cleanTraits),
+    personalitySummary: typeof raw.personalitySummary === "string" ? raw.personalitySummary : "",
+    visualIdentity: cleanStyleNotes,
+    colorPalette,
+    bodyShapeRules: joinLines(safeStrArr(raw.bodyShapeRules)),
+    faceAndExpressionRules: joinLines(safeStrArr(raw.faceAndExpressionRules)),
+    textureAndSurfaceRules: joinLines(safeStrArr(raw.textureAndSurfaceRules)),
+    leafCrownAccessoryRules: joinLines(safeStrArr(raw.leafCrownAccessoryRules)),
+    poseAndGestureRules: joinLines(safeStrArr(raw.poseAndGestureRules)),
+    storyRole: typeof character.storyRole === "string" ? character.storyRole : "",
+    voiceGuide: typeof character.voiceGuide === "string" ? character.voiceGuide : "",
+    favoriteQuote: typeof character.favoriteQuote === "string" ? character.favoriteQuote : "",
+    characterRulesAlways: joinLines(cleanAlways),
+    characterRulesNever: joinLines(cleanNever),
+    generationRestrictions: joinLines(genRestrictions),
+    doNotChangeRules: joinLines(safeStrArr(raw.doNotChangeRules)),
+    trademarkNotes: trademarkStr,
+    imageAlt: character.image?.alt ?? "",
+    profileCompletenessNotes:
+      typeof raw.profileCompletenessNotes === "string" ? raw.profileCompletenessNotes : "",
+    adminReviewNotes: "",
+  };
+}
+
+function safeStrArr(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return (v as unknown[]).filter((x): x is string => typeof x === "string").map((s) => s.trim()).filter(Boolean);
+}
+
 function formToDraft(form: EditableForm): ProfileDraft {
   return {
     name: form.name,
@@ -90,6 +176,7 @@ function formToDraft(form: EditableForm): ProfileDraft {
     home: form.home,
     shortDescription: form.shortDescription,
     personalityTraits: splitLines(form.personalityTraits),
+    personalitySummary: form.personalitySummary || undefined,
     visualIdentity: form.visualIdentity,
     colorPalette: form.colorPalette,
     bodyShapeRules: splitLines(form.bodyShapeRules),
@@ -287,6 +374,16 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
 
   const hasRef = hasPrimaryRef(character);
 
+  function handleEditManually() {
+    setState({
+      phase: "editing",
+      form: characterToForm(character),
+      referenceUrl:
+        ((character as Record<string, unknown>).primaryReferenceAssetUrl as string) ?? "",
+    });
+    setExpanded(true);
+  }
+
   async function handleGenerate() {
     setState({ phase: "generating" });
     try {
@@ -421,6 +518,16 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+            {state.phase === "idle" && (
+              <button
+                type="button"
+                onClick={handleEditManually}
+                disabled={isBusy}
+                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/12 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Edit Profile Details
+              </button>
+            )}
             {hasRef && state.phase !== "saved" && (
               <button
                 type="button"
@@ -437,7 +544,7 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
                 onClick={() => setExpanded((v) => !v)}
                 className="text-xs font-bold px-2.5 py-1.5 rounded-xl bg-tiki-brown/6 text-tiki-brown/55 hover:bg-tiki-brown/10 transition-colors"
               >
-                {expanded ? "Collapse" : "Edit"}
+                {expanded ? "Collapse" : "Expand Editor"}
               </button>
             )}
           </div>
@@ -520,9 +627,7 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
           <div className="flex items-start gap-2.5 bg-pineapple-yellow/12 border border-pineapple-yellow/25 rounded-xl px-3 py-2.5">
             <span className="text-sm flex-shrink-0">📋</span>
             <p className="text-xs text-tiki-brown/65 leading-relaxed">
-              Review and edit the AI-generated profile below before saving. Saving
-              will NOT change approval mode, status, or generation flags — those
-              are managed separately in Character Approval.
+              Use this editor to fill or correct missing profile details — color palette, quote, visual identity, story role, and more. Saving will NOT change approval mode, status, or generation flags — those are managed separately in Character Approval.
             </p>
           </div>
 
@@ -612,6 +717,10 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
                 <FieldLabel>Story Role</FieldLabel>
                 <TextArea value={form.storyRole} onChange={(v) => updateForm({ storyRole: v })} rows={4} disabled={isBusy} placeholder="How this character functions in stories" />
               </div>
+            </div>
+            <div>
+              <FieldLabel>Personality Summary (optional short sentence)</FieldLabel>
+              <TextInput value={form.personalitySummary} onChange={(v) => updateForm({ personalitySummary: v })} placeholder="e.g. Bold, imaginative, and full of wonder." disabled={isBusy} />
             </div>
             <div>
               <FieldLabel>Voice Guide</FieldLabel>
