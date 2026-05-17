@@ -10,6 +10,11 @@ import {
   buildPanelPromptWarnings,
   type PanelPromptWarning,
 } from "@/lib/storyPanelPromptBuilder";
+import {
+  getFidelityReferenceThumbnails,
+  buildFidelityChecklist,
+  hasTikiInScene as checkHasTikiInScene,
+} from "@/lib/storyPanelFidelityReview";
 
 function buildDeterministicPrompt({
   sceneNum,
@@ -241,6 +246,11 @@ function PanelPromptCard({
       : [];
 
   const fidelityNotes = getCharacterFidelityNotes(characters, charBySlug);
+
+  // Fidelity review data — passed to client component as serializable props
+  const hasTiki = scenePkg ? checkHasTikiInScene(scenePkg) : characters.some((c) => c.toLowerCase().includes("tiki"));
+  const fidelityThumbnails = scenePkg ? getFidelityReferenceThumbnails(scenePkg, charBySlug) : undefined;
+  const fidelityChecklist = buildFidelityChecklist(hasTiki);
 
   return (
     <div id={`panel-prompt-scene-${sceneNum}`} className="border border-tiki-brown/10 rounded-2xl p-5 flex flex-col gap-4">
@@ -479,6 +489,9 @@ function PanelPromptCard({
         referenceCharacters={refChars}
         sceneTitle={title}
         sceneSummary={summary}
+        fidelityThumbnails={fidelityThumbnails}
+        fidelityChecklist={fidelityChecklist}
+        hasTiki={hasTiki}
       />
     </div>
   );
