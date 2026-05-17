@@ -2799,11 +2799,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2691199,
       "uploadedAt": "2026-05-17T05:54:49.815Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:25:26.817Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T06:25:26.817Z"
     },
     {
       "id": "ref-1778997323423-c6aq2y",
