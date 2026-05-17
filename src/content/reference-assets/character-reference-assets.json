@@ -2366,12 +2366,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T06:24:58.420Z",
+      "reviewedAt": "2026-05-17T16:41:27.488Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-17T06:24:58.420Z"
+      "updatedAt": "2026-05-17T16:41:27.488Z"
     },
     {
       "id": "ref-1778996453305-ftignc",
