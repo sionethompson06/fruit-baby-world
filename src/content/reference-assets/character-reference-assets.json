@@ -2742,6 +2742,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997398388-prebu8",
+      "characterSlug": "tiki",
+      "assetType": "supporting-reference",
+      "title": "mischievous, plotting, trouble",
+      "description": "mischievous, plotting, trouble",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997397329-tiki-mischievous-plotting-trouble-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2377711,
+      "uploadedAt": "2026-05-17T05:56:38.388Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
