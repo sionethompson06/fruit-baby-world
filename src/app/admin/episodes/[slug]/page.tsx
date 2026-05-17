@@ -540,13 +540,13 @@ export default async function EpisodeDetailPage({
         <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
 
         {/* ── Media Production Overview ── */}
-        <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} />
+        <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} episodeRefSummary={episodeRefPackages} />
 
         {/* ── Reference Asset Packages ── */}
         <ReferencePackagePreviewSection summary={episodeRefPackages} />
 
         {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} />
+        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
 
         {/* ── Story Panel Asset Manifest Preview ── */}
         <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
@@ -555,7 +555,7 @@ export default async function EpisodeDetailPage({
         <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
 
         {/* ── Animation Prompt Builder ── */}
-        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} />
+        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
 
         {/* ── Animation Route Test ── */}
         <AnimationRouteTestPanel
@@ -569,7 +569,7 @@ export default async function EpisodeDetailPage({
         <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
-        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} />
+        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">

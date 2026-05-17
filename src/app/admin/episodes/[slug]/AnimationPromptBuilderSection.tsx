@@ -1,7 +1,8 @@
 import type { Character } from "@/lib/content";
 import { str, strArr } from "./helpers";
 import { getCharacterFidelityNotes } from "./characterFidelityHelpers";
-import type { CharacterReferencePackage } from "@/lib/referenceAssetLoader";
+import type { CharacterReferencePackage, SceneReferencePackage } from "@/lib/referenceAssetLoader";
+import { buildAnimationPromptContext } from "@/lib/storyBuilderContext";
 
 const GLOBAL_ANIMATION_FIDELITY_RULES = [
   "Preserve official body shape and silhouette in motion.",
@@ -58,6 +59,7 @@ function AnimationPromptCard({
   episodeTone,
   charBySlug,
   characterPackages,
+  scenePkg,
 }: {
   scene: Record<string, unknown>;
   index: number;
@@ -65,6 +67,7 @@ function AnimationPromptCard({
   episodeTone: string;
   charBySlug?: Record<string, Character>;
   characterPackages?: CharacterReferencePackage[];
+  scenePkg?: SceneReferencePackage;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const title = str(scene.title);
@@ -218,6 +221,25 @@ function AnimationPromptCard({
         </div>
       )}
 
+      {/* Reference-aware animation context */}
+      {scenePkg && charBySlug && (
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center gap-2 text-xs font-bold text-tiki-brown/50 uppercase tracking-wide select-none py-1">
+            <span className="text-tiki-brown/35 group-open:rotate-90 transition-transform inline-block">▶</span>
+            Animation Context
+            <span className="ml-auto text-xs font-semibold text-tropical-green/60 normal-case tracking-normal">
+              {scenePkg.characterPackages.reduce((s, p) => s + p.totalApprovedCount, 0)} approved assets
+            </span>
+          </summary>
+          <pre className="mt-3 bg-tropical-green/6 border border-tropical-green/15 rounded-xl px-4 py-3 text-xs text-tiki-brown/60 whitespace-pre-wrap break-words font-sans leading-relaxed select-all">
+            {buildAnimationPromptContext(scenePkg, charBySlug, {
+              setting: episodeSetting,
+              mood: episodeTone,
+            })}
+          </pre>
+        </details>
+      )}
+
       {/* Tiki scene-level guardrail */}
       {hasTikiInScene && (
         <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
@@ -268,12 +290,14 @@ export default function AnimationPromptBuilder({
   tikiFlagged,
   charBySlug,
   characterPackages,
+  sceneRefPackages,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
   charBySlug?: Record<string, Character>;
   characterPackages?: CharacterReferencePackage[];
+  sceneRefPackages?: SceneReferencePackage[];
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -346,17 +370,22 @@ export default function AnimationPromptBuilder({
         </p>
       ) : (
         <div className="flex flex-col gap-5">
-          {scenes.map((scene, i) => (
-            <AnimationPromptCard
-              key={i}
-              scene={scene}
-              index={i}
-              episodeSetting={setting}
-              episodeTone={tone}
-              charBySlug={charBySlug}
-              characterPackages={characterPackages}
-            />
-          ))}
+          {scenes.map((scene, i) => {
+            const sceneNum = typeof scene.sceneNumber === "number" ? scene.sceneNumber : i + 1;
+            const scenePkg = sceneRefPackages?.find((p) => p.sceneNumber === sceneNum);
+            return (
+              <AnimationPromptCard
+                key={i}
+                scene={scene}
+                index={i}
+                episodeSetting={setting}
+                episodeTone={tone}
+                charBySlug={charBySlug}
+                characterPackages={characterPackages}
+                scenePkg={scenePkg}
+              />
+            );
+          })}
         </div>
       )}
 

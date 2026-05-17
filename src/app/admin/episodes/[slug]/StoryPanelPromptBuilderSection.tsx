@@ -3,7 +3,8 @@ import { characterHasPrimaryReference } from "@/lib/characterEligibility";
 import { str, strArr } from "./helpers";
 import { GLOBAL_FIDELITY_RULES, getCharacterFidelityNotes } from "./characterFidelityHelpers";
 import PanelDraftGenerator from "./PanelDraftGenerator";
-import type { CharacterReferencePackage } from "@/lib/referenceAssetLoader";
+import type { CharacterReferencePackage, SceneReferencePackage } from "@/lib/referenceAssetLoader";
+import { buildStoryPanelPromptContext } from "@/lib/storyBuilderContext";
 
 function buildDeterministicPrompt({
   sceneNum,
@@ -37,6 +38,138 @@ function buildDeterministicPrompt({
   return parts.join(" ");
 }
 
+function ReferenceAwareContextBlock({
+  scenePkg,
+  charBySlug,
+  setting,
+  mood,
+  summary,
+}: {
+  scenePkg: SceneReferencePackage;
+  charBySlug: Record<string, Character>;
+  setting?: string;
+  mood?: string;
+  summary?: string;
+}) {
+  const contextText = buildStoryPanelPromptContext(scenePkg, charBySlug, {
+    setting,
+    mood,
+    summary,
+  });
+
+  return (
+    <details className="group mt-1">
+      <summary className="cursor-pointer list-none flex items-center gap-2 text-xs font-bold text-tiki-brown/50 uppercase tracking-wide select-none py-1">
+        <span className="text-tiki-brown/35 group-open:rotate-90 transition-transform inline-block">▶</span>
+        Reference-Aware Context
+        <span className="ml-auto text-xs font-semibold text-ube-purple/60 normal-case tracking-normal">
+          {scenePkg.characterPackages.length} character{scenePkg.characterPackages.length !== 1 ? "s" : ""}
+          {" · "}
+          {scenePkg.characterPackages.reduce((s, p) => s + p.totalApprovedCount, 0)} approved assets
+        </span>
+      </summary>
+
+      <div className="mt-3 flex flex-col gap-3">
+        {/* Characters */}
+        <div>
+          <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">Characters</p>
+          <div className="flex flex-col gap-2">
+            {scenePkg.characterPackages.map((charPkg) => {
+              const char = charBySlug[charPkg.characterSlug];
+              return (
+                <div key={charPkg.characterSlug} className="bg-ube-purple/5 rounded-xl px-3 py-2 flex flex-col gap-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold text-tiki-brown/70">{charPkg.characterName}</span>
+                    {charPkg.isGenerationReady ? (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green font-bold">
+                        Ref-Ready
+                      </span>
+                    ) : (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-warm-coral/12 text-warm-coral/80 font-bold">
+                        No Refs
+                      </span>
+                    )}
+                    {charPkg.environmentReferences.length > 0 && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-sky-blue/12 text-tiki-brown/60 font-semibold">
+                        {charPkg.environmentReferences.length} env refs
+                      </span>
+                    )}
+                  </div>
+                  {char?.shortDescription && (
+                    <p className="text-xs text-tiki-brown/55 leading-relaxed">{char.shortDescription}</p>
+                  )}
+                  {char && (() => {
+                    const rules = (charPkg.characterSlug === "tiki" || charPkg.characterSlug === "tiki-trouble")
+                      ? ["Mischievous, funny, dramatic, and kid-friendly.", "Do not make Tiki scary, violent, or too intense."]
+                      : [];
+                    return rules.length > 0 ? (
+                      <p className="text-xs text-warm-coral/70 leading-relaxed">{rules.join(" ")}</p>
+                    ) : null;
+                  })()}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Visual Rules */}
+        <div>
+          <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">Visual Rules</p>
+          <div className="flex flex-wrap gap-1">
+            {[
+              "Preserve body shape",
+              "Preserve color palette",
+              "Baby-like proportions",
+              "No redesign",
+              "Kid-friendly",
+            ].map((rule) => (
+              <span key={rule} className="text-xs px-2 py-0.5 rounded-full bg-tiki-brown/6 text-tiki-brown/55 font-semibold">
+                {rule}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Supporting + Environment Reference Counts */}
+        {scenePkg.characterPackages.some(
+          (p) => p.supportingReferences.length > 0 || p.mainReferences.length > 0
+        ) && (
+          <div>
+            <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide mb-1.5">
+              Supporting References
+            </p>
+            <div className="flex flex-col gap-1">
+              {scenePkg.characterPackages.map((charPkg) => {
+                const counts: string[] = [];
+                if (charPkg.mainReferences.length > 0) counts.push(`${charPkg.mainReferences.length} main`);
+                if (charPkg.profileSheets.length > 0) counts.push(`${charPkg.profileSheets.length} profile`);
+                if (charPkg.supportingReferences.length > 0) counts.push(`${charPkg.supportingReferences.length} supporting`);
+                if (counts.length === 0) return null;
+                return (
+                  <div key={charPkg.characterSlug} className="flex items-center gap-2 text-xs">
+                    <span className="font-semibold text-tiki-brown/60">{charPkg.characterName}:</span>
+                    <span className="text-tiki-brown/45">{counts.join(", ")}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Full context text (collapsible again) */}
+        <details>
+          <summary className="cursor-pointer list-none text-xs text-tiki-brown/35 italic select-none">
+            View full context text ▸
+          </summary>
+          <pre className="mt-2 bg-tiki-brown/4 rounded-xl px-3 py-2 text-xs text-tiki-brown/55 whitespace-pre-wrap break-words font-sans leading-relaxed select-all">
+            {contextText}
+          </pre>
+        </details>
+      </div>
+    </details>
+  );
+}
+
 function PanelPromptCard({
   scene,
   index,
@@ -46,6 +179,7 @@ function PanelPromptCard({
   episodeFeaturedCharacters,
   charBySlug,
   characterPackages,
+  scenePkg,
 }: {
   scene: Record<string, unknown>;
   index: number;
@@ -55,6 +189,7 @@ function PanelPromptCard({
   episodeFeaturedCharacters: string[];
   charBySlug: Record<string, Character>;
   characterPackages?: CharacterReferencePackage[];
+  scenePkg?: SceneReferencePackage;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const sceneNum = typeof num === "number" ? num : index + 1;
@@ -240,6 +375,19 @@ function PanelPromptCard({
         </div>
       </div>
 
+      {/* Reference-aware context block */}
+      {scenePkg && (
+        <div className="border border-ube-purple/15 rounded-xl px-4 py-3 bg-ube-purple/3">
+          <ReferenceAwareContextBlock
+            scenePkg={scenePkg}
+            charBySlug={charBySlug}
+            setting={episodeSetting}
+            mood={episodeTone}
+            summary={summary}
+          />
+        </div>
+      )}
+
       {/* Temporary draft generation — client-side, nothing is saved */}
       <PanelDraftGenerator
         episodeSlug={episodeSlug}
@@ -260,6 +408,7 @@ export default function StoryPanelPromptBuilder({
   episodeSlug,
   charBySlug,
   characterPackages,
+  sceneRefPackages,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
@@ -267,6 +416,7 @@ export default function StoryPanelPromptBuilder({
   episodeSlug: string;
   charBySlug: Record<string, Character>;
   characterPackages?: CharacterReferencePackage[];
+  sceneRefPackages?: SceneReferencePackage[];
 }) {
   const setting = str(raw.setting);
   const tone = str(raw.tone);
@@ -328,19 +478,24 @@ export default function StoryPanelPromptBuilder({
         </p>
       ) : (
         <div className="flex flex-col gap-5">
-          {scenes.map((scene, i) => (
-            <PanelPromptCard
-              key={i}
-              scene={scene}
-              index={i}
-              episodeSetting={setting}
-              episodeTone={tone}
-              episodeSlug={episodeSlug}
-              episodeFeaturedCharacters={featuredCharacters}
-              charBySlug={charBySlug}
-              characterPackages={characterPackages}
-            />
-          ))}
+          {scenes.map((scene, i) => {
+            const sceneNum = typeof scene.sceneNumber === "number" ? scene.sceneNumber : i + 1;
+            const scenePkg = sceneRefPackages?.find((p) => p.sceneNumber === sceneNum);
+            return (
+              <PanelPromptCard
+                key={i}
+                scene={scene}
+                index={i}
+                episodeSetting={setting}
+                episodeTone={tone}
+                episodeSlug={episodeSlug}
+                episodeFeaturedCharacters={featuredCharacters}
+                charBySlug={charBySlug}
+                characterPackages={characterPackages}
+                scenePkg={scenePkg}
+              />
+            );
+          })}
         </div>
       )}
 

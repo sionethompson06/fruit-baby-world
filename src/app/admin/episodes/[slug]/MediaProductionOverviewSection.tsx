@@ -1,4 +1,5 @@
 import { str, strArr } from "./helpers";
+import type { EpisodeReferencePackageSummary } from "@/lib/referenceAssetLoader";
 
 const MEDIA_PIPELINE_STEPS = [
   "Review episode text content.",
@@ -15,9 +16,11 @@ const MEDIA_PIPELINE_STEPS = [
 export default function MediaProductionOverview({
   scenes,
   isPublicReady,
+  episodeRefSummary,
 }: {
   scenes: Record<string, unknown>[];
   isPublicReady: boolean;
+  episodeRefSummary?: EpisodeReferencePackageSummary;
 }) {
   const count = scenes.length;
   const estimatedSeconds = count * 6;
@@ -171,6 +174,58 @@ export default function MediaProductionOverview({
           ))}
         </div>
       </div>
+
+      {/* Reference context readiness */}
+      {episodeRefSummary && (
+        <div className="border border-ube-purple/20 rounded-2xl p-4 bg-ube-purple/4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">📦</span>
+            <h3 className="text-sm font-black text-tiki-brown">Reference Context Readiness</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-3">
+            {(
+              [
+                ["Characters", String(episodeRefSummary.charactersSummary.length)],
+                [
+                  "Reference-Ready",
+                  String(episodeRefSummary.charactersSummary.filter((c) => c.isReady).length),
+                ],
+                ["Total Approved Assets", String(episodeRefSummary.totalApprovedAssets)],
+                [
+                  "Env. References",
+                  String(
+                    episodeRefSummary.scenePackages.reduce(
+                      (sum, sp) =>
+                        sum +
+                        sp.characterPackages.reduce(
+                          (s, cp) => s + cp.environmentReferences.length,
+                          0
+                        ),
+                      0
+                    )
+                  ),
+                ],
+                [
+                  "Context Ready",
+                  episodeRefSummary.totalApprovedAssets > 0 ? "Yes" : "No",
+                ],
+                ["Profile Ready", episodeRefSummary.charactersSummary.length > 0 ? "Yes" : "No"],
+              ] as [string, string][]
+            ).map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between gap-2">
+                <dt className="text-xs text-tiki-brown/45 font-semibold">{label}</dt>
+                <dd
+                  className={`text-xs font-bold ${
+                    value === "Yes" ? "text-tropical-green" : value === "No" ? "text-warm-coral/70" : "text-tiki-brown/70"
+                  }`}
+                >
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Scene → Media map */}
       {scenes.length === 0 ? (

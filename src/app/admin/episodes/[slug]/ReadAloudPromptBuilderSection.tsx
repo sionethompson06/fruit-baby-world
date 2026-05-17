@@ -1,6 +1,7 @@
 import type { Character } from "@/lib/content";
 import { str, strArr } from "./helpers";
-import type { CharacterReferencePackage } from "@/lib/referenceAssetLoader";
+import type { CharacterReferencePackage, SceneReferencePackage } from "@/lib/referenceAssetLoader";
+import { buildReadAloudContext } from "@/lib/storyBuilderContext";
 
 const CHARACTER_VOICE_GUIDANCE: Record<string, string> = {
   "pineapple baby": "Warm, kind, and encouraging — a gentle reassuring voice.",
@@ -82,6 +83,7 @@ function ReadAloudCard({
   episodeLesson,
   charBySlug,
   characterPackages,
+  scenePkg,
 }: {
   scene: Record<string, unknown>;
   index: number;
@@ -89,6 +91,7 @@ function ReadAloudCard({
   episodeLesson: string;
   charBySlug?: Record<string, Character>;
   characterPackages?: CharacterReferencePackage[];
+  scenePkg?: SceneReferencePackage;
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const title = str(scene.title);
@@ -236,6 +239,22 @@ function ReadAloudCard({
         </div>
       )}
 
+      {/* Reference-aware read-aloud context */}
+      {scenePkg && charBySlug && (
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center gap-2 text-xs font-bold text-tiki-brown/50 uppercase tracking-wide select-none py-1">
+            <span className="text-tiki-brown/35 group-open:rotate-90 transition-transform inline-block">▶</span>
+            Voice &amp; Personality Context
+          </summary>
+          <pre className="mt-3 bg-pineapple-yellow/8 border border-pineapple-yellow/20 rounded-xl px-4 py-3 text-xs text-tiki-brown/60 whitespace-pre-wrap break-words font-sans leading-relaxed select-all">
+            {buildReadAloudContext(scenePkg, charBySlug, {
+              lesson: episodeLesson,
+              tone: episodeTone,
+            })}
+          </pre>
+        </details>
+      )}
+
       {/* Tiki voice guardrail */}
       {hasTikiInScene && (
         <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
@@ -277,12 +296,14 @@ export default function ReadAloudPromptBuilder({
   tikiFlagged,
   charBySlug,
   characterPackages,
+  sceneRefPackages,
 }: {
   scenes: Record<string, unknown>[];
   raw: Record<string, unknown>;
   tikiFlagged: boolean;
   charBySlug?: Record<string, Character>;
   characterPackages?: CharacterReferencePackage[];
+  sceneRefPackages?: SceneReferencePackage[];
 }) {
   const tone = str(raw.tone);
   const lesson = str(raw.lesson);
@@ -370,17 +391,22 @@ export default function ReadAloudPromptBuilder({
         </p>
       ) : (
         <div className="flex flex-col gap-5">
-          {scenes.map((scene, i) => (
-            <ReadAloudCard
-              key={i}
-              scene={scene}
-              index={i}
-              episodeTone={tone}
-              episodeLesson={lesson}
-              charBySlug={charBySlug}
-              characterPackages={characterPackages}
-            />
-          ))}
+          {scenes.map((scene, i) => {
+            const sceneNum = typeof scene.sceneNumber === "number" ? scene.sceneNumber : i + 1;
+            const scenePkg = sceneRefPackages?.find((p) => p.sceneNumber === sceneNum);
+            return (
+              <ReadAloudCard
+                key={i}
+                scene={scene}
+                index={i}
+                episodeTone={tone}
+                episodeLesson={lesson}
+                charBySlug={charBySlug}
+                characterPackages={characterPackages}
+                scenePkg={scenePkg}
+              />
+            );
+          })}
         </div>
       )}
 
