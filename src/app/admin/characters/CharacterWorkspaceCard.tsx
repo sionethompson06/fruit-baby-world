@@ -174,7 +174,7 @@ export default function CharacterWorkspaceCard({
   const [imagesOpen, setImagesOpen] = useState(true);
   const [refsOpen, setRefsOpen] = useState(assets.length > 0);
   const [builderOpen, setBuilderOpen] = useState(
-    (isDraft && hasRef) || (!isOfficialCharacter && profileIsIncomplete)
+    (isDraft && hasRef) || profileIsIncomplete
   );
   const [statusOpen, setStatusOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -510,7 +510,7 @@ export default function CharacterWorkspaceCard({
         badge={
           !hasRef ? (
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/40 uppercase tracking-wide">
-              Needs Ref URL
+              Manual Edit Only
             </span>
           ) : undefined
         }

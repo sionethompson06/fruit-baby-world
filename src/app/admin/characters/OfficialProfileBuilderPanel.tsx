@@ -518,14 +518,14 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-            {state.phase === "idle" && (
+            {(state.phase === "idle" || state.phase === "saved") && (
               <button
                 type="button"
                 onClick={handleEditManually}
                 disabled={isBusy}
                 className="text-xs font-bold px-3 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/12 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Edit Profile Details
+                {state.phase === "saved" ? "Edit Again" : "Edit Profile Details"}
               </button>
             )}
             {hasRef && state.phase !== "saved" && (
@@ -564,12 +564,12 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
         {state.phase === "saved" && (
           <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2">
             <span className="text-sm flex-shrink-0">✅</span>
-            <div className="flex flex-col gap-0.5">
+            <div className="flex flex-col gap-1">
               <p className="text-xs font-bold text-tiki-brown/75">
-                Profile draft saved for {state.charName}.
+                Profile saved for {state.charName}.
               </p>
-              <p className="text-xs text-tiki-brown/50">
-                Vercel redeploy required before changes appear.
+              <p className="text-xs text-tiki-brown/55 leading-relaxed">
+                Changes committed to GitHub. The public character profile will update automatically after the next Vercel deployment — this usually happens within a few minutes.
               </p>
               {state.commitUrl && (
                 <a
@@ -578,7 +578,7 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
                 >
-                  View commit →
+                  View commit on GitHub →
                 </a>
               )}
             </div>
@@ -588,7 +588,7 @@ export function CharacterBuilderRow({ character }: { character: Character }) {
         {/* No reference warning */}
         {!hasRef && (
           <p className="text-xs text-tiki-brown/40 italic">
-            Assign a Primary Official Reference with an https:// URL first.
+            No https:// reference URL — AI generation unavailable. Use &ldquo;Edit Profile Details&rdquo; to manually fill in profile data.
           </p>
         )}
 
