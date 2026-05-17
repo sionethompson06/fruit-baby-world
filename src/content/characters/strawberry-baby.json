@@ -3,7 +3,7 @@
   "slug": "strawberry-baby",
   "name": "Strawberry Baby",
   "shortName": "Strawberry",
-  "role": "Strawberry Baby is the heart of the group.",
+  "role": "The Little Love Bug",
   "type": "fruit-baby",
   "status": "active",
   "canonStatus": "public",
@@ -15,62 +15,81 @@
   "generationUseAllowed": true,
   "publicUseAllowed": true,
   "tagline": "",
-  "fruitType": "comforting friends including everyone noticing feelings helping friends",
-  "home": "Heartberrt Hallow",
-  "shortDescription": "Strawberry Baby is the sweet, heart-forward friend in the Fruit Baby world. They bring warmth, kindness, and emotional comfort to the group. Strawberry Baby notices when friends feel left out, nervous, sad, or unsure, and they are often the first to offer a hug, a helping hand, or a cheerful idea.\n\nStrawberry Baby is not boring or overly shy. They are bright, playful, and full of gentle joy. Their strength is making others feel loved, included, and safe.",
+  "fruitType": "Strawberry",
+  "home": "Heartberry Hallow",
+  "shortDescription": "Strawberry Baby is the sweet little heart of sharing love in Fruit Baby Universe! Warm, affectionate, and full of care, Strawberry Baby reminds everyone that kindness, friendship, and hugs can make every day brighter.",
   "about": "",
   "personality": [
-    "Kind Always wants friends to feel cared ",
-    "happy energy to the group Helpful\tLoves "
+    "Loving",
+    "Sweet",
+    "Friendly",
+    "Cheerful",
+    "Tenderhearted"
   ],
   "visualIdentity": {
     "primaryColors": [],
     "accentColors": [],
-    "palette": [],
-    "styleNotes": "soft round strawberry-shaped body\nbright red or rosy pink fruit color\nsmall strawberry seed details\nleafy green top like a strawberry crown\nbig expressive eyes\nfriendly smile\nsoft baby-like proportions\nplush, huggable texture\ngentle heart-shaped design language\nColor Palette\nFeature\tColor Direction\nBody\tStrawberry red, rosy red, or soft pink-red\nSeeds\tTiny yellow, cream, or pale gold dots\nLeaf top\tFresh green\nCheeks\tSoft blush pink\nAccent details\tCream, white, pastel pink, or light green"
+    "palette": [
+      {
+        "name": "Berry Red",
+        "hex": "#FF4D4D"
+      },
+      {
+        "name": "Rosy Pink",
+        "hex": "#FF8A8A"
+      },
+      {
+        "name": "Blush Pink",
+        "hex": "#FFC1C1"
+      },
+      {
+        "name": "Leaf Green",
+        "hex": "#66CC66"
+      },
+      {
+        "name": "Cream Glow",
+        "hex": "#FFF0E0"
+      },
+      {
+        "name": "Golden Sparkle",
+        "hex": "#FFD700"
+      }
+    ],
+    "styleNotes": "Strawberry Baby is a bright red strawberry with big, sparkling eyes and a cheerful smile. Her green leaf crown and heart-shaped hands make her instantly recognizable."
   },
   "expressions": [],
   "posesAndActions": [],
-  "storyRole": "",
+  "storyRole": "Strawberry Baby spreads love and happiness, making sure everyone feels included and cared for.",
   "characterRules": {
     "always": [
-      "Strawberry Baby is the heart of the group.",
-      "include others",
-      "repair hurt feelings",
-      "share",
-      "listen",
-      "work together",
-      "celebrate friendship",
-      "remember to be kind",
-      "comforting friends",
-      "including everyone",
-      "noticing feelings",
-      "helping friends apologize",
-      "making shared spaces feel cozy",
-      "turning small acts of kindness into big moments of connection"
+      "Always spreads love and kindness",
+      "Always ready to give a hug"
     ],
-    "never": []
+    "never": [
+      "Never uses mean words",
+      "Never makes anyone feel left out"
+    ]
   },
   "signatureStyle": "",
   "catchphrases": [],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778995821846-strawberry-love-kind-caring-healing.png",
     "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778230068346-strawberry-baby-character-profile.png",
-    "alt": "Strawberry Baby character — draft, no official image yet"
+    "alt": "Strawberry Baby, a cute red strawberry character with a green leaf crown, smiling and holding a heart shape with her hands."
   },
   "signatureQuote": "",
-  "favoriteQuote": "“Kindness grows here!”",
-  "voiceGuide": "loving, caring, gentle",
+  "favoriteQuote": "Love grows when we share it!",
+  "voiceGuide": "Speaks in a gentle, loving tone with simple, kind words. Often uses phrases like 'Love grows when we share it!'",
   "generationRestrictions": [
-    "Not approved for generation until official reference assets are uploaded and reviewed."
+    "Must always have a heart-shaped bottom and a leaf crown."
   ],
   "trademarkNotes": [
-    "Character Type: Fruit Baby character\nFruit Inspiration: Strawberry\nCore Role: The heart-sweet helper of the Fruit Baby friend group\nPersonality Anchor: Kind, gentle, cheerful, emotionally aware, inclusive\nPrimary Environment: Strawberry Sweet Meadow\n\nOne-Sentence Canon Rule\n\nStrawberry Baby is the warm, sweet heart of the Fruit Baby world — a gentle strawberry friend who helps kindness, sharing, and friendship grow."
+    "Strawberry Baby's heart-shaped hands and leaf crown are trademark-sensitive elements."
   ],
   "notes": "Cute baby strawberry character, soft round strawberry-shaped fruit body, bright red and rosy pink coloring, tiny seed details, green leafy strawberry top, big expressive eyes, friendly smile, soft plush-like texture, small childlike proportions, gentle cheerful personality, preschool cartoon style, warm strawberry meadow environment, bright safe colors, part of a colorful fruit baby character universe.\n\nNegative Prompt / Avoid\n\nNo realistic human baby, no scary features, no sharp teeth, no romantic heart theme, no overly candy-like dessert character, no cluttered accessories, no dark colors, no adult proportions, no aggressive expression.",
   "referenceAssetIds": [],
   "createdAt": "2026-05-08T07:15:51.730Z",
-  "updatedAt": "2026-05-17T16:42:25.582Z",
+  "updatedAt": "2026-05-17T16:53:57.287Z",
   "merchPotential": [],
   "primaryReferenceAssetId": "ref-1778230069351-26wun4",
   "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778230068346-strawberry-baby-character-profile.png",
@@ -78,5 +97,26 @@
   "approvalMode": "public",
   "approvedAt": "2026-05-09T04:07:47.865Z",
   "publishedAt": "2026-05-09T04:07:47.865Z",
-  "mainReferenceAssetId": "ref-1778995822627-yts1gs"
+  "mainReferenceAssetId": "ref-1778995822627-yts1gs",
+  "profileCompletenessNotes": "Profile is complete with all key visual and personality traits described.",
+  "bodyShapeRules": [
+    "Must always have a round, plump strawberry shape with a heart-like bottom."
+  ],
+  "faceAndExpressionRules": [
+    "Always has large, expressive eyes and a friendly smile; default expression is happy."
+  ],
+  "textureAndSurfaceRules": [
+    "Surface should be smooth and shiny, resembling a real strawberry skin."
+  ],
+  "leafCrownAccessoryRules": [
+    "Always has a green leaf crown on top of her head."
+  ],
+  "poseAndGestureRules": [
+    "Often seen with arms open for a hug or holding a heart-shaped gesture."
+  ],
+  "doNotChangeRules": [
+    "The green leaf crown and heart-shaped hands must never be altered."
+  ],
+  "profileCompletedAt": "2026-05-17T16:53:57.287Z",
+  "profileGeneratedFromPrimaryReferenceAt": "2026-05-17T16:53:57.287Z"
 }
