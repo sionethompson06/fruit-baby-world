@@ -2759,6 +2759,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997432962-3t2fa7",
+      "characterSlug": "tiki",
+      "assetType": "supporting-reference",
+      "title": "mischievous, trouble, thinking",
+      "description": "mischievous, trouble, thinking",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997432181-tiki-mischievous-trouble-thinking-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2534475,
+      "uploadedAt": "2026-05-17T05:57:12.962Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
