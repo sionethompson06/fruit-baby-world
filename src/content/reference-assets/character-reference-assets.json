@@ -2195,11 +2195,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1613942,
       "uploadedAt": "2026-05-17T05:36:28.752Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:24:35.411Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T06:24:35.411Z"
     },
     {
       "id": "ref-1778996217875-nhmiwg",
