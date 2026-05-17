@@ -25,6 +25,8 @@ import ReadAloudPromptBuilder from "./ReadAloudPromptBuilderSection";
 import SavedStoryPanelAssetLibrary from "./SavedStoryPanelAssetsSection";
 import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
 import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
+import EpisodePublishReadinessSection from "./EpisodePublishReadinessSection";
+import { buildEpisodePublishReadiness } from "@/lib/episodePublishReadiness";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
@@ -530,6 +532,12 @@ export default async function EpisodeDetailPage({
     };
   });
 
+  // Episode publish readiness (read-only diagnostics)
+  const publishReadiness = buildEpisodePublishReadiness(raw, {
+    charBySlug,
+    sceneRefPackages: episodeRefPackages.scenePackages,
+  });
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -601,6 +609,9 @@ export default async function EpisodeDetailPage({
           reviewObj={reviewObj}
           publishingObj={publishingObj}
         />
+
+        {/* ── Episode Publish Readiness ── */}
+        <EpisodePublishReadinessSection readiness={publishReadiness} />
 
         {/* ── Publish Readiness Checklist ── */}
         <PublishReadinessChecklist />
