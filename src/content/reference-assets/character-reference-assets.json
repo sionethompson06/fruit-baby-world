@@ -2147,6 +2147,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996188752-mb2dtu",
+      "characterSlug": "strawberry-baby",
+      "assetType": "supporting-reference",
+      "title": "sad, curious, scared, thinking, wondering",
+      "description": "sad, curious, scared, thinking, wondering",
+      "notes": "sad, curious, scared, thinking, wondering",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996187830-strawberry-sad-currious-scared-thinking-wondering-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1613942,
+      "uploadedAt": "2026-05-17T05:36:28.752Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
