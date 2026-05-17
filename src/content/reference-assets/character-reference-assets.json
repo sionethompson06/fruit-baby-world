@@ -2618,12 +2618,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T06:26:13.287Z",
+      "reviewedAt": "2026-05-17T16:44:29.545Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-17T06:26:13.287Z"
+      "updatedAt": "2026-05-17T16:44:29.545Z"
     },
     {
       "id": "ref-1778996887259-hzycbv",
