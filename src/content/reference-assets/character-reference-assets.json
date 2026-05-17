@@ -2028,6 +2028,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778995915239-osozyt",
+      "characterSlug": "strawberry-baby",
+      "assetType": "supporting-reference",
+      "title": "cure, hopeful, listening, serious, lucky",
+      "description": "cure, hopeful, listening, serious, lucky",
+      "notes": "cure, hopeful, listening, serious, lucky",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778995914614-strawberry-cute-hope-listening-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1618021,
+      "uploadedAt": "2026-05-17T05:31:55.239Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
