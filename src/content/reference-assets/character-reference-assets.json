@@ -2249,6 +2249,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996373043-koljt0",
+      "characterSlug": "strawberry-baby",
+      "assetType": "character-environment-reference",
+      "title": "Heartberry Hallow Neighborhood",
+      "description": "Heartberry Hallow Neighborhood",
+      "notes": "Heartberry Hallow Neighborhood",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996372447-heartberry-hallow-neighborhood.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2322350,
+      "uploadedAt": "2026-05-17T05:39:33.043Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
