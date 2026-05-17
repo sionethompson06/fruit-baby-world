@@ -2283,6 +2283,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996427215-hvi5fd",
+      "characterSlug": "strawberry-baby",
+      "assetType": "character-environment-reference",
+      "title": "Heartberry Hallow Playground",
+      "description": "Heartberry Hallow Playground",
+      "notes": "Heartberry Hallow Playground",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996426171-heartberry-hallow-playground.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2216337,
+      "uploadedAt": "2026-05-17T05:40:27.215Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
