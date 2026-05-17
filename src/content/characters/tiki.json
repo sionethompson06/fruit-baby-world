@@ -36,14 +36,36 @@
   "signatureQuote": "I'm gonna find you, Pineapple Baby!",
   "rivalry": "Has a cheeky grudge against Pineapple Baby. Likes to stir up trouble for him but secretly cannot help admiring Pineapple Baby's kindness.",
   "visualIdentity": {
-    "primaryColors": ["#8B5A2B", "#5C3A1E"],
-    "accentColors": ["#FF6B00", "#7AC943", "#FFD84D"],
+    "primaryColors": [
+      "#8B5A2B",
+      "#5C3A1E"
+    ],
+    "accentColors": [
+      "#FF6B00",
+      "#7AC943",
+      "#FFD84D"
+    ],
     "palette": [
-      { "name": "Carved Wood Brown", "hex": "#8B5A2B" },
-      { "name": "Deep Wood Brown", "hex": "#5C3A1E" },
-      { "name": "Fire Orange", "hex": "#FF6B00" },
-      { "name": "Leaf Green", "hex": "#7AC943" },
-      { "name": "Torch Yellow", "hex": "#FFD84D" }
+      {
+        "name": "Carved Wood Brown",
+        "hex": "#8B5A2B"
+      },
+      {
+        "name": "Deep Wood Brown",
+        "hex": "#5C3A1E"
+      },
+      {
+        "name": "Fire Orange",
+        "hex": "#FF6B00"
+      },
+      {
+        "name": "Leaf Green",
+        "hex": "#7AC943"
+      },
+      {
+        "name": "Torch Yellow",
+        "hex": "#FFD84D"
+      }
     ],
     "styleNotes": "Carved wooden tiki mask face with angry brows and a wide grin full of teeth. Green leaf crown with tiny flames. Orange/red tribal-style headband. Skull necklace. Carries a small spear. Fiery and dramatic but still cute and kid-friendly. Treasure chest and Trouble Island setting."
   },
@@ -83,9 +105,17 @@
     "This isn't over! TIKI OUT!"
   ],
   "image": {
-    "main": "",
+    "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997147499-tiki-angry-mad-serious-yelling-.png",
     "profileSheet": "/characters/tiki/Tiki Profile.png",
     "alt": "Official Tiki Trouble character profile sheet"
   },
-  "merchPotential": ["vinyl figure", "sticker", "collectible", "mini plush", "antagonist pack"]
+  "merchPotential": [
+    "vinyl figure",
+    "sticker",
+    "collectible",
+    "mini plush",
+    "antagonist pack"
+  ],
+  "mainReferenceAssetId": "ref-1778997148476-ov437d",
+  "updatedAt": "2026-05-17T06:25:14.994Z"
 }
