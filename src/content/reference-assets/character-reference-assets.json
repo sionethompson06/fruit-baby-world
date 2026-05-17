@@ -2820,11 +2820,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2446035,
       "uploadedAt": "2026-05-17T05:55:23.423Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:25:29.503Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T06:25:29.503Z"
     },
     {
       "id": "ref-1778997350893-cbk0pp",
