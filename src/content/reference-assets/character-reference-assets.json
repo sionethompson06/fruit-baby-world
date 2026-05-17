@@ -2951,11 +2951,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2534475,
       "uploadedAt": "2026-05-17T05:57:12.962Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T16:43:54.467Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": false,
+      "updatedAt": "2026-05-17T16:43:54.467Z"
     },
     {
       "id": "ref-1778997484556-i25cgj",
