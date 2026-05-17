@@ -2,7 +2,7 @@
   "id": "dragonfruit-baby",
   "slug": "dragonfruit-baby",
   "name": "Dragon Fruit Baby",
-  "shortName": "Dragon",
+  "shortName": "DragonFruit",
   "role": "The Colorful Encourager",
   "type": "fruit-baby",
   "status": "active",
@@ -63,20 +63,20 @@
         "hex": "#8A4B24"
       }
     ],
-    "styleNotes": "Dragon Fruit Baby is instantly recognizable with its vibrant pink body, green leafy crown, and adorable black seed dots. Its cheerful expression and colorful design make it stand out."
+    "styleNotes": "Dragon Fruit Baby is instantly recognizable by their vibrant pink body, green leafy crown, and cheerful expression. Their tiny seed dots are like little idea sparks, adding to their playful and imaginative style."
   },
   "expressions": [],
   "posesAndActions": [],
-  "storyRole": "Dragon Fruit Baby encourages friends to embrace their uniqueness and be brave in trying new things.",
+  "storyRole": "Dragon Fruit Baby helps everyone celebrate what makes them special and encourages friends to be brave and creative.",
   "characterRules": {
     "always": [
       "Encourages others",
       "Celebrates uniqueness",
-      "Spreads joy"
+      "Brings joy and color"
     ],
     "never": [
       "Makes others feel left out",
-      "Gives up easily"
+      "Gives up too quickly"
     ]
   },
   "signatureStyle": "",
@@ -84,21 +84,22 @@
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778965810979-dragon-fruit-music-singing-happy-fun-skipping-jumping-leapin.png",
     "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
-    "alt": "Dragon Fruit Baby character with a vibrant pink body, green leafy crown, and cheerful expression, surrounded by colorful accents and seed dots."
+    "alt": "Dragon Fruit Baby, a vibrant pink character with a green leafy crown, smiling joyfully with tiny black seed dots on their body."
   },
   "signatureQuote": "",
-  "favoriteQuote": "\"Be bold, be you, let your colors shine!\"",
-  "voiceGuide": "Speaks with enthusiasm and warmth, using simple, encouraging words. Catchphrases are uplifting and colorful.",
+  "favoriteQuote": "Your colors make the world brighter!",
+  "voiceGuide": "Speaks with a joyful and encouraging tone, using simple, playful language. Often uses phrases like 'Your colors make the world brighter!'",
   "generationRestrictions": [
-    "Must always have a leafy crown and black seed dots"
+    "Leafy crown must always be present",
+    "Body must remain bright pink"
   ],
   "trademarkNotes": [
-    "The combination of vibrant pink, green leafy crown, and black seed dots are trademark elements."
+    "The combination of bright pink body and leafy green crown is trademark-sensitive."
   ],
   "notes": "",
   "referenceAssetIds": [],
   "createdAt": "2026-05-08T07:05:17.035Z",
-  "updatedAt": "2026-05-17T16:55:22.351Z",
+  "updatedAt": "2026-05-17T17:04:00.773Z",
   "merchPotential": [],
   "approvalMode": "public",
   "approvedAt": "2026-05-08T22:38:51.541Z",
@@ -107,25 +108,26 @@
   "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/dragonfruit-baby/1778229977021-dragon-fruit-character-profile-.png",
   "primaryReferenceAssetType": "profile-sheet",
   "mainReferenceAssetId": "ref-1778965811733-p7ojsm",
-  "profileCompletenessNotes": "Profile information was confidently inferred from the character reference image.",
+  "profileCompletenessNotes": "Profile confidently inferred from the image, capturing all key visual and personality traits.",
   "bodyShapeRules": [
-    "Round and plump body with a smooth surface and small, rounded limbs"
+    "Round and plump body with prominent leafy crown"
   ],
   "faceAndExpressionRules": [
-    "Large, expressive eyes with a joyful smile; capable of happy, excited, and thoughtful expressions"
+    "Always smiling with big, bright eyes; expressive and joyful"
   ],
   "textureAndSurfaceRules": [
-    "Smooth, shiny surface with small black seed dots scattered across the body"
+    "Smooth, shiny surface with small black seed dots"
   ],
   "leafCrownAccessoryRules": [
-    "Green leafy crown with gradient colors from green to yellow at the tips"
+    "Prominent green leafy crown with lime and golden accents"
   ],
   "poseAndGestureRules": [
-    "Often seen waving, dancing, or jumping for joy; movements are lively and expressive"
+    "Often seen waving, dancing, or jumping for joy"
   ],
   "doNotChangeRules": [
-    "The vibrant pink color and leafy crown must remain consistent"
+    "Seed dots must always be visible",
+    "Eyes must remain warm brown"
   ],
-  "profileCompletedAt": "2026-05-17T16:55:22.351Z",
-  "profileGeneratedFromPrimaryReferenceAt": "2026-05-17T16:55:22.351Z"
+  "profileCompletedAt": "2026-05-17T17:04:00.773Z",
+  "profileGeneratedFromPrimaryReferenceAt": "2026-05-17T17:04:00.773Z"
 }
