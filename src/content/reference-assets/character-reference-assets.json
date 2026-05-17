@@ -2006,11 +2006,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1458046,
       "uploadedAt": "2026-05-17T05:30:22.627Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-17T06:24:06.617Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-17T06:24:06.617Z"
     },
     {
       "id": "ref-1778995876429-rwgo4k",
