@@ -2827,6 +2827,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778997564989-2z95ni",
+      "characterSlug": "tiki",
+      "assetType": "character-environment-reference",
+      "title": "Trouble Island Bridge",
+      "description": "Trouble Island Bridge",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997564117-trouble-island-bridge-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2707332,
+      "uploadedAt": "2026-05-17T05:59:24.989Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
