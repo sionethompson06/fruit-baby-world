@@ -3164,12 +3164,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T16:44:08.650Z",
+      "reviewedAt": "2026-05-17T17:07:35.918Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-17T16:44:08.650Z"
+      "updatedAt": "2026-05-17T17:07:35.918Z"
     }
   ]
 }
