@@ -2538,6 +2538,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996956398-xlf5pp",
+      "characterSlug": "ube-baby",
+      "assetType": "character-environment-reference",
+      "title": "Cozy Garden Neighborhood",
+      "description": "Cozy Garden Neighborhood",
+      "notes": "Cozy Garden Neighborhood",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996955417-cozy-garden-neighborhood.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2546180,
+      "uploadedAt": "2026-05-17T05:49:16.398Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
