@@ -5,6 +5,11 @@ import { GLOBAL_FIDELITY_RULES, getCharacterFidelityNotes } from "./characterFid
 import PanelDraftGenerator from "./PanelDraftGenerator";
 import type { CharacterReferencePackage, SceneReferencePackage } from "@/lib/referenceAssetLoader";
 import { buildStoryPanelPromptContext } from "@/lib/storyBuilderContext";
+import {
+  buildReferenceAwareStoryPanelPrompt,
+  buildPanelPromptWarnings,
+  type PanelPromptWarning,
+} from "@/lib/storyPanelPromptBuilder";
 
 function buildDeterministicPrompt({
   sceneNum,
@@ -202,8 +207,23 @@ function PanelPromptCard({
   const hasTikiInScene = characters.some((c) => c.toLowerCase().includes("tiki"));
   const refChars = characters.length > 0 ? characters : episodeFeaturedCharacters;
 
+  // Use reference-aware prompt when scene package is available; fall back to deterministic
+  const referenceAwarePrompt =
+    scenePkg && Object.keys(charBySlug).length > 0
+      ? buildReferenceAwareStoryPanelPrompt(scenePkg, charBySlug, {
+          sceneNumber: sceneNum,
+          title,
+          summary,
+          setting: episodeSetting,
+          mood: episodeTone,
+          emotionalBeat,
+          visualNotes,
+        })
+      : null;
+
   const promptText =
     existingPrompt ||
+    referenceAwarePrompt ||
     buildDeterministicPrompt({
       sceneNum: num as number | string,
       title,
@@ -213,6 +233,12 @@ function PanelPromptCard({
       emotionalBeat,
       visualNotes,
     });
+
+  const isReferenceAware = !existingPrompt && referenceAwarePrompt !== null;
+  const warnings: PanelPromptWarning[] =
+    scenePkg && Object.keys(charBySlug).length > 0
+      ? buildPanelPromptWarnings(scenePkg, charBySlug)
+      : [];
 
   const fidelityNotes = getCharacterFidelityNotes(characters, charBySlug);
 
@@ -279,21 +305,78 @@ function PanelPromptCard({
       )}
 
       {/* Prompt copy block */}
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
+        {/* Header row with label + context summary */}
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-            {existingPrompt ? "Image Prompt Draft (from saved data)" : "Image Prompt Draft (deterministic)"}
+            {existingPrompt
+              ? "Image Prompt Draft (from saved data)"
+              : isReferenceAware
+              ? "Reference-Aware Story Panel Prompt"
+              : "Image Prompt Draft (deterministic)"}
           </p>
           {existingPrompt && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green font-bold">
               Saved
             </span>
           )}
+          {isReferenceAware && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-ube-purple/12 text-ube-purple font-bold">
+              Reference-Aware
+            </span>
+          )}
         </div>
+
+        {/* Context summary row */}
+        {scenePkg && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-tiki-brown/6 text-tiki-brown/50 font-semibold">
+              {scenePkg.characterPackages.length} character{scenePkg.characterPackages.length !== 1 ? "s" : ""} resolved
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-tiki-brown/6 text-tiki-brown/50 font-semibold">
+              {scenePkg.characterPackages.reduce((s, p) => s + p.supportingReferences.length, 0)} supporting refs
+            </span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-tiki-brown/6 text-tiki-brown/50 font-semibold">
+              {scenePkg.characterPackages.reduce((s, p) => s + p.environmentReferences.length, 0)} env refs
+            </span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                scenePkg.characterPackages.some((p) => p.profileSheets.length > 0)
+                  ? "bg-tropical-green/12 text-tropical-green"
+                  : "bg-warm-coral/10 text-warm-coral/70"
+              }`}
+            >
+              Profile sheet: {scenePkg.characterPackages.some((p) => p.profileSheets.length > 0) ? "available" : "missing"}
+            </span>
+          </div>
+        )}
+
+        {/* Prompt text */}
         <pre className="bg-sky-blue/12 border border-sky-blue/30 rounded-xl px-4 py-3 text-xs text-tiki-brown/70 leading-relaxed whitespace-pre-wrap break-words font-sans select-all">
           {promptText}
         </pre>
         <p className="text-xs text-tiki-brown/35 italic">Select text above to copy.</p>
+
+        {/* Admin warnings */}
+        {warnings.length > 0 && (
+          <div className="flex flex-col gap-1.5 bg-warm-coral/6 border border-warm-coral/20 rounded-xl px-4 py-3">
+            <p className="text-xs font-bold text-warm-coral/70 uppercase tracking-wide">
+              Admin warnings ({warnings.length})
+            </p>
+            <ul className="space-y-1">
+              {warnings.map((w, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-tiki-brown/65 leading-relaxed">
+                  <span className="flex-shrink-0 text-warm-coral/50 mt-0.5">
+                    {w.severity === "missing-ref" ? "⚠" : "ℹ"}
+                  </span>
+                  <span>
+                    <strong className="font-semibold">{w.characterName}:</strong> {w.message}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Per-character fidelity notes */}
