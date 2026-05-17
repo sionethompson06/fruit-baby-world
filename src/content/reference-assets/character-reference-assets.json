@@ -2198,6 +2198,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996282872-9i20zf",
+      "characterSlug": "strawberry-baby",
+      "assetType": "character-environment-reference",
+      "title": "Heartberry Hallow 1",
+      "description": "Heartberry Hallow 1",
+      "notes": "Heartberry Hallow 1",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/strawberry-baby/1778996282270-heartberry-hallow-2.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2246577,
+      "uploadedAt": "2026-05-17T05:38:02.872Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
