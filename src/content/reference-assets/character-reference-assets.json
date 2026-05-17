@@ -2534,12 +2534,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T06:25:56.295Z",
+      "reviewedAt": "2026-05-17T16:44:23.348Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-17T06:25:56.295Z"
+      "updatedAt": "2026-05-17T16:44:23.348Z"
     },
     {
       "id": "ref-1778996741504-a007lr",
