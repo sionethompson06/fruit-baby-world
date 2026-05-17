@@ -156,8 +156,10 @@ export default async function CharacterPage({
 
               <p className="text-base font-semibold text-tiki-brown/55">{character.role}</p>
 
-              {character.tagline && (
-                <p className="text-lg italic text-tiki-brown/70">&ldquo;{character.tagline}&rdquo;</p>
+              {(profile.tagline || profile.favoriteQuote) && (
+                <p className="text-lg italic text-tiki-brown/70">
+                  &ldquo;{profile.tagline || profile.favoriteQuote}&rdquo;
+                </p>
               )}
 
               <p className="text-sm text-tiki-brown/70 leading-relaxed max-w-xl">

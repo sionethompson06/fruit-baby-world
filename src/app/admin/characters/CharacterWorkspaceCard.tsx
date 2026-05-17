@@ -151,9 +151,31 @@ export default function CharacterWorkspaceCard({
   ).length;
   const fidelityNotes = CHARACTER_FIDELITY[character.slug] ?? [];
 
+  // Profile completeness checks (display-only)
+  const viObj = character.visualIdentity as Record<string, unknown> | undefined;
+  const hasPalette = Array.isArray(viObj?.palette) && (viObj!.palette as unknown[]).length > 0;
+  const hasStyleNotes = typeof viObj?.styleNotes === "string" && (viObj!.styleNotes as string).trim().length > 0 && !(viObj!.styleNotes as string).includes("\t");
+  const cleanPersonality = (character.personality ?? []).filter(
+    (t) => typeof t === "string" && !t.includes("\t")
+  );
+  const profileCompletenessItems = [
+    { label: "Official Profile Sheet", ok: !!profileSheetUrl },
+    { label: "Visual Identity", ok: hasStyleNotes || hasPalette },
+    { label: "Color Palette", ok: hasPalette },
+    { label: "Favorite Quote", ok: !!character.favoriteQuote },
+    { label: "Personality Traits", ok: cleanPersonality.length > 0 },
+    { label: "Story Role", ok: !!character.storyRole },
+    { label: "Character Rules", ok: Array.isArray(character.characterRules?.always) && (character.characterRules.always as string[]).filter((r) => !r.includes("\t")).length > 0 },
+  ];
+  const completenessScore = profileCompletenessItems.filter((i) => i.ok).length;
+  const profileIsIncomplete = completenessScore < profileCompletenessItems.length;
+  const [completenessOpen, setCompletenessOpen] = useState(profileIsIncomplete && !isOfficialCharacter);
+
   const [imagesOpen, setImagesOpen] = useState(true);
   const [refsOpen, setRefsOpen] = useState(assets.length > 0);
-  const [builderOpen, setBuilderOpen] = useState(isDraft && hasRef);
+  const [builderOpen, setBuilderOpen] = useState(
+    (isDraft && hasRef) || (!isOfficialCharacter && profileIsIncomplete)
+  );
   const [statusOpen, setStatusOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
@@ -440,6 +462,43 @@ export default function CharacterWorkspaceCard({
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* ── Profile Completeness section ── */}
+      <SectionToggle
+        label={`Profile Completeness (${completenessScore}/${profileCompletenessItems.length})`}
+        open={completenessOpen}
+        onToggle={() => setCompletenessOpen((v) => !v)}
+        badge={
+          profileIsIncomplete ? (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/65 uppercase tracking-wide">
+              Incomplete
+            </span>
+          ) : (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+              Complete ✓
+            </span>
+          )
+        }
+      />
+      {completenessOpen && (
+        <div className="px-5 py-4 bg-tiki-brown/2 flex flex-col gap-3">
+          <p className="text-xs text-tiki-brown/50 leading-relaxed">
+            Use the Profile Builder below to fill any missing details. Saving does not change approval status.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            {profileCompletenessItems.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span className={`text-xs flex-shrink-0 ${item.ok ? "text-tropical-green" : "text-warm-coral/70"}`}>
+                  {item.ok ? "✓" : "✗"}
+                </span>
+                <span className={`text-xs ${item.ok ? "text-tiki-brown/65" : "text-tiki-brown/45 font-semibold"}`}>
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
