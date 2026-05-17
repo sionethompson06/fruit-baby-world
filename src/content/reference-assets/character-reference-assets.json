@@ -2828,12 +2828,12 @@
       "approvedForGeneration": true,
       "requiresReview": false,
       "reviewStatus": "approved-for-generation",
-      "reviewedAt": "2026-05-17T06:25:22.229Z",
+      "reviewedAt": "2026-05-17T16:43:44.731Z",
       "reviewedBy": "admin",
       "generationUseAllowed": true,
       "publicUseAllowed": false,
       "isOfficialReference": false,
-      "updatedAt": "2026-05-17T06:25:22.229Z"
+      "updatedAt": "2026-05-17T16:43:44.731Z"
     },
     {
       "id": "ref-1778997236791-gftgyk",
