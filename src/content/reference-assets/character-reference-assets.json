@@ -2402,6 +2402,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1778996697274-zu441v",
+      "characterSlug": "ube-baby",
+      "assetType": "supporting-reference",
+      "title": "loving, caring, healing, peace",
+      "description": "loving, caring, healing, peace",
+      "notes": "loving, caring, healing, peace",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996696577-ube-loving-caring-healing-peace.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 1768787,
+      "uploadedAt": "2026-05-17T05:44:57.274Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
