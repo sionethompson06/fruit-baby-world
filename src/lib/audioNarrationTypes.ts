@@ -78,3 +78,23 @@ export type AudioDraftReviewRecommendation =
   | "needs-review"
   | "no-draft";
 
+// ─── Approved audio asset (Phase 13D) ────────────────────────────────────────
+
+export type ApprovedNarrationAudioAsset = {
+  id: string;
+  episodeSlug: string;
+  provider: string;
+  voiceId: string;
+  modelId: string;
+  voiceStyle: string;
+  url: string;
+  pathname: string;
+  mimeType: string;
+  sizeBytes: number;
+  scriptText: string;
+  reviewNotes: string;
+  approvedBy: string;
+  approvedAt: string;
+  createdAt: string;
+};
+

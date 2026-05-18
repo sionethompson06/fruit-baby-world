@@ -51,6 +51,16 @@ type GenerateError = {
   troubleshooting?: string[];
 };
 
+type UploadSuccessResult = {
+  url: string;
+  pathname: string;
+  sizeBytes: number;
+  provider: string;
+  voiceStyle: string;
+  voiceId: string;
+  approvedAt: string;
+};
+
 type GenerateResult =
   | ({ ok: true } & AudioDraft)
   | ({ ok: false } & GenerateError);
@@ -66,9 +76,11 @@ function buildInitialChecklist(hasTiki: boolean): AudioDraftReviewChecklistItem[
 function AudioReviewPanel({
   draft,
   hasTiki,
+  episodeSlug,
 }: {
   draft: AudioDraft;
   hasTiki: boolean;
+  episodeSlug: string;
 }) {
   const [checklist, setChecklist] = useState<AudioDraftReviewChecklistItem[]>(() =>
     buildInitialChecklist(hasTiki)
@@ -76,6 +88,9 @@ function AudioReviewPanel({
   const [reviewNotes, setReviewNotes] = useState("");
   const [decision, setDecision] = useState<AudioDraftReviewDecision | null>(null);
   const [decidedAt, setDecidedAt] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadSuccessResult | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const checkedCount = checklist.filter((i) => i.checked).length;
   const allChecked = checkedCount === checklist.length;
@@ -99,6 +114,64 @@ function AudioReviewPanel({
   function handleReset() {
     setDecision(null);
     setDecidedAt(null);
+    setUploadResult(null);
+    setUploadError(null);
+  }
+
+  async function handleSave() {
+    if (uploading || uploadResult) return;
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const res = await fetch("/api/audio-narration/upload-approved-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          audioBase64: draft.audioBase64,
+          mimeType: "audio/mpeg",
+          scriptText: draft.scriptText,
+          voiceStyle: draft.voiceStyle,
+          voiceId: draft.voiceId,
+          modelId: draft.modelId,
+          provider: "elevenlabs",
+          reviewNotes: reviewNotes.trim(),
+          approvedBy: "admin",
+        }),
+      });
+
+      let data: { ok: boolean; status: string; message?: string; audio?: UploadSuccessResult & Record<string, unknown> };
+      try {
+        data = await res.json();
+      } catch {
+        setUploadError(
+          res.status === 504
+            ? "Upload timed out — try again."
+            : "Unexpected server response. Try again."
+        );
+        setUploading(false);
+        return;
+      }
+
+      if (data.ok && data.audio) {
+        setUploadResult({
+          url: data.audio.url as string,
+          pathname: data.audio.pathname as string,
+          sizeBytes: data.audio.sizeBytes as number,
+          provider: data.audio.provider as string,
+          voiceStyle: data.audio.voiceStyle as string,
+          voiceId: data.audio.voiceId as string,
+          approvedAt: data.audio.approvedAt as string,
+        });
+      } else {
+        setUploadError(data.message ?? "Upload failed — check Vercel Blob configuration.");
+      }
+    } catch {
+      setUploadError("Network error — check your connection and try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   const audioSrc = `data:audio/mpeg;base64,${draft.audioBase64}`;
@@ -137,8 +210,8 @@ function AudioReviewPanel({
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio controls src={audioSrc} className="w-full rounded-xl" />
         <p className="text-xs text-tiki-brown/35">
-          Temporary narration drafts are not saved or public. Review the audio here before saving
-          approved audio in a future phase.
+          Temporary narration drafts are not public. Review the audio and complete the checklist,
+          then save the approved draft to Blob storage below.
         </p>
       </div>
 
@@ -197,7 +270,7 @@ function AudioReviewPanel({
           }`}
         >
           {recommendation === "ready"
-            ? "Looks ready for approved audio save in the next phase."
+            ? "All checklist items passed — ready to save approved audio to storage."
             : "Review needed before saving — complete the checklist above."}
         </div>
       </div>
@@ -216,8 +289,7 @@ function AudioReviewPanel({
           className="text-sm border border-tiki-brown/15 rounded-xl px-4 py-3 bg-white text-tiki-brown/80 leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-ube-purple/30 placeholder:text-tiki-brown/30"
         />
         <p className="text-xs text-tiki-brown/35 leading-relaxed">
-          Notes are local in this phase and are not saved yet. The next phase will add approved
-          audio saving.
+          Notes are included when saving to Blob storage. Not published publicly.
         </p>
       </div>
 
@@ -264,7 +336,7 @@ function AudioReviewPanel({
 
           <p className="text-xs text-tiki-brown/65 leading-relaxed">
             {decision === "looks-good"
-              ? "This draft is ready for the future save-approved-audio step. Approved audio saving is coming next. For now, this review is local guidance."
+              ? "This draft is ready to save. Use the Save Approved Audio button below to upload it to Blob storage."
               : "Adjust the script, voice style, or voice ID, then generate a new temporary draft using the controls above."}
           </p>
 
@@ -288,6 +360,86 @@ function AudioReviewPanel({
           </button>
         </div>
       )}
+
+      {/* Save approved audio section */}
+      <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-5">
+        <div className="flex flex-col gap-0.5">
+          <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+            Save Approved Audio
+          </p>
+          <p className="text-xs text-tiki-brown/45 leading-relaxed">
+            This uploads the approved narration draft to Vercel Blob only. It will not attach the
+            audio to the episode or publish it yet.
+          </p>
+        </div>
+
+        {!uploadResult ? (
+          <>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={
+                (decision !== "looks-good" && !allChecked) || uploading
+              }
+              className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-tropical-green text-white hover:bg-tropical-green/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {uploading ? "Saving to Blob storage…" : "Save Approved Audio to Media Storage"}
+            </button>
+            {uploading && (
+              <span className="text-xs text-tiki-brown/45 animate-pulse">
+                Uploading to Vercel Blob — this may take a moment…
+              </span>
+            )}
+            {decision !== "looks-good" && !allChecked && !uploading && (
+              <p className="text-xs text-tiki-brown/40">
+                Mark the draft as &quot;Looks Good&quot; or complete all checklist items to enable
+                saving.
+              </p>
+            )}
+            {uploadError && (
+              <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
+                <p className="text-xs font-bold text-warm-coral mb-0.5">Upload failed</p>
+                <p className="text-xs text-tiki-brown/70 leading-relaxed">{uploadError}</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="bg-tropical-green/10 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green">
+                Saved to Blob
+              </span>
+              <span className="text-xs text-tiki-brown/40">
+                {new Date(uploadResult.approvedAt).toLocaleString("en-US", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1 text-xs text-tiki-brown/65">
+              <p>
+                <span className="font-semibold">Provider:</span> {uploadResult.provider} ·{" "}
+                <span className="font-semibold">Voice style:</span> {uploadResult.voiceStyle} ·{" "}
+                <span className="font-semibold">Voice ID:</span>{" "}
+                <span className="font-mono">{uploadResult.voiceId}</span>
+              </p>
+              <p>
+                <span className="font-semibold">Size:</span>{" "}
+                {uploadResult.sizeBytes < 1024 * 1024
+                  ? `${Math.round(uploadResult.sizeBytes / 1024)}KB`
+                  : `${(uploadResult.sizeBytes / 1024 / 1024).toFixed(2)}MB`}
+              </p>
+              <p className="font-mono break-all">{uploadResult.url}</p>
+            </div>
+            <div className="bg-white/60 rounded-lg px-3 py-2 mt-1">
+              <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                Audio is stored in Blob. It has not been attached to the episode JSON or published
+                publicly. Future phases will add episode attachment and public playback.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Notes from generation API */}
       {draft.notes.length > 0 && (
@@ -564,7 +716,7 @@ export default function AudioNarrationDraftSection({
       )}
 
       {/* Review panel — appears after draft is generated */}
-      {draft && <AudioReviewPanel draft={draft} hasTiki={hasTiki} />}
+      {draft && <AudioReviewPanel draft={draft} hasTiki={hasTiki} episodeSlug={episodeSlug} />}
     </div>
   );
 }
