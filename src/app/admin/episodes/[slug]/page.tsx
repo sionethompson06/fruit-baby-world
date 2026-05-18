@@ -36,8 +36,9 @@ import {
   buildNarrationScriptDraftFromEpisode,
 } from "@/lib/audioNarrationContext";
 import VideoGenerationSetupSection from "./VideoGenerationSetupSection";
+import VideoClipDraftSection, { type SceneVideoOption } from "./VideoClipDraftSection";
 import { getVideoGenerationProviderStatus } from "@/lib/videoGenerationConfig";
-import { getVideoGenerationReadinessForEpisode } from "@/lib/videoGenerationContext";
+import { getVideoGenerationReadinessForEpisode, buildSceneVideoGenerationContext } from "@/lib/videoGenerationContext";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
@@ -569,6 +570,39 @@ export default async function EpisodeDetailPage({
     videoProviderStatus.configured
   );
 
+  // Scene video options for VideoClipDraftSection (Phase 14B)
+  const refBySceneNumber = new Map(
+    episodeRefPackages.scenePackages.map((pkg) => [pkg.sceneNumber, pkg])
+  );
+  const sceneVideoOptions: SceneVideoOption[] = activeScenes.map((scene, i) => {
+    const num = typeof scene.sceneNumber === "number" ? scene.sceneNumber : i + 1;
+    const sceneId = str(scene.sceneId);
+    const title = str(scene.title);
+    const existingPrompt = str(scene.animationPromptDraft);
+    const animationPrompt =
+      existingPrompt ||
+      buildDeterministicAnimationPrompt({
+        sceneNum: num,
+        title,
+        characters: strArr(scene.characters),
+        setting: str(raw.setting),
+        tone: str(raw.tone),
+        emotionalBeat: str(scene.emotionalBeat),
+        visualNotes: str(scene.visualNotes),
+      });
+    const scenePkg = refBySceneNumber.get(num);
+    const sceneCtx = buildSceneVideoGenerationContext(scene, scenePkg);
+    return {
+      sceneNumber: num,
+      sceneId,
+      title,
+      animationPrompt,
+      hasAnimationPrompt: sceneCtx.hasAnimationPrompt,
+      hasCharacterReferences: sceneCtx.hasCharacterReferences,
+      approvedReferenceCount: sceneCtx.approvedReferenceCount,
+    };
+  });
+
   // Extract existing attached narration audio from episode JSON (Phase 13E)
   const existingAudioNarration: EpisodeAudioNarration | null = (() => {
     const an = raw.audioNarration;
@@ -701,6 +735,15 @@ export default async function EpisodeDetailPage({
         <VideoGenerationSetupSection
           providerStatus={videoProviderStatus}
           readiness={videoReadiness}
+        />
+
+        {/* ── Temporary Video Clip Draft ── */}
+        <VideoClipDraftSection
+          episodeSlug={normalised.slug}
+          providerConfigured={videoProviderStatus.configured}
+          providerLabel={videoProviderStatus.providerLabel}
+          sceneOptions={sceneVideoOptions}
+          videoReadiness={videoReadiness}
         />
 
         {/* ── Media Planning ── */}

@@ -58,5 +58,6 @@ export const config = {
     "/api/audio-narration/upload-approved-draft",
     "/api/github/attach-narration-audio",
     "/api/github/update-narration-audio-visibility",
+    "/api/video-generation/generate-draft",
   ],
 };
