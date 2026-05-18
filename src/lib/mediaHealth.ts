@@ -611,6 +611,40 @@ function buildEpisodeIssues(
     }
   }
 
+  // ── Audio / narration readiness checks (info/warning only — not a blocker yet) ──
+  const scenesWithReadAloudText = activeScenes.filter((scene) => {
+    const voiceoverNotes = Array.isArray(scene.voiceoverNotes)
+      ? (scene.voiceoverNotes as unknown[]).filter((x): x is string => typeof x === "string").join(" ").trim()
+      : typeof scene.voiceoverNotes === "string" ? (scene.voiceoverNotes as string).trim() : "";
+    const dialogueDraft = Array.isArray(scene.dialogueDraft)
+      ? (scene.dialogueDraft as unknown[]).filter((x): x is string => typeof x === "string").join(" ").trim()
+      : typeof scene.dialogueDraft === "string" ? (scene.dialogueDraft as string).trim() : "";
+    return voiceoverNotes.length > 0 || dialogueDraft.length > 0 || str(scene.summary).length > 0;
+  }).length;
+  const scenesMissingReadAloud = activeScenes.length - scenesWithReadAloudText;
+
+  if (activeScenes.length > 0 && scenesWithReadAloudText === 0) {
+    issues.push({
+      id: `ep-${episodeSlug}-no-read-aloud-text`,
+      scope: "episode",
+      severity: "info",
+      title: `"${episodeTitle}": No read-aloud or script text`,
+      message: `Episode "${episodeTitle}" has no voiceover notes, dialogue, or summaries. Future audio narration will have no script source.`,
+      episodeSlug,
+      suggestedAction: "Add voiceoverNotes or dialogueDraft to scenes, or write scene summaries",
+    });
+  } else if (scenesMissingReadAloud > 0) {
+    issues.push({
+      id: `ep-${episodeSlug}-partial-read-aloud-text`,
+      scope: "episode",
+      severity: "info",
+      title: `"${episodeTitle}": ${scenesMissingReadAloud} scene${scenesMissingReadAloud !== 1 ? "s" : ""} missing read-aloud text`,
+      message: `${scenesMissingReadAloud} of ${activeScenes.length} active scenes in "${episodeTitle}" have no voiceover notes, dialogue, or summary for narration.`,
+      episodeSlug,
+      suggestedAction: "Add voiceoverNotes or dialogueDraft to scenes without script text",
+    });
+  }
+
   return issues;
 }
 

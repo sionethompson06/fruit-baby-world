@@ -22,11 +22,14 @@ import StoryPanelAssetManifest from "./StoryPanelManifestSection";
 import AnimationClipManifestPreview from "./AnimationClipManifestSection";
 import AnimationPromptBuilder, { buildDeterministicAnimationPrompt } from "./AnimationPromptBuilderSection";
 import ReadAloudPromptBuilder from "./ReadAloudPromptBuilderSection";
+import AudioNarrationSetupSection from "./AudioNarrationSetupSection";
 import SavedStoryPanelAssetLibrary from "./SavedStoryPanelAssetsSection";
 import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
 import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
 import EpisodePublishReadinessSection from "./EpisodePublishReadinessSection";
 import { buildEpisodePublishReadiness } from "@/lib/episodePublishReadiness";
+import { getAudioNarrationProviderStatus } from "@/lib/audioNarrationConfig";
+import { getNarrationReadinessForEpisode } from "@/lib/audioNarrationContext";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
@@ -538,6 +541,9 @@ export default async function EpisodeDetailPage({
     sceneRefPackages: episodeRefPackages.scenePackages,
   });
 
+  const narrationProviderStatus = getAudioNarrationProviderStatus();
+  const narrationReadiness = getNarrationReadinessForEpisode(raw);
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -660,6 +666,12 @@ export default async function EpisodeDetailPage({
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
         <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+
+        {/* ── Audio Narration Setup ── */}
+        <AudioNarrationSetupSection
+          providerStatus={narrationProviderStatus}
+          readiness={narrationReadiness}
+        />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">
