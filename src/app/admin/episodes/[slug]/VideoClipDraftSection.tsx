@@ -42,11 +42,21 @@ type DraftResult =
       ok: true;
       status: "video_draft_generated";
       provider: string;
+      modelId: string;
       videoStyle: string;
       durationSeconds: number;
       draft: { id: string; videoUrl: string; thumbnailUrl: string | null; providerJobId: string; mimeType: string };
+      referenceMode: string;
       videoGenerationPackage: VideoClipGenerationPackage;
       warnings: string[];
+      notes: string[];
+    }
+  | {
+      ok: true;
+      status: "video_draft_requested";
+      provider: string;
+      providerJobId: string;
+      message: string;
       notes: string[];
     }
   | {
@@ -55,6 +65,8 @@ type DraftResult =
       message: string;
       provider?: string;
       missing?: string[];
+      providerMessage?: string;
+      troubleshooting?: string[];
     };
 
 // ─── Video style labels ───────────────────────────────────────────────────────
@@ -283,7 +295,7 @@ export default function VideoClipDraftSection({
           )}
           {providerConfigured && (
             <span className="text-xs text-tiki-brown/50">
-              Configured — generation package will be prepared. Provider execution not yet active.
+              Configured — temporary draft generation is active.
             </span>
           )}
         </div>
@@ -405,7 +417,7 @@ export default function VideoClipDraftSection({
               : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
           }`}
         >
-          {running ? "Preparing Package…" : "Generate Temporary Video Draft"}
+          {running ? "Generating — this may take 1-2 min…" : "Generate Temporary Video Draft"}
         </button>
 
         {!providerConfigured && (
@@ -426,8 +438,10 @@ export default function VideoClipDraftSection({
       {/* Result */}
       {result && (
         <div className="flex flex-col gap-3">
-          {/* Error results */}
-          {!result.ok && result.status !== "not_implemented_yet" && (
+
+          {/* Generic error results (validation, setup, not found) */}
+          {!result.ok && result.status !== "not_implemented_yet" &&
+            result.status !== "provider_error" && result.status !== "provider_timeout" && (
             <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
               <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">
                 {result.status.replace(/_/g, " ")}
@@ -437,6 +451,29 @@ export default function VideoClipDraftSection({
                 <div className="mt-2 flex flex-col gap-0.5">
                   {result.missing.map((v, i) => (
                     <p key={i} className="text-xs font-mono text-tiki-brown/55">{v}=</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Provider error */}
+          {!result.ok && (result.status === "provider_error" || result.status === "provider_timeout") && (
+            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
+              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide">
+                {result.status === "provider_timeout" ? "Generation Timed Out" : "Provider Error"}
+              </p>
+              <p className="text-xs text-tiki-brown/70 leading-relaxed">{result.message}</p>
+              {"providerMessage" in result && result.providerMessage && (
+                <p className="text-xs font-mono text-tiki-brown/55 bg-tiki-brown/3 rounded-lg px-2 py-1">
+                  {result.providerMessage}
+                </p>
+              )}
+              {"troubleshooting" in result && Array.isArray(result.troubleshooting) && result.troubleshooting.length > 0 && (
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">Troubleshooting</p>
+                  {result.troubleshooting.map((t, i) => (
+                    <p key={i} className="text-xs text-tiki-brown/60 leading-snug">• {t}</p>
                   ))}
                 </div>
               )}
@@ -461,6 +498,25 @@ export default function VideoClipDraftSection({
             </div>
           )}
 
+          {/* Job accepted — polling not yet implemented */}
+          {result.ok && result.status === "video_draft_requested" && (
+            <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-3 flex flex-col gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+                  Generation Requested
+                </span>
+                <span className="text-xs text-tiki-brown/50">Job accepted — no URL yet</span>
+              </div>
+              <p className="text-xs text-tiki-brown/70 leading-relaxed">{result.message}</p>
+              <p className="text-xs font-mono text-tiki-brown/55 bg-tiki-brown/3 rounded-lg px-2 py-1 break-all">
+                Job ID: {result.providerJobId}
+              </p>
+              {result.notes.map((n, i) => (
+                <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
+              ))}
+            </div>
+          )}
+
           {/* Successful video draft */}
           {result.ok && result.status === "video_draft_generated" && (
             <div className="flex flex-col gap-3">
@@ -468,7 +524,8 @@ export default function VideoClipDraftSection({
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green uppercase tracking-wide">
                   Video Draft Generated
                 </span>
-                <span className="text-xs text-tiki-brown/50">Temporary — not saved</span>
+                <span className="text-xs text-tiki-brown/50">Temporary — not saved or public</span>
+                <span className="text-xs text-tiki-brown/40">Provider: {result.provider} · Model: {result.modelId}</span>
               </div>
               <video
                 src={result.draft.videoUrl}
@@ -486,43 +543,45 @@ export default function VideoClipDraftSection({
               />
             </div>
           )}
+
         </div>
       )}
 
-      {/* Fidelity review — shown whenever a result (package or video) is available */}
-      {result && selectedSceneNumber !== "" &&
-        (!result.ok ? result.status === "not_implemented_yet" : result.status === "video_draft_generated") && (() => {
-          const reviewData = sceneReviewData[selectedSceneNumber as number];
-          if (!reviewData) return null;
-          const pkg =
-            !result.ok && result.status === "not_implemented_yet"
-              ? result.videoGenerationPackage
-              : result.ok && result.status === "video_draft_generated"
-              ? result.videoGenerationPackage
-              : null;
-          if (!pkg) return null;
-          const draftInfo =
-            !result.ok && result.status === "not_implemented_yet"
-              ? ({ kind: "not_implemented_yet", provider: result.provider, pkg } as const)
-              : result.ok && result.status === "video_draft_generated"
-              ? ({
-                  kind: "video_draft_generated",
-                  videoUrl: result.draft.videoUrl,
-                  provider: result.provider,
-                  videoStyle: result.videoStyle,
-                  durationSeconds: result.durationSeconds,
-                  pkg,
-                } as const)
-              : null;
-          if (!draftInfo) return null;
-          return (
-            <VideoClipFidelityReviewSection
-              reviewData={reviewData}
-              draft={draftInfo}
-            />
-          );
-        })()
-      }
+      {/* Fidelity review — shown whenever a package or video result is available */}
+      {result && selectedSceneNumber !== "" && (() => {
+        const reviewData = sceneReviewData[selectedSceneNumber as number];
+        if (!reviewData) return null;
+
+        let draftInfo:
+          | { kind: "not_implemented_yet"; provider: string; pkg: VideoClipGenerationPackage }
+          | { kind: "video_draft_generated"; videoUrl: string; provider: string; videoStyle: string; durationSeconds: number; pkg: VideoClipGenerationPackage }
+          | { kind: "video_draft_requested"; providerJobId: string; provider: string; pkg: VideoClipGenerationPackage }
+          | null = null;
+
+        if (!result.ok && result.status === "not_implemented_yet") {
+          draftInfo = { kind: "not_implemented_yet", provider: result.provider, pkg: result.videoGenerationPackage };
+        } else if (result.ok && result.status === "video_draft_generated") {
+          draftInfo = {
+            kind: "video_draft_generated",
+            videoUrl: result.draft.videoUrl,
+            provider: result.provider,
+            videoStyle: result.videoStyle,
+            durationSeconds: result.durationSeconds,
+            pkg: result.videoGenerationPackage,
+          };
+        } else if (result.ok && result.status === "video_draft_requested") {
+          // No pkg available for job-only result — fidelity review not shown
+          return null;
+        }
+
+        if (!draftInfo) return null;
+        return (
+          <VideoClipFidelityReviewSection
+            reviewData={reviewData}
+            draft={draftInfo}
+          />
+        );
+      })()}
 
     </div>
   );
