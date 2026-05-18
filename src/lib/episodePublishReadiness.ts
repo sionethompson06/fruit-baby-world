@@ -12,6 +12,8 @@ import {
 import {
   getAttachedPanelForScene,
   sceneHasApprovedStoryPanel,
+  sceneHasPublicStoryPanel,
+  getHiddenPanelsForScene,
 } from "@/lib/storyPanelCoverage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -33,6 +35,7 @@ export type SceneReadiness = {
   characters: string[];
   isArchived: boolean;
   hasPanel: boolean;
+  panelIsHidden: boolean;
   panelHasValidUrl: boolean;
   panelHasAltText: boolean;
   panelHasCaption: boolean;
@@ -109,7 +112,11 @@ function buildSceneReadiness(
   const archived = isSceneArchived(scene);
 
   const panel = getAttachedPanelForScene(scene, raw);
-  const hasPanel = sceneHasApprovedStoryPanel(scene, raw);
+  const panelIsHidden =
+    panel !== undefined &&
+    getHiddenPanelsForScene(scene, raw).length > 0 &&
+    !sceneHasPublicStoryPanel(scene, raw);
+  const hasPanel = sceneHasPublicStoryPanel(scene, raw);
   const asset = panel && isRecord(panel.asset) ? panel.asset : null;
   const assetUrl = asset ? str(asset.url) : "";
   const panelHasValidUrl = hasPanel && isValidUrl(assetUrl);
@@ -129,7 +136,9 @@ function buildSceneReadiness(
     if (!sceneId) blockers.push("Missing scene ID");
     if (!sceneTitle && !str(scene.summary)) blockers.push("Missing title and summary");
     if (characters.length === 0) blockers.push("No characters assigned");
-    if (!hasPanel) {
+    if (panelIsHidden) {
+      blockers.push("Story panel is hidden from public");
+    } else if (!hasPanel) {
       blockers.push("Missing approved story panel");
     } else if (!panelHasValidUrl) {
       blockers.push("Panel has invalid or missing image URL");
@@ -146,6 +155,7 @@ function buildSceneReadiness(
     characters,
     isArchived: archived,
     hasPanel,
+    panelIsHidden,
     panelHasValidUrl,
     panelHasAltText,
     panelHasCaption,
@@ -299,7 +309,19 @@ export function buildEpisodePublishReadiness(
         : undefined,
   });
 
-  // 7. Valid panel URLs
+  // 7. Hidden panels
+  const hiddenPanelCount = activeReadiness.filter((s) => s.panelIsHidden).length;
+  if (hiddenPanelCount > 0) {
+    checklist.push({
+      id: "no-hidden-panels",
+      label: "No active scenes have hidden story panels",
+      status: "fail",
+      message: `${hiddenPanelCount} scene${hiddenPanelCount !== 1 ? "s" : ""} ${hiddenPanelCount !== 1 ? "have" : "has"} a story panel hidden from public display.`,
+      suggestedAction: "Restore the hidden panel(s) or attach a replacement panel in the Saved Story Panel Assets section.",
+    });
+  }
+
+  // 8. Valid panel URLs (only non-hidden panels counted above)
   const invalidUrlCount = activeReadiness.filter(
     (s) => s.hasPanel && !s.panelHasValidUrl
   ).length;
@@ -415,7 +437,31 @@ export function buildEpisodePublishReadiness(
     });
   }
 
-  // 14. Archived scenes with panels
+  // 14. Read-aloud / narration text (warning only — audio not required for publish)
+  const scenesWithVoiceover = activeReadiness.filter((s) => {
+    const scene = allScenes.find(
+      (sc) =>
+        (typeof sc.sceneNumber === "number" && sc.sceneNumber === s.sceneNumber) ||
+        (str(sc.sceneId) && str(sc.sceneId) === s.sceneId)
+    );
+    if (!scene) return false;
+    const voiceoverNotes = Array.isArray(scene.voiceoverNotes)
+      ? (scene.voiceoverNotes as unknown[]).filter((x): x is string => typeof x === "string").join(" ").trim()
+      : typeof scene.voiceoverNotes === "string" ? (scene.voiceoverNotes as string).trim() : "";
+    return voiceoverNotes.length > 0 || Boolean(str(scene.summary));
+  }).length;
+  const scenesMissingVoiceover = activeReadiness.length - scenesWithVoiceover;
+  if (scenesMissingVoiceover > 0 && activeReadiness.length > 0) {
+    checklist.push({
+      id: "narration-read-aloud-text",
+      label: "Scenes have read-aloud text or voiceover notes",
+      status: "warning",
+      message: `${scenesMissingVoiceover} scene${scenesMissingVoiceover !== 1 ? "s" : ""} missing read-aloud text. Audio narration will not be available for these scenes.`,
+      suggestedAction: "Add voiceoverNotes or a summary to scenes before generating narration.",
+    });
+  }
+
+  // 15. Archived scenes with panels
   if (archivedWithPanels.length > 0) {
     checklist.push({
       id: "archived-scenes-panel-review",

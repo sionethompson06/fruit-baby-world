@@ -5,7 +5,11 @@
 import type { Character } from "@/lib/content";
 import type { ReferenceAsset } from "@/lib/referenceAssetLoader";
 import { getActiveEpisodeScenes, getEpisodeScenes, isSceneArchived } from "@/lib/episodeScenes";
-import { sceneHasApprovedStoryPanel } from "@/lib/storyPanelCoverage";
+import {
+  sceneHasApprovedStoryPanel,
+  sceneHasPublicStoryPanel,
+  getHiddenPanelsForScene,
+} from "@/lib/storyPanelCoverage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -576,7 +580,22 @@ function buildEpisodeIssues(
       }
     }
 
-    if (!sceneHasApprovedStoryPanel(scene, raw)) {
+    const hiddenPanels = getHiddenPanelsForScene(scene, raw);
+    const hasPublicPanel = sceneHasPublicStoryPanel(scene, raw);
+    const hasAnyPanel = sceneHasApprovedStoryPanel(scene, raw) || hiddenPanels.length > 0;
+
+    if (hiddenPanels.length > 0 && !hasPublicPanel) {
+      issues.push({
+        id: `ep-${episodeSlug}-scene-${sceneNum}-panel-hidden`,
+        scope: "story-panel",
+        severity: "warning",
+        title: `"${episodeTitle}" Scene ${sceneNum}: Story panel is hidden`,
+        message: `Scene ${sceneNum} (${sceneTitle}) has a story panel that is hidden from public display. The scene will appear without a panel.`,
+        episodeSlug,
+        sceneId: sceneId || undefined,
+        suggestedAction: "Restore the panel or attach a new one in Saved Story Panel Assets",
+      });
+    } else if (!hasAnyPanel) {
       issues.push({
         id: `ep-${episodeSlug}-scene-${sceneNum}-no-panel`,
         scope: "story-panel",
@@ -590,6 +609,40 @@ function buildEpisodeIssues(
         suggestedAction: "Generate and attach a story panel for this scene",
       });
     }
+  }
+
+  // ── Audio / narration readiness checks (info/warning only — not a blocker yet) ──
+  const scenesWithReadAloudText = activeScenes.filter((scene) => {
+    const voiceoverNotes = Array.isArray(scene.voiceoverNotes)
+      ? (scene.voiceoverNotes as unknown[]).filter((x): x is string => typeof x === "string").join(" ").trim()
+      : typeof scene.voiceoverNotes === "string" ? (scene.voiceoverNotes as string).trim() : "";
+    const dialogueDraft = Array.isArray(scene.dialogueDraft)
+      ? (scene.dialogueDraft as unknown[]).filter((x): x is string => typeof x === "string").join(" ").trim()
+      : typeof scene.dialogueDraft === "string" ? (scene.dialogueDraft as string).trim() : "";
+    return voiceoverNotes.length > 0 || dialogueDraft.length > 0 || str(scene.summary).length > 0;
+  }).length;
+  const scenesMissingReadAloud = activeScenes.length - scenesWithReadAloudText;
+
+  if (activeScenes.length > 0 && scenesWithReadAloudText === 0) {
+    issues.push({
+      id: `ep-${episodeSlug}-no-read-aloud-text`,
+      scope: "episode",
+      severity: "info",
+      title: `"${episodeTitle}": No read-aloud or script text`,
+      message: `Episode "${episodeTitle}" has no voiceover notes, dialogue, or summaries. Future audio narration will have no script source.`,
+      episodeSlug,
+      suggestedAction: "Add voiceoverNotes or dialogueDraft to scenes, or write scene summaries",
+    });
+  } else if (scenesMissingReadAloud > 0) {
+    issues.push({
+      id: `ep-${episodeSlug}-partial-read-aloud-text`,
+      scope: "episode",
+      severity: "info",
+      title: `"${episodeTitle}": ${scenesMissingReadAloud} scene${scenesMissingReadAloud !== 1 ? "s" : ""} missing read-aloud text`,
+      message: `${scenesMissingReadAloud} of ${activeScenes.length} active scenes in "${episodeTitle}" have no voiceover notes, dialogue, or summary for narration.`,
+      episodeSlug,
+      suggestedAction: "Add voiceoverNotes or dialogueDraft to scenes without script text",
+    });
   }
 
   return issues;
@@ -655,7 +708,7 @@ export function buildMediaHealthReport(
   const episodeRows: EpisodeHealthRow[] = episodes.map((ep) => {
     const activeScenes = getActiveEpisodeScenes(ep.raw);
     const scenesWithPanels = activeScenes.filter((s) =>
-      sceneHasApprovedStoryPanel(s, ep.raw)
+      sceneHasPublicStoryPanel(s, ep.raw)
     ).length;
 
     const media = isRecord(ep.raw.media) ? ep.raw.media : null;

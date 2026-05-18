@@ -22,11 +22,18 @@ import StoryPanelAssetManifest from "./StoryPanelManifestSection";
 import AnimationClipManifestPreview from "./AnimationClipManifestSection";
 import AnimationPromptBuilder, { buildDeterministicAnimationPrompt } from "./AnimationPromptBuilderSection";
 import ReadAloudPromptBuilder from "./ReadAloudPromptBuilderSection";
+import AudioNarrationSetupSection from "./AudioNarrationSetupSection";
+import AudioNarrationDraftSection from "./AudioNarrationDraftSection";
 import SavedStoryPanelAssetLibrary from "./SavedStoryPanelAssetsSection";
 import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
 import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
 import EpisodePublishReadinessSection from "./EpisodePublishReadinessSection";
 import { buildEpisodePublishReadiness } from "@/lib/episodePublishReadiness";
+import { getAudioNarrationProviderStatus, getDefaultVoiceId } from "@/lib/audioNarrationConfig";
+import {
+  getNarrationReadinessForEpisode,
+  buildNarrationScriptDraftFromEpisode,
+} from "@/lib/audioNarrationContext";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
@@ -538,6 +545,17 @@ export default async function EpisodeDetailPage({
     sceneRefPackages: episodeRefPackages.scenePackages,
   });
 
+  const narrationProviderStatus = getAudioNarrationProviderStatus();
+  const narrationReadiness = getNarrationReadinessForEpisode(raw);
+  const narrationScriptDraft = buildNarrationScriptDraftFromEpisode(raw);
+  const initialNarrationScript = narrationScriptDraft.scenes
+    .filter((s) => !s.scriptLine.startsWith("[Scene "))
+    .map((s) =>
+      s.title ? `Scene ${s.sceneNumber} — ${s.title}:\n${s.scriptLine}` : s.scriptLine
+    )
+    .join("\n\n");
+  const defaultVoiceId = getDefaultVoiceId();
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -621,6 +639,21 @@ export default async function EpisodeDetailPage({
           slug={normalised.slug}
           approvedForSave={normalised.approvedForSave}
           isAlreadyPublished={isAlreadyPublished}
+        />
+
+        {/* ── Audio Narration Setup ── */}
+        <AudioNarrationSetupSection
+          providerStatus={narrationProviderStatus}
+          readiness={narrationReadiness}
+        />
+
+        {/* ── Audio Narration Draft Generator ── */}
+        <AudioNarrationDraftSection
+          episodeSlug={slug}
+          initialScript={initialNarrationScript}
+          providerConfigured={narrationProviderStatus.configured}
+          defaultVoiceId={defaultVoiceId}
+          hasTiki={tikiFlagged}
         />
 
         {/* ── Media Planning ── */}
