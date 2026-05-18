@@ -66,6 +66,7 @@ import {
   getFidelityWarnings,
 } from "@/lib/storyPanelFidelityReview";
 import { buildReferenceAwareStoryPanelPrompt } from "@/lib/storyPanelPromptBuilder";
+import EpisodeCommandCenterSection from "./EpisodeCommandCenterSection";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -204,6 +205,28 @@ function Callout({
     <div className={`flex items-start gap-3 border rounded-2xl px-4 py-3 ${className}`}>
       <span className="text-lg flex-shrink-0">{icon}</span>
       <p className="text-sm text-tiki-brown/70 leading-relaxed">{children}</p>
+    </div>
+  );
+}
+
+// ─── Section group header ────────────────────────────────────────────────────────────────────────
+
+function SectionGroupHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: string;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="flex items-start gap-2.5 border-b border-tiki-brown/10 pb-3">
+      <span className="text-lg flex-shrink-0">{icon}</span>
+      <div>
+        <h2 className="text-sm font-black text-tiki-brown uppercase tracking-wide">{title}</h2>
+        {subtitle && <p className="text-xs text-tiki-brown/50 mt-0.5">{subtitle}</p>}
+      </div>
     </div>
   );
 }
@@ -658,6 +681,10 @@ export default async function EpisodeDetailPage({
     } satisfies EpisodeAudioNarration;
   })();
 
+  // Command center derived values
+  const totalVideoClips = attachedVideoClipScenes.reduce((sum, s) => sum + s.videoClips.length, 0);
+  const hasAudio = existingAudioNarration !== null;
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -723,399 +750,387 @@ export default async function EpisodeDetailPage({
           </div>
         )}
 
-        {/* ── Public Status ── */}
-        <PublicStatusCard
+        {/* ── A. Episode Command Center ── */}
+        <EpisodeCommandCenterSection
           normalised={normalised}
-          reviewObj={reviewObj}
-          publishingObj={publishingObj}
+          publishReadiness={publishReadiness}
+          panelCoverage={panelCoverage}
+          hasAudio={hasAudio}
+          totalVideoClips={totalVideoClips}
         />
 
-        {/* ── Episode Publish Readiness ── */}
-        <EpisodePublishReadinessSection readiness={publishReadiness} />
+        {/* ── Section Navigation ── */}
+        <nav aria-label="Production sections" className="flex flex-wrap gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-4 py-3 shadow-sm">
+          {[
+            { href: "#story", label: "Story" },
+            { href: "#picture-panels", label: "Picture Panels" },
+            { href: "#audio-story", label: "Audio" },
+            { href: "#animated-clips", label: "Video" },
+            { href: "#publish-readiness", label: "Publish" },
+            { href: "#advanced-tools", label: "Advanced" },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/5 text-tiki-brown/60 hover:bg-ube-purple/10 hover:text-ube-purple transition-colors uppercase tracking-wide"
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
 
-        {/* ── Publish Readiness Checklist ── */}
-        <PublishReadinessChecklist />
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* B. STORY OVERVIEW & SCENES                                        */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="story" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="📖" title="Story Overview & Scenes" subtitle="Episode details, scenes, and story structure." />
 
-        {/* ── Publish-Ready Action ── */}
-        <PublishReadyAction
-          slug={normalised.slug}
-          approvedForSave={normalised.approvedForSave}
-          isAlreadyPublished={isAlreadyPublished}
-        />
-
-        {/* ── Audio Narration Setup ── */}
-        <AudioNarrationSetupSection
-          providerStatus={narrationProviderStatus}
-          readiness={narrationReadiness}
-        />
-
-        {/* ── Audio Narration Draft Generator ── */}
-        <AudioNarrationDraftSection
-          episodeSlug={slug}
-          initialScript={initialNarrationScript}
-          providerConfigured={narrationProviderStatus.configured}
-          defaultVoiceId={defaultVoiceId}
-          defaultModelId={defaultModelId}
-          hasTiki={tikiFlagged}
-          existingAudioNarration={existingAudioNarration}
-        />
-
-        {/* ── Video Generation Setup ── */}
-        <VideoGenerationSetupSection
-          providerStatus={videoProviderStatus}
-          readiness={videoReadiness}
-        />
-
-        {/* ── Temporary Video Clip Draft + Fidelity Review ── */}
-        <VideoClipDraftSection
-          episodeSlug={normalised.slug}
-          providerConfigured={videoProviderStatus.configured}
-          providerLabel={videoProviderStatus.providerLabel}
-          sceneOptions={sceneVideoOptions}
-          videoReadiness={videoReadiness}
-          sceneReviewData={sceneReviewData}
-        />
-
-        {/* ── Attached Video Clips ── */}
-        <AttachedVideoClipsSection scenes={attachedVideoClipScenes} />
-
-        {/* ── Media Planning ── */}
-        <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
-
-        {/* ── Media Production Overview ── */}
-        <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} episodeRefSummary={episodeRefPackages} />
-
-        {/* ── Reference Asset Packages ── */}
-        <ReferencePackagePreviewSection summary={episodeRefPackages} />
-
-        {/* ── Story Panel Prompt Builder ── */}
-        <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-
-        {/* ── Batch Missing Panel Drafts ── */}
-        <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
-
-        {/* ── Story Panel Asset Manifest Preview ── */}
-        <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
-
-        {/* ── Saved Story Panel Asset Library ── */}
-        <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
-
-        {/* ── Animation Prompt Builder ── */}
-        <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-
-        {/* ── Animation Route Test ── */}
-        <AnimationRouteTestPanel
-          episodeSlug={normalised.slug}
-          tikiFlagged={tikiFlagged}
-          scenes={sceneOptions}
-          featuredCharacters={normalised.featuredCharacters}
-        />
-
-        {/* ── Animation Clip Asset Manifest Preview ── */}
-        <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
-
-        {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
-        <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-
-        {/* ── A. Episode Overview ── */}
-        <Section title="Episode Overview">
-          <dl className="flex flex-col gap-2">
-            <MetaRow label="Lesson" value={normalised.lesson} />
-            <MetaRow label="Setting" value={normalised.setting} />
-            <MetaRow label="Tone" value={normalised.tone} />
-            <MetaRow label="Age Range" value={normalised.targetAgeRange} />
-            <MetaRow label="Status" value={normalised.status} />
-            <MetaRow label="Production" value={normalised.productionStatus} />
-            {str(raw.storyNotes) && <MetaRow label="Story Notes" value={str(raw.storyNotes)} />}
-            {str(raw.createdIn) && <MetaRow label="Created In" value={str(raw.createdIn)} />}
-            {normalised.updatedAt && (
-              <MetaRow
-                label="Updated"
-                value={new Date(normalised.updatedAt).toLocaleString("en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              />
-            )}
-            {normalised.createdAt && !normalised.updatedAt && (
-              <MetaRow
-                label="Created"
-                value={new Date(normalised.createdAt).toLocaleString("en-US", {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              />
-            )}
-          </dl>
-
-          {normalised.shortDescription && (
-            <div>
-              <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                Description
-              </p>
-              <p className="text-sm text-tiki-brown/75 leading-relaxed">
-                {normalised.shortDescription}
-              </p>
-            </div>
-          )}
-
-          {str(raw.episodeSummary) && str(raw.episodeSummary) !== normalised.shortDescription && (
-            <div>
-              <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                Episode Summary
-              </p>
-              <p className="text-sm text-tiki-brown/75 leading-relaxed">{str(raw.episodeSummary)}</p>
-            </div>
-          )}
-
-          {normalised.featuredCharacters.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-2">
-                Featured Characters
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {normalised.featuredCharacters.map((c) => (
-                  <span
-                    key={c}
-                    className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple"
-                  >
-                    {c}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </Section>
-
-        {/* ── B. Review Status ── */}
-        {reviewObj && (
-          <Section title="Review Status">
+          {/* Episode Overview */}
+          <Section title="Episode Overview">
             <dl className="flex flex-col gap-2">
-              <MetaRow label="Status" value={str(reviewObj.status)} />
-              <MetaRow label="Approved for Save" value={String(Boolean(reviewObj.approvedForSave))} />
-              <MetaRow label="Requires Human Review" value={String(Boolean(reviewObj.requiresHumanReview))} />
-            </dl>
-            {str(reviewObj.notes) && (
-              <div className="bg-pineapple-yellow/15 rounded-xl px-4 py-3">
-                <p className="text-xs font-bold text-tiki-brown mb-0.5">Review Notes</p>
-                <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(reviewObj.notes)}</p>
-              </div>
-            )}
-            {Array.isArray(reviewObj.checkedFidelityItems) && reviewObj.checkedFidelityItems.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-2">
-                  Checked Fidelity Items
-                </p>
-                <StringList items={strArr(reviewObj.checkedFidelityItems)} />
-              </div>
-            )}
-          </Section>
-        )}
-
-        {/* ── C. Publishing Status ── */}
-        {publishingObj && (
-          <Section title="Publishing Status">
-            <dl className="flex flex-col gap-2">
-              <MetaRow label="Public Status" value={str(publishingObj.publicStatus)} />
-              <MetaRow label="Ready for Public Site" value={String(Boolean(publishingObj.readyForPublicSite))} />
-            </dl>
-            <Callout icon="🔒">
-              This draft is not published. It will not appear on the public site unless it is
-              explicitly marked ready and published in a future phase.
-            </Callout>
-          </Section>
-        )}
-
-        {/* ── D. Source Storyboard ── */}
-        {sourceStoryboard && (
-          <Section title="Source Storyboard">
-            <dl className="flex flex-col gap-2">
-              <MetaRow label="Title" value={str(sourceStoryboard.title)} />
-              <MetaRow label="Lesson" value={str(sourceStoryboard.lesson)} />
-              <MetaRow label="Setting" value={str(sourceStoryboard.setting)} />
-              <MetaRow label="Tone" value={str(sourceStoryboard.tone)} />
-              <MetaRow label="Age Range" value={str(sourceStoryboard.targetAgeRange)} />
-            </dl>
-            {str(sourceStoryboard.shortDescription) && (
-              <p className="text-sm text-tiki-brown/70 leading-relaxed">
-                {str(sourceStoryboard.shortDescription)}
-              </p>
-            )}
-            {str(sourceStoryboard.storyNotes) && (
-              <div>
-                <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                  Story Notes
-                </p>
-                <p className="text-sm text-tiki-brown/65 leading-relaxed italic">
-                  {str(sourceStoryboard.storyNotes)}
-                </p>
-              </div>
-            )}
-            {sourceScenes.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
-                  Original Scenes ({sourceScenes.length})
-                </p>
-                {sourceScenes.map((scene, i) => (
-                  <SceneCard key={i} scene={scene} index={i} />
-                ))}
-              </div>
-            )}
-          </Section>
-        )}
-
-        {/* ── E. Scene Breakdown ── */}
-        {scenes.length > 0 && (
-          <Section title={`Scene Breakdown (${scenes.length} scene${scenes.length !== 1 ? "s" : ""})`}>
-            {scenes.some((s) => str(s.status) === "archived") && (
-              <p className="text-xs text-tiki-brown/45 leading-relaxed">
-                Archived scenes are shown with muted styling and are excluded from active
-                generation tools.
-              </p>
-            )}
-            <div className="flex flex-col gap-4">
-              {scenes.map((scene, i) => (
-                <SceneCard
-                  key={i}
-                  scene={scene}
-                  index={i}
-                  isArchived={str(scene.status) === "archived"}
+              <MetaRow label="Lesson" value={normalised.lesson} />
+              <MetaRow label="Setting" value={normalised.setting} />
+              <MetaRow label="Tone" value={normalised.tone} />
+              <MetaRow label="Age Range" value={normalised.targetAgeRange} />
+              <MetaRow label="Status" value={normalised.status} />
+              <MetaRow label="Production" value={normalised.productionStatus} />
+              {str(raw.storyNotes) && <MetaRow label="Story Notes" value={str(raw.storyNotes)} />}
+              {str(raw.createdIn) && <MetaRow label="Created In" value={str(raw.createdIn)} />}
+              {normalised.updatedAt && (
+                <MetaRow
+                  label="Updated"
+                  value={new Date(normalised.updatedAt).toLocaleString("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
                 />
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {/* ── Add Scene to Episode ── */}
-        <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined} />
-
-        {/* ── Edit Scene ── */}
-        <EditSceneSection
-          episodeSlug={normalised.slug}
-          scenes={sceneForEditList}
-          savedPanelSceneNumbers={savedPanelSceneNumbers}
-          characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined}
-        />
-
-        {/* ── Archive / Restore Scene ── */}
-        <ArchiveSceneSection
-          episodeSlug={normalised.slug}
-          scenes={sceneForArchiveList}
-          savedPanelSceneNumbers={savedPanelSceneNumbers}
-        />
-
-        {/* ── Scene ID Stability ── */}
-        <SceneIdStabilitySection
-          episodeSlug={normalised.slug}
-          totalScenes={sceneIdStats.totalScenes}
-          scenesWithId={sceneIdStats.scenesWithId}
-          totalPanels={sceneIdStats.totalPanels}
-          panelsWithId={sceneIdStats.panelsWithId}
-          totalClips={sceneIdStats.totalClips}
-          clipsWithId={sceneIdStats.clipsWithId}
-        />
-
-        {/* ── F. Dialogue Draft (top-level) ── */}
-        {topDialogue.length > 0 && (
-          <Section title="Dialogue Draft">
-            <StringList items={topDialogue} />
-          </Section>
-        )}
-
-        {/* ── G. Voiceover Notes (top-level) ── */}
-        {topVoiceover.length > 0 && (
-          <Section title="Voiceover Notes">
-            {topVoiceover.map((v, i) => (
-              <p key={i} className="text-sm text-tiki-brown/70 leading-relaxed italic">{v}</p>
-            ))}
-          </Section>
-        )}
-
-        {/* ── H. Image Prompt Drafts ── */}
-        {imagePrompts.length > 0 && (
-          <Section title="Image Prompt Drafts">
-            <Callout icon="🖼️" className="bg-sky-blue/20 border-sky-blue/40">
-              Image prompts are draft text only. Future visual generation must use official
-              character references and human review before any assets are created.
-            </Callout>
-            <div className="flex flex-col gap-3">
-              {imagePrompts.map((prompt, i) => (
-                <div key={i} className="bg-sky-blue/10 rounded-xl p-4">
-                  <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                    Prompt {imagePrompts.length > 1 ? i + 1 : ""}
-                  </p>
-                  <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+              )}
+              {normalised.createdAt && !normalised.updatedAt && (
+                <MetaRow
+                  label="Created"
+                  value={new Date(normalised.createdAt).toLocaleString("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                />
+              )}
+            </dl>
+            {normalised.shortDescription && (
+              <div>
+                <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">Description</p>
+                <p className="text-sm text-tiki-brown/75 leading-relaxed">{normalised.shortDescription}</p>
+              </div>
+            )}
+            {str(raw.episodeSummary) && str(raw.episodeSummary) !== normalised.shortDescription && (
+              <div>
+                <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">Episode Summary</p>
+                <p className="text-sm text-tiki-brown/75 leading-relaxed">{str(raw.episodeSummary)}</p>
+              </div>
+            )}
+            {normalised.featuredCharacters.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-2">Featured Characters</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {normalised.featuredCharacters.map((c) => (
+                    <span key={c} className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple">
+                      {c}
+                    </span>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </Section>
-        )}
 
-        {/* ── I. Animation Prompt Drafts ── */}
-        {animPrompts.length > 0 && (
-          <Section title="Animation Prompt Drafts">
-            <Callout icon="🎬" className="bg-tropical-green/10 border-tropical-green/30">
-              Animation prompts are draft text only. Future animation must preserve official
-              character design and remain kid-friendly.
-            </Callout>
-            <div className="flex flex-col gap-3">
-              {animPrompts.map((prompt, i) => (
-                <div key={i} className="bg-tropical-green/8 rounded-xl p-4">
-                  <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                    Prompt {animPrompts.length > 1 ? i + 1 : ""}
-                  </p>
-                  <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+          {/* Review Status */}
+          {reviewObj && (
+            <Section title="Review Status">
+              <dl className="flex flex-col gap-2">
+                <MetaRow label="Status" value={str(reviewObj.status)} />
+                <MetaRow label="Approved for Save" value={String(Boolean(reviewObj.approvedForSave))} />
+                <MetaRow label="Requires Human Review" value={String(Boolean(reviewObj.requiresHumanReview))} />
+              </dl>
+              {str(reviewObj.notes) && (
+                <div className="bg-pineapple-yellow/15 rounded-xl px-4 py-3">
+                  <p className="text-xs font-bold text-tiki-brown mb-0.5">Review Notes</p>
+                  <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(reviewObj.notes)}</p>
                 </div>
+              )}
+              {Array.isArray(reviewObj.checkedFidelityItems) && reviewObj.checkedFidelityItems.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-2">Checked Fidelity Items</p>
+                  <StringList items={strArr(reviewObj.checkedFidelityItems)} />
+                </div>
+              )}
+            </Section>
+          )}
+
+          {/* Publishing Status */}
+          {publishingObj && (
+            <Section title="Publishing Status">
+              <dl className="flex flex-col gap-2">
+                <MetaRow label="Public Status" value={str(publishingObj.publicStatus)} />
+                <MetaRow label="Ready for Public Site" value={String(Boolean(publishingObj.readyForPublicSite))} />
+              </dl>
+              <Callout icon="🔒">
+                This draft is not published. It will not appear on the public site unless it is
+                explicitly marked ready and published in a future phase.
+              </Callout>
+            </Section>
+          )}
+
+          {/* Source Storyboard */}
+          {sourceStoryboard && (
+            <Section title="Source Storyboard">
+              <dl className="flex flex-col gap-2">
+                <MetaRow label="Title" value={str(sourceStoryboard.title)} />
+                <MetaRow label="Lesson" value={str(sourceStoryboard.lesson)} />
+                <MetaRow label="Setting" value={str(sourceStoryboard.setting)} />
+                <MetaRow label="Tone" value={str(sourceStoryboard.tone)} />
+                <MetaRow label="Age Range" value={str(sourceStoryboard.targetAgeRange)} />
+              </dl>
+              {str(sourceStoryboard.shortDescription) && (
+                <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(sourceStoryboard.shortDescription)}</p>
+              )}
+              {str(sourceStoryboard.storyNotes) && (
+                <div>
+                  <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">Story Notes</p>
+                  <p className="text-sm text-tiki-brown/65 leading-relaxed italic">{str(sourceStoryboard.storyNotes)}</p>
+                </div>
+              )}
+              {sourceScenes.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
+                    Original Scenes ({sourceScenes.length})
+                  </p>
+                  {sourceScenes.map((scene, i) => (
+                    <SceneCard key={i} scene={scene} index={i} />
+                  ))}
+                </div>
+              )}
+            </Section>
+          )}
+
+          {/* Scene Breakdown */}
+          {scenes.length > 0 && (
+            <Section title={`Scene Breakdown (${scenes.length} scene${scenes.length !== 1 ? "s" : ""})`}>
+              {scenes.some((s) => str(s.status) === "archived") && (
+                <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                  Archived scenes are shown with muted styling and are excluded from active generation tools.
+                </p>
+              )}
+              <div className="flex flex-col gap-4">
+                {scenes.map((scene, i) => (
+                  <SceneCard key={i} scene={scene} index={i} isArchived={str(scene.status) === "archived"} />
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* Add / Edit / Archive / Stability */}
+          <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined} />
+          <EditSceneSection
+            episodeSlug={normalised.slug}
+            scenes={sceneForEditList}
+            savedPanelSceneNumbers={savedPanelSceneNumbers}
+            characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined}
+          />
+          <ArchiveSceneSection
+            episodeSlug={normalised.slug}
+            scenes={sceneForArchiveList}
+            savedPanelSceneNumbers={savedPanelSceneNumbers}
+          />
+          <SceneIdStabilitySection
+            episodeSlug={normalised.slug}
+            totalScenes={sceneIdStats.totalScenes}
+            scenesWithId={sceneIdStats.scenesWithId}
+            totalPanels={sceneIdStats.totalPanels}
+            panelsWithId={sceneIdStats.panelsWithId}
+            totalClips={sceneIdStats.totalClips}
+            clipsWithId={sceneIdStats.clipsWithId}
+          />
+
+          {/* Dialogue / Voiceover / Prompt drafts */}
+          {topDialogue.length > 0 && (
+            <Section title="Dialogue Draft"><StringList items={topDialogue} /></Section>
+          )}
+          {topVoiceover.length > 0 && (
+            <Section title="Voiceover Notes">
+              {topVoiceover.map((v, i) => (
+                <p key={i} className="text-sm text-tiki-brown/70 leading-relaxed italic">{v}</p>
               ))}
+            </Section>
+          )}
+          {imagePrompts.length > 0 && (
+            <Section title="Image Prompt Drafts">
+              <Callout icon="🖼️" className="bg-sky-blue/20 border-sky-blue/40">
+                Image prompts are draft text only. Future visual generation must use official character references and human review before any assets are created.
+              </Callout>
+              <div className="flex flex-col gap-3">
+                {imagePrompts.map((prompt, i) => (
+                  <div key={i} className="bg-sky-blue/10 rounded-xl p-4">
+                    <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1">
+                      Prompt {imagePrompts.length > 1 ? i + 1 : ""}
+                    </p>
+                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+          {animPrompts.length > 0 && (
+            <Section title="Animation Prompt Drafts">
+              <Callout icon="🎬" className="bg-tropical-green/10 border-tropical-green/30">
+                Animation prompts are draft text only. Future animation must preserve official character design and remain kid-friendly.
+              </Callout>
+              <div className="flex flex-col gap-3">
+                {animPrompts.map((prompt, i) => (
+                  <div key={i} className="bg-tropical-green/8 rounded-xl p-4">
+                    <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1">
+                      Prompt {animPrompts.length > 1 ? i + 1 : ""}
+                    </p>
+                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+          {merchTieIns.length > 0 && (
+            <Section title="Merch Tie-Ins"><StringList items={merchTieIns} /></Section>
+          )}
+          {fidelityChecklist.length > 0 && (
+            <Section title="Character Fidelity Checklist"><StringList items={fidelityChecklist} /></Section>
+          )}
+
+          {/* Character fidelity reminder */}
+          <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
+            <span className="text-xl flex-shrink-0">🎨</span>
+            <div>
+              <p className="text-sm font-bold text-tiki-brown mb-0.5">Character fidelity required before any visual step</p>
+              <p className="text-sm text-tiki-brown/65 leading-relaxed">
+                Before any image, animation, or public publishing step, this draft must be
+                reviewed against official character profiles and uploaded reference images.
+                Official character canon is the source of truth. Characters must not be
+                redesigned, and all generated visuals must be reference-anchored.
+              </p>
             </div>
-          </Section>
-        )}
-
-        {/* ── J. Merch Tie-Ins ── */}
-        {merchTieIns.length > 0 && (
-          <Section title="Merch Tie-Ins">
-            <StringList items={merchTieIns} />
-          </Section>
-        )}
-
-        {/* ── K. Character Fidelity Checklist ── */}
-        {fidelityChecklist.length > 0 && (
-          <Section title="Character Fidelity Checklist">
-            <StringList items={fidelityChecklist} />
-          </Section>
-        )}
-
-        {/* Character fidelity reminder — always shown */}
-        <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
-          <span className="text-xl flex-shrink-0">🎨</span>
-          <div>
-            <p className="text-sm font-bold text-tiki-brown mb-0.5">
-              Character fidelity required before any visual step
-            </p>
-            <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              Before any image, animation, or public publishing step, this draft must be
-              reviewed against official character profiles and uploaded reference images.
-              Official character canon is the source of truth. Characters must not be
-              redesigned, and all generated visuals must be reference-anchored.
-            </p>
           </div>
         </div>
 
-        {/* ── L. Developer JSON Preview ── */}
-        <details className="group">
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* C. PICTURE STORY PANELS                                           */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="picture-panels" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="🖼️" title="Picture Story Panels" subtitle="Create, review, arrange, and publish story artwork." />
+          <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+          <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
+          <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* D. AUDIO STORY                                                    */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="audio-story" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="🎙️" title="Audio Story" subtitle="Generate and review read-aloud narration." />
+          <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+          <AudioNarrationSetupSection providerStatus={narrationProviderStatus} readiness={narrationReadiness} />
+          <AudioNarrationDraftSection
+            episodeSlug={slug}
+            initialScript={initialNarrationScript}
+            providerConfigured={narrationProviderStatus.configured}
+            defaultVoiceId={defaultVoiceId}
+            defaultModelId={defaultModelId}
+            hasTiki={tikiFlagged}
+            existingAudioNarration={existingAudioNarration}
+          />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* E. ANIMATED CLIPS                                                 */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="animated-clips" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="🎞️" title="Animated Clips" subtitle="Create short cartoon-style scene clips." />
+          <VideoGenerationSetupSection providerStatus={videoProviderStatus} readiness={videoReadiness} />
+          <VideoClipDraftSection
+            episodeSlug={normalised.slug}
+            providerConfigured={videoProviderStatus.configured}
+            providerLabel={videoProviderStatus.providerLabel}
+            sceneOptions={sceneVideoOptions}
+            videoReadiness={videoReadiness}
+            sceneReviewData={sceneReviewData}
+          />
+          <AttachedVideoClipsSection scenes={attachedVideoClipScenes} />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* F. PUBLISH READINESS                                              */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="publish-readiness" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="🚀" title="Publish Readiness" subtitle="Check all blockers and publish when ready." />
+          <PublicStatusCard normalised={normalised} reviewObj={reviewObj} publishingObj={publishingObj} />
+          <EpisodePublishReadinessSection readiness={publishReadiness} />
+          <PublishReadinessChecklist />
+          <PublishReadyAction
+            slug={normalised.slug}
+            approvedForSave={normalised.approvedForSave}
+            isAlreadyPublished={isAlreadyPublished}
+          />
+          <div className="flex items-center gap-2.5 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-4 py-3">
+            <span className="text-base flex-shrink-0">📊</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide mb-0.5">Media Health Dashboard</p>
+              <p className="text-xs text-tiki-brown/45">Full asset health, missing panels, and audio status across all episodes.</p>
+            </div>
+            <Link href="/admin/media-health" className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors flex-shrink-0">
+              View →
+            </Link>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* G. ADVANCED TOOLS                                                 */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <details id="advanced-tools" className="group scroll-mt-4">
           <summary className="cursor-pointer list-none">
             <div className="flex items-center justify-between bg-white border border-tiki-brown/10 rounded-2xl px-5 py-4 shadow-sm hover:border-tiki-brown/20 transition-colors">
-              <div>
-                <p className="text-sm font-bold text-tiki-brown">Developer JSON Preview</p>
-                <p className="text-xs text-tiki-brown/50">Full saved episode JSON — click to expand</p>
+              <div className="flex items-center gap-2">
+                <span className="text-base">🔧</span>
+                <div>
+                  <p className="text-sm font-bold text-tiki-brown">Advanced Tools</p>
+                  <p className="text-xs text-tiki-brown/50">Developer/debug views and detailed manifests — grouped here to keep the main workflow simple.</p>
+                </div>
               </div>
-              <span className="text-tiki-brown/40 text-xs group-open:rotate-180 transition-transform">▼</span>
+              <span className="text-tiki-brown/40 text-xs group-open:rotate-180 transition-transform flex-shrink-0 ml-3">▼</span>
             </div>
           </summary>
-          <div className="mt-2 bg-white border border-tiki-brown/10 rounded-2xl overflow-hidden">
-            <pre className="p-5 text-xs font-mono text-tiki-brown/60 leading-relaxed overflow-x-auto whitespace-pre-wrap break-words">
-              {JSON.stringify(raw, null, 2)}
-            </pre>
+          <div className="mt-3 flex flex-col gap-4">
+            <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} episodeRefSummary={episodeRefPackages} />
+            <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
+            <ReferencePackagePreviewSection summary={episodeRefPackages} />
+            <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+            <AnimationRouteTestPanel
+              episodeSlug={normalised.slug}
+              tikiFlagged={tikiFlagged}
+              scenes={sceneOptions}
+              featuredCharacters={normalised.featuredCharacters}
+            />
+            <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+            <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+            <details className="group/json">
+              <summary className="cursor-pointer list-none">
+                <div className="flex items-center justify-between bg-white border border-tiki-brown/10 rounded-2xl px-5 py-4 shadow-sm hover:border-tiki-brown/20 transition-colors">
+                  <div>
+                    <p className="text-sm font-bold text-tiki-brown">Developer JSON Preview</p>
+                    <p className="text-xs text-tiki-brown/50">Full saved episode JSON — click to expand</p>
+                  </div>
+                  <span className="text-tiki-brown/40 text-xs group-open/json:rotate-180 transition-transform">▼</span>
+                </div>
+              </summary>
+              <div className="mt-2 bg-white border border-tiki-brown/10 rounded-2xl overflow-hidden">
+                <pre className="p-5 text-xs font-mono text-tiki-brown/60 leading-relaxed overflow-x-auto whitespace-pre-wrap break-words">
+                  {JSON.stringify(raw, null, 2)}
+                </pre>
+              </div>
+            </details>
           </div>
         </details>
 
