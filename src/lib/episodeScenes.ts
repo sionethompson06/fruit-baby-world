@@ -177,6 +177,9 @@ export function getApprovedPublicStoryPanels(
     )
       continue;
 
+    // Panels hidden by admin are excluded from public display (missing visibility = public)
+    if (str(p.visibility) === "hidden") continue;
+
     if (p.status !== "approved" && p.approvalStatus !== "approved") continue;
 
     const sceneNumber =
