@@ -39,13 +39,21 @@ type AudioDraft = {
   scriptText: string;
   voiceStyle: NarrationVoiceStyle;
   voiceId: string;
+  modelId: string;
   warnings: string[];
   notes: string[];
 };
 
+type GenerateError = {
+  message: string;
+  providerStatus?: number;
+  providerMessage?: string;
+  troubleshooting?: string[];
+};
+
 type GenerateResult =
   | ({ ok: true } & AudioDraft)
-  | { ok: false; message: string };
+  | ({ ok: false } & GenerateError);
 
 function buildInitialChecklist(hasTiki: boolean): AudioDraftReviewChecklistItem[] {
   const items = BASE_CHECKLIST.map((item) => ({ ...item, checked: false }));
@@ -106,6 +114,7 @@ function AudioReviewPanel({
         </span>
         <span className="text-xs text-tiki-brown/45 ml-auto">
           ElevenLabs · {draft.voiceStyle} · <span className="font-mono">{draft.voiceId}</span>
+          {" "}· <span className="font-mono">{draft.modelId}</span>
         </span>
       </div>
 
@@ -301,12 +310,14 @@ export default function AudioNarrationDraftSection({
   initialScript,
   providerConfigured,
   defaultVoiceId,
+  defaultModelId,
   hasTiki = false,
 }: {
   episodeSlug: string;
   initialScript: string;
   providerConfigured: boolean;
   defaultVoiceId?: string;
+  defaultModelId?: string;
   hasTiki?: boolean;
 }) {
   const [script, setScript] = useState(initialScript);
@@ -314,7 +325,7 @@ export default function AudioNarrationDraftSection({
   const [voiceId, setVoiceId] = useState(defaultVoiceId ?? "");
   const [loading, setLoading] = useState(false);
   const [draft, setDraft] = useState<AudioDraft | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<GenerateError | null>(null);
 
   const canGenerate = providerConfigured && script.trim().length > 0 && !loading;
 
@@ -344,14 +355,20 @@ export default function AudioNarrationDraftSection({
           scriptText: data.scriptText,
           voiceStyle: data.voiceStyle,
           voiceId: data.voiceId,
+          modelId: data.modelId,
           warnings: data.warnings,
           notes: data.notes,
         });
       } else {
-        setError(data.message);
+        setError({
+          message: data.message,
+          providerStatus: data.providerStatus,
+          providerMessage: data.providerMessage,
+          troubleshooting: data.troubleshooting,
+        });
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError({ message: "Network error. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -428,6 +445,9 @@ export default function AudioNarrationDraftSection({
             }
             className="text-sm border border-tiki-brown/15 rounded-xl px-3 py-2 bg-white text-tiki-brown placeholder:text-tiki-brown/30 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 disabled:opacity-50 font-mono"
           />
+          <p className="text-xs text-tiki-brown/40 leading-relaxed">
+            Voice IDs are case-sensitive. Use a voice ID from your ElevenLabs account.
+          </p>
           {!voiceId.trim() && !defaultVoiceId && providerConfigured && (
             <p className="text-xs text-warm-coral/80">
               Add{" "}
@@ -437,6 +457,16 @@ export default function AudioNarrationDraftSection({
           )}
         </div>
       </div>
+
+      {/* Model ID display */}
+      <p className="text-xs text-tiki-brown/40 -mt-1">
+        Model:{" "}
+        <span className="font-mono">
+          {defaultModelId ?? "eleven_multilingual_v2"}
+        </span>
+        {" "}
+        <span className="text-tiki-brown/30">(set via ELEVENLABS_MODEL_ID)</span>
+      </p>
 
       {/* Script textarea */}
       <div className="flex flex-col gap-1.5">
@@ -490,9 +520,31 @@ export default function AudioNarrationDraftSection({
 
       {/* Error */}
       {error && (
-        <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
-          <p className="text-xs font-bold text-warm-coral mb-0.5">Generation failed</p>
-          <p className="text-xs text-tiki-brown/65 leading-relaxed">{error}</p>
+        <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+          <p className="text-xs font-bold text-warm-coral">Generation failed</p>
+          <p className="text-xs text-tiki-brown/70 leading-relaxed">{error.message}</p>
+          {error.providerStatus !== undefined && (
+            <p className="text-xs text-tiki-brown/55">
+              Provider status: <span className="font-mono font-bold">{error.providerStatus}</span>
+            </p>
+          )}
+          {error.providerMessage && (
+            <p className="text-xs text-tiki-brown/55 leading-relaxed">
+              Provider message: {error.providerMessage}
+            </p>
+          )}
+          {error.troubleshooting && error.troubleshooting.length > 0 && (
+            <div className="mt-0.5">
+              <p className="text-xs font-bold text-tiki-brown/45 mb-1">Try:</p>
+              <ul className="flex flex-col gap-0.5">
+                {error.troubleshooting.map((tip) => (
+                  <li key={tip} className="text-xs text-tiki-brown/60 leading-relaxed">
+                    • {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

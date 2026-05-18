@@ -29,7 +29,7 @@ import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
 import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
 import EpisodePublishReadinessSection from "./EpisodePublishReadinessSection";
 import { buildEpisodePublishReadiness } from "@/lib/episodePublishReadiness";
-import { getAudioNarrationProviderStatus, getDefaultVoiceId } from "@/lib/audioNarrationConfig";
+import { getAudioNarrationProviderStatus, getDefaultVoiceId, getDefaultNarrationModelId } from "@/lib/audioNarrationConfig";
 import {
   getNarrationReadinessForEpisode,
   buildNarrationScriptDraftFromEpisode,
@@ -555,6 +555,7 @@ export default async function EpisodeDetailPage({
     )
     .join("\n\n");
   const defaultVoiceId = getDefaultVoiceId();
+  const defaultModelId = getDefaultNarrationModelId() ?? "eleven_multilingual_v2";
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -653,6 +654,7 @@ export default async function EpisodeDetailPage({
           initialScript={initialNarrationScript}
           providerConfigured={narrationProviderStatus.configured}
           defaultVoiceId={defaultVoiceId}
+          defaultModelId={defaultModelId}
           hasTiki={tikiFlagged}
         />
 

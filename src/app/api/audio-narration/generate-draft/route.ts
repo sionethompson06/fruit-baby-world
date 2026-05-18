@@ -30,6 +30,7 @@ const ALLOWED_VOICE_STYLES = new Set<NarrationVoiceStyle>([
 
 const ELEVENLABS_DEFAULT_MODEL = "eleven_multilingual_v2";
 const MAX_SCRIPT_LENGTH = 5000;
+const ELEVENLABS_TIMEOUT_MS = 60_000;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,7 @@ type GenerateDraftResult =
       episodeSlug: string;
       provider: "elevenlabs";
       voiceId: string;
+      modelId: string;
       voiceStyle: NarrationVoiceStyle;
       mimeType: "audio/mpeg";
       audioBase64: string;
@@ -53,10 +55,15 @@ type GenerateDraftResult =
       status:
         | "validation_error"
         | "setup_required"
+        | "missing_voice_id"
         | "episode_not_found"
         | "missing_script"
-        | "provider_error";
+        | "provider_error"
+        | "provider_timeout";
       message: string;
+      providerStatus?: number;
+      providerMessage?: string;
+      troubleshooting?: string[];
     };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -89,15 +96,97 @@ function sanitizeScriptForNarration(text: string): string {
   return clean.trim();
 }
 
+// Extract a safe provider message from an ElevenLabs error response body.
+// Never returns secrets, headers, or stack traces.
+function extractProviderMessage(httpStatus: number, rawText: string): string {
+  try {
+    const parsed = JSON.parse(rawText) as unknown;
+    if (typeof parsed === "object" && parsed !== null) {
+      const obj = parsed as Record<string, unknown>;
+      if (typeof obj.detail === "string" && obj.detail.length > 0) {
+        return obj.detail.slice(0, 300);
+      }
+      if (typeof obj.detail === "object" && obj.detail !== null) {
+        const detail = obj.detail as Record<string, unknown>;
+        if (typeof detail.message === "string" && detail.message.length > 0) {
+          return detail.message.slice(0, 300);
+        }
+        if (typeof detail.status === "string" && detail.status.length > 0) {
+          return detail.status.slice(0, 300);
+        }
+      }
+      if (typeof obj.message === "string" && obj.message.length > 0) {
+        return obj.message.slice(0, 300);
+      }
+      if (typeof obj.error === "string" && obj.error.length > 0) {
+        return obj.error.slice(0, 300);
+      }
+    }
+  } catch {
+    // Not JSON — fall through to status-based messages
+  }
+
+  if (httpStatus === 401) return "Invalid or missing API key.";
+  if (httpStatus === 403) return "Access denied — check your ElevenLabs plan, quota, or permissions.";
+  if (httpStatus === 404) return "Voice not found — check that the Voice ID exists in your ElevenLabs account.";
+  if (httpStatus === 422) return "Invalid request — check the model ID, voice settings, or script content.";
+  if (httpStatus === 429) return "Rate limit or quota exceeded — wait and try again.";
+  if (httpStatus >= 500) return "ElevenLabs service error.";
+  return `Provider returned status ${httpStatus}.`;
+}
+
+function getTroubleshootingForStatus(httpStatus: number): string[] {
+  if (httpStatus === 401) {
+    return [
+      "Check that ELEVENLABS_API_KEY is valid and active.",
+      "Verify the key has not expired or been revoked in your ElevenLabs dashboard.",
+    ];
+  }
+  if (httpStatus === 403) {
+    return [
+      "Check your ElevenLabs plan limits and quota.",
+      "Verify your account has access to the requested model.",
+      "Check that ELEVENLABS_API_KEY is correct.",
+    ];
+  }
+  if (httpStatus === 404) {
+    return [
+      "Check that the Voice ID exists in your ElevenLabs account.",
+      "Voice IDs are case-sensitive — copy the exact ID from your ElevenLabs dashboard.",
+      "The voice may have been deleted or is unavailable on your plan.",
+    ];
+  }
+  if (httpStatus === 422) {
+    return [
+      "Check that ELEVENLABS_MODEL_ID is valid, such as eleven_multilingual_v2.",
+      "Check that the script does not contain unsupported characters or content.",
+      "Check that the voice settings values are in the expected range.",
+    ];
+  }
+  if (httpStatus === 429) {
+    return [
+      "Wait a few minutes before retrying.",
+      "Check your ElevenLabs quota and character limits.",
+      "Consider using a shorter script for this draft.",
+    ];
+  }
+  return [
+    "Check that ELEVENLABS_API_KEY is valid.",
+    "Check that the Voice ID exists in your ElevenLabs account.",
+    "Check that ELEVENLABS_MODEL_ID is valid, such as eleven_multilingual_v2.",
+    "Check ElevenLabs plan/quota limits.",
+  ];
+}
+
 const VOICE_STYLE_SETTINGS: Record<
   NarrationVoiceStyle,
-  { stability: number; similarity_boost: number; style: number }
+  { stability: number; similarity_boost: number; style: number; use_speaker_boost: boolean }
 > = {
-  "warm-storyteller": { stability: 0.65, similarity_boost: 0.75, style: 0.25 },
-  "playful": { stability: 0.45, similarity_boost: 0.85, style: 0.45 },
-  "gentle-teacher": { stability: 0.70, similarity_boost: 0.70, style: 0.15 },
-  "calm-bedtime": { stability: 0.75, similarity_boost: 0.65, style: 0.10 },
-  "energetic-cartoon": { stability: 0.40, similarity_boost: 0.90, style: 0.55 },
+  "warm-storyteller":   { stability: 0.65, similarity_boost: 0.75, style: 0.25, use_speaker_boost: true },
+  "playful":            { stability: 0.45, similarity_boost: 0.85, style: 0.45, use_speaker_boost: true },
+  "gentle-teacher":     { stability: 0.70, similarity_boost: 0.70, style: 0.15, use_speaker_boost: true },
+  "calm-bedtime":       { stability: 0.75, similarity_boost: 0.65, style: 0.10, use_speaker_boost: true },
+  "energetic-cartoon":  { stability: 0.40, similarity_boost: 0.90, style: 0.55, use_speaker_boost: true },
 };
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -189,9 +278,9 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json(
       {
         ok: false,
-        status: "setup_required",
+        status: "missing_voice_id",
         message:
-          "Add ELEVENLABS_DEFAULT_VOICE_ID in environment variables or provide a voiceId for narration drafts.",
+          "No ElevenLabs voice ID was provided. Add ELEVENLABS_DEFAULT_VOICE_ID in Vercel or enter a voice ID in the admin form.",
       } satisfies GenerateDraftResult,
       { status: 503 }
     );
@@ -303,10 +392,13 @@ export async function POST(request: Request): Promise<Response> {
   const modelId = getDefaultNarrationModelId() ?? ELEVENLABS_DEFAULT_MODEL;
   const voiceSettings = VOICE_STYLE_SETTINGS[voiceStyle];
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ELEVENLABS_TIMEOUT_MS);
+
   let audioBuffer: ArrayBuffer;
   try {
     const elevenRes = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`,
+      `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`,
       {
         method: "POST",
         headers: {
@@ -319,8 +411,10 @@ export async function POST(request: Request): Promise<Response> {
           model_id: modelId,
           voice_settings: voiceSettings,
         }),
+        signal: controller.signal,
       }
     );
+    clearTimeout(timeoutId);
 
     if (!elevenRes.ok) {
       const errText = await elevenRes.text().catch(() => "");
@@ -328,11 +422,16 @@ export async function POST(request: Request): Promise<Response> {
         `[generate-draft] ElevenLabs error (${elevenRes.status}):`,
         errText.slice(0, 300)
       );
+      const providerMessage = extractProviderMessage(elevenRes.status, errText);
+      const troubleshooting = getTroubleshootingForStatus(elevenRes.status);
       return Response.json(
         {
           ok: false,
           status: "provider_error",
-          message: "Narration provider returned an error while generating the draft.",
+          message: "ElevenLabs could not generate the narration draft.",
+          providerStatus: elevenRes.status,
+          providerMessage,
+          troubleshooting,
         } satisfies GenerateDraftResult,
         { status: 502 }
       );
@@ -340,6 +439,17 @@ export async function POST(request: Request): Promise<Response> {
 
     audioBuffer = await elevenRes.arrayBuffer();
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err instanceof Error && err.name === "AbortError") {
+      return Response.json(
+        {
+          ok: false,
+          status: "provider_timeout",
+          message: "Narration generation timed out. Try a shorter script or try again.",
+        } satisfies GenerateDraftResult,
+        { status: 504 }
+      );
+    }
     console.error(
       "[generate-draft] Network error:",
       err instanceof Error ? err.message : err
@@ -348,7 +458,12 @@ export async function POST(request: Request): Promise<Response> {
       {
         ok: false,
         status: "provider_error",
-        message: "Narration provider returned an error while generating the draft.",
+        message: "ElevenLabs could not generate the narration draft.",
+        troubleshooting: [
+          "Check your network connection.",
+          "Check that ELEVENLABS_API_KEY is valid.",
+          "Check ElevenLabs service status.",
+        ],
       } satisfies GenerateDraftResult,
       { status: 502 }
     );
@@ -363,6 +478,7 @@ export async function POST(request: Request): Promise<Response> {
       episodeSlug,
       provider: "elevenlabs",
       voiceId,
+      modelId,
       voiceStyle,
       mimeType: "audio/mpeg",
       audioBase64,
