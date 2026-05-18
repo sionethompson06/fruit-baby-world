@@ -641,6 +641,21 @@ export default async function EpisodeDetailPage({
           isAlreadyPublished={isAlreadyPublished}
         />
 
+        {/* ── Audio Narration Setup ── */}
+        <AudioNarrationSetupSection
+          providerStatus={narrationProviderStatus}
+          readiness={narrationReadiness}
+        />
+
+        {/* ── Audio Narration Draft Generator ── */}
+        <AudioNarrationDraftSection
+          episodeSlug={slug}
+          initialScript={initialNarrationScript}
+          providerConfigured={narrationProviderStatus.configured}
+          defaultVoiceId={defaultVoiceId}
+          hasTiki={tikiFlagged}
+        />
+
         {/* ── Media Planning ── */}
         <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
 
@@ -678,21 +693,6 @@ export default async function EpisodeDetailPage({
 
         {/* ── Read-Aloud / Voiceover Prompt Builder ── */}
         <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-
-        {/* ── Audio Narration Setup ── */}
-        <AudioNarrationSetupSection
-          providerStatus={narrationProviderStatus}
-          readiness={narrationReadiness}
-        />
-
-        {/* ── Audio Narration Draft Generator ── */}
-        <AudioNarrationDraftSection
-          episodeSlug={slug}
-          initialScript={initialNarrationScript}
-          providerConfigured={narrationProviderStatus.configured}
-          defaultVoiceId={defaultVoiceId}
-          hasTiki={tikiFlagged}
-        />
 
         {/* ── A. Episode Overview ── */}
         <Section title="Episode Overview">
