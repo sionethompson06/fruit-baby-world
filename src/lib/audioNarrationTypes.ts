@@ -97,7 +97,8 @@ export type EpisodeAudioNarration = {
   approvedBy?: string;
   approvedAt?: string;
   attachedAt: string;
-  visibility: "admin-only" | "public-ready";
+  visibility: "admin-only" | "public-ready" | "hidden";
+  visibilityUpdatedAt?: string;
 };
 
 // ─── Approved audio asset (Phase 13D) ────────────────────────────────────────

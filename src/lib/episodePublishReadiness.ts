@@ -464,23 +464,32 @@ export function buildEpisodePublishReadiness(
   // 15. Narration audio (warning/pass — not a blocker)
   const audioNarration = isRecord(raw.audioNarration) ? raw.audioNarration : null;
   const audioUrl = audioNarration ? str(audioNarration.url) : "";
+  const audioVisibility = audioNarration ? str(audioNarration.visibility) : "";
   if (audioNarration) {
     const audioUrlValid = audioUrl.startsWith("https://") && audioUrl.length > 8;
+    const isPublicReady = audioUrlValid && audioVisibility === "public-ready";
+    const isHidden = audioVisibility === "hidden";
     checklist.push({
       id: "episode-has-narration-audio",
-      label: "Episode has attached narration audio",
-      status: audioUrlValid ? "pass" : "warning",
-      message: audioUrlValid
-        ? `Narration audio attached (visibility: ${str(audioNarration.visibility) || "admin-only"}).`
-        : "Attached narration audio has an invalid or missing URL.",
-      suggestedAction: audioUrlValid
+      label: "Episode has narration audio (public-ready)",
+      status: isPublicReady ? "pass" : "warning",
+      message: !audioUrlValid
+        ? "Attached narration audio has an invalid or missing URL."
+        : isHidden
+        ? "Narration audio is attached but hidden — it will not appear publicly."
+        : isPublicReady
+        ? "Narration audio is attached and public-ready."
+        : "Narration audio is attached but not public-ready. Use Make Audio Public Ready in the Audio Narration section.",
+      suggestedAction: !audioUrlValid
+        ? "Re-attach the narration audio using a valid Blob URL."
+        : isPublicReady
         ? undefined
-        : "Re-attach the narration audio using a valid Blob URL.",
+        : "In the Audio Narration section, use the visibility controls to mark audio as Public Ready.",
     });
   } else {
     checklist.push({
       id: "episode-has-narration-audio",
-      label: "Episode has attached narration audio",
+      label: "Episode has narration audio (public-ready)",
       status: "warning",
       message: "No narration audio attached yet. Audio is optional for publishing.",
       suggestedAction: "Generate and attach narration audio in the Audio Narration section.",

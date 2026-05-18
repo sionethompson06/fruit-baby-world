@@ -599,21 +599,71 @@ function AudioReviewPanel({
 
 // ─── Attached narration panel sub-component ──────────────────────────────────
 
-function AttachedNarrationPanel({ audio }: { audio: EpisodeAudioNarration }) {
+type AudioVisibility = "admin-only" | "public-ready" | "hidden";
+
+function AttachedNarrationPanel({
+  audio,
+  episodeSlug,
+}: {
+  audio: EpisodeAudioNarration;
+  episodeSlug: string;
+}) {
+  const [currentVisibility, setCurrentVisibility] = useState<AudioVisibility>(
+    audio.visibility as AudioVisibility
+  );
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+
+  async function handleVisibilityChange(newVisibility: AudioVisibility) {
+    if (updating) return;
+    setUpdating(true);
+    setUpdateError(null);
+    setUpdateSuccess(null);
+
+    try {
+      const res = await fetch("/api/github/update-narration-audio-visibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ episodeSlug, visibility: newVisibility }),
+      });
+
+      let data: { ok: boolean; message?: string; visibility?: string; notes?: string[] };
+      try {
+        data = await res.json();
+      } catch {
+        setUpdateError(res.status >= 500 ? "Server error — try again." : "Unexpected response. Try again.");
+        setUpdating(false);
+        return;
+      }
+
+      if (data.ok) {
+        setCurrentVisibility(newVisibility);
+        setUpdateSuccess(data.notes?.[0] ?? `Visibility updated to ${newVisibility}.`);
+      } else {
+        setUpdateError(data.message ?? "Update failed.");
+      }
+    } catch {
+      setUpdateError("Network error — check your connection and try again.");
+    } finally {
+      setUpdating(false);
+    }
+  }
+
+  const visibilityBadge = {
+    "public-ready": { label: "Public Ready", className: "bg-tropical-green/15 text-tropical-green" },
+    "admin-only": { label: "Admin Only", className: "bg-pineapple-yellow/25 text-tiki-brown/70" },
+    "hidden": { label: "Hidden", className: "bg-warm-coral/15 text-warm-coral/80" },
+  }[currentVisibility] ?? { label: currentVisibility, className: "bg-tiki-brown/8 text-tiki-brown/60" };
+
   return (
     <div className="flex flex-col gap-3 bg-ube-purple/5 border border-ube-purple/15 rounded-2xl px-4 py-4">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
           Attached Narration Audio
         </span>
-        <span
-          className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-            audio.visibility === "public-ready"
-              ? "bg-tropical-green/15 text-tropical-green"
-              : "bg-pineapple-yellow/25 text-tiki-brown/70"
-          }`}
-        >
-          {audio.visibility === "public-ready" ? "Public Ready" : "Admin Only"}
+        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${visibilityBadge.className}`}>
+          {visibilityBadge.label}
         </span>
         <span className="text-xs text-tiki-brown/40 ml-auto">
           Attached{" "}
@@ -659,9 +709,56 @@ function AttachedNarrationPanel({ audio }: { audio: EpisodeAudioNarration }) {
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <audio controls src={audio.url} className="w-full rounded-xl" />
 
-      <p className="text-xs text-tiki-brown/40 italic">
-        Admin-only preview. Public audio playback is not yet enabled (Phase 13F).
-      </p>
+      {/* Visibility controls */}
+      <div className="flex flex-col gap-2 border-t border-ube-purple/10 pt-3">
+        <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+          Audio Visibility
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {currentVisibility !== "public-ready" && (
+            <button
+              type="button"
+              onClick={() => handleVisibilityChange("public-ready")}
+              disabled={updating}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-tropical-green/15 text-tropical-green hover:bg-tropical-green/25 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Make Audio Public Ready
+            </button>
+          )}
+          {currentVisibility !== "admin-only" && (
+            <button
+              type="button"
+              onClick={() => handleVisibilityChange("admin-only")}
+              disabled={updating}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-pineapple-yellow/20 text-tiki-brown/70 hover:bg-pineapple-yellow/35 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Set Admin Only
+            </button>
+          )}
+          {currentVisibility !== "hidden" && (
+            <button
+              type="button"
+              onClick={() => handleVisibilityChange("hidden")}
+              disabled={updating}
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-warm-coral/10 text-warm-coral/80 hover:bg-warm-coral/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Hide Public Audio
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-tiki-brown/40 leading-relaxed">
+          Public Ready audio will appear on the public story page after redeploy.
+        </p>
+        {updating && (
+          <span className="text-xs text-tiki-brown/45 animate-pulse">Updating visibility…</span>
+        )}
+        {updateSuccess && (
+          <p className="text-xs text-tropical-green font-semibold">{updateSuccess}</p>
+        )}
+        {updateError && (
+          <p className="text-xs text-warm-coral font-semibold">{updateError}</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -774,7 +871,7 @@ export default function AudioNarrationDraftSection({
 
       {/* Currently attached narration audio */}
       {existingAudioNarration && (
-        <AttachedNarrationPanel audio={existingAudioNarration} />
+        <AttachedNarrationPanel audio={existingAudioNarration} episodeSlug={episodeSlug} />
       )}
 
       {/* Provider status banner */}
