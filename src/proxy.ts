@@ -56,5 +56,6 @@ export const config = {
     "/api/github/save-character-profile-draft",
     "/api/audio-narration/generate-draft",
     "/api/audio-narration/upload-approved-draft",
+    "/api/github/attach-narration-audio",
   ],
 };

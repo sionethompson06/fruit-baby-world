@@ -78,6 +78,28 @@ export type AudioDraftReviewRecommendation =
   | "needs-review"
   | "no-draft";
 
+// ─── Episode-level attached audio narration (Phase 13E) ──────────────────────
+
+export type EpisodeAudioNarration = {
+  id: string;
+  type: "episode-narration";
+  status: "approved";
+  provider: string;
+  voiceId?: string;
+  modelId?: string;
+  voiceStyle?: string;
+  url: string;
+  pathname?: string;
+  mimeType: string;
+  sizeBytes?: number;
+  scriptText?: string;
+  reviewNotes?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  attachedAt: string;
+  visibility: "admin-only" | "public-ready";
+};
+
 // ─── Approved audio asset (Phase 13D) ────────────────────────────────────────
 
 export type ApprovedNarrationAudioAsset = {

@@ -30,6 +30,7 @@ import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
 import EpisodePublishReadinessSection from "./EpisodePublishReadinessSection";
 import { buildEpisodePublishReadiness } from "@/lib/episodePublishReadiness";
 import { getAudioNarrationProviderStatus, getDefaultVoiceId, getDefaultNarrationModelId } from "@/lib/audioNarrationConfig";
+import type { EpisodeAudioNarration } from "@/lib/audioNarrationTypes";
 import {
   getNarrationReadinessForEpisode,
   buildNarrationScriptDraftFromEpisode,
@@ -557,6 +558,32 @@ export default async function EpisodeDetailPage({
   const defaultVoiceId = getDefaultVoiceId();
   const defaultModelId = getDefaultNarrationModelId() ?? "eleven_multilingual_v2";
 
+  // Extract existing attached narration audio from episode JSON (Phase 13E)
+  const existingAudioNarration: EpisodeAudioNarration | null = (() => {
+    const an = raw.audioNarration;
+    if (!isRec(an)) return null;
+    if (typeof an.url !== "string" || !an.url) return null;
+    return {
+      id: typeof an.id === "string" ? an.id : `audio-unknown`,
+      type: "episode-narration",
+      status: "approved",
+      provider: typeof an.provider === "string" ? an.provider : "elevenlabs",
+      voiceId: typeof an.voiceId === "string" ? an.voiceId : undefined,
+      modelId: typeof an.modelId === "string" ? an.modelId : undefined,
+      voiceStyle: typeof an.voiceStyle === "string" ? an.voiceStyle : undefined,
+      url: an.url,
+      pathname: typeof an.pathname === "string" ? an.pathname : undefined,
+      mimeType: typeof an.mimeType === "string" ? an.mimeType : "audio/mpeg",
+      sizeBytes: typeof an.sizeBytes === "number" ? an.sizeBytes : undefined,
+      scriptText: typeof an.scriptText === "string" ? an.scriptText : undefined,
+      reviewNotes: typeof an.reviewNotes === "string" ? an.reviewNotes : undefined,
+      approvedBy: typeof an.approvedBy === "string" ? an.approvedBy : undefined,
+      approvedAt: typeof an.approvedAt === "string" ? an.approvedAt : undefined,
+      attachedAt: typeof an.attachedAt === "string" ? an.attachedAt : new Date().toISOString(),
+      visibility: an.visibility === "public-ready" ? "public-ready" : "admin-only",
+    } satisfies EpisodeAudioNarration;
+  })();
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -656,6 +683,7 @@ export default async function EpisodeDetailPage({
           defaultVoiceId={defaultVoiceId}
           defaultModelId={defaultModelId}
           hasTiki={tikiFlagged}
+          existingAudioNarration={existingAudioNarration}
         />
 
         {/* ── Media Planning ── */}
