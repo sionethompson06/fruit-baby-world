@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FidelityThumbnail } from "@/lib/storyPanelFidelityReview";
 import type { VideoFidelityChecklistItem } from "@/lib/videoClipFidelityReview";
 import type { VideoClipGenerationPackage } from "@/lib/videoClipGenerationTypes";
+import type { ApprovedVideoClipAsset } from "@/lib/videoGenerationTypes";
 
 // ─── Serializable props ───────────────────────────────────────────────────────
 
@@ -16,7 +17,17 @@ export type SceneReviewData = {
 
 type DraftInfo =
   | { kind: "not_implemented_yet"; provider: string; pkg: VideoClipGenerationPackage }
-  | { kind: "video_draft_generated"; videoUrl: string; provider: string; videoStyle: string; durationSeconds: number; pkg: VideoClipGenerationPackage }
+  | {
+      kind: "video_draft_generated";
+      videoUrl: string;
+      thumbnailUrl: string | null;
+      provider: string;
+      providerJobId: string;
+      modelId: string;
+      videoStyle: string;
+      durationSeconds: number;
+      pkg: VideoClipGenerationPackage;
+    }
   | { kind: "video_draft_requested"; providerJobId: string; provider: string; pkg: VideoClipGenerationPackage };
 
 type Props = {
@@ -25,6 +36,22 @@ type Props = {
 };
 
 type ReviewDecision = "looks-good" | "needs-regeneration";
+
+// ─── Upload result type (mirrors route response) ──────────────────────────────
+
+type VideoUploadResult =
+  | {
+      ok: true;
+      status: "approved_video_uploaded";
+      video: ApprovedVideoClipAsset;
+      notes: string[];
+    }
+  | {
+      ok: false;
+      status: string;
+      message: string;
+      details?: Record<string, string>;
+    };
 
 // ─── Group labels ─────────────────────────────────────────────────────────────
 
@@ -149,6 +176,12 @@ function DraftPreviewPanel({ draft }: { draft: DraftInfo }) {
             <span>Style: <strong className="text-tiki-brown">{draft.videoStyle}</strong></span>
             <span>·</span>
             <span>Duration: <strong className="text-tiki-brown">{draft.durationSeconds}s</strong></span>
+            {draft.modelId && (
+              <>
+                <span>·</span>
+                <span>Model: <strong className="text-tiki-brown">{draft.modelId}</strong></span>
+              </>
+            )}
           </div>
         </>
       )}
@@ -238,7 +271,52 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
   const [reviewNotes, setReviewNotes] = useState("");
   const [decision, setDecision] = useState<ReviewDecision | null>(null);
 
+  // ── Upload state ────────────────────────────────────────────────────────────
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<VideoUploadResult | null>(null);
+  const [uploadFetchError, setUploadFetchError] = useState<string | null>(null);
+
   const allChecked = checklistItems.length > 0 && checklistItems.every((item) => checked[item.id]);
+
+  const hasPlayableVideo = draft.kind === "video_draft_generated";
+  const canUpload = hasPlayableVideo && decision === "looks-good" && !uploading && !uploadResult?.ok;
+
+  async function handleUpload() {
+    if (!canUpload || draft.kind !== "video_draft_generated") return;
+    setUploading(true);
+    setUploadResult(null);
+    setUploadFetchError(null);
+
+    try {
+      const res = await fetch("/api/video-generation/upload-approved-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug: draft.pkg.episodeSlug,
+          sceneId: draft.pkg.sceneId,
+          sceneNumber: draft.pkg.sceneNumber,
+          videoUrl: draft.videoUrl,
+          thumbnailUrl: draft.thumbnailUrl ?? "",
+          provider: draft.provider,
+          providerJobId: draft.providerJobId,
+          modelId: draft.modelId,
+          videoStyle: draft.videoStyle,
+          durationSeconds: draft.durationSeconds,
+          promptText: draft.pkg.finalPromptText,
+          referenceMode: draft.pkg.referenceMode,
+          reviewNotes,
+          approvedBy: "admin",
+        }),
+      });
+
+      const data = (await res.json()) as VideoUploadResult;
+      setUploadResult(data);
+    } catch (err) {
+      setUploadFetchError(err instanceof Error ? err.message : "Failed to reach the server.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function toggleItem(id: string) {
     setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -395,7 +473,7 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
           className="w-full bg-tiki-brown/3 border border-tiki-brown/12 rounded-xl px-3 py-2 text-sm text-tiki-brown/80 placeholder:text-tiki-brown/30 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 resize-y"
         />
         <p className="text-xs text-tiki-brown/35">
-          Notes are local in this phase and are not saved yet. A future phase will save approved video metadata.
+          Notes will be saved with the video when you upload the approved clip to Blob storage.
         </p>
       </div>
 
@@ -449,6 +527,118 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
           </div>
         )}
       </div>
+
+      {/* Save approved video — only when a playable draft exists */}
+      {hasPlayableVideo && (
+        <div className="flex flex-col gap-3 pt-2 border-t border-tiki-brown/8">
+          <div>
+            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
+              Save Approved Video Clip to Media Storage
+            </p>
+            <p className="text-xs text-tiki-brown/50 leading-relaxed">
+              This uploads the approved video clip to Vercel Blob only. It will not attach the video to
+              the episode or publish it yet.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleUpload}
+            disabled={!canUpload || uploading}
+            className={`w-full rounded-2xl py-3 px-4 text-sm font-black uppercase tracking-wide transition-colors ${
+              canUpload && !uploading
+                ? "bg-tropical-green text-white hover:bg-tropical-green/85 active:bg-tropical-green/70"
+                : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
+            }`}
+          >
+            {uploading ? "Uploading Approved Video Clip…" : "Save Approved Video Clip to Media Storage"}
+          </button>
+
+          {!hasPlayableVideo && (
+            <p className="text-xs text-tiki-brown/45 text-center">
+              A playable video draft is required to save.
+            </p>
+          )}
+          {hasPlayableVideo && decision !== "looks-good" && !uploadResult?.ok && (
+            <p className="text-xs text-tiki-brown/45 text-center">
+              Mark the clip as Looks Good to enable saving.
+            </p>
+          )}
+
+          {/* Upload fetch error */}
+          {uploadFetchError && (
+            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
+              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">Request Error</p>
+              <p className="text-xs text-tiki-brown/65">{uploadFetchError}</p>
+            </div>
+          )}
+
+          {/* Upload error */}
+          {uploadResult && !uploadResult.ok && (
+            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
+              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide">
+                {uploadResult.status.replace(/_/g, " ")}
+              </p>
+              <p className="text-xs text-tiki-brown/70 leading-relaxed">{uploadResult.message}</p>
+            </div>
+          )}
+
+          {/* Upload success */}
+          {uploadResult && uploadResult.ok && (
+            <div className="bg-tropical-green/8 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green uppercase tracking-wide">
+                  Approved Video Uploaded
+                </span>
+                <span className="text-xs text-tiki-brown/50">Saved to Blob — not public yet</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: "Provider", value: uploadResult.video.provider },
+                  { label: "Style", value: uploadResult.video.videoStyle },
+                  { label: "Duration", value: `${uploadResult.video.durationSeconds}s` },
+                  { label: "Size", value: `${Math.round(uploadResult.video.sizeBytes / 1024 / 1024 * 10) / 10} MB` },
+                ].map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="flex flex-col items-center bg-white border border-tiki-brown/8 rounded-xl px-3 py-2 min-w-[72px]"
+                  >
+                    <span className="text-sm font-black text-tiki-brown">{value}</span>
+                    <span className="text-xs text-tiki-brown/45 text-center leading-tight">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">Blob URL</p>
+                <p className="text-xs font-mono text-ube-purple break-all">{uploadResult.video.url}</p>
+              </div>
+
+              {uploadResult.video.pathname && (
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">Blob Path</p>
+                  <p className="text-xs font-mono text-tiki-brown/60 break-all">{uploadResult.video.pathname}</p>
+                </div>
+              )}
+
+              {uploadResult.video.modelId && (
+                <p className="text-xs text-tiki-brown/55">
+                  Model: <span className="font-mono">{uploadResult.video.modelId}</span>
+                </p>
+              )}
+
+              <p className="text-xs text-tiki-brown/50">
+                Approved: <span className="font-semibold">{uploadResult.video.approvedAt}</span>
+              </p>
+
+              {uploadResult.notes.map((n, i) => (
+                <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
     </div>
   );
