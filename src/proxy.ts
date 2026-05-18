@@ -59,5 +59,6 @@ export const config = {
     "/api/github/attach-narration-audio",
     "/api/github/update-narration-audio-visibility",
     "/api/video-generation/generate-draft",
+    "/api/video-generation/upload-approved-draft",
   ],
 };

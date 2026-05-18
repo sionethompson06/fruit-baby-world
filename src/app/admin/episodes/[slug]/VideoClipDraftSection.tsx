@@ -554,7 +554,7 @@ export default function VideoClipDraftSection({
 
         let draftInfo:
           | { kind: "not_implemented_yet"; provider: string; pkg: VideoClipGenerationPackage }
-          | { kind: "video_draft_generated"; videoUrl: string; provider: string; videoStyle: string; durationSeconds: number; pkg: VideoClipGenerationPackage }
+          | { kind: "video_draft_generated"; videoUrl: string; thumbnailUrl: string | null; providerJobId: string; modelId: string; provider: string; videoStyle: string; durationSeconds: number; pkg: VideoClipGenerationPackage }
           | { kind: "video_draft_requested"; providerJobId: string; provider: string; pkg: VideoClipGenerationPackage }
           | null = null;
 
@@ -564,6 +564,9 @@ export default function VideoClipDraftSection({
           draftInfo = {
             kind: "video_draft_generated",
             videoUrl: result.draft.videoUrl,
+            thumbnailUrl: result.draft.thumbnailUrl,
+            providerJobId: result.draft.providerJobId,
+            modelId: result.modelId,
             provider: result.provider,
             videoStyle: result.videoStyle,
             durationSeconds: result.durationSeconds,

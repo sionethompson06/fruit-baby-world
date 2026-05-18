@@ -64,3 +64,26 @@ export type EpisodeVideoGenerationReadiness = VideoGenerationReadiness & {
   episodeSlug: string;
   episodeTitle: string;
 };
+
+export type ApprovedVideoClipAsset = {
+  id: string;
+  episodeSlug: string;
+  sceneId: string;
+  sceneNumber: number;
+  provider: string;
+  providerJobId: string;
+  modelId: string;
+  videoStyle: string;
+  durationSeconds: number;
+  url: string;
+  pathname: string;
+  thumbnailUrl: string;
+  mimeType: string;
+  sizeBytes: number;
+  promptText: string;
+  referenceMode: string;
+  reviewNotes: string;
+  approvedBy: string;
+  approvedAt: string;
+  createdAt: string;
+};
