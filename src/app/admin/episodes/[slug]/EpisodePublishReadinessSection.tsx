@@ -145,9 +145,16 @@ function SceneRow({ scene }: { scene: SceneReadiness }) {
 
       <div className="flex flex-wrap gap-3 text-xs">
         <span
-          className={`flex items-center gap-1 ${scene.hasPanel ? "text-tropical-green" : "text-warm-coral font-semibold"}`}
+          className={`flex items-center gap-1 ${
+            scene.hasPanel
+              ? "text-tropical-green"
+              : scene.panelIsHidden
+              ? "text-warm-coral font-semibold"
+              : "text-warm-coral font-semibold"
+          }`}
         >
-          {scene.hasPanel ? "✓" : "✗"} Panel
+          {scene.hasPanel ? "✓" : scene.panelIsHidden ? "◉" : "✗"}{" "}
+          {scene.panelIsHidden ? "Panel (Hidden)" : "Panel"}
         </span>
         {scene.hasPanel && (
           <>

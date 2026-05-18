@@ -5,7 +5,11 @@
 import type { Character } from "@/lib/content";
 import type { ReferenceAsset } from "@/lib/referenceAssetLoader";
 import { getActiveEpisodeScenes, getEpisodeScenes, isSceneArchived } from "@/lib/episodeScenes";
-import { sceneHasApprovedStoryPanel } from "@/lib/storyPanelCoverage";
+import {
+  sceneHasApprovedStoryPanel,
+  sceneHasPublicStoryPanel,
+  getHiddenPanelsForScene,
+} from "@/lib/storyPanelCoverage";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -576,7 +580,22 @@ function buildEpisodeIssues(
       }
     }
 
-    if (!sceneHasApprovedStoryPanel(scene, raw)) {
+    const hiddenPanels = getHiddenPanelsForScene(scene, raw);
+    const hasPublicPanel = sceneHasPublicStoryPanel(scene, raw);
+    const hasAnyPanel = sceneHasApprovedStoryPanel(scene, raw) || hiddenPanels.length > 0;
+
+    if (hiddenPanels.length > 0 && !hasPublicPanel) {
+      issues.push({
+        id: `ep-${episodeSlug}-scene-${sceneNum}-panel-hidden`,
+        scope: "story-panel",
+        severity: "warning",
+        title: `"${episodeTitle}" Scene ${sceneNum}: Story panel is hidden`,
+        message: `Scene ${sceneNum} (${sceneTitle}) has a story panel that is hidden from public display. The scene will appear without a panel.`,
+        episodeSlug,
+        sceneId: sceneId || undefined,
+        suggestedAction: "Restore the panel or attach a new one in Saved Story Panel Assets",
+      });
+    } else if (!hasAnyPanel) {
       issues.push({
         id: `ep-${episodeSlug}-scene-${sceneNum}-no-panel`,
         scope: "story-panel",
@@ -655,7 +674,7 @@ export function buildMediaHealthReport(
   const episodeRows: EpisodeHealthRow[] = episodes.map((ep) => {
     const activeScenes = getActiveEpisodeScenes(ep.raw);
     const scenesWithPanels = activeScenes.filter((s) =>
-      sceneHasApprovedStoryPanel(s, ep.raw)
+      sceneHasPublicStoryPanel(s, ep.raw)
     ).length;
 
     const media = isRecord(ep.raw.media) ? ep.raw.media : null;

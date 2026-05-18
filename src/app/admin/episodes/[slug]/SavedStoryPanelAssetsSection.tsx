@@ -1,6 +1,7 @@
 import { str, strArr, isRec } from "./helpers";
 import EditPanelCopySection from "./EditPanelCopySection";
 import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection";
+import PanelVisibilityControl from "./PanelVisibilityControl";
 
 function bool(v: unknown): boolean {
   return v === true;
@@ -244,6 +245,13 @@ function SavedPanelCard({
           </a>
         </div>
 
+        {/* ── Panel Visibility ── */}
+        <PanelVisibilityControl
+          episodeSlug={episodeSlug}
+          sceneNumber={sceneNum}
+          initialVisibility={str(panel.visibility) === "hidden" ? "hidden" : "public"}
+        />
+
         {/* ── Edit Alt Text & Caption ── */}
         <EditPanelCopySection
           episodeSlug={episodeSlug}
@@ -290,6 +298,7 @@ export default function SavedStoryPanelAssetLibrary({
     const pu = isRec(p.publicUse) ? p.publicUse : null;
     return bool(pu?.appearsOnPublicStoryPage);
   }).length;
+  const hiddenCount = panels.filter((p) => str(p.visibility) === "hidden").length;
   const vercelBlobCount = panels.filter((p) => {
     const asset = isRec(p.asset) ? p.asset : null;
     return asset?.storageProvider === "vercel-blob";
@@ -359,6 +368,7 @@ export default function SavedStoryPanelAssetLibrary({
                 ["Approved", String(approved)],
                 ["Public Use Allowed", String(publicAllowed)],
                 ["On Public Story Page", String(appearsOnPage)],
+                ...(hiddenCount > 0 ? [["Hidden from Public", String(hiddenCount)]] : []),
                 ["Vercel Blob", String(vercelBlobCount)],
                 ["Panel Mode Status", spmStatus || "—"],
               ].map(([label, value]) => (
@@ -373,6 +383,8 @@ export default function SavedStoryPanelAssetLibrary({
                     className={`text-sm font-black ${
                       label === "Total Panels" || label === "Vercel Blob"
                         ? "text-tiki-brown"
+                        : label === "Hidden from Public"
+                        ? "text-warm-coral"
                         : value === String(total) && total > 0
                         ? "text-tropical-green"
                         : value === "0"
