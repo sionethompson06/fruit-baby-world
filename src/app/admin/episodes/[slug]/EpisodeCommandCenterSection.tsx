@@ -75,7 +75,7 @@ export default function EpisodeCommandCenterSection({
       warn: panelCoverage.scenesMissingPanel > 0,
     },
     { label: "Audio", value: hasAudio ? "Attached" : "None", warn: !hasAudio },
-    { label: "Video Clips", value: String(totalVideoClips) },
+    { label: "Video Clips", value: totalVideoClips > 0 ? String(totalVideoClips) : "None" },
     { label: "Blockers", value: String(blockerCount), warn: blockerCount > 0 },
     { label: "Warnings", value: String(warningCount) },
   ];

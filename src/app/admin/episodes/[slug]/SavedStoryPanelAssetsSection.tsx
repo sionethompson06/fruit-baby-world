@@ -2,6 +2,7 @@ import { str, strArr, isRec } from "./helpers";
 import EditPanelCopySection from "./EditPanelCopySection";
 import ReorderPanelsSection, { type PanelSummary } from "./ReorderPanelsSection";
 import PanelVisibilityControl from "./PanelVisibilityControl";
+import { getMediaLifecycleBadgeClass } from "@/lib/mediaLifecycle";
 
 function bool(v: unknown): boolean {
   return v === true;
@@ -27,15 +28,15 @@ function PublicDisplayBadge({ panel }: { panel: Record<string, unknown> }) {
 
   if (isApproved && fidelityApproved && publicAllowed && appearsOnPage) {
     return (
-      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green">
-        Public Display: Yes
+      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getMediaLifecycleBadgeClass("public-ready")}`}>
+        Public Ready
       </span>
     );
   }
   if (isApproved && fidelityApproved) {
     return (
-      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80">
-        Approved Asset
+      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getMediaLifecycleBadgeClass("attached-to-episode")}`}>
+        Attached to Episode
       </span>
     );
   }
@@ -47,8 +48,8 @@ function PublicDisplayBadge({ panel }: { panel: Record<string, unknown> }) {
     );
   }
   return (
-    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/10 text-tiki-brown/50">
-      Public Display: No
+    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${getMediaLifecycleBadgeClass("attached-to-episode")}`}>
+      Attached to Episode
     </span>
   );
 }
@@ -365,11 +366,10 @@ export default function SavedStoryPanelAssetLibrary({
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {[
                 ["Total Panels", String(total)],
-                ["Approved", String(approved)],
-                ["Public Use Allowed", String(publicAllowed)],
-                ["On Public Story Page", String(appearsOnPage)],
-                ...(hiddenCount > 0 ? [["Hidden from Public", String(hiddenCount)]] : []),
-                ["Vercel Blob", String(vercelBlobCount)],
+                ["Attached to Episode", String(approved)],
+                ["Public Ready", String(appearsOnPage)],
+                ...(hiddenCount > 0 ? [["Hidden", String(hiddenCount)]] : []),
+                ["In Media Storage", String(vercelBlobCount)],
                 ["Panel Mode Status", spmStatus || "—"],
               ].map(([label, value]) => (
                 <div

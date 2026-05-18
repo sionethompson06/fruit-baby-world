@@ -1,6 +1,7 @@
 "use client";
 
 import type { AttachedVideoClipAsset } from "@/lib/videoGenerationTypes";
+import { getMediaVisibilityLabel, getMediaLifecycleBadgeClass, getMediaVisibilityStage } from "@/lib/mediaLifecycle";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -28,19 +29,8 @@ const STYLE_LABELS: Record<string, string> = {
 // ─── Single clip card ─────────────────────────────────────────────────────────
 
 function VideoClipCard({ clip }: { clip: AttachedVideoClipAsset }) {
-  const visibilityLabel =
-    clip.visibility === "admin-only"
-      ? "Admin Only"
-      : clip.visibility === "public-ready"
-      ? "Public Ready"
-      : "Hidden";
-
-  const visibilityColor =
-    clip.visibility === "admin-only"
-      ? "bg-pineapple-yellow/20 text-tiki-brown/65"
-      : clip.visibility === "public-ready"
-      ? "bg-tropical-green/15 text-tropical-green"
-      : "bg-warm-coral/15 text-warm-coral";
+  const visibilityLabel = getMediaVisibilityLabel(clip.visibility);
+  const visibilityColor = getMediaLifecycleBadgeClass(getMediaVisibilityStage(clip.visibility));
 
   return (
     <div className="bg-white border border-tiki-brown/10 rounded-2xl p-4 flex flex-col gap-3">

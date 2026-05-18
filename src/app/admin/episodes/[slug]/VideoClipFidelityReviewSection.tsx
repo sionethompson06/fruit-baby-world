@@ -607,8 +607,8 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
               Save Approved Video Clip to Media Storage
             </p>
             <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              This uploads the approved video clip to Vercel Blob only. It will not attach the video to
-              the episode or publish it yet.
+              Uploads the Temporary Draft to Vercel Blob. Lifecycle stage becomes Saved to
+              Media Storage. It will not be attached to the episode or published yet.
             </p>
           </div>
 
@@ -658,10 +658,10 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
           {uploadResult && uploadResult.ok && (
             <div className="bg-tropical-green/8 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green uppercase tracking-wide">
-                  Approved Video Uploaded
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80 uppercase tracking-wide">
+                  Saved to Media Storage
                 </span>
-                <span className="text-xs text-tiki-brown/50">Saved to Blob — not public yet</span>
+                <span className="text-xs text-tiki-brown/50">Not yet attached to episode</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -719,8 +719,8 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
               Attach Video Clip to Episode Scene
             </p>
             <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              This saves the approved video metadata to this scene in the episode JSON.
-              It will not make the video public yet.
+              Saves approved video metadata to this scene in the episode JSON. Lifecycle
+              stage becomes Attached to Episode. It will not be public yet.
             </p>
           </div>
 
@@ -764,9 +764,9 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
             <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
-                  Video Clip Attached
+                  Attached to Episode
                 </span>
-                <span className="text-xs text-tiki-brown/50">Saved to scene — admin only</span>
+                <span className="text-xs text-tiki-brown/50">Saved to scene — not yet public</span>
               </div>
               <p className="text-xs font-mono text-tiki-brown/60 break-all">{attachResult.path}</p>
               <p className="text-xs text-tiki-brown/55">
@@ -775,7 +775,7 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
               {attachResult.notes.map((n, i) => (
                 <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
               ))}
-              <p className="text-xs text-tiki-brown/45 mt-1">Public video playback comes next.</p>
+              <p className="text-xs text-tiki-brown/45 mt-1">Set visibility to Public Ready when public video display is ready.</p>
             </div>
           )}
         </div>

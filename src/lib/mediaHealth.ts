@@ -645,10 +645,10 @@ function buildEpisodeIssues(
         id: `ep-${episodeSlug}-narration-audio-admin-only`,
         scope: "episode",
         severity: "info",
-        title: `"${episodeTitle}": Narration audio visibility is admin-only`,
-        message: `Episode "${episodeTitle}" has narration audio attached but it is not yet public. Set visibility to "public-ready" in Phase 13F.`,
+        title: `"${episodeTitle}": Audio is Attached to Episode but not Public Ready`,
+        message: `Episode "${episodeTitle}" has narration audio attached but it is not yet Public Ready. Set visibility to "public-ready" in the Audio Story section.`,
         episodeSlug,
-        suggestedAction: "Phase 13F will add public audio playback",
+        suggestedAction: "Set audio visibility to Public Ready in the Audio Story section",
       });
     }
   }
@@ -721,11 +721,11 @@ function buildEpisodeIssues(
           id: `ep-${episodeSlug}-scene-${sceneNum}-video-admin-only-${clipId}`,
           scope: "scene",
           severity: "info",
-          title: `"${episodeTitle}" Scene ${sceneNum}: Video clip is admin-only`,
-          message: `Scene ${sceneNum} has an attached video clip with visibility "admin-only". Public video playback will be added in Phase 14F.`,
+          title: `"${episodeTitle}" Scene ${sceneNum}: Video clip Attached to Episode but not Public Ready`,
+          message: `Scene ${sceneNum} has an attached video clip but it is not yet Public Ready. Public video display will be enabled in a future phase.`,
           episodeSlug,
           sceneId: sceneId || undefined,
-          suggestedAction: "Phase 14F will add public video playback controls",
+          suggestedAction: "Set video clip visibility to Public Ready when public video display is available",
         });
       }
     }

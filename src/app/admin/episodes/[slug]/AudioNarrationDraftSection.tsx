@@ -254,8 +254,8 @@ function AudioReviewPanel({
       {/* Review header */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm font-black text-tiki-brown">Draft Review</span>
-        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/70">
-          Temporary — not saved
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/70">
+          Temporary Draft
         </span>
         <span className="text-xs text-tiki-brown/45 ml-auto">
           ElevenLabs · {draft.voiceStyle} · <span className="font-mono">{draft.voiceId}</span>
@@ -282,8 +282,8 @@ function AudioReviewPanel({
         {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
         <audio controls src={audioSrc} className="w-full rounded-xl" />
         <p className="text-xs text-tiki-brown/35">
-          Temporary narration drafts are not public. Review the audio and complete the checklist,
-          then save the approved draft to Blob storage below.
+          Temporary Drafts are not saved or published. Review the audio and complete the
+          checklist, then save it to Media Storage below.
         </p>
       </div>
 
@@ -437,11 +437,11 @@ function AudioReviewPanel({
       <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-5">
         <div className="flex flex-col gap-0.5">
           <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-            Save Approved Audio
+            Save Audio to Media Storage
           </p>
           <p className="text-xs text-tiki-brown/45 leading-relaxed">
-            This uploads the approved narration draft to Vercel Blob only. It will not attach the
-            audio to the episode or publish it yet.
+            Uploads the approved Temporary Draft to Vercel Blob. Lifecycle stage becomes
+            Saved to Media Storage. It will not be attached to the episode or published yet.
           </p>
         </div>
 
@@ -478,8 +478,8 @@ function AudioReviewPanel({
         ) : (
           <div className="bg-tropical-green/10 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green">
-                Saved to Blob
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80">
+                Saved to Media Storage
               </span>
               <span className="text-xs text-tiki-brown/40">
                 {new Date(uploadResult.approvedAt).toLocaleString("en-US", {
@@ -505,8 +505,8 @@ function AudioReviewPanel({
             </div>
             <div className="bg-white/60 rounded-lg px-3 py-2 mt-1">
               <p className="text-xs text-tiki-brown/50 leading-relaxed">
-                Audio is stored in Blob. It has not been attached to the episode JSON or published
-                publicly. Future phases will add episode attachment and public playback.
+                Audio is saved to media storage. Attach it to the episode below to move it to
+                the next lifecycle stage. It will not be public until marked Public Ready.
               </p>
             </div>
           </div>
@@ -518,11 +518,11 @@ function AudioReviewPanel({
         <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-5">
           <div className="flex flex-col gap-0.5">
             <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-              Attach Audio to Episode JSON
+              Attach Audio to Episode
             </p>
             <p className="text-xs text-tiki-brown/45 leading-relaxed">
-              This saves the approved audio metadata to the episode JSON. It will not make the audio
-              public yet.
+              Saves approved audio metadata to the episode JSON. Lifecycle stage becomes
+              Attached to Episode. It will not be Public Ready until you set that below.
             </p>
             {hasExistingAttachment && !attachResult && (
               <p className="text-xs text-pineapple-yellow/80 font-semibold mt-1">
@@ -541,8 +541,8 @@ function AudioReviewPanel({
                 className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {attaching
-                  ? "Attaching narration audio to episode…"
-                  : "Attach Audio to Episode JSON"}
+                  ? "Attaching audio to episode…"
+                  : "Attach Audio to Episode"}
               </button>
               {attaching && (
                 <span className="text-xs text-tiki-brown/45 animate-pulse">
@@ -560,7 +560,7 @@ function AudioReviewPanel({
             <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
-                  Narration audio attached to episode
+                  Attached to Episode
                 </span>
                 <span className="text-xs text-tiki-brown/40">
                   {new Date(attachResult.attachedAt).toLocaleString("en-US", {
@@ -573,7 +573,8 @@ function AudioReviewPanel({
               <p className="text-xs text-tiki-brown/50 italic">{attachResult.commitMessage}</p>
               <div className="bg-white/60 rounded-lg px-3 py-2 mt-1">
                 <p className="text-xs text-tiki-brown/50 leading-relaxed">
-                  Public audio playback comes next. Phase 13F will add the public audio story player.
+                  Audio is Attached to Episode. Set visibility to Public Ready above to make it
+                  appear on the public story page.
                 </p>
               </div>
             </div>
@@ -651,16 +652,16 @@ function AttachedNarrationPanel({
   }
 
   const visibilityBadge = {
-    "public-ready": { label: "Public Ready", className: "bg-tropical-green/15 text-tropical-green" },
-    "admin-only": { label: "Admin Only", className: "bg-pineapple-yellow/25 text-tiki-brown/70" },
-    "hidden": { label: "Hidden", className: "bg-warm-coral/15 text-warm-coral/80" },
+    "public-ready": { label: "Public Ready",        className: "bg-tropical-green/15 text-tropical-green" },
+    "admin-only":   { label: "Attached to Episode", className: "bg-ube-purple/15 text-ube-purple" },
+    "hidden":       { label: "Hidden",              className: "bg-warm-coral/15 text-warm-coral/80" },
   }[currentVisibility] ?? { label: currentVisibility, className: "bg-tiki-brown/8 text-tiki-brown/60" };
 
   return (
     <div className="flex flex-col gap-3 bg-ube-purple/5 border border-ube-purple/15 rounded-2xl px-4 py-4">
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
-          Attached Narration Audio
+          Attached to Episode
         </span>
         <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${visibilityBadge.className}`}>
           {visibilityBadge.label}
@@ -730,9 +731,9 @@ function AttachedNarrationPanel({
               type="button"
               onClick={() => handleVisibilityChange("admin-only")}
               disabled={updating}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-pineapple-yellow/20 text-tiki-brown/70 hover:bg-pineapple-yellow/35 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/18 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Set Admin Only
+              Set Attached to Episode
             </button>
           )}
           {currentVisibility !== "hidden" && (
@@ -742,7 +743,7 @@ function AttachedNarrationPanel({
               disabled={updating}
               className="px-3 py-1.5 rounded-xl text-xs font-bold bg-warm-coral/10 text-warm-coral/80 hover:bg-warm-coral/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Hide Public Audio
+              Hide Audio
             </button>
           )}
         </div>
