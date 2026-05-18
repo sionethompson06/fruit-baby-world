@@ -347,7 +347,22 @@ export default function AudioNarrationDraftSection({
         }),
       });
 
-      const data = (await res.json()) as GenerateResult;
+      let data: GenerateResult;
+      try {
+        data = (await res.json()) as GenerateResult;
+      } catch {
+        // Non-JSON response — most likely a Vercel gateway timeout (504) or
+        // server crash. Give an actionable hint instead of a generic message.
+        const hint =
+          res.status === 504
+            ? "The request timed out — try a shorter script or regenerate."
+            : res.status >= 500
+            ? "A server error occurred. Check your environment variables and try again."
+            : "Unexpected response from server. Try again.";
+        setError({ message: hint });
+        setLoading(false);
+        return;
+      }
 
       if (data.ok) {
         setDraft({
@@ -368,7 +383,7 @@ export default function AudioNarrationDraftSection({
         });
       }
     } catch {
-      setError({ message: "Network error. Please try again." });
+      setError({ message: "Network error — check your connection and try again." });
     } finally {
       setLoading(false);
     }

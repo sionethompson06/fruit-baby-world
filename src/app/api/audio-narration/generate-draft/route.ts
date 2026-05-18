@@ -6,6 +6,9 @@
 //          API key is never exposed in responses or logs.
 // Phase:   13B — temporary narration draft generation.
 
+// Allow up to 60 s on Vercel (default is 10 s on Hobby, which ElevenLabs TTS easily exceeds).
+export const maxDuration = 60;
+
 import { loadEpisodeBySlug } from "@/lib/savedEpisodes";
 import {
   isElevenLabsConfigured,
@@ -390,7 +393,14 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Call ElevenLabs TTS ───────────────────────────────────────────────────
   const modelId = getDefaultNarrationModelId() ?? ELEVENLABS_DEFAULT_MODEL;
-  const voiceSettings = VOICE_STYLE_SETTINGS[voiceStyle];
+  const baseSettings = VOICE_STYLE_SETTINGS[voiceStyle];
+
+  // eleven_*_v1 models do not support `style` or `use_speaker_boost` — sending
+  // them produces a 422. v2/turbo/flash models support all four fields.
+  const isV2Model = !/v1($|[^0-9])/.test(modelId);
+  const voiceSettings = isV2Model
+    ? baseSettings
+    : { stability: baseSettings.stability, similarity_boost: baseSettings.similarity_boost };
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ELEVENLABS_TIMEOUT_MS);
@@ -438,6 +448,21 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     audioBuffer = await elevenRes.arrayBuffer();
+    if (audioBuffer.byteLength === 0) {
+      return Response.json(
+        {
+          ok: false,
+          status: "provider_error",
+          message: "ElevenLabs returned an empty audio response. Try a different voice style or regenerate.",
+          troubleshooting: [
+            "Try a different voice style.",
+            "Shorten the script and regenerate.",
+            "Check ElevenLabs service status.",
+          ],
+        } satisfies GenerateDraftResult,
+        { status: 502 }
+      );
+    }
   } catch (err) {
     clearTimeout(timeoutId);
     if (err instanceof Error && err.name === "AbortError") {
