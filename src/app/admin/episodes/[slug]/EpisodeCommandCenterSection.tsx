@@ -1,6 +1,8 @@
 import type { SavedEpisodeDraft } from "@/lib/savedEpisodes";
 import type { EpisodePublishReadiness } from "@/lib/episodePublishReadiness";
 import type { StoryPanelCoverage } from "@/lib/storyPanelCoverage";
+import type { MediaLifecycleStage } from "@/lib/mediaLifecycle";
+import { getMediaLifecycleLabel } from "@/lib/mediaLifecycle";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -8,7 +10,7 @@ type Props = {
   normalised: SavedEpisodeDraft;
   publishReadiness: EpisodePublishReadiness;
   panelCoverage: StoryPanelCoverage;
-  hasAudio: boolean;
+  audioLifecycleStage: MediaLifecycleStage;
   totalVideoClips: number;
 };
 
@@ -41,12 +43,14 @@ export default function EpisodeCommandCenterSection({
   normalised,
   publishReadiness,
   panelCoverage,
-  hasAudio,
+  audioLifecycleStage,
   totalVideoClips,
 }: Props) {
   const activeSceneCount = panelCoverage.totalActiveScenes;
   const blockerCount = publishReadiness.blockers.length;
   const warningCount = publishReadiness.warnings.length;
+  const hasAudio = audioLifecycleStage !== "unknown";
+  const audioStatusLabel = hasAudio ? getMediaLifecycleLabel(audioLifecycleStage) : "None";
 
   const nextAction = deriveNextAction({
     activeSceneCount,
@@ -74,7 +78,11 @@ export default function EpisodeCommandCenterSection({
       value: String(panelCoverage.scenesMissingPanel),
       warn: panelCoverage.scenesMissingPanel > 0,
     },
-    { label: "Audio", value: hasAudio ? "Attached" : "None", warn: !hasAudio },
+    {
+      label: "Audio",
+      value: audioStatusLabel,
+      warn: !hasAudio,
+    },
     { label: "Video Clips", value: String(totalVideoClips) },
     { label: "Blockers", value: String(blockerCount), warn: blockerCount > 0 },
     { label: "Warnings", value: String(warningCount) },
