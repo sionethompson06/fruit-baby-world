@@ -350,6 +350,87 @@ function ApprovedPanelCard({
   );
 }
 
+// ─── Public audio story player ───────────────────────────────────────────────
+
+type PublicAudio = {
+  url: string;
+  mimeType: string;
+  voiceStyle: string | null;
+};
+
+function PublicAudioStoryPlayer({
+  audio,
+  title,
+}: {
+  audio: PublicAudio;
+  title: string;
+}) {
+  return (
+    <div
+      id="listen"
+      className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
+      aria-labelledby="audio-player-heading"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <h2
+            id="audio-player-heading"
+            className="text-lg font-black text-tiki-brown flex items-center gap-2"
+          >
+            <span aria-hidden="true">🎧</span> Listen to the Story
+          </h2>
+          <p className="text-sm text-tiki-brown/60 leading-relaxed">
+            Hear <em>{title}</em> read aloud.
+          </p>
+        </div>
+        <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
+          Audio Available
+        </span>
+      </div>
+
+      {/* Player */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide">
+          Full Story Narration
+        </p>
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <audio
+          controls
+          src={audio.url}
+          className="w-full rounded-xl"
+          aria-label={`Audio narration of ${title}`}
+        >
+          <p className="text-sm text-tiki-brown/60">
+            Your browser does not support the audio element.
+          </p>
+        </audio>
+      </div>
+
+      {/* Voice style hint — only show if safe/friendly value */}
+      {audio.voiceStyle && (
+        <p className="text-xs text-tiki-brown/45 leading-relaxed">
+          Narration style:{" "}
+          <span className="font-semibold">
+            {audio.voiceStyle.replace(/-/g, " ")}
+          </span>
+        </p>
+      )}
+
+      {/* Cross-link to read-aloud text */}
+      <p className="text-xs text-tiki-brown/50 leading-relaxed">
+        Prefer reading?{" "}
+        <a
+          href="#read-aloud"
+          className="text-ube-purple font-semibold hover:text-ube-purple/70 transition-colors underline underline-offset-2"
+        >
+          Follow along below.
+        </a>
+      </p>
+    </div>
+  );
+}
+
 // ─── Discussion prompts ───────────────────────────────────────────────────────
 
 function buildDiscussionPrompts(lesson: string): string[] {
@@ -561,6 +642,21 @@ export default async function StoryDetailPage({
     };
   });
 
+  // Public-ready narration audio — only shown when approved and public-ready
+  const publicAudio: PublicAudio | null = (() => {
+    const an = raw.audioNarration;
+    if (typeof an !== "object" || an === null || Array.isArray(an)) return null;
+    const a = an as Record<string, unknown>;
+    if (typeof a.url !== "string" || !a.url.startsWith("https://")) return null;
+    if (a.status !== "approved") return null;
+    if (a.visibility !== "public-ready") return null;
+    return {
+      url: a.url,
+      mimeType: typeof a.mimeType === "string" ? a.mimeType : "audio/mpeg",
+      voiceStyle: typeof a.voiceStyle === "string" && a.voiceStyle ? a.voiceStyle : null,
+    };
+  })();
+
   // Gradient colors from featured characters
   const heroColorA = featuredChars[0]?.visualIdentity.primaryColors[0] ?? "#FFD84D";
   const heroColorB = featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#7AC943";
@@ -647,6 +743,14 @@ export default async function StoryDetailPage({
           >
             📖 Story
           </a>
+          {publicAudio && (
+            <a
+              href="#listen"
+              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tropical-green/10 border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/20 transition-colors"
+            >
+              🎧 Listen
+            </a>
+          )}
           <a
             href="#story-panels"
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
@@ -693,11 +797,13 @@ export default async function StoryDetailPage({
             )}
           </div>
 
-          {/* Read Aloud — active */}
-          <div className="flex flex-col items-center gap-2 bg-pineapple-yellow/20 border border-pineapple-yellow/40 rounded-2xl px-3 py-4 text-center shadow-sm">
-            <span className="text-2xl">🎙️</span>
-            <p className="text-xs font-black text-tiki-brown leading-snug">Read Aloud</p>
-            <span className="text-xs font-bold text-tiki-brown/60 bg-pineapple-yellow/30 px-2 py-0.5 rounded-full">
+          {/* Listen / Read Aloud */}
+          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${publicAudio ? "bg-tropical-green/10 border-tropical-green/25" : "bg-pineapple-yellow/20 border-pineapple-yellow/40"}`}>
+            <span className="text-2xl">{publicAudio ? "🎧" : "🎙️"}</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">
+              {publicAudio ? "Listen" : "Read Aloud"}
+            </p>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${publicAudio ? "text-tropical-green bg-tropical-green/15" : "text-tiki-brown/60 bg-pineapple-yellow/30"}`}>
               Available
             </span>
           </div>
@@ -781,6 +887,11 @@ export default async function StoryDetailPage({
             </p>
           )}
         </PublicSection>
+
+        {/* ── Audio Story Player — public-ready audio only ── */}
+        {publicAudio && (
+          <PublicAudioStoryPlayer audio={publicAudio} title={title} />
+        )}
 
         {/* Scene-by-scene story */}
         {scenes.length > 0 && (
@@ -940,19 +1051,39 @@ export default async function StoryDetailPage({
                 )}
                 <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
                   <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Audio</dt>
-                  <dd className="text-sm text-tiki-brown/75">Coming later — read together for now</dd>
+                  <dd className="text-sm text-tiki-brown/75">
+                    {publicAudio ? (
+                      <a href="#listen" className="text-ube-purple font-semibold hover:text-ube-purple/70 transition-colors">
+                        Audio available — listen above ↑
+                      </a>
+                    ) : (
+                      "Coming later — read together for now"
+                    )}
+                  </dd>
                 </div>
               </dl>
             </div>
 
-            {/* No-audio notice */}
-            <div className="flex items-start gap-3 bg-sky-blue/8 border border-sky-blue/20 rounded-2xl px-5 py-4">
-              <span className="text-lg flex-shrink-0">🔇</span>
-              <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                Audio narration is not active yet. This read-aloud mode is designed for adults
-                and children to read together.
-              </p>
-            </div>
+            {/* Audio notice — adapt based on whether public audio exists */}
+            {publicAudio ? (
+              <div className="flex items-start gap-3 bg-tropical-green/8 border border-tropical-green/20 rounded-2xl px-5 py-4">
+                <span className="text-lg flex-shrink-0">🎧</span>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Audio narration is available for this story.{" "}
+                  <a href="#listen" className="text-ube-purple font-semibold hover:text-ube-purple/70 transition-colors">
+                    Listen at the top of this page ↑
+                  </a>
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-start gap-3 bg-sky-blue/8 border border-sky-blue/20 rounded-2xl px-5 py-4">
+                <span className="text-lg flex-shrink-0">🔇</span>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Audio narration is not active yet. This read-aloud mode is designed for adults
+                  and children to read together.
+                </p>
+              </div>
+            )}
 
             {/* Scene cards */}
             <div className="flex flex-col gap-5">
