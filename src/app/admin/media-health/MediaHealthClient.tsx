@@ -448,6 +448,16 @@ export default function MediaHealthClient({
                   <div className={row.missingAltCount > 0 ? "text-pineapple-yellow/80 font-semibold" : "text-tiki-brown/60"}>
                     Missing alt text: <strong>{row.missingAltCount}</strong>
                   </div>
+                  <div className={row.hasAttachedNarration ? "text-tiki-brown/60" : "text-tiki-brown/35"}>
+                    Narration audio:{" "}
+                    <strong>
+                      {row.hasAttachedNarration
+                        ? row.narrationVisibility === "public-ready"
+                          ? "public-ready"
+                          : "admin-only"
+                        : "none"}
+                    </strong>
+                  </div>
                 </div>
 
                 <Link

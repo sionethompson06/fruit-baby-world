@@ -461,7 +461,33 @@ export function buildEpisodePublishReadiness(
     });
   }
 
-  // 15. Archived scenes with panels
+  // 15. Narration audio (warning/pass — not a blocker)
+  const audioNarration = isRecord(raw.audioNarration) ? raw.audioNarration : null;
+  const audioUrl = audioNarration ? str(audioNarration.url) : "";
+  if (audioNarration) {
+    const audioUrlValid = audioUrl.startsWith("https://") && audioUrl.length > 8;
+    checklist.push({
+      id: "episode-has-narration-audio",
+      label: "Episode has attached narration audio",
+      status: audioUrlValid ? "pass" : "warning",
+      message: audioUrlValid
+        ? `Narration audio attached (visibility: ${str(audioNarration.visibility) || "admin-only"}).`
+        : "Attached narration audio has an invalid or missing URL.",
+      suggestedAction: audioUrlValid
+        ? undefined
+        : "Re-attach the narration audio using a valid Blob URL.",
+    });
+  } else {
+    checklist.push({
+      id: "episode-has-narration-audio",
+      label: "Episode has attached narration audio",
+      status: "warning",
+      message: "No narration audio attached yet. Audio is optional for publishing.",
+      suggestedAction: "Generate and attach narration audio in the Audio Narration section.",
+    });
+  }
+
+  // 16. Archived scenes with panels
   if (archivedWithPanels.length > 0) {
     checklist.push({
       id: "archived-scenes-panel-review",

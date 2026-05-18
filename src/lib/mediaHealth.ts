@@ -52,6 +52,8 @@ export type EpisodeHealthRow = {
   missingAltCount: number;
   issueCount: number;
   hasBlocker: boolean;
+  hasAttachedNarration: boolean;
+  narrationVisibility: string;
 };
 
 export type RefAssetStats = {
@@ -611,6 +613,45 @@ function buildEpisodeIssues(
     }
   }
 
+  // ── Attached narration audio checks (info only — not a blocker yet) ────────
+  const audioNarration = isRecord(raw.audioNarration) ? raw.audioNarration : null;
+  if (!audioNarration) {
+    issues.push({
+      id: `ep-${episodeSlug}-no-narration-audio`,
+      scope: "episode",
+      severity: "info",
+      title: `"${episodeTitle}": No narration audio attached`,
+      message: `Episode "${episodeTitle}" has no attached narration audio. Audio is optional for publishing.`,
+      episodeSlug,
+      suggestedAction: "Generate and attach narration audio in the Audio Narration section",
+    });
+  } else {
+    const audioUrl = str(audioNarration.url);
+    if (!audioUrl || !isValidUrl(audioUrl)) {
+      issues.push({
+        id: `ep-${episodeSlug}-narration-audio-bad-url`,
+        scope: "episode",
+        severity: "warning",
+        title: `"${episodeTitle}": Attached narration audio has invalid URL`,
+        message: `Episode "${episodeTitle}" has narration audio attached but the URL is invalid or missing.`,
+        episodeSlug,
+        suggestedAction: "Re-attach narration audio with a valid Vercel Blob URL",
+      });
+    }
+    const visibility = str(audioNarration.visibility);
+    if (visibility === "admin-only") {
+      issues.push({
+        id: `ep-${episodeSlug}-narration-audio-admin-only`,
+        scope: "episode",
+        severity: "info",
+        title: `"${episodeTitle}": Narration audio visibility is admin-only`,
+        message: `Episode "${episodeTitle}" has narration audio attached but it is not yet public. Set visibility to "public-ready" in Phase 13F.`,
+        episodeSlug,
+        suggestedAction: "Phase 13F will add public audio playback",
+      });
+    }
+  }
+
   // ── Audio / narration readiness checks (info/warning only — not a blocker yet) ──
   const scenesWithReadAloudText = activeScenes.filter((scene) => {
     const voiceoverNotes = Array.isArray(scene.voiceoverNotes)
@@ -725,6 +766,16 @@ export function buildMediaHealthReport(
       return url && !alt;
     }).length;
 
+    const audioNarration = isRecord(ep.raw.audioNarration) ? ep.raw.audioNarration : null;
+    const hasAttachedNarration =
+      audioNarration !== null &&
+      typeof audioNarration.url === "string" &&
+      isValidUrl(audioNarration.url);
+    const narrationVisibility =
+      audioNarration && typeof audioNarration.visibility === "string"
+        ? audioNarration.visibility
+        : "";
+
     const epIssueList = allIssues.filter((i) => i.episodeSlug === ep.slug);
     return {
       slug: ep.slug,
@@ -737,6 +788,8 @@ export function buildMediaHealthReport(
       missingAltCount,
       issueCount: epIssueList.length,
       hasBlocker: epIssueList.some((i) => i.severity === "blocker"),
+      hasAttachedNarration,
+      narrationVisibility,
     };
   });
 

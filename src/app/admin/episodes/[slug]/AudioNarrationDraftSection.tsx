@@ -5,6 +5,7 @@ import type {
   NarrationVoiceStyle,
   AudioDraftReviewChecklistItem,
   AudioDraftReviewDecision,
+  EpisodeAudioNarration,
 } from "@/lib/audioNarrationTypes";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ type GenerateError = {
 };
 
 type UploadSuccessResult = {
+  id: string;
   url: string;
   pathname: string;
   sizeBytes: number;
@@ -59,6 +61,12 @@ type UploadSuccessResult = {
   voiceStyle: string;
   voiceId: string;
   approvedAt: string;
+};
+
+type AttachSuccessResult = {
+  path: string;
+  commitMessage: string;
+  attachedAt: string;
 };
 
 type GenerateResult =
@@ -77,10 +85,12 @@ function AudioReviewPanel({
   draft,
   hasTiki,
   episodeSlug,
+  hasExistingAttachment,
 }: {
   draft: AudioDraft;
   hasTiki: boolean;
   episodeSlug: string;
+  hasExistingAttachment: boolean;
 }) {
   const [checklist, setChecklist] = useState<AudioDraftReviewChecklistItem[]>(() =>
     buildInitialChecklist(hasTiki)
@@ -91,6 +101,9 @@ function AudioReviewPanel({
   const [uploading, setUploading] = useState(false);
   const [uploadResult, setUploadResult] = useState<UploadSuccessResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [attaching, setAttaching] = useState(false);
+  const [attachResult, setAttachResult] = useState<AttachSuccessResult | null>(null);
+  const [attachError, setAttachError] = useState<string | null>(null);
 
   const checkedCount = checklist.filter((i) => i.checked).length;
   const allChecked = checkedCount === checklist.length;
@@ -116,6 +129,8 @@ function AudioReviewPanel({
     setDecidedAt(null);
     setUploadResult(null);
     setUploadError(null);
+    setAttachResult(null);
+    setAttachError(null);
   }
 
   async function handleSave() {
@@ -156,6 +171,7 @@ function AudioReviewPanel({
 
       if (data.ok && data.audio) {
         setUploadResult({
+          id: data.audio.id as string,
           url: data.audio.url as string,
           pathname: data.audio.pathname as string,
           sizeBytes: data.audio.sizeBytes as number,
@@ -171,6 +187,62 @@ function AudioReviewPanel({
       setUploadError("Network error — check your connection and try again.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleAttach() {
+    if (!uploadResult || attaching || attachResult) return;
+    setAttaching(true);
+    setAttachError(null);
+
+    try {
+      const res = await fetch("/api/github/attach-narration-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          audio: {
+            id: uploadResult.id,
+            provider: uploadResult.provider,
+            voiceId: draft.voiceId,
+            modelId: draft.modelId,
+            voiceStyle: uploadResult.voiceStyle,
+            url: uploadResult.url,
+            pathname: uploadResult.pathname,
+            mimeType: "audio/mpeg",
+            sizeBytes: uploadResult.sizeBytes,
+            scriptText: draft.scriptText,
+            reviewNotes: reviewNotes.trim(),
+            approvedBy: "admin",
+            approvedAt: uploadResult.approvedAt,
+          },
+        }),
+      });
+
+      let data: { ok: boolean; status: string; message?: string; path?: string; commitMessage?: string; audioNarration?: { attachedAt?: string } };
+      try {
+        data = await res.json();
+      } catch {
+        setAttachError(
+          res.status === 504 ? "Request timed out — try again." : "Unexpected server response. Try again."
+        );
+        setAttaching(false);
+        return;
+      }
+
+      if (data.ok) {
+        setAttachResult({
+          path: data.path ?? "",
+          commitMessage: data.commitMessage ?? "",
+          attachedAt: data.audioNarration?.attachedAt ?? new Date().toISOString(),
+        });
+      } else {
+        setAttachError(data.message ?? "Attach failed — check GitHub configuration.");
+      }
+    } catch {
+      setAttachError("Network error — check your connection and try again.");
+    } finally {
+      setAttaching(false);
     }
   }
 
@@ -441,6 +513,74 @@ function AudioReviewPanel({
         )}
       </div>
 
+      {/* Attach to episode JSON section — only shown after blob upload succeeds */}
+      {uploadResult && (
+        <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-5">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+              Attach Audio to Episode JSON
+            </p>
+            <p className="text-xs text-tiki-brown/45 leading-relaxed">
+              This saves the approved audio metadata to the episode JSON. It will not make the audio
+              public yet.
+            </p>
+            {hasExistingAttachment && !attachResult && (
+              <p className="text-xs text-pineapple-yellow/80 font-semibold mt-1">
+                Attaching a new narration audio will replace the current episode narration metadata.
+                The old Blob file will not be deleted.
+              </p>
+            )}
+          </div>
+
+          {!attachResult ? (
+            <>
+              <button
+                type="button"
+                onClick={handleAttach}
+                disabled={attaching}
+                className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {attaching
+                  ? "Attaching narration audio to episode…"
+                  : "Attach Audio to Episode JSON"}
+              </button>
+              {attaching && (
+                <span className="text-xs text-tiki-brown/45 animate-pulse">
+                  Saving to GitHub episode JSON — this may take a moment…
+                </span>
+              )}
+              {attachError && (
+                <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
+                  <p className="text-xs font-bold text-warm-coral mb-0.5">Attach failed</p>
+                  <p className="text-xs text-tiki-brown/70 leading-relaxed">{attachError}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
+                  Narration audio attached to episode
+                </span>
+                <span className="text-xs text-tiki-brown/40">
+                  {new Date(attachResult.attachedAt).toLocaleString("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </span>
+              </div>
+              <p className="text-xs font-mono text-tiki-brown/50 break-all">{attachResult.path}</p>
+              <p className="text-xs text-tiki-brown/50 italic">{attachResult.commitMessage}</p>
+              <div className="bg-white/60 rounded-lg px-3 py-2 mt-1">
+                <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                  Public audio playback comes next. Phase 13F will add the public audio story player.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Notes from generation API */}
       {draft.notes.length > 0 && (
         <div className="flex flex-col gap-1 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2.5">
@@ -457,6 +597,77 @@ function AudioReviewPanel({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+// ─── Attached narration panel sub-component ──────────────────────────────────
+
+function AttachedNarrationPanel({ audio }: { audio: EpisodeAudioNarration }) {
+  return (
+    <div className="flex flex-col gap-3 bg-ube-purple/5 border border-ube-purple/15 rounded-2xl px-4 py-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
+          Attached Narration Audio
+        </span>
+        <span
+          className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+            audio.visibility === "public-ready"
+              ? "bg-tropical-green/15 text-tropical-green"
+              : "bg-pineapple-yellow/25 text-tiki-brown/70"
+          }`}
+        >
+          {audio.visibility === "public-ready" ? "Public Ready" : "Admin Only"}
+        </span>
+        <span className="text-xs text-tiki-brown/40 ml-auto">
+          Attached{" "}
+          {new Date(audio.attachedAt).toLocaleString("en-US", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-tiki-brown/60">
+        {audio.provider && (
+          <div>
+            Provider: <span className="font-semibold text-tiki-brown/75">{audio.provider}</span>
+          </div>
+        )}
+        {audio.voiceStyle && (
+          <div>
+            Voice style:{" "}
+            <span className="font-semibold text-tiki-brown/75">{audio.voiceStyle}</span>
+          </div>
+        )}
+        {audio.voiceId && (
+          <div>
+            Voice ID:{" "}
+            <span className="font-mono font-semibold text-tiki-brown/75">{audio.voiceId}</span>
+          </div>
+        )}
+        {audio.sizeBytes && (
+          <div>
+            Size:{" "}
+            <span className="font-semibold text-tiki-brown/75">
+              {audio.sizeBytes < 1024 * 1024
+                ? `${Math.round(audio.sizeBytes / 1024)}KB`
+                : `${(audio.sizeBytes / 1024 / 1024).toFixed(2)}MB`}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs font-mono text-tiki-brown/45 break-all">{audio.url}</p>
+
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio controls src={audio.url} className="w-full rounded-xl" />
+
+      <p className="text-xs text-tiki-brown/40 italic">
+        Admin-only preview. Public audio playback is not yet enabled (Phase 13F).
+      </p>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function AudioNarrationDraftSection({
   episodeSlug,
   initialScript,
@@ -464,6 +675,7 @@ export default function AudioNarrationDraftSection({
   defaultVoiceId,
   defaultModelId,
   hasTiki = false,
+  existingAudioNarration = null,
 }: {
   episodeSlug: string;
   initialScript: string;
@@ -471,6 +683,7 @@ export default function AudioNarrationDraftSection({
   defaultVoiceId?: string;
   defaultModelId?: string;
   hasTiki?: boolean;
+  existingAudioNarration?: EpisodeAudioNarration | null;
 }) {
   const [script, setScript] = useState(initialScript);
   const [voiceStyle, setVoiceStyle] = useState<NarrationVoiceStyle>("warm-storyteller");
@@ -558,6 +771,11 @@ export default function AudioNarrationDraftSection({
           uploaded, or published. Review the audio and script before any future save step.
         </p>
       </div>
+
+      {/* Currently attached narration audio */}
+      {existingAudioNarration && (
+        <AttachedNarrationPanel audio={existingAudioNarration} />
+      )}
 
       {/* Provider status banner */}
       {!providerConfigured && (
@@ -716,7 +934,14 @@ export default function AudioNarrationDraftSection({
       )}
 
       {/* Review panel — appears after draft is generated */}
-      {draft && <AudioReviewPanel draft={draft} hasTiki={hasTiki} episodeSlug={episodeSlug} />}
+      {draft && (
+        <AudioReviewPanel
+          draft={draft}
+          hasTiki={hasTiki}
+          episodeSlug={episodeSlug}
+          hasExistingAttachment={!!existingAudioNarration}
+        />
+      )}
     </div>
   );
 }
