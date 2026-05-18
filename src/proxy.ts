@@ -54,5 +54,6 @@ export const config = {
     "/api/github/assign-primary-character-reference",
     "/api/characters/generate-official-profile-draft",
     "/api/github/save-character-profile-draft",
+    "/api/audio-narration/generate-draft",
   ],
 };
