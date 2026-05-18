@@ -60,5 +60,6 @@ export const config = {
     "/api/github/update-narration-audio-visibility",
     "/api/video-generation/generate-draft",
     "/api/video-generation/upload-approved-draft",
+    "/api/github/attach-video-clip",
   ],
 };

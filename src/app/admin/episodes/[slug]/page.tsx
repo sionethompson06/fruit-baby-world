@@ -38,6 +38,8 @@ import {
 import VideoGenerationSetupSection from "./VideoGenerationSetupSection";
 import VideoClipDraftSection, { type SceneVideoOption } from "./VideoClipDraftSection";
 import type { SceneReviewData } from "./VideoClipFidelityReviewSection";
+import AttachedVideoClipsSection, { type SceneWithVideoClips } from "./AttachedVideoClipsSection";
+import { getVideoClipsForScene } from "@/lib/videoClipCoverage";
 import { getVideoGenerationProviderStatus } from "@/lib/videoGenerationConfig";
 import { getVideoGenerationReadinessForEpisode, buildSceneVideoGenerationContext } from "@/lib/videoGenerationContext";
 import {
@@ -622,6 +624,14 @@ export default async function EpisodeDetailPage({
     };
   }
 
+  // Attached video clips per scene (Phase 14E)
+  const attachedVideoClipScenes: SceneWithVideoClips[] = activeScenes.map((scene) => ({
+    sceneNumber: typeof scene.sceneNumber === "number" ? scene.sceneNumber : 0,
+    sceneId: str(scene.sceneId),
+    sceneTitle: str(scene.title),
+    videoClips: getVideoClipsForScene(scene),
+  }));
+
   // Extract existing attached narration audio from episode JSON (Phase 13E)
   const existingAudioNarration: EpisodeAudioNarration | null = (() => {
     const an = raw.audioNarration;
@@ -765,6 +775,9 @@ export default async function EpisodeDetailPage({
           videoReadiness={videoReadiness}
           sceneReviewData={sceneReviewData}
         />
+
+        {/* ── Attached Video Clips ── */}
+        <AttachedVideoClipsSection scenes={attachedVideoClipScenes} />
 
         {/* ── Media Planning ── */}
         <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />

@@ -65,6 +65,29 @@ export type EpisodeVideoGenerationReadiness = VideoGenerationReadiness & {
   episodeTitle: string;
 };
 
+export type AttachedVideoClipAsset = {
+  id: string;
+  type: "animated-clip";
+  status: "approved";
+  provider: string;
+  providerJobId: string;
+  modelId: string;
+  videoStyle: string;
+  durationSeconds: number;
+  url: string;
+  pathname: string;
+  thumbnailUrl: string;
+  mimeType: string;
+  sizeBytes: number;
+  promptText: string;
+  referenceMode: string;
+  reviewNotes: string;
+  approvedBy: string;
+  approvedAt: string;
+  attachedAt: string;
+  visibility: "admin-only" | "public-ready" | "hidden";
+};
+
 export type ApprovedVideoClipAsset = {
   id: string;
   episodeSlug: string;

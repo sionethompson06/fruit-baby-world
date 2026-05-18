@@ -56,6 +56,8 @@ export type EpisodePublishReadinessSummary = {
   charactersMissingReferences: number;
   blockers: number;
   warnings: number;
+  scenesWithVideoClips: number;
+  publicReadyVideoClips: number;
 };
 
 export type EpisodePublishReadiness = {
@@ -197,6 +199,16 @@ export function buildEpisodePublishReadiness(
   const scenesMissingCaptions = activeReadiness.filter(
     (s) => s.hasPanel && !s.panelHasCaption
   ).length;
+
+  // Video clips (info only — not required for publish)
+  const scenesWithVideoClips = activeScenes.filter((scene) => {
+    const clips = scene.videoClips;
+    return Array.isArray(clips) && (clips as unknown[]).some((c) => isRecord(c));
+  }).length;
+  const publicReadyVideoClips = activeScenes.reduce((sum, scene) => {
+    const clips = Array.isArray(scene.videoClips) ? (scene.videoClips as unknown[]) : [];
+    return sum + clips.filter(isRecord).filter((c) => str(c.visibility) === "public-ready").length;
+  }, 0);
 
   // Characters
   const uniqueCharSlugs = new Set<string>();
@@ -496,7 +508,22 @@ export function buildEpisodePublishReadiness(
     });
   }
 
-  // 16. Archived scenes with panels
+  // 16b. Video clips (info only — not required for publish)
+  checklist.push({
+    id: "episode-video-clips",
+    label: "Approved video clips can be uploaded (optional)",
+    status: "warning",
+    message:
+      scenesWithVideoClips > 0
+        ? `${scenesWithVideoClips} scene${scenesWithVideoClips !== 1 ? "s" : ""} have attached video clips. Public video playback is not enabled yet.`
+        : "No video clips attached yet. Approved video clips can be uploaded but are not required for publish.",
+    suggestedAction:
+      scenesWithVideoClips === 0
+        ? "Use the Temporary Video Draft section to generate and attach approved clips."
+        : "Phase 14F will add public video playback controls.",
+  });
+
+  // 17. Archived scenes with panels
   if (archivedWithPanels.length > 0) {
     checklist.push({
       id: "archived-scenes-panel-review",
@@ -535,6 +562,8 @@ export function buildEpisodePublishReadiness(
       charactersMissingReferences: unresolvedChars.length,
       blockers: blockers.length,
       warnings: warnings.length,
+      scenesWithVideoClips,
+      publicReadyVideoClips,
     },
     checklist,
     sceneReadiness,
