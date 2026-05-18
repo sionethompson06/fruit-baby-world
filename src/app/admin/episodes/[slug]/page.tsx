@@ -35,6 +35,9 @@ import {
   getNarrationReadinessForEpisode,
   buildNarrationScriptDraftFromEpisode,
 } from "@/lib/audioNarrationContext";
+import VideoGenerationSetupSection from "./VideoGenerationSetupSection";
+import { getVideoGenerationProviderStatus } from "@/lib/videoGenerationConfig";
+import { getVideoGenerationReadinessForEpisode } from "@/lib/videoGenerationContext";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
@@ -558,6 +561,14 @@ export default async function EpisodeDetailPage({
   const defaultVoiceId = getDefaultVoiceId();
   const defaultModelId = getDefaultNarrationModelId() ?? "eleven_multilingual_v2";
 
+  // Video generation provider status and readiness (Phase 14A)
+  const videoProviderStatus = getVideoGenerationProviderStatus();
+  const videoReadiness = getVideoGenerationReadinessForEpisode(
+    raw,
+    episodeRefPackages.scenePackages,
+    videoProviderStatus.configured
+  );
+
   // Extract existing attached narration audio from episode JSON (Phase 13E)
   const existingAudioNarration: EpisodeAudioNarration | null = (() => {
     const an = raw.audioNarration;
@@ -684,6 +695,12 @@ export default async function EpisodeDetailPage({
           defaultModelId={defaultModelId}
           hasTiki={tikiFlagged}
           existingAudioNarration={existingAudioNarration}
+        />
+
+        {/* ── Video Generation Setup ── */}
+        <VideoGenerationSetupSection
+          providerStatus={videoProviderStatus}
+          readiness={videoReadiness}
         />
 
         {/* ── Media Planning ── */}
