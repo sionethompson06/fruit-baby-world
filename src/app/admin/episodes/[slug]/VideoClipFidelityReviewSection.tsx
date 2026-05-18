@@ -53,6 +53,24 @@ type VideoUploadResult =
       details?: Record<string, string>;
     };
 
+// ─── Attach result type ───────────────────────────────────────────────────────
+
+type VideoAttachResult =
+  | {
+      ok: true;
+      status: "video_clip_attached";
+      sceneId: string;
+      sceneNumber: number;
+      path: string;
+      commitMessage: string;
+      notes: string[];
+    }
+  | {
+      ok: false;
+      status: string;
+      message: string;
+    };
+
 // ─── Group labels ─────────────────────────────────────────────────────────────
 
 const GROUP_LABELS: Record<string, string> = {
@@ -276,10 +294,16 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
   const [uploadResult, setUploadResult] = useState<VideoUploadResult | null>(null);
   const [uploadFetchError, setUploadFetchError] = useState<string | null>(null);
 
+  // ── Attach state ─────────────────────────────────────────────────────────────
+  const [attaching, setAttaching] = useState(false);
+  const [attachResult, setAttachResult] = useState<VideoAttachResult | null>(null);
+  const [attachFetchError, setAttachFetchError] = useState<string | null>(null);
+
   const allChecked = checklistItems.length > 0 && checklistItems.every((item) => checked[item.id]);
 
   const hasPlayableVideo = draft.kind === "video_draft_generated";
   const canUpload = hasPlayableVideo && decision === "looks-good" && !uploading && !uploadResult?.ok;
+  const canAttach = uploadResult?.ok === true && !attaching && !attachResult?.ok;
 
   async function handleUpload() {
     if (!canUpload || draft.kind !== "video_draft_generated") return;
@@ -315,6 +339,53 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
       setUploadFetchError(err instanceof Error ? err.message : "Failed to reach the server.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleAttach() {
+    if (!canAttach || !uploadResult?.ok || draft.kind !== "video_draft_generated") return;
+    setAttaching(true);
+    setAttachResult(null);
+    setAttachFetchError(null);
+
+    const v = uploadResult.video;
+    try {
+      const res = await fetch("/api/github/attach-video-clip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug: draft.pkg.episodeSlug,
+          sceneId: draft.pkg.sceneId,
+          sceneNumber: draft.pkg.sceneNumber,
+          video: {
+            id: v.id,
+            type: "animated-clip",
+            provider: v.provider,
+            providerJobId: v.providerJobId,
+            modelId: v.modelId,
+            videoStyle: v.videoStyle,
+            durationSeconds: v.durationSeconds,
+            url: v.url,
+            pathname: v.pathname,
+            thumbnailUrl: v.thumbnailUrl,
+            mimeType: v.mimeType,
+            sizeBytes: v.sizeBytes,
+            promptText: v.promptText,
+            referenceMode: v.referenceMode,
+            reviewNotes: v.reviewNotes,
+            approvedBy: v.approvedBy,
+            approvedAt: v.approvedAt,
+            createdAt: v.createdAt,
+          },
+        }),
+      });
+
+      const data = (await res.json()) as VideoAttachResult;
+      setAttachResult(data);
+    } catch (err) {
+      setAttachFetchError(err instanceof Error ? err.message : "Failed to reach the server.");
+    } finally {
+      setAttaching(false);
     }
   }
 
@@ -635,6 +706,76 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
               {uploadResult.notes.map((n, i) => (
                 <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Attach to episode — shown after successful Blob upload */}
+      {uploadResult?.ok && (
+        <div className="flex flex-col gap-3 pt-2 border-t border-tiki-brown/8">
+          <div>
+            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
+              Attach Video Clip to Episode Scene
+            </p>
+            <p className="text-xs text-tiki-brown/50 leading-relaxed">
+              This saves the approved video metadata to this scene in the episode JSON.
+              It will not make the video public yet.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAttach}
+            disabled={!canAttach || attaching}
+            className={`w-full rounded-2xl py-3 px-4 text-sm font-black uppercase tracking-wide transition-colors ${
+              canAttach && !attaching
+                ? "bg-ube-purple text-white hover:bg-ube-purple/85 active:bg-ube-purple/70"
+                : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
+            }`}
+          >
+            {attaching
+              ? "Attaching Video Clip to Episode Scene…"
+              : attachResult?.ok
+              ? "Video Clip Attached"
+              : "Attach Video Clip to Episode Scene"}
+          </button>
+
+          {/* Attach fetch error */}
+          {attachFetchError && (
+            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
+              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">Request Error</p>
+              <p className="text-xs text-tiki-brown/65">{attachFetchError}</p>
+            </div>
+          )}
+
+          {/* Attach error */}
+          {attachResult && !attachResult.ok && (
+            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
+              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">
+                {attachResult.status.replace(/_/g, " ")}
+              </p>
+              <p className="text-xs text-tiki-brown/65">{attachResult.message}</p>
+            </div>
+          )}
+
+          {/* Attach success */}
+          {attachResult?.ok && (
+            <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+                  Video Clip Attached
+                </span>
+                <span className="text-xs text-tiki-brown/50">Saved to scene — admin only</span>
+              </div>
+              <p className="text-xs font-mono text-tiki-brown/60 break-all">{attachResult.path}</p>
+              <p className="text-xs text-tiki-brown/55">
+                Commit: <span className="font-semibold">{attachResult.commitMessage}</span>
+              </p>
+              {attachResult.notes.map((n, i) => (
+                <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
+              ))}
+              <p className="text-xs text-tiki-brown/45 mt-1">Public video playback comes next.</p>
             </div>
           )}
         </div>

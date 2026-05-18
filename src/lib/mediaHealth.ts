@@ -54,6 +54,7 @@ export type EpisodeHealthRow = {
   hasBlocker: boolean;
   hasAttachedNarration: boolean;
   narrationVisibility: string;
+  attachedVideoClipCount: number;
 };
 
 export type RefAssetStats = {
@@ -686,6 +687,50 @@ function buildEpisodeIssues(
     });
   }
 
+  // ── Attached video clip checks (info only — not a blocker yet) ────────────
+  const scenesWithVideoClips = activeScenes.filter((scene) => {
+    const clips = Array.isArray(scene.videoClips) ? scene.videoClips : [];
+    return clips.some(isRecord);
+  });
+
+  for (const scene of scenesWithVideoClips) {
+    const clips = (scene.videoClips as unknown[]).filter(isRecord);
+    const sceneNum = typeof scene.sceneNumber === "number" ? scene.sceneNumber : 0;
+    const sceneId = str(scene.sceneId);
+
+    for (const clip of clips) {
+      const clipUrl = str(clip.url);
+      const clipId = str(clip.id) || `clip-${sceneNum}`;
+
+      if (!clipUrl || !isValidUrl(clipUrl)) {
+        issues.push({
+          id: `ep-${episodeSlug}-scene-${sceneNum}-video-bad-url-${clipId}`,
+          scope: "scene",
+          severity: "warning",
+          title: `"${episodeTitle}" Scene ${sceneNum}: Attached video clip has invalid URL`,
+          message: `Scene ${sceneNum} has an attached video clip but the URL is invalid or missing.`,
+          episodeSlug,
+          sceneId: sceneId || undefined,
+          suggestedAction: "Re-attach the video clip with a valid Vercel Blob URL",
+        });
+      }
+
+      const visibility = str(clip.visibility);
+      if (visibility === "admin-only") {
+        issues.push({
+          id: `ep-${episodeSlug}-scene-${sceneNum}-video-admin-only-${clipId}`,
+          scope: "scene",
+          severity: "info",
+          title: `"${episodeTitle}" Scene ${sceneNum}: Video clip is admin-only`,
+          message: `Scene ${sceneNum} has an attached video clip with visibility "admin-only". Public video playback will be added in Phase 14F.`,
+          episodeSlug,
+          sceneId: sceneId || undefined,
+          suggestedAction: "Phase 14F will add public video playback controls",
+        });
+      }
+    }
+  }
+
   return issues;
 }
 
@@ -776,6 +821,15 @@ export function buildMediaHealthReport(
         ? audioNarration.visibility
         : "";
 
+    // Count video clips across all active scenes
+    const attachedVideoClipCount = activeScenes.reduce((sum, scene) => {
+      const clips = Array.isArray(scene.videoClips) ? scene.videoClips : [];
+      return sum + clips.filter(isRecord).filter((c) => {
+        const url = str(c.url);
+        return url.startsWith("https://");
+      }).length;
+    }, 0);
+
     const epIssueList = allIssues.filter((i) => i.episodeSlug === ep.slug);
     return {
       slug: ep.slug,
@@ -790,6 +844,7 @@ export function buildMediaHealthReport(
       hasBlocker: epIssueList.some((i) => i.severity === "blocker"),
       hasAttachedNarration,
       narrationVisibility,
+      attachedVideoClipCount,
     };
   });
 
