@@ -437,7 +437,31 @@ export function buildEpisodePublishReadiness(
     });
   }
 
-  // 14. Archived scenes with panels
+  // 14. Read-aloud / narration text (warning only — audio not required for publish)
+  const scenesWithVoiceover = activeReadiness.filter((s) => {
+    const scene = allScenes.find(
+      (sc) =>
+        (typeof sc.sceneNumber === "number" && sc.sceneNumber === s.sceneNumber) ||
+        (str(sc.sceneId) && str(sc.sceneId) === s.sceneId)
+    );
+    if (!scene) return false;
+    const voiceoverNotes = Array.isArray(scene.voiceoverNotes)
+      ? (scene.voiceoverNotes as unknown[]).filter((x): x is string => typeof x === "string").join(" ").trim()
+      : typeof scene.voiceoverNotes === "string" ? (scene.voiceoverNotes as string).trim() : "";
+    return voiceoverNotes.length > 0 || Boolean(str(scene.summary));
+  }).length;
+  const scenesMissingVoiceover = activeReadiness.length - scenesWithVoiceover;
+  if (scenesMissingVoiceover > 0 && activeReadiness.length > 0) {
+    checklist.push({
+      id: "narration-read-aloud-text",
+      label: "Scenes have read-aloud text or voiceover notes",
+      status: "warning",
+      message: `${scenesMissingVoiceover} scene${scenesMissingVoiceover !== 1 ? "s" : ""} missing read-aloud text. Audio narration will not be available for these scenes.`,
+      suggestedAction: "Add voiceoverNotes or a summary to scenes before generating narration.",
+    });
+  }
+
+  // 15. Archived scenes with panels
   if (archivedWithPanels.length > 0) {
     checklist.push({
       id: "archived-scenes-panel-review",
