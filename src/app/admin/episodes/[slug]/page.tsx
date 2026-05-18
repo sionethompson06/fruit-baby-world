@@ -37,8 +37,15 @@ import {
 } from "@/lib/audioNarrationContext";
 import VideoGenerationSetupSection from "./VideoGenerationSetupSection";
 import VideoClipDraftSection, { type SceneVideoOption } from "./VideoClipDraftSection";
+import type { SceneReviewData } from "./VideoClipFidelityReviewSection";
 import { getVideoGenerationProviderStatus } from "@/lib/videoGenerationConfig";
 import { getVideoGenerationReadinessForEpisode, buildSceneVideoGenerationContext } from "@/lib/videoGenerationContext";
+import {
+  buildVideoFidelityChecklist,
+  hasTikiInVideoScene,
+  getVideoFidelityReferenceThumbnails,
+  getVideoFidelityWarnings,
+} from "@/lib/videoClipFidelityReview";
 import {
   loadReferenceAssets,
   buildEpisodeReferencePackages,
@@ -603,6 +610,18 @@ export default async function EpisodeDetailPage({
     };
   });
 
+  // Scene review data for VideoClipFidelityReviewSection (Phase 14C)
+  const sceneReviewData: Record<number, SceneReviewData> = {};
+  for (const [sceneNum, refPkg] of refBySceneNumber) {
+    const hasTikiScene = hasTikiInVideoScene(refPkg);
+    sceneReviewData[sceneNum] = {
+      thumbnails: getVideoFidelityReferenceThumbnails(refPkg, charBySlug),
+      checklistItems: buildVideoFidelityChecklist(hasTikiScene),
+      fidelityWarnings: getVideoFidelityWarnings(refPkg),
+      hasTiki: hasTikiScene,
+    };
+  }
+
   // Extract existing attached narration audio from episode JSON (Phase 13E)
   const existingAudioNarration: EpisodeAudioNarration | null = (() => {
     const an = raw.audioNarration;
@@ -737,13 +756,14 @@ export default async function EpisodeDetailPage({
           readiness={videoReadiness}
         />
 
-        {/* ── Temporary Video Clip Draft ── */}
+        {/* ── Temporary Video Clip Draft + Fidelity Review ── */}
         <VideoClipDraftSection
           episodeSlug={normalised.slug}
           providerConfigured={videoProviderStatus.configured}
           providerLabel={videoProviderStatus.providerLabel}
           sceneOptions={sceneVideoOptions}
           videoReadiness={videoReadiness}
+          sceneReviewData={sceneReviewData}
         />
 
         {/* ── Media Planning ── */}

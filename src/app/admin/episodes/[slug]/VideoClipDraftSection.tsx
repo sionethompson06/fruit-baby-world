@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ALLOWED_VIDEO_STYLES, type VideoClipRequestStyle, type VideoClipGenerationPackage } from "@/lib/videoClipGenerationTypes";
 import type { EpisodeVideoGenerationReadiness } from "@/lib/videoGenerationTypes";
+import VideoClipFidelityReviewSection, { type SceneReviewData } from "./VideoClipFidelityReviewSection";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ type Props = {
   providerLabel: string;
   sceneOptions: SceneVideoOption[];
   videoReadiness: EpisodeVideoGenerationReadiness;
+  sceneReviewData: Record<number, SceneReviewData>;
 };
 
 // ─── Result types ─────────────────────────────────────────────────────────────
@@ -175,6 +177,7 @@ export default function VideoClipDraftSection({
   providerLabel,
   sceneOptions,
   videoReadiness,
+  sceneReviewData,
 }: Props) {
   const [selectedSceneNumber, setSelectedSceneNumber] = useState<number | "">(
     sceneOptions.length > 0 ? sceneOptions[0].sceneNumber : ""
@@ -485,6 +488,41 @@ export default function VideoClipDraftSection({
           )}
         </div>
       )}
+
+      {/* Fidelity review — shown whenever a result (package or video) is available */}
+      {result && selectedSceneNumber !== "" &&
+        (!result.ok ? result.status === "not_implemented_yet" : result.status === "video_draft_generated") && (() => {
+          const reviewData = sceneReviewData[selectedSceneNumber as number];
+          if (!reviewData) return null;
+          const pkg =
+            !result.ok && result.status === "not_implemented_yet"
+              ? result.videoGenerationPackage
+              : result.ok && result.status === "video_draft_generated"
+              ? result.videoGenerationPackage
+              : null;
+          if (!pkg) return null;
+          const draftInfo =
+            !result.ok && result.status === "not_implemented_yet"
+              ? ({ kind: "not_implemented_yet", provider: result.provider, pkg } as const)
+              : result.ok && result.status === "video_draft_generated"
+              ? ({
+                  kind: "video_draft_generated",
+                  videoUrl: result.draft.videoUrl,
+                  provider: result.provider,
+                  videoStyle: result.videoStyle,
+                  durationSeconds: result.durationSeconds,
+                  pkg,
+                } as const)
+              : null;
+          if (!draftInfo) return null;
+          return (
+            <VideoClipFidelityReviewSection
+              reviewData={reviewData}
+              draft={draftInfo}
+            />
+          );
+        })()
+      }
 
     </div>
   );
