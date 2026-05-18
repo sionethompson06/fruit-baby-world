@@ -29,6 +29,7 @@ import ReferencePackagePreviewSection from "./ReferencePackagePreviewSection";
 import BatchMissingPanelDraftsSection from "./BatchMissingPanelDraftsSection";
 import EpisodePublishReadinessSection from "./EpisodePublishReadinessSection";
 import { buildEpisodePublishReadiness } from "@/lib/episodePublishReadiness";
+import { getMediaLifecycleStage } from "@/lib/mediaLifecycle";
 import { getAudioNarrationProviderStatus, getDefaultVoiceId, getDefaultNarrationModelId } from "@/lib/audioNarrationConfig";
 import type { EpisodeAudioNarration } from "@/lib/audioNarrationTypes";
 import {
@@ -677,9 +678,16 @@ export default async function EpisodeDetailPage({
       approvedBy: typeof an.approvedBy === "string" ? an.approvedBy : undefined,
       approvedAt: typeof an.approvedAt === "string" ? an.approvedAt : undefined,
       attachedAt: typeof an.attachedAt === "string" ? an.attachedAt : new Date().toISOString(),
-      visibility: an.visibility === "public-ready" ? "public-ready" : "admin-only",
+      visibility:
+        an.visibility === "public-ready" || an.visibility === "hidden"
+          ? an.visibility
+          : "admin-only",
     } satisfies EpisodeAudioNarration;
   })();
+
+  const existingAudioLifecycleStage = existingAudioNarration
+    ? getMediaLifecycleStage(existingAudioNarration, "audio")
+    : "unknown";
 
   // Command center derived values
   const totalVideoClips = attachedVideoClipScenes.reduce((sum, s) => sum + s.videoClips.length, 0);
@@ -755,7 +763,7 @@ export default async function EpisodeDetailPage({
           normalised={normalised}
           publishReadiness={publishReadiness}
           panelCoverage={panelCoverage}
-          hasAudio={hasAudio}
+          audioLifecycleStage={existingAudioLifecycleStage}
           totalVideoClips={totalVideoClips}
         />
 
