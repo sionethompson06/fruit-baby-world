@@ -1,4 +1,4 @@
-// Types for the audio narration pipeline (Phase 13A — foundation only).
+// Types for the audio narration pipeline (Phase 13A–13C).
 // No audio is generated in this phase. Types are prepared for future phases.
 // All types are JSON-serializable.
 
@@ -55,3 +55,26 @@ export type NarrationReadiness = {
   warnings: string[];
   blockers: string[];
 };
+
+// ─── Review types (Phase 13C) ─────────────────────────────────────────────────
+
+export type AudioDraftReviewChecklistItem = {
+  id: string;
+  label: string;
+  checked: boolean;
+};
+
+export type AudioDraftReviewDecision = "looks-good" | "needs-regeneration";
+
+export type AudioDraftReviewState = {
+  checklist: AudioDraftReviewChecklistItem[];
+  notes: string;
+  decision: AudioDraftReviewDecision | null;
+  decidedAt: string | null;
+};
+
+export type AudioDraftReviewRecommendation =
+  | "ready"
+  | "needs-review"
+  | "no-draft";
+
