@@ -691,6 +691,7 @@ export default async function EpisodeDetailPage({
           initialScript={initialNarrationScript}
           providerConfigured={narrationProviderStatus.configured}
           defaultVoiceId={defaultVoiceId}
+          hasTiki={tikiFlagged}
         />
 
         {/* ── A. Episode Overview ── */}
