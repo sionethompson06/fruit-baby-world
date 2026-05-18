@@ -67,11 +67,11 @@ export default function PanelVisibilityControl({
         </span>
         {isHidden ? (
           <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral">
-            Hidden from Public
+            Hidden
           </span>
         ) : (
           <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green">
-            Publicly Visible
+            Public Ready
           </span>
         )}
       </div>
@@ -165,8 +165,8 @@ export default function PanelVisibilityControl({
             <div className="flex flex-col gap-0.5">
               <p className="font-bold">
                 {result.visibility === "hidden"
-                  ? "Panel hidden from public display."
-                  : "Panel restored to public display."}
+                  ? "Panel is now Hidden."
+                  : "Panel is now Public Ready."}
               </p>
               {result.notes.map((n) => (
                 <p key={n} className="text-tropical-green/75">{n}</p>
