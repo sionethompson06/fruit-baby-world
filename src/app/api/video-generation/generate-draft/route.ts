@@ -1,12 +1,12 @@
 // POST /api/video-generation/generate-draft
 // Validates a video clip draft request, loads episode/scene data, builds a
-// scene reference package, and returns a structured video generation package.
+// scene reference package, and calls the configured provider (Fal.ai) or
+// returns not_implemented_yet for unimplemented providers.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
-// Safety:  No video is generated, saved, uploaded, or written to JSON in Phase 14B.
-//          Returns not_implemented_yet with the full generation package.
+// Safety:  No video is saved, uploaded, or written to episode JSON.
 //          Does not expose API keys, auth headers, stack traces, or raw secrets.
-// Phase:   14B — Generate Temporary Animated Clip Draft.
+// Phase:   14B.1 — Fal.ai provider execution.
 
 import { loadEpisodeBySlug } from "@/lib/savedEpisodes";
 import { getEpisodeScenes } from "@/lib/episodeScenes";
@@ -27,9 +27,10 @@ import {
   ALLOWED_VIDEO_STYLES,
 } from "@/lib/videoClipGenerationPackage";
 import type { VideoClipRequestStyle, VideoClipGenerationPackage } from "@/lib/videoClipGenerationTypes";
+import { generateFalVideoDraft, getFalVideoModelId } from "@/lib/falVideoProvider";
 import type { Character } from "@/lib/content";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,6 +51,7 @@ type GenerateDraftResult =
       sceneId: string;
       sceneNumber: number;
       provider: string;
+      modelId: string;
       videoStyle: string;
       durationSeconds: number;
       draft: {
@@ -59,8 +61,17 @@ type GenerateDraftResult =
         providerJobId: string;
         mimeType: string;
       };
+      referenceMode: string;
       videoGenerationPackage: VideoClipGenerationPackage;
       warnings: string[];
+      notes: string[];
+    }
+  | {
+      ok: true;
+      status: "video_draft_requested";
+      provider: string;
+      providerJobId: string;
+      message: string;
       notes: string[];
     }
   | {
@@ -75,6 +86,8 @@ type GenerateDraftResult =
       message: string;
       provider?: string;
       missing?: string[];
+      providerMessage?: string;
+      troubleshooting?: string[];
     };
 
 // ─── Validation helpers ───────────────────────────────────────────────────────
@@ -410,9 +423,89 @@ export async function POST(request: Request): Promise<Response> {
     warnings
   );
 
-  // ── Return not_implemented_yet with full package ──────────────────────────────
+  // ── Execute provider ──────────────────────────────────────────────────────────
   const providerLabel = getVideoProviderLabel(provider);
 
+  if (provider === "fal") {
+    const falResult = await generateFalVideoDraft(videoGenerationPackage);
+
+    if (falResult.ok && falResult.status === "video_draft_generated") {
+      return Response.json(
+        {
+          ok: true,
+          status: "video_draft_generated",
+          episodeSlug,
+          sceneId,
+          sceneNumber,
+          provider,
+          modelId: falResult.modelId,
+          videoStyle,
+          durationSeconds,
+          draft: {
+            id: `video-draft-${sceneId || sceneNumber}-${Date.now()}`,
+            videoUrl: falResult.videoUrl,
+            thumbnailUrl: falResult.thumbnailUrl,
+            providerJobId: falResult.providerJobId,
+            mimeType: "video/mp4",
+          },
+          referenceMode: falResult.referenceMode,
+          videoGenerationPackage,
+          warnings: videoGenerationPackage.warnings,
+          notes: [
+            "This video draft has not been saved.",
+            "Review it before uploading or attaching in a future phase.",
+          ],
+        } satisfies GenerateDraftResult,
+        { status: 200 }
+      );
+    }
+
+    if (falResult.ok && falResult.status === "video_draft_requested") {
+      return Response.json(
+        {
+          ok: true,
+          status: "video_draft_requested",
+          provider,
+          providerJobId: falResult.providerJobId,
+          message: falResult.message,
+          notes: [
+            "Polling/retrieval can be added in a follow-up phase if needed.",
+            "No video has been saved or attached.",
+          ],
+        } satisfies GenerateDraftResult,
+        { status: 200 }
+      );
+    }
+
+    if (!falResult.ok && falResult.status === "provider_timeout") {
+      return Response.json(
+        {
+          ok: false,
+          status: "provider_timeout",
+          message: falResult.message,
+          provider,
+          troubleshooting: falResult.troubleshooting,
+        } satisfies GenerateDraftResult,
+        { status: 504 }
+      );
+    }
+
+    if (!falResult.ok && falResult.status === "provider_error") {
+      return Response.json(
+        {
+          ok: false,
+          status: "provider_error",
+          message: falResult.message,
+          provider,
+          providerMessage: falResult.providerMessage,
+          troubleshooting: falResult.troubleshooting,
+        } satisfies GenerateDraftResult,
+        { status: 502 }
+      );
+    }
+  }
+
+  // ── not_implemented_yet — non-Fal providers ───────────────────────────────────
   return Response.json(
     {
       ok: false,
