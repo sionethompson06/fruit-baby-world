@@ -61,5 +61,6 @@ export const config = {
     "/api/video-generation/generate-draft",
     "/api/video-generation/upload-approved-draft",
     "/api/github/attach-video-clip",
+    "/api/final-video/render-and-save",
   ],
 };

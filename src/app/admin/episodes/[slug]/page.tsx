@@ -71,6 +71,7 @@ import EpisodeCommandCenterSection from "./EpisodeCommandCenterSection";
 import FinalVideoAssemblyPreviewSection from "./FinalVideoAssemblyPreviewSection";
 import FinalStoryVideoPreviewSection from "./FinalStoryVideoPreviewSection";
 import FinalVideoRenderReadinessSection from "./FinalVideoRenderReadinessSection";
+import FinalVideoProductionSection from "./FinalVideoProductionSection";
 import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
 
 export const dynamic = "force-dynamic";
@@ -1089,6 +1090,9 @@ export default async function EpisodeDetailPage({
           </div>
           <div id="final-video-render-readiness">
             <FinalVideoRenderReadinessSection pkg={finalVideoPkg} />
+          </div>
+          <div id="final-video-production">
+            <FinalVideoProductionSection pkg={finalVideoPkg} episodeSlug={normalised.slug} raw={raw} />
           </div>
         </div>
 
