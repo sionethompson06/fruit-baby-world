@@ -73,6 +73,7 @@ import FinalStoryVideoPreviewSection from "./FinalStoryVideoPreviewSection";
 import FinalVideoRenderReadinessSection from "./FinalVideoRenderReadinessSection";
 import FinalVideoProductionSection from "./FinalVideoProductionSection";
 import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
+import { isFinalVideoAsset } from "@/lib/finalVideoAssetTypes";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -590,6 +591,7 @@ export default async function EpisodeDetailPage({
 
   // Final video assembly plan (preview only — no rendering)
   const finalVideoPkg = buildFinalVideoAssemblyPackage(raw);
+  const initialFinalVideo = isFinalVideoAsset(raw.finalVideo) ? raw.finalVideo : null;
 
   const narrationProviderStatus = getAudioNarrationProviderStatus();
   const narrationReadiness = getNarrationReadinessForEpisode(raw);
@@ -1092,7 +1094,11 @@ export default async function EpisodeDetailPage({
             <FinalVideoRenderReadinessSection pkg={finalVideoPkg} />
           </div>
           <div id="final-video-production">
-            <FinalVideoProductionSection pkg={finalVideoPkg} episodeSlug={normalised.slug} raw={raw} />
+            <FinalVideoProductionSection
+              pkg={finalVideoPkg}
+              episodeSlug={normalised.slug}
+              initialFinalVideo={initialFinalVideo}
+            />
           </div>
         </div>
 

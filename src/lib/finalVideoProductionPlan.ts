@@ -81,14 +81,16 @@ export function buildFinalVideoProductionPlan(
 
   const futureSteps = buildFutureSteps(assemblyPackage);
 
-  // Rendering is not yet enabled — always disabled in this phase.
-  const disabledReason = "Final video rendering is not yet enabled. It will be added in a future phase.";
+  const canRenderAndSave = readiness.status !== "blocked";
+  const disabledReason = canRenderAndSave
+    ? undefined
+    : `Cannot render: ${readiness.blockers.join("; ")}`;
 
   return {
-    canRenderAndSave: false,
+    canRenderAndSave,
     status: readiness.status,
     actionLabel: "Render & Save Final Video",
-    disabledReason,
+    ...(disabledReason ? { disabledReason } : {}),
     summary,
     warnings: readiness.warnings,
     blockers: readiness.blockers,
@@ -104,8 +106,8 @@ export function getFinalVideoProductionStatus(plan: FinalVideoProductionPlan): F
 }
 
 export function getFinalVideoProductionNextAction(plan: FinalVideoProductionPlan): string {
-  if (!plan.canRenderAndSave) return "Rendering will be enabled in a future phase.";
   if (plan.blockers.length > 0) return "Resolve blockers before rendering.";
+  if (!plan.canRenderAndSave) return "Resolve blockers before rendering.";
   return "Render & Save Final Video.";
 }
 
