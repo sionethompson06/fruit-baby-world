@@ -118,7 +118,7 @@
   ],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1778966465650-kiwi-waving-hello-goodbye-raising-hand.png",
-    "profileSheet": "/characters/kiwi-baby/Kiwi Profile.png",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1779160313144-kiwi-character-profile-.png",
     "alt": "Official Kiwi Baby character profile sheet"
   },
   "merchPotential": [
@@ -132,7 +132,7 @@
     "collectible figure"
   ],
   "mainReferenceAssetId": "ref-1778966466424-6veaqw",
-  "updatedAt": "2026-05-19T03:04:26.260Z",
+  "updatedAt": "2026-05-19T04:41:41.194Z",
   "fruitType": "Kiwi",
   "home": "Canopy Cove",
   "favoriteQuote": "Every little thing is worth exploring",
@@ -152,5 +152,8 @@
     "Kiwi Baby™ is a gentle, fresh, and cheerful character who embodies the sweetness of nature and the joy of curiosity. With a heart full of kindness and a love for simple moments, Kiwi Baby™ brings calm, happiness, and a sense of wonder to the Fruit Baby Universe™, inspiring friendship, positivity, and connection in every adventure."
   ],
   "profileCompletedAt": "2026-05-19T03:04:26.260Z",
-  "profileGeneratedFromPrimaryReferenceAt": "2026-05-19T03:04:26.260Z"
+  "profileGeneratedFromPrimaryReferenceAt": "2026-05-19T03:04:26.260Z",
+  "primaryReferenceAssetId": "ref-1779160314165-308h7k",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1779160313144-kiwi-character-profile-.png",
+  "primaryReferenceAssetType": "official-profile-reference"
 }
