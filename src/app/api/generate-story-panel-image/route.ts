@@ -27,7 +27,10 @@ import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import {
   buildStoryPanelGenerationPackage,
   buildFinalStoryPanelPrompt,
+  type StoryPanelGenerationPackage,
 } from "@/lib/storyPanelGenerationPackage";
+import { getFidelityRulesSummary } from "@/lib/storyPanelFidelityRules";
+import type { ReferenceBundleCounts } from "@/lib/storyPanelReferenceBundle";
 import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,6 +42,12 @@ type ReferenceMetaItem = {
   type: string;
   priority: string;
 };
+
+type ReferenceModeValue =
+  | "reference-images-attached"
+  | "strict-reference-bundle"
+  | "prompt-only-reference-summary"
+  | "no-references-available";
 
 type GenerateResult =
   | {
@@ -58,9 +67,11 @@ type GenerateResult =
       image: { mimeType: string; base64?: string; url?: string };
       generationPrompt: string;
       referenceCharacters: string[];
-      referenceMode: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
+      referenceMode: ReferenceModeValue;
+      referenceCounts: ReferenceBundleCounts;
       referencesUsed: ReferenceMetaItem[];
       referencesOmitted: ReferenceMetaItem[];
+      fidelityRulesSummary: string;
       warnings: string[];
       notes: string[];
     }
@@ -79,7 +90,8 @@ type GenerateResult =
       troubleshooting?: string[];
       generationPrompt?: string;
       referenceCharacters?: string[];
-      referenceMode?: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
+      referenceMode?: ReferenceModeValue;
+      referenceCounts?: ReferenceBundleCounts;
       referencesUsed?: ReferenceMetaItem[];
       referencesOmitted?: ReferenceMetaItem[];
       warnings?: string[];
@@ -87,11 +99,16 @@ type GenerateResult =
 
 const ALLOWED_REFERENCE_MODES = [
   "reference-images-attached",
+  "strict-reference-bundle",
   "prompt-only-reference-summary",
   "no-references-available",
 ] as const;
 
 type ReferenceMode = (typeof ALLOWED_REFERENCE_MODES)[number];
+
+const EMPTY_REF_COUNTS: ReferenceBundleCounts = {
+  total: 0, profileSheets: 0, mainReferences: 0, supporting: 0, environment: 0,
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -381,10 +398,13 @@ export async function POST(request: Request): Promise<Response> {
   // Attempt to load approved reference assets and build scene reference package.
   // On failure, fall back to the legacy prompt builder gracefully.
   let generationPrompt: string;
-  let referenceMode: GenerateResult["referenceMode"] = "no-references-available";
+  let referenceMode: ReferenceModeValue = "no-references-available";
+  let referenceCounts: ReferenceBundleCounts = EMPTY_REF_COUNTS;
   let referencesUsed: ReferenceMetaItem[] = [];
   let referencesOmitted: ReferenceMetaItem[] = [];
+  let fidelityRulesSummary = "";
   let refWarnings: string[] = [];
+  let genPkg: StoryPanelGenerationPackage | null = null;
 
   const requestedReferenceMode =
     typeof body.referenceMode === "string" && ALLOWED_REFERENCE_MODES.includes(body.referenceMode as ReferenceMode)
@@ -415,11 +435,13 @@ export async function POST(request: Request): Promise<Response> {
       charBySlug
     );
 
-    const genPkg = buildStoryPanelGenerationPackage(sceneRefPkg, panelPrompt, { sceneNumber });
+    genPkg = buildStoryPanelGenerationPackage(sceneRefPkg, panelPrompt, { sceneNumber });
     generationPrompt = buildFinalStoryPanelPrompt(genPkg);
     referenceMode = genPkg.referenceMode;
+    referenceCounts = genPkg.referenceCounts;
     referencesUsed = genPkg.referencesUsed;
     referencesOmitted = genPkg.referencesOmitted;
+    fidelityRulesSummary = getFidelityRulesSummary(sceneRefPkg);
     refWarnings = genPkg.warnings;
   } catch {
     // Fall back to legacy prompt builder if reference loading fails
@@ -478,6 +500,7 @@ export async function POST(request: Request): Promise<Response> {
           generationPrompt,
           referenceCharacters,
           referenceMode,
+          referenceCounts,
           referencesUsed,
           referencesOmitted,
           warnings: refWarnings,
@@ -509,8 +532,10 @@ export async function POST(request: Request): Promise<Response> {
         generationPrompt,
         referenceCharacters,
         referenceMode,
+        referenceCounts,
         referencesUsed,
         referencesOmitted,
+        fidelityRulesSummary,
         warnings: refWarnings,
         notes: [
           "This story panel draft has not been saved.",
@@ -535,6 +560,7 @@ export async function POST(request: Request): Promise<Response> {
         generationPrompt,
         referenceCharacters,
         referenceMode,
+        referenceCounts,
         referencesUsed,
         referencesOmitted,
         warnings: refWarnings,

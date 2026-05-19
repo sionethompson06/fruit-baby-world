@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { Episode, Character } from "@/lib/content";
 
+type MediaFlags = {
+  hasAudio?: boolean;
+  hasVideoClips?: boolean;
+  hasFinalVideo?: boolean;
+};
+
 type Props = {
   episode: Episode;
   characterMap: Record<string, Character>;
   thumbnailUrl?: string;
   thumbnailAlt?: string;
+  mediaFlags?: MediaFlags;
 };
 
-export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbnailAlt }: Props) {
+export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbnailAlt, mediaFlags }: Props) {
   const featuredChars = episode.featuredCharacters
     .map((id) => characterMap[id])
     .filter((c): c is Character => Boolean(c));
@@ -110,22 +117,34 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
           </div>
         )}
 
-        {/* Mode badges + CTA */}
+        {/* Media type badges + CTA */}
         <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto flex-wrap gap-2">
           <div className="flex flex-wrap gap-1">
+            {hasReadAloud && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple/80">
+                📖 Read
+              </span>
+            )}
             {hasIllustrated && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green">
-                🖼️ Illustrated
+                🖼️ Picture
               </span>
             )}
-            {hasReadAloud && (
+            {mediaFlags?.hasAudio && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/70">
-                🎙️ Read-Aloud
+                🎙️ Audio
               </span>
             )}
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-warm-coral/10 text-warm-coral/70">
-              🎬 Short Soon
-            </span>
+            {mediaFlags?.hasVideoClips && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral">
+                🎬 Clips
+              </span>
+            )}
+            {mediaFlags?.hasFinalVideo && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-blue/30 text-tiki-brown/70">
+                🎥 Full Video
+              </span>
+            )}
           </div>
           <span className="text-xs font-bold text-ube-purple flex-shrink-0">
             Read Story →

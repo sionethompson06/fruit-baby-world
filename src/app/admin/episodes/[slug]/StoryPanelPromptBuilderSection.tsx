@@ -438,13 +438,14 @@ function PanelPromptCard({
         </div>
       )}
 
-      {/* Reference assets required */}
-      <div className="flex items-start gap-2.5 bg-pineapple-yellow/12 border border-pineapple-yellow/30 rounded-xl px-3 py-2.5">
+      {/* Strict reference bundle note */}
+      <div className="flex items-start gap-2.5 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2.5">
         <span className="text-sm flex-shrink-0">📎</span>
         <p className="text-xs text-tiki-brown/65 leading-relaxed">
-          <strong className="font-semibold">Reference Assets Required.</strong>{" "}
-          Future image generation must use the official uploaded character profile images and
-          approved reference images for every character in this panel.
+          <strong className="font-semibold">Strict Reference Bundle.</strong>{" "}
+          Panel generation automatically selects approved official profile sheets, main character images,
+          supporting references, and environment references as the primary source of truth.
+          Upload and approve references in Character Studio to strengthen the bundle.
         </p>
       </div>
 

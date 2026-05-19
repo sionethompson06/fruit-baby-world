@@ -38,8 +38,12 @@ const REF_MODE_LABELS: Record<string, { label: string; className: string }> = {
     label: "Reference Images Attached",
     className: "bg-tropical-green/15 text-tropical-green",
   },
+  "strict-reference-bundle": {
+    label: "Production Reference Bundle",
+    className: "bg-tropical-green/15 text-tropical-green",
+  },
   "prompt-only-reference-summary": {
-    label: "Prompt-Only Reference Summary",
+    label: "Reference Summary (Text)",
     className: "bg-ube-purple/12 text-ube-purple",
   },
   "no-references-available": {

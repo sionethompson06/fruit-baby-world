@@ -1,24 +1,13 @@
 // Generation input package for story panel image generation.
-// Selects reference assets by priority and prepares the final prompt.
-// Server-safe. Do NOT import in client components.
-//
-// NOTE: DALL-E 3 only accepts text prompts — reference images cannot be passed
-// as image inputs. referenceMode is therefore always "prompt-only-reference-summary"
-// when reference assets exist.
-// TODO: When upgrading to a provider that supports image reference inputs (e.g. a
-// future OpenAI model or Stability AI), set referenceMode = "reference-images-attached"
-// and pass referenceImages[].blobUrl to the provider.
+// Selects reference assets by priority, builds a strict reference bundle,
+// and prepares an enriched final prompt. Server-safe. Do NOT import in client components.
 
 import type { SceneReferencePackage, ReferenceAsset } from "@/lib/referenceAssetLoader";
-
-// ─── Limits ───────────────────────────────────────────────────────────────────
-
-const MAX_PROFILE_SHEETS_PER_CHAR = 1;
-const MAX_MAIN_REFS_PER_CHAR = 1;
-const MAX_SUPPORTING_REFS_PER_CHAR = 3;
-const MAX_ENV_REFS_PER_CHAR = 2;
-const MAX_REFS_PER_CHAR = 4;
-const MAX_TOTAL_REFS = 8;
+import {
+  buildStoryPanelReferenceBundle,
+  type ReferenceBundleCounts,
+} from "@/lib/storyPanelReferenceBundle";
+import { buildStrictFidelityMandate } from "@/lib/storyPanelFidelityRules";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -41,8 +30,10 @@ export type StoryPanelGenerationPackage = {
   omittedImages: StoryPanelReferenceImage[];
   referenceMode:
     | "reference-images-attached"
+    | "strict-reference-bundle"
     | "prompt-only-reference-summary"
     | "no-references-available";
+  referenceCounts: ReferenceBundleCounts;
   referencesUsed: Array<{
     characterSlug: string;
     characterName: string;
@@ -88,16 +79,15 @@ function toMeta(img: StoryPanelReferenceImage) {
   };
 }
 
-// ─── Reference image selection ────────────────────────────────────────────────
+// ─── Legacy reference image selection (kept for omitted list) ─────────────────
 
-/**
- * Selects reference images in priority order:
- * 1. Profile sheet (max 1 per char)
- * 2. Main reference (max 1 per char)
- * 3. Supporting references (max 3 per char)
- * 4. Environment references (max 2 per char)
- * Total cap: 4 per character, 8 overall.
- */
+const MAX_PROFILE_SHEETS_PER_CHAR = 1;
+const MAX_MAIN_REFS_PER_CHAR = 1;
+const MAX_SUPPORTING_REFS_PER_CHAR = 4;
+const MAX_ENV_REFS_PER_CHAR = 2;
+const MAX_REFS_PER_CHAR = 4;
+const MAX_TOTAL_REFS = 8;
+
 export function getReferenceImagesForStoryPanel(
   sceneRefPkg: SceneReferencePackage
 ): { selected: StoryPanelReferenceImage[]; omitted: StoryPanelReferenceImage[] } {
@@ -109,7 +99,6 @@ export function getReferenceImagesForStoryPanel(
     const perChar: StoryPanelReferenceImage[] = [];
     const perCharOmitted: StoryPanelReferenceImage[] = [];
 
-    // 1. Profile sheets
     charPkg.profileSheets.slice(0, MAX_PROFILE_SHEETS_PER_CHAR).forEach((a) =>
       perChar.push(toRefImage(a, name, "profile-sheet"))
     );
@@ -117,7 +106,6 @@ export function getReferenceImagesForStoryPanel(
       perCharOmitted.push(toRefImage(a, name, "profile-sheet"))
     );
 
-    // 2. Main references
     const mainSlots = Math.max(0, MAX_REFS_PER_CHAR - perChar.length);
     charPkg.mainReferences.slice(0, Math.min(MAX_MAIN_REFS_PER_CHAR, mainSlots)).forEach((a) =>
       perChar.push(toRefImage(a, name, "main-reference"))
@@ -126,7 +114,6 @@ export function getReferenceImagesForStoryPanel(
       perCharOmitted.push(toRefImage(a, name, "main-reference"))
     );
 
-    // 3. Supporting references
     const suppSlots = Math.max(0, MAX_REFS_PER_CHAR - perChar.length);
     charPkg.supportingReferences
       .slice(0, Math.min(MAX_SUPPORTING_REFS_PER_CHAR, suppSlots))
@@ -135,7 +122,6 @@ export function getReferenceImagesForStoryPanel(
       .slice(Math.min(MAX_SUPPORTING_REFS_PER_CHAR, suppSlots))
       .forEach((a) => perCharOmitted.push(toRefImage(a, name, "supporting")));
 
-    // 4. Environment references
     const envSlots = Math.max(0, MAX_REFS_PER_CHAR - perChar.length);
     charPkg.environmentReferences
       .slice(0, Math.min(MAX_ENV_REFS_PER_CHAR, envSlots))
@@ -144,7 +130,6 @@ export function getReferenceImagesForStoryPanel(
       .slice(Math.min(MAX_ENV_REFS_PER_CHAR, envSlots))
       .forEach((a) => perCharOmitted.push(toRefImage(a, name, "environment")));
 
-    // Apply total cap
     for (const img of perChar) {
       if (selected.length < MAX_TOTAL_REFS) {
         selected.push(img);
@@ -165,47 +150,43 @@ export function buildStoryPanelGenerationPackage(
   panelPrompt: string,
   options?: { sceneNumber?: number }
 ): StoryPanelGenerationPackage {
+  // Build the strict reference bundle
+  const bundle = buildStoryPanelReferenceBundle(sceneRefPkg);
+
+  // Keep legacy selected/omitted lists for backward-compat response metadata
   const { selected, omitted } = getReferenceImagesForStoryPanel(sceneRefPkg);
-  const warnings: string[] = [];
 
-  for (const charPkg of sceneRefPkg.characterPackages) {
-    if (!charPkg.isGenerationReady) {
-      warnings.push(
-        `${charPkg.characterName}: No approved reference assets found. Character described from profile only.`
-      );
-    } else if (charPkg.profileSheets.length === 0 && charPkg.mainReferences.length === 0) {
-      warnings.push(
-        `${charPkg.characterName}: No official profile sheet or main reference found. Supporting references used.`
-      );
-    }
-  }
+  // Build the enriched final prompt:
+  // - Start with the full reference-aware panel prompt (sections A–G from the caller)
+  // - Append the strict reference bundle listing (section H)
+  // - Append the fidelity mandate
+  const fidelityMandate = buildStrictFidelityMandate(sceneRefPkg);
+  const finalPrompt = [
+    panelPrompt.trimEnd(),
+    bundle.promptContextBlock,
+    fidelityMandate,
+  ].join("\n\n");
 
-  // DALL-E 3 is text-only — image inputs are not supported.
-  // referenceMode reflects what could be sent to an image-input-capable provider.
   const referenceMode: StoryPanelGenerationPackage["referenceMode"] =
-    selected.length > 0 ? "prompt-only-reference-summary" : "no-references-available";
+    bundle.counts.total > 0 ? "strict-reference-bundle" : "no-references-available";
 
   return {
     panelPrompt,
-    finalPrompt: panelPrompt,
+    finalPrompt,
     characterSlugs: sceneRefPkg.characterSlugs,
     sceneNumber: options?.sceneNumber,
     referenceImages: selected,
     omittedImages: omitted,
     referenceMode,
+    referenceCounts: bundle.counts,
     referencesUsed: selected.map(toMeta),
     referencesOmitted: omitted.map(toMeta),
-    warnings,
+    warnings: bundle.warnings,
   };
 }
 
 // ─── Final prompt ─────────────────────────────────────────────────────────────
 
-/**
- * Returns the prompt to send to the image generation provider.
- * With DALL-E 3 (text-only), this is the reference-aware text prompt as-is.
- * With a future image-input provider, this could also attach reference image URLs.
- */
 export function buildFinalStoryPanelPrompt(pkg: StoryPanelGenerationPackage): string {
   return pkg.finalPrompt;
 }
@@ -218,7 +199,7 @@ export function summarizeReferenceInputsForAdmin(
   const lines: string[] = [`Reference mode: ${pkg.referenceMode}`];
 
   if (pkg.referenceImages.length > 0) {
-    lines.push(`Reference assets available for context: ${pkg.referenceImages.length}`);
+    lines.push(`Reference assets in bundle: ${pkg.referenceImages.length}`);
     pkg.referenceImages.forEach((r) => {
       lines.push(`  • ${r.characterName} — ${r.title} [${r.priority}]`);
     });
@@ -227,7 +208,7 @@ export function summarizeReferenceInputsForAdmin(
   }
 
   if (pkg.omittedImages.length > 0) {
-    lines.push(`Additional assets omitted (exceeded per-character or total limit): ${pkg.omittedImages.length}`);
+    lines.push(`Additional assets omitted (cap reached): ${pkg.omittedImages.length}`);
   }
 
   if (pkg.warnings.length > 0) {

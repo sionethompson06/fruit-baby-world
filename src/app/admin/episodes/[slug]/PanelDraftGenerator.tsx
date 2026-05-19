@@ -18,6 +18,14 @@ type ReferenceMetaItem = {
   priority: string;
 };
 
+type ReferenceCounts = {
+  total: number;
+  profileSheets: number;
+  mainReferences: number;
+  supporting: number;
+  environment: number;
+};
+
 type GenApiResult = {
   ok: boolean;
   status: string;
@@ -27,9 +35,11 @@ type GenApiResult = {
   troubleshooting?: string[];
   generationPrompt?: string;
   referenceCharacters?: string[];
-  referenceMode?: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
+  referenceMode?: "reference-images-attached" | "strict-reference-bundle" | "prompt-only-reference-summary" | "no-references-available";
+  referenceCounts?: ReferenceCounts;
   referencesUsed?: ReferenceMetaItem[];
   referencesOmitted?: ReferenceMetaItem[];
+  fidelityRulesSummary?: string;
   warnings?: string[];
   notes?: string[];
   draft?: {
@@ -83,8 +93,12 @@ const REFERENCE_MODE_LABELS: Record<string, { label: string; className: string }
     label: "Reference Images Attached",
     className: "bg-tropical-green/15 text-tropical-green border-tropical-green/30",
   },
+  "strict-reference-bundle": {
+    label: "Production Reference Bundle",
+    className: "bg-tropical-green/15 text-tropical-green border-tropical-green/30",
+  },
   "prompt-only-reference-summary": {
-    label: "Prompt-Only Reference Summary",
+    label: "Reference Summary (Text)",
     className: "bg-ube-purple/12 text-ube-purple border-ube-purple/25",
   },
   "no-references-available": {
@@ -970,17 +984,17 @@ export default function PanelDraftGenerator({
             </p>
           </div>
           {result.referenceMode && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Reference Mode</p>
               <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
                 {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
               </span>
+              {result.referenceCounts && result.referenceCounts.total > 0 && (
+                <span className="text-xs text-tiki-brown/50">
+                  {result.referenceCounts.total} asset{result.referenceCounts.total !== 1 ? "s" : ""} in bundle
+                </span>
+              )}
             </div>
-          )}
-          {result.referencesUsed && result.referencesUsed.length > 0 && (
-            <p className="text-xs text-tiki-brown/45">
-              {result.referencesUsed.length} reference asset{result.referencesUsed.length !== 1 ? "s" : ""} would be included in prompt context.
-            </p>
           )}
           {result.generationPrompt && <GenerationPromptBlock prompt={result.generationPrompt} />}
         </div>
@@ -1026,37 +1040,77 @@ export default function PanelDraftGenerator({
               )}
 
               {/* Draft metadata */}
-              <div className="flex flex-col gap-1.5 text-xs">
-                {/* Reference mode badge */}
-                {result.referenceMode && (
+              <div className="flex flex-col gap-2 text-xs">
+
+                {/* Reference mode + counts */}
+                <div className="bg-tiki-brown/4 rounded-xl px-3 py-2.5 flex flex-col gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-bold text-tiki-brown/45 uppercase tracking-wide">Reference Mode</span>
-                    <span className={`font-bold px-2 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
-                      {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
-                    </span>
-                  </div>
-                )}
-
-                {/* References used */}
-                {result.referencesUsed && result.referencesUsed.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    <span className="font-bold text-tiki-brown/45 uppercase tracking-wide">
-                      Prompt Context ({result.referencesUsed.length} asset{result.referencesUsed.length !== 1 ? "s" : ""})
-                    </span>
-                    {result.referencesUsed.map((r, i) => (
-                      <span key={i} className="text-tiki-brown/50 leading-relaxed pl-2">
-                        <span className="font-semibold">{r.characterName}</span> — {r.title}
-                        <span className="text-tiki-brown/30"> [{r.priority}]</span>
+                    <span className="font-bold text-tiki-brown/50 uppercase tracking-wide">Reference Mode</span>
+                    {result.referenceMode && (
+                      <span className={`font-bold px-2 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
+                        {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
                       </span>
-                    ))}
+                    )}
                   </div>
-                )}
 
-                {/* Reference mode note */}
-                {result.referenceMode === "prompt-only-reference-summary" && (
-                  <p className="text-tiki-brown/35 italic">
-                    Reference context injected as text. DALL-E 3 is text-only; image inputs are a future upgrade.
-                  </p>
+                  {/* Reference counts summary */}
+                  {result.referenceCounts && result.referenceCounts.total > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">
+                        Production Reference Bundle — {result.referenceCounts.total} asset{result.referenceCounts.total !== 1 ? "s" : ""}
+                      </span>
+                      <div className="flex flex-wrap gap-1.5 mt-0.5">
+                        {result.referenceCounts.profileSheets > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green font-semibold">
+                            {result.referenceCounts.profileSheets} profile sheet{result.referenceCounts.profileSheets !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {result.referenceCounts.mainReferences > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-ube-purple/12 text-ube-purple font-semibold">
+                            {result.referenceCounts.mainReferences} main ref{result.referenceCounts.mainReferences !== 1 ? "s" : ""}
+                          </span>
+                        )}
+                        {result.referenceCounts.supporting > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-sky-blue/20 text-tiki-brown/70 font-semibold">
+                            {result.referenceCounts.supporting} supporting
+                          </span>
+                        )}
+                        {result.referenceCounts.environment > 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-tropical-green/10 text-tiki-brown/65 font-semibold">
+                            {result.referenceCounts.environment} environment
+                          </span>
+                        )}
+                        {result.referenceCounts.profileSheets === 0 && (
+                          <span className="px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 font-semibold">
+                            ⚠ No profile sheet
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {result.referenceCounts && result.referenceCounts.total === 0 && (
+                    <p className="text-tiki-brown/40 italic">
+                      No approved reference assets found. Upload and approve official character profile sheets in Character Studio.
+                    </p>
+                  )}
+                </div>
+
+                {/* Asset listing */}
+                {result.referencesUsed && result.referencesUsed.length > 0 && (
+                  <details>
+                    <summary className="cursor-pointer list-none text-tiki-brown/40 italic select-none py-0.5">
+                      View {result.referencesUsed.length} reference asset{result.referencesUsed.length !== 1 ? "s" : ""} in bundle ▸
+                    </summary>
+                    <div className="flex flex-col gap-0.5 mt-1.5 pl-2">
+                      {result.referencesUsed.map((r, i) => (
+                        <span key={i} className="text-tiki-brown/50 leading-relaxed">
+                          <span className="font-semibold">{r.characterName}</span> — {r.title}
+                          <span className="text-tiki-brown/30"> [{r.priority}]</span>
+                        </span>
+                      ))}
+                    </div>
+                  </details>
                 )}
 
                 {/* Generation warnings */}
