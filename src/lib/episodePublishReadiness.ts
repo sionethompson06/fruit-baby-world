@@ -511,16 +511,20 @@ export function buildEpisodePublishReadiness(
   // 16b. Video clips (info only — not required for publish)
   checklist.push({
     id: "episode-video-clips",
-    label: "Approved video clips can be uploaded (optional)",
+    label: "Animated video clips (optional)",
     status: "warning",
     message:
-      scenesWithVideoClips > 0
-        ? `${scenesWithVideoClips} scene${scenesWithVideoClips !== 1 ? "s" : ""} have attached video clips. Public video playback is not enabled yet.`
-        : "No video clips attached yet. Approved video clips can be uploaded but are not required for publish.",
+      publicReadyVideoClips > 0
+        ? `${publicReadyVideoClips} public-ready video clip${publicReadyVideoClips !== 1 ? "s" : ""} will appear on the public story page after redeploy.`
+        : scenesWithVideoClips > 0
+        ? `${scenesWithVideoClips} scene${scenesWithVideoClips !== 1 ? "s" : ""} have attached video clips — none are Public Ready yet. Use the visibility controls to publish them.`
+        : "No video clips attached yet. Animated clips are optional for publishing.",
     suggestedAction:
       scenesWithVideoClips === 0
         ? "Use the Temporary Video Draft section to generate and attach approved clips."
-        : "Phase 14F will add public video playback controls.",
+        : publicReadyVideoClips === 0
+        ? "In the Attached Video Clips section, click Make Public Ready on clips you want to show publicly."
+        : undefined,
   });
 
   // 17. Archived scenes with panels

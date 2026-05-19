@@ -1066,7 +1066,7 @@ export default async function EpisodeDetailPage({
             videoReadiness={videoReadiness}
             sceneReviewData={sceneReviewData}
           />
-          <AttachedVideoClipsSection scenes={attachedVideoClipScenes} />
+          <AttachedVideoClipsSection episodeSlug={normalised.slug} scenes={attachedVideoClipScenes} />
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}

@@ -702,30 +702,31 @@ function buildEpisodeIssues(
       const clipUrl = str(clip.url);
       const clipId = str(clip.id) || `clip-${sceneNum}`;
 
+      const visibility = str(clip.visibility);
       if (!clipUrl || !isValidUrl(clipUrl)) {
         issues.push({
           id: `ep-${episodeSlug}-scene-${sceneNum}-video-bad-url-${clipId}`,
           scope: "scene",
-          severity: "warning",
+          severity: visibility === "public-ready" ? "warning" : "info",
           title: `"${episodeTitle}" Scene ${sceneNum}: Attached video clip has invalid URL`,
-          message: `Scene ${sceneNum} has an attached video clip but the URL is invalid or missing.`,
+          message: visibility === "public-ready"
+            ? `Scene ${sceneNum} has a Public Ready video clip but the URL is invalid or missing — it will not play on the public story page.`
+            : `Scene ${sceneNum} has an attached video clip but the URL is invalid or missing.`,
           episodeSlug,
           sceneId: sceneId || undefined,
           suggestedAction: "Re-attach the video clip with a valid Vercel Blob URL",
         });
       }
-
-      const visibility = str(clip.visibility);
       if (visibility === "admin-only") {
         issues.push({
           id: `ep-${episodeSlug}-scene-${sceneNum}-video-admin-only-${clipId}`,
           scope: "scene",
           severity: "info",
           title: `"${episodeTitle}" Scene ${sceneNum}: Video clip Attached to Episode but not Public Ready`,
-          message: `Scene ${sceneNum} has an attached video clip but it is not yet Public Ready. Public video display will be enabled in a future phase.`,
+          message: `Scene ${sceneNum} has an attached video clip set to Admin Only. Use the visibility controls in Attached Video Clips to mark it Public Ready.`,
           episodeSlug,
           sceneId: sceneId || undefined,
-          suggestedAction: "Set video clip visibility to Public Ready when public video display is available",
+          suggestedAction: "In the Attached Video Clips section, click Make Public Ready on this clip.",
         });
       }
     }
