@@ -7,6 +7,7 @@ import { getAllProductConcepts } from "@/lib/productConcepts";
 import type { CharacterSeedData } from "@/lib/productConceptTypes";
 import ProductPromptBuilderSection from "./ProductPromptBuilderSection";
 import ProductConceptManagerSection from "./ProductConceptManagerSection";
+import ProductMockupDraftSection from "./ProductMockupDraftSection";
 
 export const metadata: Metadata = {
   title: "Product Concept Studio | Admin",
@@ -436,7 +437,10 @@ export default function AdminProductsPage() {
         {/* ── E. Product Prompt Builder ──────────────────────────────────────── */}
         <ProductPromptBuilderSection characters={characterSeeds} />
 
-        {/* ── F. Future Product Workflow ─────────────────────────────────────── */}
+        {/* ── F. Product Mockup Draft Generator ─────────────────────────────── */}
+        <ProductMockupDraftSection characters={characterSeeds} />
+
+        {/* ── G. Future Product Workflow ─────────────────────────────────────── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
           <h2 className="text-base font-black text-tiki-brown">
             Future Product Workflow
