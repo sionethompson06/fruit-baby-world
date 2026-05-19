@@ -438,7 +438,7 @@ export default function AdminProductsPage() {
         <ProductPromptBuilderSection characters={characterSeeds} />
 
         {/* ── F. Product Mockup Draft Generator ─────────────────────────────── */}
-        <ProductMockupDraftSection characters={characterSeeds} />
+        <ProductMockupDraftSection characters={characterSeeds} concepts={concepts} />
 
         {/* ── G. Future Product Workflow ─────────────────────────────────────── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">

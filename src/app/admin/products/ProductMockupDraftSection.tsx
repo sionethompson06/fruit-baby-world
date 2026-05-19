@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import type {
   CharacterSeedData,
   ProductConceptCategory,
+  ProductConcept,
 } from "@/lib/productConceptTypes";
 import type { ProductMockupStyle, ProductMockupDraftResult } from "@/lib/productMockupTypes";
 import { PRODUCT_CATEGORY_LABELS } from "@/lib/productPromptBuilder";
+import ProductMockupReviewSection from "./ProductMockupReviewSection";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -40,11 +41,12 @@ const CATEGORIES = Object.keys(PRODUCT_CATEGORY_LABELS) as ProductConceptCategor
 
 interface Props {
   characters: CharacterSeedData[];
+  concepts: ProductConcept[];
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function ProductMockupDraftSection({ characters }: Props) {
+export default function ProductMockupDraftSection({ characters, concepts }: Props) {
   const [selectedSlug, setSelectedSlug] = useState<string>(characters[0]?.slug ?? "");
   const [category, setCategory] = useState<ProductConceptCategory>("plush");
   const [productTitle, setProductTitle] = useState("");
@@ -310,75 +312,20 @@ export default function ProductMockupDraftSection({ characters }: Props) {
         </div>
       )}
 
-      {/* ── Draft preview ────────────────────────────────────────────────────── */}
-      {phase === "done" && draft && (
-        <div className="flex flex-col gap-4 border border-tropical-green/20 bg-tropical-green/5 rounded-3xl p-5">
-          {/* Preview header */}
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <p className="text-sm font-black text-tiki-brown">{draft.productTitle}</p>
-              <p className="text-xs text-tiki-brown/50">
-                {PRODUCT_CATEGORY_LABELS[draft.category]}
-                {" · "}{draft.characterSlug}
-              </p>
-            </div>
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-pineapple-yellow/35 text-tiki-brown uppercase tracking-wide">
-              Temporary Draft
-            </span>
-          </div>
-
-          {/* Image */}
-          {draft.imageBase64 && (
-            <div className="relative w-full aspect-square rounded-2xl overflow-hidden border border-tiki-brown/10 shadow-sm bg-white">
-              <Image
-                src={`data:${draft.mimeType};base64,${draft.imageBase64}`}
-                alt={`Product mockup draft: ${draft.productTitle}`}
-                fill
-                className="object-contain"
-                unoptimized
-              />
-            </div>
-          )}
-
-          {/* Metadata */}
-          <div className="flex flex-col gap-1.5 text-xs text-tiki-brown/55">
-            <p>
-              <span className="font-semibold text-tiki-brown/70">Character:</span>{" "}
-              {selectedChar?.displayName ?? draft.characterSlug}
-            </p>
-            <p>
-              <span className="font-semibold text-tiki-brown/70">Category:</span>{" "}
-              {PRODUCT_CATEGORY_LABELS[draft.category]}
-            </p>
-            <p>
-              <span className="font-semibold text-tiki-brown/70">Reference mode:</span>{" "}
-              prompt-only-reference-summary
-            </p>
-            <p>
-              <span className="font-semibold text-tiki-brown/70">Generated:</span>{" "}
-              {new Date(draft.createdAt).toLocaleString()}
+      {/* ── Draft generated — hand off to review section ────────────────────── */}
+      {phase === "done" && draft && selectedChar && (
+        <div className="flex flex-col gap-3 border border-tropical-green/20 bg-tropical-green/4 rounded-3xl p-5">
+          <div className="flex items-center gap-2">
+            <span className="text-base">✓</span>
+            <p className="text-sm font-bold text-tropical-green">
+              Draft generated — review below
             </p>
           </div>
-
-          {/* Notes */}
-          {notes.length > 0 && (
-            <div className="flex flex-col gap-1">
-              {notes.map((n, i) => (
-                <p key={i} className="text-xs text-tiki-brown/50 leading-relaxed">
-                  • {n}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {/* Not-saved callout */}
-          <div className="flex items-start gap-2 bg-white border border-tiki-brown/10 rounded-xl px-3 py-2.5">
-            <span className="text-sm flex-shrink-0">🔒</span>
-            <p className="text-xs text-tiki-brown/60 leading-relaxed">
-              <span className="font-bold text-tiki-brown">Temporary Draft — not saved or public.</span>{" "}
-              Saving to a product concept will be available in a future phase.
-            </p>
-          </div>
+          <ProductMockupReviewSection
+            draft={draft}
+            character={selectedChar}
+            concepts={concepts}
+          />
         </div>
       )}
     </div>
