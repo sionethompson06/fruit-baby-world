@@ -1,17 +1,12 @@
 // POST /api/generate-story-panel-image
-// Protected route that validates a story panel generation request, loads canonical
-// character data and approved reference assets, builds a reference-aware prompt,
-// and — if OPENAI_API_KEY is present — calls DALL-E 3 and returns a base64 draft.
+// Protected route: validates request, loads approved reference assets, and
+// generates a temporary story panel draft using image-conditioned generation
+// (images.edit with input_fidelity:'high') when reference images are available,
+// falling back to images.generate with the enriched prompt when they are not.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
 // Safety:  Generated images are never saved, uploaded, or written to JSON.
-// Phase:   11D — reference-anchored prompt metadata added.
-//
-// NOTE: DALL-E 3 only accepts text prompts. Reference images are included in
-// prompt text (as titles/descriptions) but cannot be passed as image inputs.
-// referenceMode is always "prompt-only-reference-summary" when references exist.
-// TODO: Upgrade to an image-input-capable provider and set
-// referenceMode = "reference-images-attached" when that is available.
+// Phase:   18C — strict reference-image conditioned generation pipeline.
 
 import OpenAI from "openai";
 import {
@@ -29,8 +24,15 @@ import {
   buildFinalStoryPanelPrompt,
   type StoryPanelGenerationPackage,
 } from "@/lib/storyPanelGenerationPackage";
-import { getFidelityRulesSummary } from "@/lib/storyPanelFidelityRules";
-import type { ReferenceBundleCounts } from "@/lib/storyPanelReferenceBundle";
+import {
+  getFidelityRulesSummary,
+  buildImageConditionedEditPrompt,
+} from "@/lib/storyPanelFidelityRules";
+import {
+  buildStoryPanelReferenceBundle,
+  type ReferenceBundleCounts,
+} from "@/lib/storyPanelReferenceBundle";
+import { fetchConditionedImages } from "@/lib/storyPanelImageConditioner";
 import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -44,6 +46,9 @@ type ReferenceMetaItem = {
 };
 
 type ReferenceModeValue =
+  | "image-conditioned-reference-bundle"
+  | "prompt-only-reference-bundle"
+  | "no-references"
   | "reference-images-attached"
   | "strict-reference-bundle"
   | "prompt-only-reference-summary"
@@ -72,6 +77,9 @@ type GenerateResult =
       referencesUsed: ReferenceMetaItem[];
       referencesOmitted: ReferenceMetaItem[];
       fidelityRulesSummary: string;
+      usedImageConditioning: boolean;
+      providerSupportsImageReferences: boolean;
+      fallbackReason?: string;
       warnings: string[];
       notes: string[];
     }
@@ -94,10 +102,16 @@ type GenerateResult =
       referenceCounts?: ReferenceBundleCounts;
       referencesUsed?: ReferenceMetaItem[];
       referencesOmitted?: ReferenceMetaItem[];
+      usedImageConditioning?: boolean;
+      providerSupportsImageReferences?: boolean;
+      fallbackReason?: string;
       warnings?: string[];
     };
 
 const ALLOWED_REFERENCE_MODES = [
+  "image-conditioned-reference-bundle",
+  "prompt-only-reference-bundle",
+  "no-references",
   "reference-images-attached",
   "strict-reference-bundle",
   "prompt-only-reference-summary",
@@ -398,37 +412,21 @@ export async function POST(request: Request): Promise<Response> {
   // Attempt to load approved reference assets and build scene reference package.
   // On failure, fall back to the legacy prompt builder gracefully.
   let generationPrompt: string;
-  let referenceMode: ReferenceModeValue = "no-references-available";
+  let referenceMode: ReferenceModeValue = "no-references";
   let referenceCounts: ReferenceBundleCounts = EMPTY_REF_COUNTS;
   let referencesUsed: ReferenceMetaItem[] = [];
   let referencesOmitted: ReferenceMetaItem[] = [];
   let fidelityRulesSummary = "";
   let refWarnings: string[] = [];
   let genPkg: StoryPanelGenerationPackage | null = null;
-
-  const requestedReferenceMode =
-    typeof body.referenceMode === "string" && ALLOWED_REFERENCE_MODES.includes(body.referenceMode as ReferenceMode)
-      ? (body.referenceMode as ReferenceMode)
-      : undefined;
-
-  if (requestedReferenceMode === "reference-images-attached") {
-    refWarnings.push(
-      "Reference images were requested, but the current provider only supports prompt-only reference guidance. The prompt still includes character reference context."
-    );
-  }
-
-  if (Array.isArray(body.referenceImages) && body.referenceImages.length > 0) {
-    refWarnings.push(
-      "Reference image input was skipped because the current provider call does not support it. The prompt still includes character reference guidance."
-    );
-  }
+  let sceneRefPkg: ReturnType<typeof buildSceneReferencePackage> | null = null;
 
   try {
     const allAssets = loadReferenceAssets();
     const allChars = loadAllCharactersFromDisk();
     const charBySlug = buildCharBySlug(allChars);
 
-    const sceneRefPkg = buildSceneReferencePackage(
+    sceneRefPkg = buildSceneReferencePackage(
       sceneNumber ?? 1,
       referenceCharacters,
       allAssets,
@@ -437,16 +435,16 @@ export async function POST(request: Request): Promise<Response> {
 
     genPkg = buildStoryPanelGenerationPackage(sceneRefPkg, panelPrompt, { sceneNumber });
     generationPrompt = buildFinalStoryPanelPrompt(genPkg);
-    referenceMode = genPkg.referenceMode;
     referenceCounts = genPkg.referenceCounts;
     referencesUsed = genPkg.referencesUsed;
     referencesOmitted = genPkg.referencesOmitted;
     fidelityRulesSummary = getFidelityRulesSummary(sceneRefPkg);
     refWarnings = genPkg.warnings;
+    // referenceMode is set later based on whether image conditioning succeeds
   } catch {
     // Fall back to legacy prompt builder if reference loading fails
     generationPrompt = buildGenerationPrompt(panelPrompt, refs, sceneNumber);
-    referenceMode = "no-references-available";
+    referenceMode = "no-references";
     refWarnings = ["Reference asset loading failed — using legacy prompt builder as fallback."];
   }
 
@@ -471,101 +469,173 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  try {
-    const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({ apiKey });
 
-    const imageResponse = await openai.images.generate({
-      model: imageModel,
-      prompt: generationPrompt,
-      n: 1,
-      size: "1024x1024",
-    });
+  // ── Try image-conditioned generation (images.edit) when bundle has assets ────
+  let b64: string | undefined;
+  let resultImageUrl: string | undefined;
+  let usedImageConditioning = false;
+  let fallbackReason: string | undefined;
 
-    const imageData = imageResponse.data?.[0] ?? {};
-    const b64 = typeof imageData.b64_json === "string" ? imageData.b64_json : undefined;
-    const url = typeof imageData.url === "string" ? imageData.url : undefined;
+  const hasBundle = referenceCounts.total > 0 && genPkg !== null && sceneRefPkg !== null;
 
-    if (!b64 && !url) {
+  if (hasBundle && genPkg && sceneRefPkg) {
+    const bundleAssets = buildStoryPanelReferenceBundle(sceneRefPkg).assets;
+
+    if (bundleAssets.length > 0) {
+      const conditioned = await fetchConditionedImages(bundleAssets).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn("[generate-story-panel-image] fetchConditionedImages threw:", msg);
+        return { images: [], failedAssetIds: [] as string[], warnings: [`Fetch error: ${msg}`] };
+      });
+      refWarnings.push(...conditioned.warnings);
+
+      if (conditioned.images.length > 0) {
+        const editPrompt = buildImageConditionedEditPrompt(sceneRefPkg, panelPrompt);
+
+        try {
+          const editResponse = await openai.images.edit({
+            model: imageModel,
+            image: conditioned.images.map((fi) => fi.response) as Parameters<typeof openai.images.edit>[0]["image"],
+            prompt: editPrompt,
+            n: 1,
+            size: "1024x1024",
+            input_fidelity: "high",
+          });
+
+          const editData = editResponse.data?.[0] ?? {};
+          b64 = typeof editData.b64_json === "string" ? editData.b64_json : undefined;
+          resultImageUrl = typeof editData.url === "string" ? editData.url : undefined;
+
+          if (b64 || resultImageUrl) {
+            usedImageConditioning = true;
+            referenceMode = "image-conditioned-reference-bundle";
+            generationPrompt = editPrompt;
+          } else {
+            fallbackReason = "Image edit returned no image data — falling back to prompt-only generation.";
+          }
+        } catch (editErr) {
+          const editMsg = editErr instanceof Error ? editErr.message : String(editErr);
+          fallbackReason = `Image edit failed (${editMsg}) — falling back to prompt-only generation.`;
+          console.warn("[generate-story-panel-image] images.edit failed, will fall back:", editMsg);
+        }
+      } else {
+        fallbackReason = "No reference images could be fetched — falling back to prompt-only generation.";
+      }
+    } else {
+      fallbackReason = "Bundle has no assets for image conditioning — falling back to prompt-only generation.";
+    }
+
+    if (!usedImageConditioning) {
+      referenceMode = "prompt-only-reference-bundle";
+    }
+  }
+
+  // ── Fall back to images.generate when edit was not used ──────────────────────
+  if (!usedImageConditioning) {
+    try {
+      const generateResponse = await openai.images.generate({
+        model: imageModel,
+        prompt: generationPrompt,
+        n: 1,
+        size: "1024x1024",
+      });
+
+      const generateData = generateResponse.data?.[0] ?? {};
+      b64 = typeof generateData.b64_json === "string" ? generateData.b64_json : undefined;
+      resultImageUrl = typeof generateData.url === "string" ? generateData.url : undefined;
+    } catch (generateErr) {
+      const parsedError = parseProviderError(generateErr);
+      console.error("[generate-story-panel-image] OpenAI generate error:", parsedError.providerMessage);
+
       return Response.json(
         {
           ok: false,
-          status: "image_response_parse_error",
-          message: "Image provider responded but did not return a usable image.",
-          providerMessage: "No base64 or URL image data was returned.",
-          troubleshooting: [
-            "Confirm the image model is valid.",
-            "Try generating with a shorter prompt.",
-            "Try again later in case the image provider is temporarily unavailable.",
-          ],
+          status: parsedError.status,
+          message:
+            "The image provider could not generate the story panel draft. See the provider message for details.",
+          providerStatus: parsedError.providerStatus,
+          providerMessage: parsedError.providerMessage,
+          troubleshooting: parsedError.troubleshooting,
           generationPrompt,
           referenceCharacters,
           referenceMode,
           referenceCounts,
           referencesUsed,
           referencesOmitted,
+          usedImageConditioning: false,
+          providerSupportsImageReferences: true,
+          fallbackReason,
           warnings: refWarnings,
         } satisfies GenerateResult,
         { status: 502 }
       );
     }
+  }
 
-    return Response.json(
-      {
-        ok: true,
-        status: "story_panel_draft_generated",
-        draft: {
-          id: `story-panel-draft-${Date.now()}`,
-          episodeSlug,
-          sceneId,
-          sceneNumber,
-          mimeType: "image/png",
-          imageBase64: b64,
-          imageUrl: url,
-          promptText: panelPrompt,
-          createdAt: new Date().toISOString(),
-        },
-        image: {
-          mimeType: "image/png",
-          base64: b64,
-          url,
-        },
-        generationPrompt,
-        referenceCharacters,
-        referenceMode,
-        referenceCounts,
-        referencesUsed,
-        referencesOmitted,
-        fidelityRulesSummary,
-        warnings: refWarnings,
-        notes: [
-          "This story panel draft has not been saved.",
-          "Review it before approving and saving to the episode.",
-        ],
-      } satisfies GenerateResult,
-      { status: 200 }
-    );
-  } catch (err) {
-    const parsedError = parseProviderError(err);
-    console.error("[generate-story-panel-image] OpenAI error:", parsedError.providerMessage);
-
+  if (!b64 && !resultImageUrl) {
     return Response.json(
       {
         ok: false,
-        status: parsedError.status,
-        message:
-          "The image provider could not generate the story panel draft. See the provider message for details.",
-        providerStatus: parsedError.providerStatus,
-        providerMessage: parsedError.providerMessage,
-        troubleshooting: parsedError.troubleshooting,
+        status: "image_response_parse_error",
+        message: "Image provider responded but did not return a usable image.",
+        providerMessage: "No base64 or URL image data was returned.",
+        troubleshooting: [
+          "Confirm the image model is valid.",
+          "Try generating with a shorter prompt.",
+          "Try again later in case the image provider is temporarily unavailable.",
+        ],
         generationPrompt,
         referenceCharacters,
         referenceMode,
         referenceCounts,
         referencesUsed,
         referencesOmitted,
+        usedImageConditioning,
+        providerSupportsImageReferences: true,
+        fallbackReason,
         warnings: refWarnings,
       } satisfies GenerateResult,
       { status: 502 }
     );
   }
+
+  return Response.json(
+    {
+      ok: true,
+      status: "story_panel_draft_generated",
+      draft: {
+        id: `story-panel-draft-${Date.now()}`,
+        episodeSlug,
+        sceneId,
+        sceneNumber,
+        mimeType: "image/png",
+        imageBase64: b64,
+        imageUrl: resultImageUrl,
+        promptText: panelPrompt,
+        createdAt: new Date().toISOString(),
+      },
+      image: {
+        mimeType: "image/png",
+        base64: b64,
+        url: resultImageUrl,
+      },
+      generationPrompt,
+      referenceCharacters,
+      referenceMode,
+      referenceCounts,
+      referencesUsed,
+      referencesOmitted,
+      fidelityRulesSummary,
+      usedImageConditioning,
+      providerSupportsImageReferences: true,
+      fallbackReason,
+      warnings: refWarnings,
+      notes: [
+        "This story panel draft has not been saved.",
+        "Review it before approving and saving to the episode.",
+      ],
+    } satisfies GenerateResult,
+    { status: 200 }
+  );
 }

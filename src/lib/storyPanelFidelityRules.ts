@@ -109,6 +109,47 @@ export function buildStrictFidelityMandate(
   return sections.join("\n\n");
 }
 
+// ─── Image-conditioned edit prompt ────────────────────────────────────────────
+
+export function buildImageConditionedEditPrompt(
+  sceneRefPkg: SceneReferencePackage,
+  panelPrompt: string
+): string {
+  const charNames = sceneRefPkg.characterPackages
+    .map((p) => p.characterName)
+    .join(", ");
+  const hasTiki = sceneRefPkg.characterPackages.some(
+    (p) => p.characterSlug === "tiki" || p.characterSlug === "tiki-trouble"
+  );
+
+  const lines: string[] = [
+    "The attached images are the official approved character designs for this scene.",
+    "Use them as the PRIMARY visual source of truth for every character's appearance.",
+    "Match each character's colors, body shape, proportions, and style exactly as shown.",
+    "",
+    panelPrompt,
+    "",
+    "STRICT REQUIREMENTS:",
+    "• Match the attached official designs exactly — do not redesign or reinterpret.",
+    "• Preserve cute baby-like proportions — do not make characters taller, older, or more realistic.",
+    "• Preserve color palette, eye style, mouth style, blush/cheek details, and all signature features.",
+    "• Keep all content kid-friendly, warm, playful, and emotionally safe.",
+    "• Do not create generic fruit mascots — use the specific characters shown in the reference images.",
+  ];
+
+  if (hasTiki) {
+    lines.push(
+      "• Tiki Trouble must remain mischievous and funny — not scary, violent, cruel, or too intense."
+    );
+  }
+
+  if (charNames) {
+    lines.push(`Characters in this scene: ${charNames}`);
+  }
+
+  return lines.join("\n");
+}
+
 // ─── Summary string (for API response metadata) ───────────────────────────────
 
 export function getFidelityRulesSummary(

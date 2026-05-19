@@ -34,6 +34,18 @@ const READINESS_BADGE: Record<
 };
 
 const REF_MODE_LABELS: Record<string, { label: string; className: string }> = {
+  "image-conditioned-reference-bundle": {
+    label: "Image-Conditioned",
+    className: "bg-tropical-green/20 text-tropical-green",
+  },
+  "prompt-only-reference-bundle": {
+    label: "Prompt-Only Bundle (Fallback)",
+    className: "bg-ube-purple/12 text-ube-purple",
+  },
+  "no-references": {
+    label: "No References",
+    className: "bg-tiki-brown/8 text-tiki-brown/55",
+  },
   "reference-images-attached": {
     label: "Reference Images Attached",
     className: "bg-tropical-green/15 text-tropical-green",

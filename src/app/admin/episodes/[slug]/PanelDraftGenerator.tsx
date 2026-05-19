@@ -35,11 +35,21 @@ type GenApiResult = {
   troubleshooting?: string[];
   generationPrompt?: string;
   referenceCharacters?: string[];
-  referenceMode?: "reference-images-attached" | "strict-reference-bundle" | "prompt-only-reference-summary" | "no-references-available";
+  referenceMode?:
+    | "image-conditioned-reference-bundle"
+    | "prompt-only-reference-bundle"
+    | "no-references"
+    | "reference-images-attached"
+    | "strict-reference-bundle"
+    | "prompt-only-reference-summary"
+    | "no-references-available";
   referenceCounts?: ReferenceCounts;
   referencesUsed?: ReferenceMetaItem[];
   referencesOmitted?: ReferenceMetaItem[];
   fidelityRulesSummary?: string;
+  usedImageConditioning?: boolean;
+  providerSupportsImageReferences?: boolean;
+  fallbackReason?: string;
   warnings?: string[];
   notes?: string[];
   draft?: {
@@ -89,6 +99,18 @@ type AttachApiResult = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const REFERENCE_MODE_LABELS: Record<string, { label: string; className: string }> = {
+  "image-conditioned-reference-bundle": {
+    label: "Image-Conditioned (Phase 18C)",
+    className: "bg-tropical-green/20 text-tropical-green border-tropical-green/40",
+  },
+  "prompt-only-reference-bundle": {
+    label: "Prompt-Only Bundle (Fallback)",
+    className: "bg-ube-purple/12 text-ube-purple border-ube-purple/25",
+  },
+  "no-references": {
+    label: "No References",
+    className: "bg-tiki-brown/8 text-tiki-brown/55 border-tiki-brown/15",
+  },
   "reference-images-attached": {
     label: "Reference Images Attached",
     className: "bg-tropical-green/15 text-tropical-green border-tropical-green/30",
@@ -1053,7 +1075,23 @@ export default function PanelDraftGenerator({
                     )}
                   </div>
 
-                  {/* Reference counts summary */}
+                  {/* Image conditioning status */}
+                  {result.usedImageConditioning === true && (
+                    <div className="flex items-center gap-1.5 text-tropical-green font-semibold">
+                      <span>✅</span>
+                      <span>
+                        Image-conditioned generation — {result.referenceCounts?.total ?? 0} reference image{(result.referenceCounts?.total ?? 0) !== 1 ? "s" : ""} used as visual inputs
+                      </span>
+                    </div>
+                  )}
+                  {result.usedImageConditioning === false && result.fallbackReason && (
+                    <div className="flex items-start gap-1.5 text-ube-purple/80">
+                      <span className="flex-shrink-0">↩</span>
+                      <span>Prompt-only fallback — {result.fallbackReason}</span>
+                    </div>
+                  )}
+
+                {/* Reference counts summary */}
                   {result.referenceCounts && result.referenceCounts.total > 0 && (
                     <div className="flex flex-col gap-1">
                       <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">
