@@ -250,7 +250,6 @@ export async function POST(request: Request): Promise<Response> {
       prompt: generationPrompt,
       n: 1,
       size: "1024x1024",
-      response_format: "b64_json",
     });
 
     const b64 = imageResponse.data?.[0]?.b64_json;
