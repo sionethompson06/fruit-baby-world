@@ -65,5 +65,7 @@ export const config = {
     "/api/github/save-product-concept",
     "/api/products/generate-mockup-draft",
     "/api/products/save-approved-mockup",
+    "/api/github/update-product-concept-visibility",
+    "/api/github/update-product-mockup-visibility",
   ],
 };

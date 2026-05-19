@@ -43,6 +43,10 @@ export type ProductConcept = {
   productNotes?: string;
   characterIntegrityNotes?: string;
   mockups?: ProductMockupAsset[];
+  publicPreviewStatus?: "draft" | "public-ready" | "hidden";
+  publicTitle?: string;
+  publicDescription?: string;
+  publicPreviewUpdatedAt?: string;
   createdAt: string;
   updatedAt?: string;
 };

@@ -6,6 +6,7 @@ import type {
   ProductConceptCategory,
   ProductConceptStatus,
   ProductConceptAudience,
+  ProductMockupAsset,
   CharacterSeedData,
 } from "@/lib/productConceptTypes";
 
@@ -48,11 +49,35 @@ const STATUS_COLORS: Record<ProductConceptStatus, string> = {
   archived: "bg-tiki-brown/8 text-tiki-brown/40",
 };
 
+const PREVIEW_STATUS_COLORS: Record<string, string> = {
+  draft: "bg-tiki-brown/8 text-tiki-brown/55",
+  "public-ready": "bg-tropical-green/15 text-tropical-green",
+  hidden: "bg-warm-coral/15 text-warm-coral/80",
+};
+
+const MOCKUP_VIS_COLORS: Record<string, string> = {
+  "admin-only": "bg-ube-purple/10 text-ube-purple/70",
+  "public-ready": "bg-tropical-green/15 text-tropical-green",
+  hidden: "bg-warm-coral/15 text-warm-coral/80",
+};
+
 function getCategoryLabel(v: ProductConceptCategory) {
   return CATEGORIES.find((c) => c.value === v)?.label ?? v;
 }
 function getStatusLabel(v: ProductConceptStatus) {
   return STATUSES.find((s) => s.value === v)?.label ?? v;
+}
+function getPreviewStatusLabel(v: string | undefined) {
+  if (!v || v === "draft") return "Preview: Draft";
+  if (v === "public-ready") return "Preview: Public Ready";
+  if (v === "hidden") return "Preview: Hidden";
+  return v;
+}
+function getMockupVisLabel(v: string) {
+  if (v === "admin-only") return "Admin Only";
+  if (v === "public-ready") return "Public Ready";
+  if (v === "hidden") return "Hidden";
+  return v;
 }
 
 // ─── Blank form state ─────────────────────────────────────────────────────────
@@ -68,6 +93,8 @@ function blankForm() {
     audience: "" as ProductConceptAudience | "",
     productNotes: "",
     characterIntegrityNotes: "",
+    publicTitle: "",
+    publicDescription: "",
   };
 }
 
@@ -90,6 +117,9 @@ export default function ProductConceptManagerSection({
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+  const [visUpdating, setVisUpdating] = useState<string | null>(null);
+  const [mockupVisUpdating, setMockupVisUpdating] = useState<string | null>(null);
+  const [visError, setVisError] = useState("");
 
   const activeConcepts = concepts.filter((c) => c.status !== "archived");
   const archivedConcepts = concepts.filter((c) => c.status === "archived");
@@ -106,6 +136,8 @@ export default function ProductConceptManagerSection({
       audience: concept.audience ?? "",
       productNotes: concept.productNotes ?? "",
       characterIntegrityNotes: concept.characterIntegrityNotes ?? "",
+      publicTitle: concept.publicTitle ?? "",
+      publicDescription: concept.publicDescription ?? "",
     });
     setSaveError("");
     setSaveSuccess("");
@@ -139,6 +171,8 @@ export default function ProductConceptManagerSection({
             audience: form.audience || undefined,
             productNotes: form.productNotes || undefined,
             characterIntegrityNotes: form.characterIntegrityNotes || undefined,
+            publicTitle: form.publicTitle || undefined,
+            publicDescription: form.publicDescription || undefined,
           },
         }),
       });
@@ -216,6 +250,80 @@ export default function ProductConceptManagerSection({
       }
     } catch {
       setSaveError("Network error during restore.");
+    }
+  }
+
+  async function handleConceptVisibility(
+    concept: ProductConcept,
+    publicPreviewStatus: "draft" | "public-ready" | "hidden"
+  ) {
+    setVisUpdating(concept.id);
+    setVisError("");
+    try {
+      const res = await fetch("/api/github/update-product-concept-visibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productConceptId: concept.id, publicPreviewStatus }),
+      });
+      const data = (await res.json()) as { ok: boolean; message?: string };
+      if (!res.ok || !data.ok) {
+        setVisError(data.message ?? "Visibility update failed.");
+        return;
+      }
+      setConcepts((prev) =>
+        prev.map((c) =>
+          c.id === concept.id
+            ? { ...c, publicPreviewStatus, publicPreviewUpdatedAt: new Date().toISOString() }
+            : c
+        )
+      );
+    } catch {
+      setVisError("Network error during visibility update.");
+    } finally {
+      setVisUpdating(null);
+    }
+  }
+
+  async function handleMockupVisibility(
+    concept: ProductConcept,
+    mockup: ProductMockupAsset,
+    visibility: "admin-only" | "public-ready" | "hidden"
+  ) {
+    setMockupVisUpdating(mockup.id);
+    setVisError("");
+    try {
+      const res = await fetch("/api/github/update-product-mockup-visibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productConceptId: concept.id,
+          mockupId: mockup.id,
+          visibility,
+        }),
+      });
+      const data = (await res.json()) as { ok: boolean; message?: string };
+      if (!res.ok || !data.ok) {
+        setVisError(data.message ?? "Mockup visibility update failed.");
+        return;
+      }
+      setConcepts((prev) =>
+        prev.map((c) =>
+          c.id === concept.id
+            ? {
+                ...c,
+                mockups: (c.mockups ?? []).map((m) =>
+                  m.id === mockup.id
+                    ? { ...m, visibility, visibilityUpdatedAt: new Date().toISOString() }
+                    : m
+                ),
+              }
+            : c
+        )
+      );
+    } catch {
+      setVisError("Network error during mockup visibility update.");
+    } finally {
+      setMockupVisUpdating(null);
     }
   }
 
@@ -367,6 +475,41 @@ export default function ProductConceptManagerSection({
             />
           </div>
 
+          {/* Public title + description */}
+          <div className="flex flex-col gap-3 rounded-2xl border border-tiki-brown/10 bg-tiki-brown/2 px-4 py-4">
+            <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+              Public Preview Fields — shown on /shop when Public Ready
+            </p>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="concept-public-title" className="text-xs font-semibold text-tiki-brown/65">
+                Public Title <span className="text-tiki-brown/35 font-normal">— optional, overrides title on /shop</span>
+              </label>
+              <input
+                id="concept-public-title"
+                type="text"
+                maxLength={120}
+                value={form.publicTitle}
+                onChange={(e) => setForm((f) => ({ ...f, publicTitle: e.target.value }))}
+                placeholder="e.g. Pineapple Baby Soft Plush (collector edition)"
+                className="w-full rounded-xl border border-tiki-brown/20 bg-white px-3 py-2.5 text-sm text-tiki-brown placeholder:text-tiki-brown/30 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 focus:border-ube-purple/40"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="concept-public-desc" className="text-xs font-semibold text-tiki-brown/65">
+                Public Description <span className="text-tiki-brown/35 font-normal">— optional, overrides short description on /shop</span>
+              </label>
+              <textarea
+                id="concept-public-desc"
+                maxLength={500}
+                rows={2}
+                value={form.publicDescription}
+                onChange={(e) => setForm((f) => ({ ...f, publicDescription: e.target.value }))}
+                placeholder="Collector-facing description shown on the /shop page…"
+                className="w-full rounded-xl border border-tiki-brown/20 bg-white px-3 py-2.5 text-sm text-tiki-brown placeholder:text-tiki-brown/30 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 focus:border-ube-purple/40 resize-none"
+              />
+            </div>
+          </div>
+
           {/* Product notes */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="concept-product-notes" className="text-xs font-semibold text-tiki-brown/65">
@@ -418,6 +561,11 @@ export default function ProductConceptManagerSection({
         </form>
       </div>
 
+      {/* ── Visibility error ──────────────────────────────────────────────────── */}
+      {visError && (
+        <p className="text-sm text-warm-coral font-semibold px-1">{visError}</p>
+      )}
+
       {/* ── Active concepts list ───────────────────────────────────────────────── */}
       <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -439,56 +587,149 @@ export default function ProductConceptManagerSection({
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-tiki-brown/8">
-            {activeConcepts.map((concept) => (
-              <div key={concept.id} className="py-4 flex flex-col gap-2">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <p className="text-sm font-bold text-tiki-brown">{concept.title}</p>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[concept.status]}`}>
-                        {getStatusLabel(concept.status)}
-                      </span>
+            {activeConcepts.map((concept) => {
+              const previewStatus = concept.publicPreviewStatus ?? "draft";
+              const isVisUpdating = visUpdating === concept.id;
+              const mockups = concept.mockups ?? [];
+
+              return (
+                <div key={concept.id} className="py-4 flex flex-col gap-3">
+
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <p className="text-sm font-bold text-tiki-brown">{concept.title}</p>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[concept.status]}`}>
+                          {getStatusLabel(concept.status)}
+                        </span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${PREVIEW_STATUS_COLORS[previewStatus] ?? "bg-tiki-brown/8 text-tiki-brown/55"}`}>
+                          {getPreviewStatusLabel(previewStatus)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-tiki-brown/50">
+                        {getCategoryLabel(concept.category)}
+                        {concept.characterSlug && ` · ${concept.characterSlug}`}
+                        {concept.audience && ` · ${concept.audience}`}
+                      </p>
+                      {concept.shortDescription && (
+                        <p className="text-xs text-tiki-brown/55 mt-1 leading-relaxed">
+                          {concept.shortDescription}
+                        </p>
+                      )}
+                      {concept.updatedAt && (
+                        <p className="text-[10px] text-tiki-brown/30 mt-1">
+                          Updated {new Date(concept.updatedAt).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-xs text-tiki-brown/50">
-                      {getCategoryLabel(concept.category)}
-                      {concept.characterSlug && ` · ${concept.characterSlug}`}
-                      {concept.audience && ` · ${concept.audience}`}
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => fillForm(concept)}
+                        className="text-xs font-bold px-3 py-1.5 rounded-full border border-ube-purple/25 bg-ube-purple/8 text-ube-purple hover:bg-ube-purple/15 transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleArchive(concept)}
+                        className="text-xs font-bold px-3 py-1.5 rounded-full border border-tiki-brown/15 bg-tiki-brown/5 text-tiki-brown/55 hover:bg-tiki-brown/10 transition-colors"
+                      >
+                        Archive
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Concept visibility controls */}
+                  <div className="flex flex-col gap-1.5 rounded-xl border border-tiki-brown/8 bg-tiki-brown/2 px-3 py-2.5">
+                    <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">
+                      Public Preview Visibility
                     </p>
-                    {concept.shortDescription && (
-                      <p className="text-xs text-tiki-brown/55 mt-1 leading-relaxed">
-                        {concept.shortDescription}
-                      </p>
-                    )}
-                    {concept.updatedAt && (
-                      <p className="text-[10px] text-tiki-brown/30 mt-1">
-                        Updated {new Date(concept.updatedAt).toLocaleDateString()}
-                      </p>
-                    )}
-                    {concept.mockups && concept.mockups.length > 0 && (
-                      <p className="text-[10px] text-ube-purple/70 mt-1 font-semibold">
-                        🖼️ {concept.mockups.length} mockup{concept.mockups.length !== 1 ? "s" : ""} saved · Admin Only
-                      </p>
-                    )}
+                    <div className="flex gap-1.5 flex-wrap">
+                      {(["public-ready", "draft", "hidden"] as const).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          disabled={isVisUpdating || previewStatus === s}
+                          onClick={() => handleConceptVisibility(concept, s)}
+                          className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors disabled:cursor-not-allowed ${
+                            previewStatus === s
+                              ? "bg-tiki-brown/10 border-tiki-brown/20 text-tiki-brown/40 cursor-default"
+                              : s === "public-ready"
+                              ? "border-tropical-green/30 bg-tropical-green/8 text-tropical-green hover:bg-tropical-green/18"
+                              : s === "hidden"
+                              ? "border-warm-coral/30 bg-warm-coral/8 text-warm-coral/80 hover:bg-warm-coral/15"
+                              : "border-tiki-brown/20 bg-tiki-brown/5 text-tiki-brown/60 hover:bg-tiki-brown/10"
+                          }`}
+                        >
+                          {isVisUpdating ? "Saving…" : s === "public-ready" ? "Mark Public Ready" : s === "draft" ? "Set Draft" : "Hide"}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => fillForm(concept)}
-                      className="text-xs font-bold px-3 py-1.5 rounded-full border border-ube-purple/25 bg-ube-purple/8 text-ube-purple hover:bg-ube-purple/15 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleArchive(concept)}
-                      className="text-xs font-bold px-3 py-1.5 rounded-full border border-tiki-brown/15 bg-tiki-brown/5 text-tiki-brown/55 hover:bg-tiki-brown/10 transition-colors"
-                    >
-                      Archive
-                    </button>
-                  </div>
+
+                  {/* Mockups */}
+                  {mockups.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">
+                        Saved Mockups ({mockups.length})
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {mockups.map((mockup) => {
+                          const isMockupUpdating = mockupVisUpdating === mockup.id;
+                          return (
+                            <div
+                              key={mockup.id}
+                              className="rounded-xl border border-tiki-brown/8 bg-tiki-brown/2 px-3 py-2.5 flex flex-col gap-1.5"
+                            >
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${MOCKUP_VIS_COLORS[mockup.visibility] ?? "bg-tiki-brown/8 text-tiki-brown/55"}`}>
+                                  {getMockupVisLabel(mockup.visibility)}
+                                </span>
+                                <span className="text-xs text-tiki-brown/45">
+                                  {mockup.productTitle}
+                                </span>
+                                <span className="text-[10px] text-tiki-brown/30">
+                                  {new Date(mockup.approvedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <div className="flex gap-1.5 flex-wrap">
+                                {(["public-ready", "admin-only", "hidden"] as const).map((v) => (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    disabled={isMockupUpdating || mockup.visibility === v}
+                                    onClick={() => handleMockupVisibility(concept, mockup, v)}
+                                    className={`text-xs font-bold px-2.5 py-1 rounded-full border transition-colors disabled:cursor-not-allowed ${
+                                      mockup.visibility === v
+                                        ? "bg-tiki-brown/10 border-tiki-brown/20 text-tiki-brown/35 cursor-default"
+                                        : v === "public-ready"
+                                        ? "border-tropical-green/30 bg-tropical-green/8 text-tropical-green hover:bg-tropical-green/18"
+                                        : v === "hidden"
+                                        ? "border-warm-coral/30 bg-warm-coral/8 text-warm-coral/80 hover:bg-warm-coral/15"
+                                        : "border-ube-purple/25 bg-ube-purple/8 text-ube-purple/70 hover:bg-ube-purple/15"
+                                    }`}
+                                  >
+                                    {isMockupUpdating
+                                      ? "Saving…"
+                                      : v === "public-ready"
+                                      ? "Make Public"
+                                      : v === "admin-only"
+                                      ? "Admin Only"
+                                      : "Hide"}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

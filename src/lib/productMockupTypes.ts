@@ -35,6 +35,7 @@ export type ProductMockupAsset = {
   reviewNotes?: string;
   approvedBy?: string;
   approvedAt: string;
+  visibilityUpdatedAt?: string;
   createdAt: string;
 };
 
