@@ -15,7 +15,7 @@ const primaryStudios = [
     emoji: "🍍",
     title: "Character Studio",
     description:
-      "Manage official characters, profiles, reference assets, color palettes, personality rules, homes, and character integrity.",
+      "Manage official characters, references, profiles, and character integrity.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/characters",
@@ -24,7 +24,7 @@ const primaryStudios = [
     emoji: "🎬",
     title: "Story Studio",
     description:
-      "Build episodes and scenes. Generate picture panels, audio narration, and animated clips. Approve and save media with one click.",
+      "Create episodes, scenes, picture panels, audio stories, animated clips, and final videos.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/episodes",
@@ -33,7 +33,7 @@ const primaryStudios = [
     emoji: "🩺",
     title: "Media Health",
     description:
-      "Find missing panels, incomplete references, broken media, hidden assets, and production readiness blockers before publishing.",
+      "Find missing media, hidden assets, readiness issues, and public display problems.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/media-health",
@@ -42,10 +42,19 @@ const primaryStudios = [
     emoji: "📤",
     title: "Publishing",
     description:
-      "Review publish-readiness for episodes, control what content appears on public pages, and manage story release status.",
+      "Review public readiness and publishing status.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/publishing",
+  },
+  {
+    emoji: "🛍️",
+    title: "Product Studio",
+    description:
+      "Plan products, generate mockups, and prepare collector previews.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/products",
   },
 ];
 
@@ -78,15 +87,6 @@ const advancedTools = [
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/canon",
-  },
-  {
-    emoji: "🛍️",
-    title: "Product Studio",
-    description:
-      "Plan future plush, collectible, book, and product ideas linked to characters and episodes. Commerce features come later.",
-    status: "Planning",
-    statusColor: "bg-pineapple-yellow/35 text-tiki-brown",
-    href: "/admin/products",
   },
 ];
 
@@ -129,6 +129,12 @@ const todayGuidance = [
     text: "Use Publishing when a story is approved and ready for public release.",
     href: "/admin/publishing",
     label: "Publishing",
+  },
+  {
+    icon: "🛍️",
+    text: "Open Product Studio to plan mockups and manage the /shop collector preview.",
+    href: "/admin/products",
+    label: "Product Studio",
   },
 ];
 
@@ -232,7 +238,7 @@ export default function AdminPage() {
             <span className="text-ube-purple">Production Studio</span>
           </h1>
           <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-2xl">
-            Create, review, and publish character-safe stories, picture panels, audio narration, and animated clips.
+            Create, review, and publish character-safe Fruit Baby stories, media, and products.
           </p>
         </div>
       </section>
@@ -275,7 +281,7 @@ export default function AdminPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {primaryStudios.map((s) => (
             <StudioCard key={s.title} {...s} size="large" />
           ))}
@@ -360,18 +366,18 @@ export default function AdminPage() {
         <div className="border-t border-dashed border-tiki-brown/15" />
       </div>
 
-      {/* ── Advanced & System Tools ── */}
+      {/* ── Advanced Tools ── */}
       <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
         <div className="mb-7">
           <h2 className="text-2xl font-black text-tiki-brown mb-1">
-            🧩 Advanced & System Tools
+            🧩 Advanced Tools
           </h2>
           <p className="text-sm text-tiki-brown/60">
-            Additional tools for planning, canon management, and future product development.
+            Planning, canon management, and developer tools.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {advancedTools.map((t) => (
             <StudioCard key={t.title} {...t} />
           ))}

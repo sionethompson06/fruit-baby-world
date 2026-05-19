@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Publishing Queue | Story Studio",
+  title: "Publishing | Admin",
 };
 
 // ─── Grouping helpers ─────────────────────────────────────────────────────────
@@ -250,10 +250,10 @@ export default function PublishingPage() {
           </div>
           <div className="text-4xl mb-3">📤</div>
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
-            Publishing Queue
+            Publishing
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Track saved Fruit Baby episode drafts from review to public-ready status.
+            Review public readiness and publishing status.
           </p>
         </div>
       </section>

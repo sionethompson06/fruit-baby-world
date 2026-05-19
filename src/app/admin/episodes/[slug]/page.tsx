@@ -714,7 +714,7 @@ export default async function EpisodeDetailPage({
             href="/admin/episodes"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors mb-6"
           >
-            ← Back to Saved Episode Drafts
+            ← Back to Story Studio
           </Link>
 
           {/* Badges */}
@@ -1181,7 +1181,7 @@ export default async function EpisodeDetailPage({
             href="/admin/episodes"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
           >
-            ← Back to Saved Episode Drafts
+            ← Back to Story Studio
           </Link>
         </div>
 

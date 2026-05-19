@@ -10,7 +10,7 @@ import ProductConceptManagerSection from "./ProductConceptManagerSection";
 import ProductMockupDraftSection from "./ProductMockupDraftSection";
 
 export const metadata: Metadata = {
-  title: "Product Concept Studio | Admin",
+  title: "Product Studio | Admin",
 };
 
 export const dynamic = "force-dynamic";
@@ -193,7 +193,7 @@ export default function AdminProductsPage() {
             href="/admin"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors mb-6"
           >
-            ← Back to Production Studio
+            ← Back to Dashboard
           </Link>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-pineapple-yellow/40 text-tiki-brown uppercase tracking-widest">
@@ -205,11 +205,10 @@ export default function AdminProductsPage() {
           </div>
           <div className="text-4xl mb-3">🛍️</div>
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
-            Product Concept Studio
+            Product Studio
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Plan future plush, books, collectibles, classroom materials, and
-            character products before commerce is added.
+            Plan products, generate mockups, and prepare collector previews.
           </p>
         </div>
       </section>

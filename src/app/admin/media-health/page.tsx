@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Media Health Dashboard | Fruit Baby World Admin",
+  title: "Media Health | Admin",
 };
 
 export default function MediaHealthPage() {
@@ -58,7 +58,7 @@ export default function MediaHealthPage() {
             href="/admin"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors mb-6"
           >
-            ← Back to Story Studio
+            ← Back to Dashboard
           </Link>
 
           <div className="flex flex-wrap items-center gap-2 mb-3">
@@ -81,12 +81,11 @@ export default function MediaHealthPage() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-2 leading-tight">
-            Media Health Dashboard
+            Media Health
           </h1>
           <p className="text-sm text-tiki-brown/60 max-w-2xl leading-relaxed">
-            Review character, reference, story, and panel readiness before publishing or
-            generating production media. All checks are read-only — this dashboard never
-            modifies data.
+            Find missing media, hidden assets, readiness issues, and public display problems.
+            All checks are read-only — this dashboard never modifies data.
           </p>
         </div>
       </section>

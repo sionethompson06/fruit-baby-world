@@ -3,7 +3,7 @@ import Link from "next/link";
 import { loadEpisodeDrafts, type SavedEpisodeDraft, type EpisodeLoadDiag } from "@/lib/savedEpisodes";
 
 export const metadata: Metadata = {
-  title: "Episode Package Studio | Story Studio",
+  title: "Story Studio | Admin",
 };
 
 // Force dynamic server rendering on every request. Prevents stale static
@@ -201,11 +201,10 @@ export default async function EpisodesPage() {
           </div>
           <div className="text-4xl mb-3">🎬</div>
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
-            Episode Package Studio
+            Story Studio
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Review saved episode draft packages. All episodes here are
-            internal drafts — none are visible on the public site yet.
+            Create episodes, scenes, picture panels, audio stories, animated clips, and final videos.
           </p>
           <div className="mt-6">
             <Link

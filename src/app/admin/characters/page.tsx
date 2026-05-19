@@ -128,8 +128,7 @@ export default function AdminCharactersPage() {
             Character Studio
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Manage character references, profile drafts, and approval status. Each character has its
-            own workspace below.
+            Manage official characters, references, profiles, and character integrity.
           </p>
         </div>
       </section>
