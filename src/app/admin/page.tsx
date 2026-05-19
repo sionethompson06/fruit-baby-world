@@ -30,6 +30,15 @@ const primaryStudios = [
     href: "/admin/episodes",
   },
   {
+    emoji: "🎞️",
+    title: "Media Studio",
+    description:
+      "Browse all production media in one place — panels, audio, clips, videos, and mockups.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/media",
+  },
+  {
     emoji: "🩺",
     title: "Media Health",
     description:
@@ -117,6 +126,12 @@ const todayGuidance = [
     text: "Open Story Studio to create panels, audio, and video for an episode.",
     href: "/admin/episodes",
     label: "Story Studio",
+  },
+  {
+    icon: "🎞️",
+    text: "Open Media Studio to browse all production media in one central place.",
+    href: "/admin/media",
+    label: "Media Studio",
   },
   {
     icon: "🩺",
