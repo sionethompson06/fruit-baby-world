@@ -464,6 +464,11 @@ export default function ProductConceptManagerSection({
                         Updated {new Date(concept.updatedAt).toLocaleDateString()}
                       </p>
                     )}
+                    {concept.mockups && concept.mockups.length > 0 && (
+                      <p className="text-[10px] text-ube-purple/70 mt-1 font-semibold">
+                        🖼️ {concept.mockups.length} mockup{concept.mockups.length !== 1 ? "s" : ""} saved · Admin Only
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2 flex-shrink-0">
                     <button

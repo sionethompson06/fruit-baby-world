@@ -64,5 +64,6 @@ export const config = {
     "/api/final-video/render-and-save",
     "/api/github/save-product-concept",
     "/api/products/generate-mockup-draft",
+    "/api/products/save-approved-mockup",
   ],
 };
