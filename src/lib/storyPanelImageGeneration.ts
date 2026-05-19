@@ -1,7 +1,7 @@
 // Helper for story panel image generation: validation, character data loading,
 // and prompt building. All functions are pure text/data — no image generation.
 
-import { getAllCharacters } from "@/lib/content";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 
 // ─── Slug validation ──────────────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ export type CharacterRef = {
 export function loadCharacterRefs(
   slugs: string[]
 ): { refs: CharacterRef[]; missing: string[] } {
-  const all = getAllCharacters();
+  const all = loadAllCharactersFromDisk();
   const refs: CharacterRef[] = [];
   const missing: string[] = [];
 

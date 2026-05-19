@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getAllProducts, getAllCharacters } from "@/lib/content";
+import { getAllProducts } from "@/lib/content";
+import { getPublicCharactersFromDisk } from "@/lib/characterContent";
 import ProductCard from "@/components/ProductCard";
 
 export const metadata: Metadata = {
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function ShopPage() {
   const products = getAllProducts();
-  const characters = getAllCharacters();
+  const characters = getPublicCharactersFromDisk();
   const characterMap = Object.fromEntries(characters.map((c) => [c.id, c]));
 
   const gridClass =

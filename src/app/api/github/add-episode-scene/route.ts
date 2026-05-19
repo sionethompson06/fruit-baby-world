@@ -59,6 +59,8 @@ function validateSlug(slug: unknown): slug is string {
   return SAFE_SLUG.test(normalized);
 }
 
+// Fast-path allowlist — NOT a blocklist. Unknown slugs fall through to the regex check below.
+// New characters (e.g. dragonfruit-baby) are allowed as long as they pass the regex.
 const KNOWN_CHARACTER_SLUGS = new Set([
   "pineapple-baby",
   "ube-baby",
