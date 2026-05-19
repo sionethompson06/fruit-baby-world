@@ -3170,6 +3170,23 @@
       "publicUseAllowed": false,
       "isOfficialReference": false,
       "updatedAt": "2026-05-17T17:07:35.918Z"
+    },
+    {
+      "id": "ref-1779160314165-308h7k",
+      "characterSlug": "kiwi-baby",
+      "assetType": "official-profile-reference",
+      "title": "Kiwi Official Profile Sheet",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/kiwi-baby/1779160313144-kiwi-character-profile-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2204090,
+      "uploadedAt": "2026-05-19T03:11:54.165Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
