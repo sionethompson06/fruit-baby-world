@@ -95,7 +95,7 @@
   ],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968207308-pineapple-happy-smile-fun-playing.png",
-    "profileSheet": "/characters/pineapple-baby/Pineapple Profile.png",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1779160490025-pineapple-baby-character-profile.png",
     "alt": "Official Pineapple Baby character profile sheet"
   },
   "merchPotential": [
@@ -106,5 +106,8 @@
     "collectible figure"
   ],
   "mainReferenceAssetId": "ref-1778968208156-hh21so",
-  "updatedAt": "2026-05-16T22:25:58.705Z"
+  "updatedAt": "2026-05-19T04:42:23.778Z",
+  "primaryReferenceAssetId": "ref-1779160490886-83kx7a",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1779160490025-pineapple-baby-character-profile.png",
+  "primaryReferenceAssetType": "official-profile-reference"
 }
