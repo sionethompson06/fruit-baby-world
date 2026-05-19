@@ -3182,11 +3182,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2204090,
       "uploadedAt": "2026-05-19T03:11:54.165Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:41:39.923Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:41:39.923Z"
     },
     {
       "id": "ref-1779160448572-ddwbsy",
