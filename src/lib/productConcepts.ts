@@ -38,6 +38,14 @@ export function getAllProductConcepts(): ProductConcept[] {
   }
 }
 
+export function getActiveProductConcepts(): ProductConcept[] {
+  return getAllProductConcepts().filter((c) => c.status !== "archived");
+}
+
+export function getArchivedProductConcepts(): ProductConcept[] {
+  return getAllProductConcepts().filter((c) => c.status === "archived");
+}
+
 export function getProductConceptsByCharacter(
   characterSlug: string
 ): ProductConcept[] {

@@ -3,13 +3,10 @@ import Link from "next/link";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import { isCharacterApprovedForAdminUse } from "@/lib/characterEligibility";
 import { normalizeCharacterProfile } from "@/lib/characterProfileNormalizer";
-import {
-  getAllProductConcepts,
-  getProductConceptCategoryLabel,
-  getProductConceptStatusLabel,
-} from "@/lib/productConcepts";
+import { getAllProductConcepts } from "@/lib/productConcepts";
 import type { CharacterSeedData } from "@/lib/productConceptTypes";
 import ProductPromptBuilderSection from "./ProductPromptBuilderSection";
+import ProductConceptManagerSection from "./ProductConceptManagerSection";
 
 export const metadata: Metadata = {
   title: "Product Concept Studio | Admin",
@@ -115,15 +112,6 @@ function getSuggestedProducts(type: string, role: string): string[] {
     "Collectible",
   ];
 }
-
-// ─── Status badge styling ─────────────────────────────────────────────────────
-
-const STATUS_COLORS: Record<string, string> = {
-  idea: "bg-sky-blue/20 text-tiki-brown/70",
-  planned: "bg-ube-purple/15 text-ube-purple",
-  "in-design": "bg-pineapple-yellow/40 text-tiki-brown",
-  archived: "bg-tiki-brown/8 text-tiki-brown/40",
-};
 
 // ─── Future workflow steps ────────────────────────────────────────────────────
 
@@ -439,63 +427,14 @@ export default function AdminProductsPage() {
           </div>
         </div>
 
-        {/* ── D. Product Prompt Builder ──────────────────────────────────────── */}
+        {/* ── D. Product Concept Manager ────────────────────────────────────── */}
+        <ProductConceptManagerSection
+          characters={characterSeeds}
+          initialConcepts={concepts}
+        />
+
+        {/* ── E. Product Prompt Builder ──────────────────────────────────────── */}
         <ProductPromptBuilderSection characters={characterSeeds} />
-
-        {/* ── E. Product Concepts ────────────────────────────────────────────── */}
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-3 justify-between flex-wrap">
-            <h2 className="text-base font-black text-tiki-brown">
-              Product Concepts
-            </h2>
-            {concepts.length > 0 && (
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-tiki-brown/8 text-tiki-brown/55">
-                {concepts.length} concept{concepts.length !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-
-          {concepts.length === 0 ? (
-            <div className="border border-dashed border-tiki-brown/15 rounded-2xl px-6 py-8 text-center flex flex-col gap-2">
-              <p className="text-sm text-tiki-brown/45 leading-relaxed">
-                No product concepts yet. Use this studio to plan future products
-                before adding mockups or commerce.
-              </p>
-              <p className="text-xs text-tiki-brown/30 font-mono">
-                Concepts: src/content/products/product-concepts.json
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col divide-y divide-tiki-brown/8">
-              {concepts.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-start justify-between py-3 gap-3"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-tiki-brown">
-                      {c.title}
-                    </p>
-                    <p className="text-xs text-tiki-brown/50">
-                      {getProductConceptCategoryLabel(c.category)}
-                      {c.characterSlug && ` · ${c.characterSlug}`}
-                    </p>
-                    {c.shortDescription && (
-                      <p className="text-xs text-tiki-brown/45 mt-0.5 leading-relaxed">
-                        {c.shortDescription}
-                      </p>
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLORS[c.status] ?? "bg-tiki-brown/8 text-tiki-brown/55"}`}
-                  >
-                    {getProductConceptStatusLabel(c.status)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
         {/* ── F. Future Product Workflow ─────────────────────────────────────── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">

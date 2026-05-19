@@ -2,6 +2,7 @@
 // Foundation only — no rendering, no saving, no publishing in this phase.
 
 import type { FinalVideoAssemblyPackage, FinalVideoAssemblyStatus } from "@/lib/finalVideoTypes";
+import type { FinalVideoAsset } from "@/lib/finalVideoAssetTypes";
 import {
   buildFinalVideoProductionPlan,
   getFinalVideoFutureActionSummary,
@@ -39,6 +40,7 @@ type Props = {
   pkg: FinalVideoAssemblyPackage;
   episodeSlug: string;
   raw?: Record<string, unknown>;
+  initialFinalVideo?: FinalVideoAsset | null;
 };
 
 export default function FinalVideoProductionSection({ pkg, episodeSlug, raw }: Props) {
