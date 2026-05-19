@@ -8,6 +8,8 @@ import {
   getProductConceptCategoryLabel,
   getProductConceptStatusLabel,
 } from "@/lib/productConcepts";
+import type { CharacterSeedData } from "@/lib/productConceptTypes";
+import ProductPromptBuilderSection from "./ProductPromptBuilderSection";
 
 export const metadata: Metadata = {
   title: "Product Concept Studio | Admin",
@@ -162,6 +164,33 @@ export default function AdminProductsPage() {
   const allChars = loadAllCharactersFromDisk();
   const adminChars = allChars.filter(isCharacterApprovedForAdminUse);
   const normalizedChars = adminChars.map((c) => normalizeCharacterProfile(c));
+
+  const characterSeeds: CharacterSeedData[] = normalizedChars.map((char) => ({
+    slug: char.slug,
+    displayName: char.displayName,
+    shortName: char.shortName,
+    tagline: char.tagline,
+    shortDescription: char.shortDescription,
+    fruitType: char.fruitType,
+    role: char.role,
+    type: char.type,
+    home: char.home,
+    visualIdentitySummary: char.visualIdentitySummary,
+    colorPalette: char.colorPalette.map((c) => ({
+      name: c.name,
+      hex: c.hex,
+      usage: c.usage,
+    })),
+    alwaysRules: char.alwaysRules,
+    neverRules: char.neverRules,
+    doNotChangeRules: char.doNotChangeRules,
+    personalityTraits: char.personalityTraits,
+    profileImageUrl: char.profileImageUrl,
+    hasProfileImage: char.hasProfileImage,
+    hasVisualIdentity: char.hasVisualIdentity,
+    hasColorPalette: char.hasColorPalette,
+    hasCharacterRules: char.hasCharacterRules,
+  }));
 
   const concepts = getAllProductConcepts();
 
@@ -410,7 +439,10 @@ export default function AdminProductsPage() {
           </div>
         </div>
 
-        {/* ── D. Product Concepts ────────────────────────────────────────────── */}
+        {/* ── D. Product Prompt Builder ──────────────────────────────────────── */}
+        <ProductPromptBuilderSection characters={characterSeeds} />
+
+        {/* ── E. Product Concepts ────────────────────────────────────────────── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
           <div className="flex items-center gap-3 justify-between flex-wrap">
             <h2 className="text-base font-black text-tiki-brown">
@@ -465,7 +497,7 @@ export default function AdminProductsPage() {
           )}
         </div>
 
-        {/* ── E. Future Product Workflow ─────────────────────────────────────── */}
+        {/* ── F. Future Product Workflow ─────────────────────────────────────── */}
         <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
           <h2 className="text-base font-black text-tiki-brown">
             Future Product Workflow

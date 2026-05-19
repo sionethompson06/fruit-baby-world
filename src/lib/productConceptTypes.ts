@@ -41,3 +41,54 @@ export type ProductConcept = {
   createdAt: string;
   updatedAt?: string;
 };
+
+// ─── Prompt builder types ─────────────────────────────────────────────────────
+
+// Serializable subset of NormalizedCharacterProfile — safe to pass as props.
+export type CharacterSeedData = {
+  slug: string;
+  displayName: string;
+  shortName: string;
+  tagline: string;
+  shortDescription: string;
+  fruitType: string;
+  role: string;
+  type: string;
+  home: string;
+  visualIdentitySummary: string;
+  colorPalette: Array<{ name: string; hex?: string; usage?: string }>;
+  alwaysRules: string[];
+  neverRules: string[];
+  doNotChangeRules: string[];
+  personalityTraits: string[];
+  profileImageUrl: string;
+  hasProfileImage: boolean;
+  hasVisualIdentity: boolean;
+  hasColorPalette: boolean;
+  hasCharacterRules: boolean;
+};
+
+export type ProductPromptPackage = {
+  characterSlug: string;
+  characterName: string;
+  characterTagline: string;
+  characterShortDescription: string;
+  characterFruitType: string;
+  characterRole: string;
+  characterHome: string;
+  characterType: string;
+  characterPersonalityTraits: string[];
+  category: ProductConceptCategory;
+  productTitle: string;
+  audience?: ProductConceptAudience;
+  productGoal?: string;
+  visualIdentitySummary: string;
+  colorPalette: string[];
+  alwaysRules: string[];
+  neverRules: string[];
+  characterRules: string[];
+  doNotChangeRules: string[];
+  productSpecificGuidance: string[];
+  finalPrompt: string;
+  warnings: string[];
+};
