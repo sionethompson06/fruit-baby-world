@@ -105,6 +105,13 @@ function AudioReviewPanel({
   const [attachResult, setAttachResult] = useState<AttachSuccessResult | null>(null);
   const [attachError, setAttachError] = useState<string | null>(null);
 
+  // Approve & Save (one-click) state
+  type AudioApproveSaveStatus = "idle" | "uploading" | "attaching" | "done" | "error";
+  const [approveAndSaveStatus, setApproveAndSaveStatus] = useState<AudioApproveSaveStatus>("idle");
+  const [approveAndSaveError, setApproveAndSaveError] = useState<string | null>(null);
+  const [approveAndSaveErrorStep, setApproveAndSaveErrorStep] = useState<"upload" | "attach" | null>(null);
+  const [approveAndSaveUploadedResult, setApproveAndSaveUploadedResult] = useState<UploadSuccessResult | null>(null);
+
   const checkedCount = checklist.filter((i) => i.checked).length;
   const allChecked = checkedCount === checklist.length;
 
@@ -131,6 +138,145 @@ function AudioReviewPanel({
     setUploadError(null);
     setAttachResult(null);
     setAttachError(null);
+    setApproveAndSaveStatus("idle");
+    setApproveAndSaveError(null);
+    setApproveAndSaveErrorStep(null);
+    setApproveAndSaveUploadedResult(null);
+  }
+
+  const canApproveAndSave =
+    (decision === "looks-good" || allChecked) &&
+    approveAndSaveStatus !== "uploading" &&
+    approveAndSaveStatus !== "attaching" &&
+    approveAndSaveStatus !== "done";
+
+  async function handleApproveAndSave() {
+    if (!canApproveAndSave) return;
+
+    setApproveAndSaveStatus("uploading");
+    setApproveAndSaveError(null);
+    setApproveAndSaveErrorStep(null);
+    setApproveAndSaveUploadedResult(null);
+
+    // Step 1: Upload to Blob
+    let saved: UploadSuccessResult;
+    try {
+      const res = await fetch("/api/audio-narration/upload-approved-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          audioBase64: draft.audioBase64,
+          mimeType: "audio/mpeg",
+          scriptText: draft.scriptText,
+          voiceStyle: draft.voiceStyle,
+          voiceId: draft.voiceId,
+          modelId: draft.modelId,
+          provider: "elevenlabs",
+          reviewNotes: reviewNotes.trim(),
+          approvedBy: "admin",
+        }),
+      });
+
+      let data: { ok: boolean; status: string; message?: string; audio?: UploadSuccessResult & Record<string, unknown> };
+      try {
+        data = await res.json();
+      } catch {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(res.status === 504 ? "Media upload timed out — try again." : "Media upload failed — unexpected server response.");
+        setApproveAndSaveErrorStep("upload");
+        return;
+      }
+
+      if (!data.ok || !data.audio) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(`Media upload failed: ${data.message ?? "check Vercel Blob configuration."}`);
+        setApproveAndSaveErrorStep("upload");
+        return;
+      }
+
+      saved = {
+        id: data.audio.id as string,
+        url: data.audio.url as string,
+        pathname: data.audio.pathname as string,
+        sizeBytes: data.audio.sizeBytes as number,
+        provider: data.audio.provider as string,
+        voiceStyle: data.audio.voiceStyle as string,
+        voiceId: data.audio.voiceId as string,
+        approvedAt: data.audio.approvedAt as string,
+      };
+      setApproveAndSaveUploadedResult(saved);
+    } catch {
+      setApproveAndSaveStatus("error");
+      setApproveAndSaveError("Media upload failed — network error. Check your connection and try again.");
+      setApproveAndSaveErrorStep("upload");
+      return;
+    }
+
+    // Step 2: Attach to episode JSON
+    setApproveAndSaveStatus("attaching");
+    try {
+      const res = await fetch("/api/github/attach-narration-audio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          audio: {
+            id: saved.id,
+            provider: saved.provider,
+            voiceId: draft.voiceId,
+            modelId: draft.modelId,
+            voiceStyle: saved.voiceStyle,
+            url: saved.url,
+            pathname: saved.pathname,
+            mimeType: "audio/mpeg",
+            sizeBytes: saved.sizeBytes,
+            scriptText: draft.scriptText,
+            reviewNotes: reviewNotes.trim(),
+            approvedBy: "admin",
+            approvedAt: saved.approvedAt,
+          },
+        }),
+      });
+
+      let data: { ok: boolean; status: string; message?: string; path?: string; commitMessage?: string; audioNarration?: { attachedAt?: string } };
+      try {
+        data = await res.json();
+      } catch {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(
+          res.status === 504
+            ? "Attach to episode timed out. The audio was saved to media storage. Use Manual Controls to attach it."
+            : "Attach to episode failed — unexpected server response. The audio was saved to media storage. Use Manual Controls to attach it."
+        );
+        setApproveAndSaveErrorStep("attach");
+        return;
+      }
+
+      if (!data.ok) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(
+          `Attach to episode failed: ${data.message ?? "check GitHub configuration."} The audio was saved to media storage. Use Manual Controls to attach it.`
+        );
+        setApproveAndSaveErrorStep("attach");
+        return;
+      }
+
+      // Sync manual controls state
+      setUploadResult(saved);
+      setAttachResult({
+        path: data.path ?? "",
+        commitMessage: data.commitMessage ?? "",
+        attachedAt: data.audioNarration?.attachedAt ?? new Date().toISOString(),
+      });
+      setApproveAndSaveStatus("done");
+    } catch {
+      setApproveAndSaveStatus("error");
+      setApproveAndSaveError(
+        "Attach to episode failed — network error. The audio was saved to media storage. Use Manual Controls to attach it."
+      );
+      setApproveAndSaveErrorStep("attach");
+    }
   }
 
   async function handleSave() {
@@ -433,154 +579,192 @@ function AudioReviewPanel({
         </div>
       )}
 
-      {/* Save approved audio section */}
+      {/* ── Approve & Save Audio (primary one-click workflow) ── */}
       <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-5">
-        <div className="flex flex-col gap-0.5">
-          <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-            Save Audio to Media Storage
-          </p>
-          <p className="text-xs text-tiki-brown/45 leading-relaxed">
-            Uploads the approved Temporary Draft to Vercel Blob. Lifecycle stage becomes
-            Saved to Media Storage. It will not be attached to the episode or published yet.
-          </p>
+        <div className="flex items-center gap-2">
+          <span className="text-base">✨</span>
+          <p className="text-sm font-black text-tiki-brown">Approve & Save Audio to Episode</p>
         </div>
+        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+          This will save the approved draft to media storage and attach it to this episode. It will not make it public yet.
+        </p>
 
-        {!uploadResult ? (
-          <>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={
-                (decision !== "looks-good" && !allChecked) || uploading
-              }
-              className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-tropical-green text-white hover:bg-tropical-green/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {uploading ? "Saving to Blob storage…" : "Save Approved Audio to Media Storage"}
-            </button>
-            {uploading && (
-              <span className="text-xs text-tiki-brown/45 animate-pulse">
-                Uploading to Vercel Blob — this may take a moment…
-              </span>
-            )}
-            {decision !== "looks-good" && !allChecked && !uploading && (
-              <p className="text-xs text-tiki-brown/40">
-                Mark the draft as &quot;Looks Good&quot; or complete all checklist items to enable
-                saving.
-              </p>
-            )}
-            {uploadError && (
-              <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
-                <p className="text-xs font-bold text-warm-coral mb-0.5">Upload failed</p>
-                <p className="text-xs text-tiki-brown/70 leading-relaxed">{uploadError}</p>
+        {(decision !== "looks-good" && !allChecked) && approveAndSaveStatus === "idle" && (
+          <p className="text-xs text-tiki-brown/40">
+            Mark the draft as &ldquo;Looks Good&rdquo; or complete all checklist items to enable saving.
+          </p>
+        )}
+
+        {(approveAndSaveStatus === "idle" || approveAndSaveStatus === "error") && !attachResult && (
+          <button
+            type="button"
+            onClick={handleApproveAndSave}
+            disabled={!canApproveAndSave}
+            className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {approveAndSaveStatus === "error" ? "Retry Approve & Save Audio to Episode" : "Approve & Save Audio to Episode"}
+          </button>
+        )}
+
+        {approveAndSaveStatus === "uploading" && (
+          <p className="text-xs text-tiki-brown/45 animate-pulse">Saving to Media Storage…</p>
+        )}
+        {approveAndSaveStatus === "attaching" && (
+          <p className="text-xs text-tiki-brown/45 animate-pulse">Attaching to Episode…</p>
+        )}
+
+        {approveAndSaveStatus === "error" && (
+          <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3 flex flex-col gap-1.5">
+            <p className="text-xs font-bold text-warm-coral">
+              {approveAndSaveErrorStep === "upload" ? "Media upload failed" : "Attach to episode failed"}
+            </p>
+            <p className="text-xs text-tiki-brown/70 leading-relaxed">{approveAndSaveError}</p>
+            {approveAndSaveErrorStep === "attach" && approveAndSaveUploadedResult && (
+              <div className="bg-white/60 rounded-lg px-2 py-1.5 mt-0.5 flex flex-col gap-0.5">
+                <p className="text-xs font-semibold text-tiki-brown/55">Saved to Media Storage:</p>
+                <p className="text-xs font-mono text-ube-purple break-all">{approveAndSaveUploadedResult.url}</p>
+                <p className="text-xs text-tiki-brown/40">Use Manual Controls below to attach it to the episode.</p>
               </div>
             )}
-          </>
-        ) : (
-          <div className="bg-tropical-green/10 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-2">
+          </div>
+        )}
+
+        {(approveAndSaveStatus === "done" || !!attachResult) && attachResult && (
+          <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80">
-                Saved to Media Storage
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
+                Attached to Episode
               </span>
               <span className="text-xs text-tiki-brown/40">
-                {new Date(uploadResult.approvedAt).toLocaleString("en-US", {
+                {new Date(attachResult.attachedAt).toLocaleString("en-US", {
                   dateStyle: "medium",
                   timeStyle: "short",
                 })}
               </span>
             </div>
-            <div className="flex flex-col gap-1 text-xs text-tiki-brown/65">
-              <p>
-                <span className="font-semibold">Provider:</span> {uploadResult.provider} ·{" "}
-                <span className="font-semibold">Voice style:</span> {uploadResult.voiceStyle} ·{" "}
-                <span className="font-semibold">Voice ID:</span>{" "}
-                <span className="font-mono">{uploadResult.voiceId}</span>
-              </p>
-              <p>
-                <span className="font-semibold">Size:</span>{" "}
-                {uploadResult.sizeBytes < 1024 * 1024
-                  ? `${Math.round(uploadResult.sizeBytes / 1024)}KB`
-                  : `${(uploadResult.sizeBytes / 1024 / 1024).toFixed(2)}MB`}
-              </p>
-              <p className="font-mono break-all">{uploadResult.url}</p>
-            </div>
-            <div className="bg-white/60 rounded-lg px-3 py-2 mt-1">
-              <p className="text-xs text-tiki-brown/50 leading-relaxed">
-                Audio is saved to media storage. Attach it to the episode below to move it to
-                the next lifecycle stage. It will not be public until marked Public Ready.
-              </p>
-            </div>
+            <p className="text-xs font-mono text-tiki-brown/50 break-all">{attachResult.path}</p>
+            <p className="text-xs text-tiki-brown/50 italic">{attachResult.commitMessage}</p>
+            <p className="text-xs text-tiki-brown/45 mt-1">
+              Next step: Set visibility to Public Ready to make it appear on the public story page.
+            </p>
           </div>
         )}
       </div>
 
-      {/* Attach to episode JSON section — only shown after blob upload succeeds */}
-      {uploadResult && (
-        <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-5">
-          <div className="flex flex-col gap-0.5">
+      {/* ── Manual Controls ── */}
+      <details className="group border border-tiki-brown/10 rounded-2xl overflow-hidden">
+        <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none bg-tiki-brown/3 hover:bg-tiki-brown/5 transition-colors list-none">
+          <span className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Manual Controls</span>
+          <span className="ml-auto text-xs text-tiki-brown/35">Save and attach separately</span>
+        </summary>
+        <div className="flex flex-col gap-4 px-4 pt-3 pb-4">
+          <p className="text-xs text-tiki-brown/45 leading-relaxed">
+            Use manual controls if you need to upload and attach separately for debugging or recovery.
+          </p>
+
+          {/* Manual save to Blob */}
+          <div className="flex flex-col gap-2">
             <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-              Attach Audio to Episode
+              Save Audio to Media Storage
             </p>
-            <p className="text-xs text-tiki-brown/45 leading-relaxed">
-              Saves approved audio metadata to the episode JSON. Lifecycle stage becomes
-              Attached to Episode. It will not be Public Ready until you set that below.
-            </p>
-            {hasExistingAttachment && !attachResult && (
-              <p className="text-xs text-pineapple-yellow/80 font-semibold mt-1">
-                Attaching a new narration audio will replace the current episode narration metadata.
-                The old Blob file will not be deleted.
-              </p>
+            {!uploadResult ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={(decision !== "looks-good" && !allChecked) || uploading}
+                  className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-tropical-green text-white hover:bg-tropical-green/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {uploading ? "Saving to Blob storage…" : "Save Approved Audio to Media Storage"}
+                </button>
+                {uploading && (
+                  <span className="text-xs text-tiki-brown/45 animate-pulse">
+                    Uploading to Vercel Blob — this may take a moment…
+                  </span>
+                )}
+                {decision !== "looks-good" && !allChecked && !uploading && (
+                  <p className="text-xs text-tiki-brown/40">
+                    Mark the draft as &quot;Looks Good&quot; or complete all checklist items to enable saving.
+                  </p>
+                )}
+                {uploadError && (
+                  <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
+                    <p className="text-xs font-bold text-warm-coral mb-0.5">Upload failed</p>
+                    <p className="text-xs text-tiki-brown/70 leading-relaxed">{uploadError}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-tropical-green/10 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80">
+                    Saved to Media Storage
+                  </span>
+                  <span className="text-xs text-tiki-brown/40">
+                    {new Date(uploadResult.approvedAt).toLocaleString("en-US", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 text-xs text-tiki-brown/65">
+                  <p>
+                    <span className="font-semibold">Provider:</span> {uploadResult.provider} ·{" "}
+                    <span className="font-semibold">Voice style:</span> {uploadResult.voiceStyle}
+                  </p>
+                  <p className="font-mono break-all">{uploadResult.url}</p>
+                </div>
+              </div>
             )}
           </div>
 
-          {!attachResult ? (
-            <>
-              <button
-                type="button"
-                onClick={handleAttach}
-                disabled={attaching}
-                className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {attaching
-                  ? "Attaching audio to episode…"
-                  : "Attach Audio to Episode"}
-              </button>
-              {attaching && (
-                <span className="text-xs text-tiki-brown/45 animate-pulse">
-                  Saving to GitHub episode JSON — this may take a moment…
-                </span>
+          {/* Manual attach */}
+          {uploadResult && (
+            <div className="flex flex-col gap-2 border-t border-tiki-brown/8 pt-3">
+              <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+                Attach Audio to Episode
+              </p>
+              {hasExistingAttachment && !attachResult && (
+                <p className="text-xs text-pineapple-yellow/80 font-semibold">
+                  Attaching a new narration audio will replace the current episode narration metadata.
+                  The old Blob file will not be deleted.
+                </p>
               )}
-              {attachError && (
-                <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
-                  <p className="text-xs font-bold text-warm-coral mb-0.5">Attach failed</p>
-                  <p className="text-xs text-tiki-brown/70 leading-relaxed">{attachError}</p>
+              {!attachResult ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleAttach}
+                    disabled={attaching}
+                    className="self-start px-5 py-2.5 rounded-xl text-sm font-black bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {attaching ? "Attaching audio to episode…" : "Attach Audio to Episode"}
+                  </button>
+                  {attaching && (
+                    <span className="text-xs text-tiki-brown/45 animate-pulse">
+                      Saving to GitHub episode JSON — this may take a moment…
+                    </span>
+                  )}
+                  {attachError && (
+                    <div className="bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-4 py-3">
+                      <p className="text-xs font-bold text-warm-coral mb-0.5">Attach failed</p>
+                      <p className="text-xs text-tiki-brown/70 leading-relaxed">{attachError}</p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple self-start">
+                    Attached to Episode
+                  </span>
+                  <p className="text-xs font-mono text-tiki-brown/50 break-all">{attachResult.path}</p>
+                  <p className="text-xs text-tiki-brown/50 italic">{attachResult.commitMessage}</p>
                 </div>
               )}
-            </>
-          ) : (
-            <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">
-                  Attached to Episode
-                </span>
-                <span className="text-xs text-tiki-brown/40">
-                  {new Date(attachResult.attachedAt).toLocaleString("en-US", {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </span>
-              </div>
-              <p className="text-xs font-mono text-tiki-brown/50 break-all">{attachResult.path}</p>
-              <p className="text-xs text-tiki-brown/50 italic">{attachResult.commitMessage}</p>
-              <div className="bg-white/60 rounded-lg px-3 py-2 mt-1">
-                <p className="text-xs text-tiki-brown/50 leading-relaxed">
-                  Audio is Attached to Episode. Set visibility to Public Ready above to make it
-                  appear on the public story page.
-                </p>
-              </div>
             </div>
           )}
         </div>
-      )}
+      </details>
 
       {/* Notes from generation API */}
       {draft.notes.length > 0 && (
