@@ -70,6 +70,7 @@ import { buildReferenceAwareStoryPanelPrompt } from "@/lib/storyPanelPromptBuild
 import EpisodeCommandCenterSection from "./EpisodeCommandCenterSection";
 import FinalVideoAssemblyPreviewSection from "./FinalVideoAssemblyPreviewSection";
 import FinalStoryVideoPreviewSection from "./FinalStoryVideoPreviewSection";
+import FinalVideoRenderReadinessSection from "./FinalVideoRenderReadinessSection";
 import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
 
 export const dynamic = "force-dynamic";
@@ -1085,6 +1086,9 @@ export default async function EpisodeDetailPage({
           <FinalVideoAssemblyPreviewSection pkg={finalVideoPkg} />
           <div id="final-video-preview">
             <FinalStoryVideoPreviewSection pkg={finalVideoPkg} />
+          </div>
+          <div id="final-video-render-readiness">
+            <FinalVideoRenderReadinessSection pkg={finalVideoPkg} />
           </div>
         </div>
 
