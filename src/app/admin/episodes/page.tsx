@@ -167,13 +167,13 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
         )}
       </div>
 
-      {/* View draft link */}
+      {/* Primary action */}
       <div className="pt-1">
         <Link
           href={`/admin/episodes/${draft.slug}`}
-          className="inline-flex items-center gap-1.5 text-sm font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-bold bg-ube-purple text-white px-4 py-2 rounded-full hover:bg-ube-purple/85 transition-colors shadow-sm"
         >
-          View Draft →
+          Open Production Studio →
         </Link>
       </div>
     </article>
@@ -220,24 +220,27 @@ export default async function EpisodesPage() {
 
       <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
 
-        {/* Draft-only notice */}
+        {/* Admin notice */}
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
-          <span className="text-xl flex-shrink-0">📁</span>
-          <div>
-            <p className="text-sm font-bold text-tiki-brown mb-0.5">Saved draft episodes only</p>
-            <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              These are episode package JSON files committed to{" "}
-              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">src/content/episodes/</code>{" "}
-              in the repository. Saved drafts are read from{" "}
-              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">src/content/episodes</code>{" "}
-              after GitHub commits and Vercel redeploys. Read-only — no editing, deleting, or publishing controls.
-            </p>
-            <p className="text-sm text-tiki-brown/50 leading-relaxed mt-1.5">
-              🔒 Saved drafts remain private to this admin library until a future publishing phase marks them public-ready.
-              They do not appear on the public{" "}
-              <code className="font-mono text-xs bg-tiki-brown/8 px-1 py-0.5 rounded">/stories</code> page.
-            </p>
-          </div>
+          <span className="text-xl flex-shrink-0">📋</span>
+          <p className="text-sm text-tiki-brown/65 leading-relaxed">
+            <strong className="text-tiki-brown font-bold">Admin only.</strong>{" "}
+            Episodes remain private until explicitly marked public-ready. Open any episode to access
+            its full production workspace — panels, audio, animated clips, final video, and publish controls.
+          </p>
+        </div>
+
+        {/* Character integrity note */}
+        <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-3">
+          <span className="text-sm flex-shrink-0">🍍</span>
+          <p className="text-xs text-tiki-brown/55 leading-relaxed">
+            Character integrity comes from official profiles, approved references, and generation rules
+            managed in{" "}
+            <Link href="/admin/characters" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
+              Character Studio
+            </Link>
+            .
+          </p>
         </div>
 
         {/* File count */}
@@ -306,41 +309,18 @@ export default async function EpisodesPage() {
           <EpisodeCard key={draft._filename} draft={draft} />
         ))}
 
-        {/* Fidelity callout */}
-        <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
-          <span className="text-xl flex-shrink-0">🎨</span>
-          <div>
-            <p className="text-sm font-bold text-tiki-brown mb-0.5">
-              Image &amp; animation prompts require human review
-            </p>
-            <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              All AI-generated image and animation prompts must be checked for
-              character fidelity against official reference art before any asset
-              generation. Do not send prompts to an image model without a manual fidelity review.
-            </p>
-          </div>
-        </div>
-
-        {/* Diagnostic footer — always shown for admin visibility */}
-        <DiagPanel diag={diag} />
-
-        {/* Future workflow */}
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-7">
-          <h2 className="text-base font-black text-tiki-brown mb-4">Future workflow</h2>
-          <ul className="space-y-3">
-            {[
-              "Approved drafts flow to an animation production queue",
-              "Image prompts are reviewed and sent to a controlled image-generation pipeline",
-              "Episodes are scheduled, published to the public site, and linked to merchandise",
-              "Published episode data feeds into the public /stories page automatically",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-2.5 text-sm text-tiki-brown/70 leading-snug">
-                <span className="text-ube-purple mt-0.5 flex-shrink-0">→</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Developer diagnostics (collapsed) */}
+        {diag.dirExists && (
+          <details className="group">
+            <summary className="cursor-pointer list-none flex items-center gap-2 px-4 py-2 text-xs font-semibold text-tiki-brown/40 hover:text-tiki-brown/60 transition-colors">
+              <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
+              Developer diagnostics
+            </summary>
+            <div className="mt-2">
+              <DiagPanel diag={diag} />
+            </div>
+          </details>
+        )}
 
       </section>
     </div>

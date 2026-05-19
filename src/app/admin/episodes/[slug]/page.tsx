@@ -222,17 +222,27 @@ function SectionGroupHeader({
   icon,
   title,
   subtitle,
+  badge,
+  nextAction,
 }: {
   icon: string;
   title: string;
   subtitle?: string;
+  badge?: React.ReactNode;
+  nextAction?: string;
 }) {
   return (
     <div className="flex items-start gap-2.5 border-b border-tiki-brown/10 pb-3">
       <span className="text-lg flex-shrink-0">{icon}</span>
-      <div>
-        <h2 className="text-sm font-black text-tiki-brown uppercase tracking-wide">{title}</h2>
+      <div className="flex-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-black text-tiki-brown uppercase tracking-wide">{title}</h2>
+          {badge}
+        </div>
         {subtitle && <p className="text-xs text-tiki-brown/50 mt-0.5">{subtitle}</p>}
+        {nextAction && (
+          <p className="text-xs font-semibold text-ube-purple/70 mt-1">→ {nextAction}</p>
+        )}
       </div>
     </div>
   );
@@ -737,20 +747,18 @@ export default async function EpisodeDetailPage({
             {normalised.title}
           </h1>
           <p className="text-xs font-mono text-tiki-brown/40 mb-1">{normalised.slug}</p>
-          <p className="text-xs font-mono text-tiki-brown/35">{normalised._filePath}</p>
         </div>
       </section>
 
       <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
 
-        {/* Read-only notice */}
+        {/* Admin notice */}
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            <strong className="text-tiki-brown font-bold">Read-only draft. </strong>
-            This is a saved episode draft from GitHub content files. Content editing and
-            delete workflows are not available. A controlled publish-ready action is
-            available below after review.
+            <strong className="text-tiki-brown font-bold">Production workspace.</strong>{" "}
+            Create panels, audio, animated clips, and final video for this episode. Use the Publish
+            section to mark it public-ready when all media is approved.
           </p>
         </div>
 
@@ -783,9 +791,9 @@ export default async function EpisodeDetailPage({
           {[
             { href: "#story", label: "Story" },
             { href: "#picture-panels", label: "Picture Panels" },
-            { href: "#audio-story", label: "Audio" },
-            { href: "#animated-clips", label: "Video" },
-            { href: "#final-video-plan", label: "Video Plan" },
+            { href: "#audio-story", label: "Audio Story" },
+            { href: "#animated-clips", label: "Animated Clips" },
+            { href: "#final-video", label: "Final Video" },
             { href: "#publish-readiness", label: "Publish" },
             { href: "#advanced-tools", label: "Advanced" },
           ].map(({ href, label }) => (
@@ -803,7 +811,11 @@ export default async function EpisodeDetailPage({
         {/* B. STORY OVERVIEW & SCENES                                        */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="story" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader icon="📖" title="Story Overview & Scenes" subtitle="Episode details, scenes, and story structure." />
+          <SectionGroupHeader
+            icon="📖"
+            title="Story"
+            subtitle="Episode details, scenes, and production structure."
+          />
 
           {/* Episode Overview */}
           <Section title="Episode Overview">
@@ -861,73 +873,53 @@ export default async function EpisodeDetailPage({
             )}
           </Section>
 
-          {/* Review Status */}
-          {reviewObj && (
-            <Section title="Review Status">
-              <dl className="flex flex-col gap-2">
-                <MetaRow label="Status" value={str(reviewObj.status)} />
-                <MetaRow label="Approved for Save" value={String(Boolean(reviewObj.approvedForSave))} />
-                <MetaRow label="Requires Human Review" value={String(Boolean(reviewObj.requiresHumanReview))} />
-              </dl>
-              {str(reviewObj.notes) && (
-                <div className="bg-pineapple-yellow/15 rounded-xl px-4 py-3">
-                  <p className="text-xs font-bold text-tiki-brown mb-0.5">Review Notes</p>
-                  <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(reviewObj.notes)}</p>
-                </div>
-              )}
-              {Array.isArray(reviewObj.checkedFidelityItems) && reviewObj.checkedFidelityItems.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-2">Checked Fidelity Items</p>
-                  <StringList items={strArr(reviewObj.checkedFidelityItems)} />
-                </div>
-              )}
-            </Section>
+          {/* Review Status — show notes if present, otherwise collapsed */}
+          {reviewObj && str(reviewObj.notes) && (
+            <div className="bg-pineapple-yellow/10 border border-pineapple-yellow/30 rounded-2xl px-5 py-4">
+              <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide mb-1.5">Review Notes</p>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(reviewObj.notes)}</p>
+            </div>
           )}
 
-          {/* Publishing Status */}
-          {publishingObj && (
-            <Section title="Publishing Status">
-              <dl className="flex flex-col gap-2">
-                <MetaRow label="Public Status" value={str(publishingObj.publicStatus)} />
-                <MetaRow label="Ready for Public Site" value={String(Boolean(publishingObj.readyForPublicSite))} />
-              </dl>
-              <Callout icon="🔒">
-                This draft is not published. It will not appear on the public site unless it is
-                explicitly marked ready and published in a future phase.
-              </Callout>
-            </Section>
-          )}
-
-          {/* Source Storyboard */}
+          {/* Source Storyboard — collapsed by default */}
           {sourceStoryboard && (
-            <Section title="Source Storyboard">
-              <dl className="flex flex-col gap-2">
-                <MetaRow label="Title" value={str(sourceStoryboard.title)} />
-                <MetaRow label="Lesson" value={str(sourceStoryboard.lesson)} />
-                <MetaRow label="Setting" value={str(sourceStoryboard.setting)} />
-                <MetaRow label="Tone" value={str(sourceStoryboard.tone)} />
-                <MetaRow label="Age Range" value={str(sourceStoryboard.targetAgeRange)} />
-              </dl>
-              {str(sourceStoryboard.shortDescription) && (
-                <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(sourceStoryboard.shortDescription)}</p>
-              )}
-              {str(sourceStoryboard.storyNotes) && (
-                <div>
-                  <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">Story Notes</p>
-                  <p className="text-sm text-tiki-brown/65 leading-relaxed italic">{str(sourceStoryboard.storyNotes)}</p>
-                </div>
-              )}
-              {sourceScenes.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
-                    Original Scenes ({sourceScenes.length})
-                  </p>
-                  {sourceScenes.map((scene, i) => (
-                    <SceneCard key={i} scene={scene} index={i} />
-                  ))}
-                </div>
-              )}
-            </Section>
+            <details className="group">
+              <summary className="cursor-pointer list-none bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 flex items-center gap-2 hover:border-tiki-brown/20 transition-colors shadow-sm">
+                <span className="text-sm font-bold text-tiki-brown flex-1">Source Storyboard</span>
+                <span className="text-xs text-tiki-brown/35 group-open:hidden">▼ Show original</span>
+                <span className="text-xs text-tiki-brown/35 hidden group-open:inline">▲ Hide</span>
+              </summary>
+              <div className="mt-2">
+                <Section title="Source Storyboard">
+                  <dl className="flex flex-col gap-2">
+                    <MetaRow label="Title" value={str(sourceStoryboard.title)} />
+                    <MetaRow label="Lesson" value={str(sourceStoryboard.lesson)} />
+                    <MetaRow label="Setting" value={str(sourceStoryboard.setting)} />
+                    <MetaRow label="Tone" value={str(sourceStoryboard.tone)} />
+                    <MetaRow label="Age Range" value={str(sourceStoryboard.targetAgeRange)} />
+                  </dl>
+                  {str(sourceStoryboard.shortDescription) && (
+                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{str(sourceStoryboard.shortDescription)}</p>
+                  )}
+                  {str(sourceStoryboard.storyNotes) && (
+                    <div>
+                      <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide mb-1">Story Notes</p>
+                      <p className="text-sm text-tiki-brown/65 leading-relaxed italic">{str(sourceStoryboard.storyNotes)}</p>
+                    </div>
+                  )}
+                  {sourceScenes.length > 0 && (
+                    <div className="flex flex-col gap-3">
+                      <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
+                        Original Scenes ({sourceScenes.length})
+                      </p>
+                      {sourceScenes.map((scene, i) => (
+                        <SceneCard key={i} scene={scene} index={i} />
+                      ))}
+                    </div>
+                  )}
+                </Section>
+              </div>
+            </details>
           )}
 
           {/* Scene Breakdown */}
@@ -946,7 +938,7 @@ export default async function EpisodeDetailPage({
             </Section>
           )}
 
-          {/* Add / Edit / Archive / Stability */}
+          {/* Add / Edit / Archive */}
           <AddSceneSection episodeSlug={normalised.slug} currentSceneCount={scenes.length} characterOptions={sceneCharacterOptions.length > 0 ? sceneCharacterOptions : undefined} />
           <EditSceneSection
             episodeSlug={normalised.slug}
@@ -959,80 +951,41 @@ export default async function EpisodeDetailPage({
             scenes={sceneForArchiveList}
             savedPanelSceneNumbers={savedPanelSceneNumbers}
           />
-          <SceneIdStabilitySection
-            episodeSlug={normalised.slug}
-            totalScenes={sceneIdStats.totalScenes}
-            scenesWithId={sceneIdStats.scenesWithId}
-            totalPanels={sceneIdStats.totalPanels}
-            panelsWithId={sceneIdStats.panelsWithId}
-            totalClips={sceneIdStats.totalClips}
-            clipsWithId={sceneIdStats.clipsWithId}
-          />
 
-          {/* Dialogue / Voiceover / Prompt drafts */}
-          {topDialogue.length > 0 && (
-            <Section title="Dialogue Draft"><StringList items={topDialogue} /></Section>
-          )}
-          {topVoiceover.length > 0 && (
-            <Section title="Voiceover Notes">
-              {topVoiceover.map((v, i) => (
-                <p key={i} className="text-sm text-tiki-brown/70 leading-relaxed italic">{v}</p>
-              ))}
-            </Section>
-          )}
-          {imagePrompts.length > 0 && (
-            <Section title="Image Prompt Drafts">
-              <Callout icon="🖼️" className="bg-sky-blue/20 border-sky-blue/40">
-                Image prompts are draft text only. Future visual generation must use official character references and human review before any assets are created.
-              </Callout>
-              <div className="flex flex-col gap-3">
-                {imagePrompts.map((prompt, i) => (
-                  <div key={i} className="bg-sky-blue/10 rounded-xl p-4">
-                    <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                      Prompt {imagePrompts.length > 1 ? i + 1 : ""}
-                    </p>
-                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
-                  </div>
-                ))}
+          {/* Dialogue / Voiceover — episode-level, collapsed */}
+          {(topDialogue.length > 0 || topVoiceover.length > 0) && (
+            <details className="group">
+              <summary className="cursor-pointer list-none bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 flex items-center gap-2 hover:border-tiki-brown/20 transition-colors shadow-sm">
+                <span className="text-sm font-bold text-tiki-brown flex-1">Dialogue &amp; Voiceover Notes</span>
+                <span className="text-xs text-tiki-brown/35 group-open:hidden">▼ Show</span>
+                <span className="text-xs text-tiki-brown/35 hidden group-open:inline">▲ Hide</span>
+              </summary>
+              <div className="mt-2 flex flex-col gap-3">
+                {topDialogue.length > 0 && (
+                  <Section title="Dialogue Draft"><StringList items={topDialogue} /></Section>
+                )}
+                {topVoiceover.length > 0 && (
+                  <Section title="Voiceover Notes">
+                    {topVoiceover.map((v, i) => (
+                      <p key={i} className="text-sm text-tiki-brown/70 leading-relaxed italic">{v}</p>
+                    ))}
+                  </Section>
+                )}
               </div>
-            </Section>
-          )}
-          {animPrompts.length > 0 && (
-            <Section title="Animation Prompt Drafts">
-              <Callout icon="🎬" className="bg-tropical-green/10 border-tropical-green/30">
-                Animation prompts are draft text only. Future animation must preserve official character design and remain kid-friendly.
-              </Callout>
-              <div className="flex flex-col gap-3">
-                {animPrompts.map((prompt, i) => (
-                  <div key={i} className="bg-tropical-green/8 rounded-xl p-4">
-                    <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-1">
-                      Prompt {animPrompts.length > 1 ? i + 1 : ""}
-                    </p>
-                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
-                  </div>
-                ))}
-              </div>
-            </Section>
-          )}
-          {merchTieIns.length > 0 && (
-            <Section title="Merch Tie-Ins"><StringList items={merchTieIns} /></Section>
-          )}
-          {fidelityChecklist.length > 0 && (
-            <Section title="Character Fidelity Checklist"><StringList items={fidelityChecklist} /></Section>
+            </details>
           )}
 
-          {/* Character fidelity reminder */}
-          <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-2xl px-5 py-4">
-            <span className="text-xl flex-shrink-0">🎨</span>
-            <div>
-              <p className="text-sm font-bold text-tiki-brown mb-0.5">Character fidelity required before any visual step</p>
-              <p className="text-sm text-tiki-brown/65 leading-relaxed">
-                Before any image, animation, or public publishing step, this draft must be
-                reviewed against official character profiles and uploaded reference images.
-                Official character canon is the source of truth. Characters must not be
-                redesigned, and all generated visuals must be reference-anchored.
-              </p>
-            </div>
+          {/* Character integrity note */}
+          <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-3">
+            <span className="text-sm flex-shrink-0">🍍</span>
+            <p className="text-xs text-tiki-brown/55 leading-relaxed">
+              Character integrity comes from official profiles, approved references, and generation
+              rules managed in{" "}
+              <Link href="/admin/characters" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
+                Character Studio
+              </Link>
+              . All generated visuals must be reference-anchored and reviewed before publishing.
+            </p>
           </div>
         </div>
 
@@ -1040,7 +993,23 @@ export default async function EpisodeDetailPage({
         {/* C. PICTURE STORY PANELS                                           */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="picture-panels" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader icon="🖼️" title="Picture Story Panels" subtitle="Create, review, arrange, and publish story artwork." />
+          <SectionGroupHeader
+            icon="🖼️"
+            title="Picture Panels"
+            subtitle="Create, review, arrange, and publish story artwork for each scene."
+            badge={
+              panelCoverage.scenesMissingPanel > 0 ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                  Needs {panelCoverage.scenesMissingPanel} panel{panelCoverage.scenesMissingPanel !== 1 ? "s" : ""}
+                </span>
+              ) : panelCoverage.totalActiveScenes > 0 ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  All panels done ✓
+                </span>
+              ) : undefined
+            }
+            nextAction={panelCoverage.scenesMissingPanel > 0 ? "Generate missing panel drafts" : undefined}
+          />
           <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
           <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
           <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
@@ -1050,7 +1019,23 @@ export default async function EpisodeDetailPage({
         {/* D. AUDIO STORY                                                    */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="audio-story" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader icon="🎙️" title="Audio Story" subtitle="Generate and review read-aloud narration." />
+          <SectionGroupHeader
+            icon="🎙️"
+            title="Audio Story"
+            subtitle="Generate and review read-aloud narration for this episode."
+            badge={
+              hasAudio ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  Audio attached ✓
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
+                  No audio yet
+                </span>
+              )
+            }
+            nextAction={!hasAudio ? "Generate a narration draft" : undefined}
+          />
           <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
           <AudioNarrationSetupSection providerStatus={narrationProviderStatus} readiness={narrationReadiness} />
           <AudioNarrationDraftSection
@@ -1068,7 +1053,22 @@ export default async function EpisodeDetailPage({
         {/* E. ANIMATED CLIPS                                                 */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="animated-clips" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader icon="🎞️" title="Animated Clips" subtitle="Create short cartoon-style scene clips." />
+          <SectionGroupHeader
+            icon="🎞️"
+            title="Animated Clips"
+            subtitle="Create short animated scene clips for this episode."
+            badge={
+              totalVideoClips > 0 ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  {totalVideoClips} clip{totalVideoClips !== 1 ? "s" : ""} attached ✓
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
+                  Optional
+                </span>
+              )
+            }
+          />
           <VideoGenerationSetupSection providerStatus={videoProviderStatus} readiness={videoReadiness} />
           <VideoClipDraftSection
             episodeSlug={normalised.slug}
@@ -1084,8 +1084,28 @@ export default async function EpisodeDetailPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* F. FINAL VIDEO ASSEMBLY PLAN                                      */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="final-video-plan" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader icon="🎬" title="Final Story Video Plan" subtitle="Preview how this episode could be assembled into a complete story video. Rendering comes in a future phase." />
+        <div id="final-video" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader
+            icon="🎬"
+            title="Final Video"
+            subtitle="Assemble panels, audio, and clips into a complete story video."
+            badge={
+              finalVideoPkg.status === "ready" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  Ready
+                </span>
+              ) : finalVideoPkg.status === "blocked" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                  Blocked
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/70 uppercase tracking-wide">
+                  Needs Work
+                </span>
+              )
+            }
+            nextAction={finalVideoPkg.status !== "ready" ? "Complete panels and audio first" : undefined}
+          />
           <FinalVideoAssemblyPreviewSection pkg={finalVideoPkg} />
           <div id="final-video-preview">
             <FinalStoryVideoPreviewSection pkg={finalVideoPkg} />
@@ -1106,7 +1126,22 @@ export default async function EpisodeDetailPage({
         {/* G. PUBLISH READINESS                                              */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="publish-readiness" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader icon="🚀" title="Publish Readiness" subtitle="Check all blockers and publish when ready." />
+          <SectionGroupHeader
+            icon="🚀"
+            title="Publish"
+            subtitle="Review public readiness and make this episode live."
+            badge={
+              publishReadiness.status === "ready" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  Ready to publish ✓
+                </span>
+              ) : publishReadiness.status === "blocked" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                  {publishReadiness.blockers.length} blocker{publishReadiness.blockers.length !== 1 ? "s" : ""}
+                </span>
+              ) : undefined
+            }
+          />
           <PublicStatusCard normalised={normalised} reviewObj={reviewObj} publishingObj={publishingObj} />
           <EpisodePublishReadinessSection readiness={publishReadiness} />
           <PublishReadinessChecklist />
@@ -1144,6 +1179,49 @@ export default async function EpisodeDetailPage({
             </div>
           </summary>
           <div className="mt-3 flex flex-col gap-4">
+            {/* Scene ID stability (diagnostic) */}
+            <SceneIdStabilitySection
+              episodeSlug={normalised.slug}
+              totalScenes={sceneIdStats.totalScenes}
+              scenesWithId={sceneIdStats.scenesWithId}
+              totalPanels={sceneIdStats.totalPanels}
+              panelsWithId={sceneIdStats.panelsWithId}
+              totalClips={sceneIdStats.totalClips}
+              clipsWithId={sceneIdStats.clipsWithId}
+            />
+            {/* Draft prompt & planning text */}
+            {imagePrompts.length > 0 && (
+              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Image Prompt Drafts</p>
+                {imagePrompts.map((prompt, i) => (
+                  <div key={i} className="bg-sky-blue/10 rounded-xl p-4">
+                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {animPrompts.length > 0 && (
+              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Animation Prompt Drafts</p>
+                {animPrompts.map((prompt, i) => (
+                  <div key={i} className="bg-tropical-green/8 rounded-xl p-4">
+                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            {fidelityChecklist.length > 0 && (
+              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Character Fidelity Checklist</p>
+                <StringList items={fidelityChecklist} />
+              </div>
+            )}
+            {merchTieIns.length > 0 && (
+              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Merch Tie-Ins</p>
+                <StringList items={merchTieIns} />
+              </div>
+            )}
             <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} episodeRefSummary={episodeRefPackages} />
             <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
             <ReferencePackagePreviewSection summary={episodeRefPackages} />
