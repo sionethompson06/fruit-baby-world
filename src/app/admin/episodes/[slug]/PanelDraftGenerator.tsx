@@ -22,6 +22,9 @@ type GenApiResult = {
   ok: boolean;
   status: string;
   message?: string;
+  providerStatus?: number;
+  providerMessage?: string;
+  troubleshooting?: string[];
   generationPrompt?: string;
   referenceCharacters?: string[];
   referenceMode?: "reference-images-attached" | "prompt-only-reference-summary" | "no-references-available";
@@ -29,7 +32,18 @@ type GenApiResult = {
   referencesOmitted?: ReferenceMetaItem[];
   warnings?: string[];
   notes?: string[];
-  image?: { mimeType: string; base64: string };
+  draft?: {
+    id: string;
+    episodeSlug?: string;
+    sceneId?: string;
+    sceneNumber?: number;
+    mimeType: string;
+    imageBase64?: string;
+    imageUrl?: string;
+    promptText: string;
+    createdAt: string;
+  };
+  image?: { mimeType: string; base64?: string; url?: string };
 };
 
 type UploadAsset = {
@@ -479,10 +493,13 @@ export default function PanelDraftGenerator({
   const [approveAndSaveError, setApproveAndSaveError] = useState<string>("");
   const [approveAndSaveErrorStep, setApproveAndSaveErrorStep] = useState<"upload" | "attach" | null>(null);
 
-  const hasImage = genStatus === "done" && !!result?.image?.base64;
+  const hasImage =
+    genStatus === "done" &&
+    (!!result?.image?.base64 || !!result?.image?.url || !!result?.draft?.imageBase64 || !!result?.draft?.imageUrl);
   const hasDraft = genStatus === "done" || genStatus === "not_configured";
   const isLoading = genStatus === "loading";
-  const canUpload = hasImage && fidelityApprovedForUpload;
+  const hasBase64Image = !!result?.image?.base64 || !!result?.draft?.imageBase64;
+  const canUpload = hasBase64Image && fidelityApprovedForUpload;
   const uploadedAsset = uploadResult?.asset;
   const canAttach =
     uploadStatus === "success" &&
@@ -561,7 +578,7 @@ export default function PanelDraftGenerator({
         return;
       }
 
-      if (data.status === "not_implemented_yet") {
+      if (data.status === "not_implemented_yet" || data.status === "setup_required") {
         setGenStatus("not_configured");
         setResult(data);
         return;
@@ -572,7 +589,10 @@ export default function PanelDraftGenerator({
         setResult(data);
       } else {
         setGenStatus("error");
-        setErrorMsg(data.message ?? "Something went wrong while generating this temporary panel draft.");
+        setResult(data);
+        setErrorMsg(
+          data.message ?? data.providerMessage ?? "Something went wrong while generating this temporary panel draft."
+        );
       }
     } catch {
       setGenStatus("error");
@@ -901,9 +921,40 @@ export default function PanelDraftGenerator({
 
       {/* Error */}
       {genStatus === "error" && (
-        <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-          <span className="text-sm flex-shrink-0">⚠️</span>
-          <p className="text-xs text-warm-coral leading-relaxed font-semibold">{errorMsg}</p>
+        <div className="flex flex-col gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+          <div className="flex items-start gap-2.5">
+            <span className="text-sm flex-shrink-0">⚠️</span>
+            <p className="text-xs text-warm-coral leading-relaxed font-semibold">{errorMsg}</p>
+          </div>
+          {result?.providerMessage && (
+            <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
+              <p className="font-semibold text-warm-coral/90">Provider message</p>
+              <p>{result.providerMessage}</p>
+            </div>
+          )}
+          {result?.providerStatus && (
+            <p className="text-xs text-tiki-brown/60">Provider status: {result.providerStatus}</p>
+          )}
+          {result?.troubleshooting && result.troubleshooting.length > 0 && (
+            <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
+              <p className="font-semibold text-warm-coral/90">Troubleshooting</p>
+              <ul className="list-disc list-inside space-y-1">
+                {result.troubleshooting.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {result?.warnings && result.warnings.length > 0 && (
+            <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
+              <p className="font-semibold text-warm-coral/90">Warnings</p>
+              <ul className="list-disc list-inside space-y-1">
+                {result.warnings.map((warning, i) => (
+                  <li key={i}>{warning}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -957,10 +1008,14 @@ export default function PanelDraftGenerator({
                 Generated Temporary Draft — Not Saved
               </p>
 
-              {result.image?.base64 ? (
+              {result.image?.base64 || result.image?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={`data:${result.image.mimeType};base64,${result.image.base64}`}
+                  src={
+                    result.image?.base64
+                      ? `data:${result.image.mimeType};base64,${result.image.base64}`
+                      : result.image.url
+                  }
                   alt="Temporary story panel draft — not saved, not published"
                   className="w-full rounded-2xl border-2 border-warm-coral/30 shadow-sm"
                 />
