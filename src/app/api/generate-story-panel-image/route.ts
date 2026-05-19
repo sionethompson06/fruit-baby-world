@@ -1,12 +1,15 @@
 // POST /api/generate-story-panel-image
 // Protected route: validates request, loads approved reference assets, and
-// generates a temporary story panel draft using image-conditioned generation
-// (images.edit with input_fidelity:'high') when reference images are available,
-// falling back to images.generate with the enriched prompt when they are not.
+// generates a temporary story panel draft.
+//
+// generationMode "draft"      → OpenAI images.edit (reference-conditioned) with
+//                               images.generate fallback. Concept quality.
+// generationMode "production" → Fal.ai with strict production fidelity prompt and
+//                               primary reference image URL. Production quality target.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
 // Safety:  Generated images are never saved, uploaded, or written to JSON.
-// Phase:   18C — strict reference-image conditioned generation pipeline.
+// Phase:   18D — production provider adapter (Fal.ai).
 
 import OpenAI from "openai";
 import {
@@ -27,12 +30,23 @@ import {
 import {
   getFidelityRulesSummary,
   buildImageConditionedEditPrompt,
+  buildProductionFidelityPrompt,
 } from "@/lib/storyPanelFidelityRules";
 import {
   buildStoryPanelReferenceBundle,
   type ReferenceBundleCounts,
 } from "@/lib/storyPanelReferenceBundle";
 import { fetchConditionedImages } from "@/lib/storyPanelImageConditioner";
+import {
+  type StoryPanelGenerationMode,
+  type StoryPanelProvider,
+  getProductionProvider,
+  getProductionModelId,
+  getFalApiKey,
+  isProductionProviderConfigured,
+  getProductionSetupError,
+  getDraftModelId,
+} from "@/lib/storyPanelImageProvider";
 import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -71,6 +85,9 @@ type GenerateResult =
       };
       image: { mimeType: string; base64?: string; url?: string };
       generationPrompt: string;
+      generationMode: StoryPanelGenerationMode;
+      provider: StoryPanelProvider;
+      modelId: string;
       referenceCharacters: string[];
       referenceMode: ReferenceModeValue;
       referenceCounts: ReferenceBundleCounts;
@@ -83,6 +100,7 @@ type GenerateResult =
       conditionedImageCount: number;
       skippedReferenceAssetCount: number;
       imageConditioningWarnings: string[];
+      fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
       notes: string[];
@@ -101,6 +119,9 @@ type GenerateResult =
       providerMessage?: string;
       troubleshooting?: string[];
       generationPrompt?: string;
+      generationMode?: StoryPanelGenerationMode;
+      provider?: StoryPanelProvider;
+      modelId?: string;
       referenceCharacters?: string[];
       referenceMode?: ReferenceModeValue;
       referenceCounts?: ReferenceBundleCounts;
@@ -112,6 +133,7 @@ type GenerateResult =
       conditionedImageCount?: number;
       skippedReferenceAssetCount?: number;
       imageConditioningWarnings?: string[];
+      fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
     };
@@ -145,7 +167,6 @@ function normalizePromptBody(body: Record<string, unknown>): string | null {
     body.promptText,
     body.prompt,
   ].find((value) => typeof value === "string" && value.trim().length > 0);
-
   return typeof maybePrompt === "string" ? maybePrompt.trim() : null;
 }
 
@@ -153,11 +174,9 @@ function extractReferenceSlugs(body: Record<string, unknown>): string[] {
   if (Array.isArray(body.referenceCharacters)) {
     return body.referenceCharacters.filter((item): item is string => typeof item === "string");
   }
-
   if (Array.isArray(body.references)) {
     return body.references.filter((item): item is string => typeof item === "string");
   }
-
   if (Array.isArray(body.referenceImages)) {
     return body.referenceImages
       .map((item) => {
@@ -168,87 +187,46 @@ function extractReferenceSlugs(body: Record<string, unknown>): string[] {
       })
       .filter((item): item is string => typeof item === "string");
   }
-
   return [];
 }
 
-function parseProviderError(err: unknown) {
+function parseProviderError(err: unknown, isTimeout?: boolean) {
   let providerStatus: number | undefined;
   let providerMessage = "The image provider could not generate the story panel draft.";
   const troubleshooting = [
-    "Confirm OPENAI_API_KEY is set in Vercel environment variables and the deployment was redeployed.",
-    "Confirm the image model is valid.",
-    "Try generating without reference images if reference mode is unsupported.",
-    "Try a shorter prompt.",
+    "Confirm the provider API key is set in Vercel environment variables.",
+    "Confirm the image model ID is valid.",
+    "Try a shorter or simpler prompt.",
+    "Try again — the provider may be temporarily unavailable.",
   ];
 
   if (err instanceof Error) {
     providerMessage = err.message || providerMessage;
     const anyErr = err as { response?: unknown; status?: number };
-
-    if (typeof anyErr.status === "number") {
-      providerStatus = anyErr.status;
-    }
-
+    if (typeof anyErr.status === "number") providerStatus = anyErr.status;
     if (isRecord(anyErr.response)) {
       const response = anyErr.response as Record<string, unknown>;
       if (typeof response.status === "number") providerStatus = response.status;
       if (isRecord(response.data) && isRecord(response.data.error)) {
         const errData = response.data.error as Record<string, unknown>;
-        if (typeof errData.message === "string") {
-          providerMessage = errData.message;
-        }
+        if (typeof errData.message === "string") providerMessage = errData.message;
       }
-    }
-
-    if (
-      providerStatus === 408 ||
-      providerStatus === 429 ||
-      providerStatus === 500 ||
-      providerMessage.toLowerCase().includes("timeout")
-    ) {
-      return {
-        status: "provider_timeout" as const,
-        providerStatus,
-        providerMessage,
-        troubleshooting,
-      };
     }
   }
 
+  const isTimeoutSignal =
+    isTimeout ||
+    providerStatus === 408 ||
+    providerStatus === 429 ||
+    providerStatus === 504 ||
+    (providerMessage.toLowerCase().includes("timeout")) ||
+    (err instanceof Error && err.name === "AbortError");
+
   return {
-    status: "provider_error" as const,
+    status: isTimeoutSignal ? ("provider_timeout" as const) : ("provider_error" as const),
     providerStatus,
     providerMessage,
     troubleshooting,
-  };
-}
-
-function buildImageDraftResponse(
-  episodeSlug: string | undefined,
-  sceneId: string | undefined,
-  sceneNumber: number | undefined,
-  promptText: string,
-  mimeType: string,
-  payload: { base64?: string; url?: string }
-) {
-  const draft = {
-    id: `story-panel-draft-${Date.now()}`,
-    episodeSlug,
-    sceneId,
-    sceneNumber,
-    mimeType,
-    imageBase64: payload.base64,
-    imageUrl: payload.url,
-    promptText,
-    createdAt: new Date().toISOString(),
-  };
-
-  return {
-    ok: true,
-    status: "story_panel_draft_generated" as const,
-    draft,
-    image: { mimeType, base64: payload.base64, url: payload.url },
   };
 }
 
@@ -260,10 +238,96 @@ function buildCharBySlug(chars: Character[]): Record<string, Character> {
       map[(c as Character & { id?: string }).id!] = c;
     }
   }
-  // tiki alias — both slugs resolve to the same character
   if (map["tiki"] && !map["tiki-trouble"]) map["tiki-trouble"] = map["tiki"];
   if (map["tiki-trouble"] && !map["tiki"]) map["tiki"] = map["tiki-trouble"];
   return map;
+}
+
+// ─── Fal.ai production generator ─────────────────────────────────────────────
+
+type FalImageResult = {
+  b64: string | undefined;
+  imageUrl: string | undefined;
+  selectedReferenceAssetCount: number;
+  conditionedImageCount: number;
+  referenceMode: ReferenceModeValue;
+};
+
+async function generateWithFal(
+  falApiKey: string,
+  modelId: string,
+  productionPrompt: string,
+  bundleAssets: ReturnType<typeof buildStoryPanelReferenceBundle>["assets"]
+): Promise<FalImageResult> {
+  const selectedReferenceAssetCount = bundleAssets.length;
+
+  // Pick best reference image URL: profile-sheet → main-reference → any
+  const primaryReferenceUrl =
+    bundleAssets.find((a) => a.role === "profile-sheet")?.url ??
+    bundleAssets.find((a) => a.role === "main-reference")?.url ??
+    bundleAssets[0]?.url;
+
+  const conditionedImageCount = primaryReferenceUrl ? 1 : 0;
+  const referenceMode: ReferenceModeValue =
+    primaryReferenceUrl ? "image-conditioned-reference-bundle" : "prompt-only-reference-bundle";
+
+  console.log(
+    `[generate-story-panel-image] production: model=${modelId}, ref=${primaryReferenceUrl ? "yes" : "none"}`
+  );
+
+  const requestBody: Record<string, unknown> = {
+    prompt: productionPrompt,
+    num_images: 1,
+  };
+  if (primaryReferenceUrl) {
+    requestBody.image_url = primaryReferenceUrl;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120_000);
+
+  let falResp: Response;
+  try {
+    falResp = await fetch(`https://fal.run/${modelId}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${falApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!falResp.ok) {
+    const errText = await falResp.text().catch(() => "");
+    throw new Error(`Fal.ai ${falResp.status}: ${errText.slice(0, 300)}`);
+  }
+
+  const falData = (await falResp.json()) as Record<string, unknown>;
+
+  // Normalise across model response shapes
+  const firstImage =
+    (Array.isArray(falData.images) ? falData.images[0] : null) ??
+    (isRecord(falData.image) ? falData.image : null);
+
+  const falImageUrl =
+    typeof firstImage?.url === "string" ? firstImage.url :
+    typeof falData.url === "string" ? falData.url : undefined;
+
+  if (!falImageUrl) {
+    throw new Error("Fal.ai returned no image URL");
+  }
+
+  // Download and convert to base64 so the upload flow stays unchanged
+  const imgResp = await fetch(falImageUrl);
+  if (!imgResp.ok) throw new Error(`Could not download Fal.ai result: HTTP ${imgResp.status}`);
+  const imgBuffer = await imgResp.arrayBuffer();
+  const b64 = Buffer.from(imgBuffer).toString("base64");
+
+  return { b64, imageUrl: falImageUrl, selectedReferenceAssetCount, conditionedImageCount, referenceMode };
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -275,22 +339,14 @@ export async function POST(request: Request): Promise<Response> {
     body = await request.json();
   } catch {
     return Response.json(
-      {
-        ok: false,
-        status: "validation_error",
-        message: "Request body must be valid JSON.",
-      } satisfies GenerateResult,
+      { ok: false, status: "validation_error", message: "Request body must be valid JSON." } satisfies GenerateResult,
       { status: 400 }
     );
   }
 
   if (!isRecord(body)) {
     return Response.json(
-      {
-        ok: false,
-        status: "validation_error",
-        message: "Request body must be a JSON object.",
-      } satisfies GenerateResult,
+      { ok: false, status: "validation_error", message: "Request body must be a JSON object." } satisfies GenerateResult,
       { status: 400 }
     );
   }
@@ -298,55 +354,37 @@ export async function POST(request: Request): Promise<Response> {
   const panelPrompt = normalizePromptBody(body);
   if (!panelPrompt) {
     return Response.json(
-      {
-        ok: false,
-        status: "validation_error",
-        message: "A story panel prompt is required before generating an image.",
-      } satisfies GenerateResult,
+      { ok: false, status: "validation_error", message: "A story panel prompt is required before generating an image." } satisfies GenerateResult,
       { status: 400 }
     );
   }
 
   if (panelPrompt.length > 5000) {
     return Response.json(
-      {
-        ok: false,
-        status: "validation_error",
-        message:
-          "The story panel prompt is too long. Shorten it to 5000 characters or less and try again.",
-      } satisfies GenerateResult,
+      { ok: false, status: "validation_error", message: "The story panel prompt is too long. Shorten it to 5000 characters or less and try again." } satisfies GenerateResult,
       { status: 400 }
     );
   }
+
+  // ── Generation mode ───────────────────────────────────────────────────────────
+  const generationMode: StoryPanelGenerationMode =
+    body.generationMode === "production" ? "production" : "draft";
 
   const referenceCharacters = extractReferenceSlugs(body);
   const unsafeSlugs = referenceCharacters.filter((slug) => !validateSlug(slug));
 
   if (unsafeSlugs.length > 0) {
     return Response.json(
-      {
-        ok: false,
-        status: "validation_error",
-        message:
-          "All reference characters must be safe slugs (lowercase letters, numbers, hyphens only).",
-      } satisfies GenerateResult,
+      { ok: false, status: "validation_error", message: "All reference characters must be safe slugs (lowercase letters, numbers, hyphens only)." } satisfies GenerateResult,
       { status: 400 }
     );
   }
 
   let sceneNumber: number | undefined;
   if (body.sceneNumber !== undefined) {
-    if (
-      typeof body.sceneNumber !== "number" ||
-      body.sceneNumber < 1 ||
-      !Number.isFinite(body.sceneNumber)
-    ) {
+    if (typeof body.sceneNumber !== "number" || body.sceneNumber < 1 || !Number.isFinite(body.sceneNumber)) {
       return Response.json(
-        {
-          ok: false,
-          status: "validation_error",
-          message: "sceneNumber must be a positive number if provided.",
-        } satisfies GenerateResult,
+        { ok: false, status: "validation_error", message: "sceneNumber must be a positive number if provided." } satisfies GenerateResult,
         { status: 400 }
       );
     }
@@ -357,11 +395,7 @@ export async function POST(request: Request): Promise<Response> {
   if (body.sceneId !== undefined) {
     if (typeof body.sceneId !== "string" || body.sceneId.trim().length === 0) {
       return Response.json(
-        {
-          ok: false,
-          status: "validation_error",
-          message: "sceneId must be a non-empty string if provided.",
-        } satisfies GenerateResult,
+        { ok: false, status: "validation_error", message: "sceneId must be a non-empty string if provided." } satisfies GenerateResult,
         { status: 400 }
       );
     }
@@ -372,12 +406,7 @@ export async function POST(request: Request): Promise<Response> {
   if (body.episodeSlug !== undefined) {
     if (!validateSlug(body.episodeSlug)) {
       return Response.json(
-        {
-          ok: false,
-          status: "validation_error",
-          message:
-            "episodeSlug must be a safe slug (lowercase letters, numbers, hyphens only) if provided.",
-        } satisfies GenerateResult,
+        { ok: false, status: "validation_error", message: "episodeSlug must be a safe slug if provided." } satisfies GenerateResult,
         { status: 400 }
       );
     }
@@ -390,19 +419,15 @@ export async function POST(request: Request): Promise<Response> {
         {
           ok: false,
           status: "unsupported_reference_mode",
-          message:
-            "The requested reference mode is not supported by the current story panel generator.",
-          troubleshooting: [
-            "Use prompt-only reference mode instead of attaching image references.",
-            "Leave referenceMode unset or use prompt-only-reference-summary.",
-          ],
+          message: "The requested reference mode is not supported by the current story panel generator.",
+          troubleshooting: ["Leave referenceMode unset to use the default for the selected generation mode."],
         } satisfies GenerateResult,
         { status: 400 }
       );
     }
   }
 
-  // ── Load canonical character data (slug validation) ───────────────────────────
+  // ── Load canonical character data ─────────────────────────────────────────────
   const { refs, missing } = loadCharacterRefs(referenceCharacters);
   if (missing.length > 0) {
     return Response.json(
@@ -417,8 +442,6 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // ── Load reference assets and build generation package ────────────────────────
-  // Attempt to load approved reference assets and build scene reference package.
-  // On failure, fall back to the legacy prompt builder gracefully.
   let generationPrompt: string;
   let referenceMode: ReferenceModeValue = "no-references";
   let referenceCounts: ReferenceBundleCounts = EMPTY_REF_COUNTS;
@@ -434,13 +457,7 @@ export async function POST(request: Request): Promise<Response> {
     const allChars = loadAllCharactersFromDisk();
     const charBySlug = buildCharBySlug(allChars);
 
-    sceneRefPkg = buildSceneReferencePackage(
-      sceneNumber ?? 1,
-      referenceCharacters,
-      allAssets,
-      charBySlug
-    );
-
+    sceneRefPkg = buildSceneReferencePackage(sceneNumber ?? 1, referenceCharacters, allAssets, charBySlug);
     genPkg = buildStoryPanelGenerationPackage(sceneRefPkg, panelPrompt, { sceneNumber });
     generationPrompt = buildFinalStoryPanelPrompt(genPkg);
     referenceCounts = genPkg.referenceCounts;
@@ -448,26 +465,165 @@ export async function POST(request: Request): Promise<Response> {
     referencesOmitted = genPkg.referencesOmitted;
     fidelityRulesSummary = getFidelityRulesSummary(sceneRefPkg);
     refWarnings = genPkg.warnings;
-    // referenceMode is set later based on whether image conditioning succeeds
   } catch {
-    // Fall back to legacy prompt builder if reference loading fails
     generationPrompt = buildGenerationPrompt(panelPrompt, refs, sceneNumber);
     referenceMode = "no-references";
     refWarnings = ["Reference asset loading failed — using legacy prompt builder as fallback."];
   }
 
-  // ── Image generation ──────────────────────────────────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════════
+  // PRODUCTION MODE — Fal.ai
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  if (generationMode === "production") {
+    const provider = getProductionProvider();
+    const modelId = getProductionModelId();
+
+    // Check setup
+    if (!isProductionProviderConfigured()) {
+      const setupError = getProductionSetupError();
+      return Response.json(
+        {
+          ok: false,
+          status: "setup_required",
+          message: setupError ?? "Production image provider is not configured.",
+          generationMode,
+          provider,
+          modelId,
+          troubleshooting: [
+            "Add FAL_KEY to Vercel environment variables.",
+            "Redeploy after adding the key.",
+            "Use Draft Mode if Production Mode is not yet configured.",
+          ],
+          referenceCharacters,
+          referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          warnings: refWarnings,
+        } satisfies GenerateResult,
+        { status: 503 }
+      );
+    }
+
+    const falApiKey = getFalApiKey()!;
+    const hasBundle = referenceCounts.total > 0 && sceneRefPkg !== null;
+    const bundleAssets = hasBundle && sceneRefPkg
+      ? buildStoryPanelReferenceBundle(sceneRefPkg).assets
+      : [];
+
+    const productionPrompt = sceneRefPkg
+      ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt)
+      : panelPrompt;
+
+    console.log(
+      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, bundle=${bundleAssets.length} assets`
+    );
+
+    try {
+      const falResult = await generateWithFal(falApiKey, modelId, productionPrompt, bundleAssets);
+
+      return Response.json(
+        {
+          ok: true,
+          status: "story_panel_draft_generated",
+          draft: {
+            id: `story-panel-draft-${Date.now()}`,
+            episodeSlug,
+            sceneId,
+            sceneNumber,
+            mimeType: "image/png",
+            imageBase64: falResult.b64,
+            imageUrl: falResult.imageUrl,
+            promptText: panelPrompt,
+            createdAt: new Date().toISOString(),
+          },
+          image: { mimeType: "image/png", base64: falResult.b64, url: falResult.imageUrl },
+          generationPrompt: productionPrompt,
+          generationMode,
+          provider,
+          modelId,
+          referenceCharacters,
+          referenceMode: falResult.referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          fidelityRulesSummary,
+          usedImageConditioning: falResult.conditionedImageCount > 0,
+          providerSupportsImageReferences: true,
+          selectedReferenceAssetCount: falResult.selectedReferenceAssetCount,
+          conditionedImageCount: falResult.conditionedImageCount,
+          skippedReferenceAssetCount: 0,
+          imageConditioningWarnings: [],
+          fallbackUsed: false,
+          warnings: refWarnings,
+          notes: [
+            "This story panel draft has not been saved.",
+            "Production Mode — Fal.ai — strict reference fidelity target.",
+            "Review it before approving and saving to the episode.",
+          ],
+        } satisfies GenerateResult,
+        { status: 200 }
+      );
+    } catch (falErr) {
+      const isAbort = falErr instanceof Error && falErr.name === "AbortError";
+      const errMsg = falErr instanceof Error ? falErr.message : String(falErr);
+      console.error("[generate-story-panel-image] Fal.ai production error:", errMsg);
+
+      return Response.json(
+        {
+          ok: false,
+          status: isAbort ? "provider_timeout" : "provider_error",
+          message: isAbort
+            ? "Production Mode timed out — Fal.ai took longer than 120 seconds. Try again or switch to Draft Mode."
+            : `Production Mode failed — Fal.ai error: ${errMsg}`,
+          providerMessage: errMsg,
+          generationMode,
+          provider,
+          modelId,
+          referenceCharacters,
+          referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          usedImageConditioning: false,
+          providerSupportsImageReferences: true,
+          selectedReferenceAssetCount: bundleAssets.length,
+          conditionedImageCount: 0,
+          skippedReferenceAssetCount: 0,
+          imageConditioningWarnings: [],
+          fallbackUsed: false,
+          troubleshooting: [
+            "Confirm FAL_KEY is valid and has sufficient credits.",
+            `Confirm model ID is correct: ${modelId}`,
+            "Try again — Fal.ai may be temporarily unavailable.",
+            "Switch to Draft Mode to continue with OpenAI generation.",
+          ],
+          warnings: refWarnings,
+        } satisfies GenerateResult,
+        { status: 502 }
+      );
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // DRAFT MODE — OpenAI (existing path, unchanged)
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  const provider: StoryPanelProvider = "openai";
+  const modelId = getDraftModelId();
   const apiKey = process.env.OPENAI_API_KEY;
-  const imageModel = process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-1";
 
   if (!apiKey) {
     return Response.json(
       {
         ok: false,
         status: "setup_required",
-        message:
-          "OpenAI image generation is not configured. Add OPENAI_API_KEY in Vercel environment variables and redeploy.",
+        message: "OpenAI image generation is not configured. Add OPENAI_API_KEY in Vercel environment variables and redeploy.",
         providerMessage: "Missing OPENAI_API_KEY.",
+        generationMode,
+        provider,
+        modelId,
         troubleshooting: [
           "Add OPENAI_API_KEY to your Vercel environment variables.",
           "Redeploy after updating environment variables.",
@@ -478,8 +634,6 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const openai = new OpenAI({ apiKey });
-
-  // ── Try image-conditioned generation (images.edit) when bundle has assets ────
   let b64: string | undefined;
   let resultImageUrl: string | undefined;
   let usedImageConditioning = false;
@@ -495,9 +649,7 @@ export async function POST(request: Request): Promise<Response> {
     const bundleAssets = buildStoryPanelReferenceBundle(sceneRefPkg).assets;
     selectedReferenceAssetCount = bundleAssets.length;
 
-    console.log(
-      `[generate-story-panel-image] bundle: ${selectedReferenceAssetCount} assets, model: ${imageModel}`
-    );
+    console.log(`[generate-story-panel-image] draft: bundle ${selectedReferenceAssetCount} assets, model: ${modelId}`);
 
     if (bundleAssets.length > 0) {
       const conditioned = await fetchConditionedImages(bundleAssets).catch((err) => {
@@ -514,9 +666,7 @@ export async function POST(request: Request): Promise<Response> {
       skippedReferenceAssetCount = conditioned.failedAssetIds.length;
       imageConditioningWarnings = conditioned.warnings;
 
-      console.log(
-        `[generate-story-panel-image] conditioned: ${conditionedImageCount} valid, ${skippedReferenceAssetCount} skipped`
-      );
+      console.log(`[generate-story-panel-image] conditioned: ${conditionedImageCount} valid, ${skippedReferenceAssetCount} skipped`);
       if (conditioned.warnings.length > 0) {
         console.log("[generate-story-panel-image] conditioning warnings:", conditioned.warnings);
       }
@@ -525,14 +675,10 @@ export async function POST(request: Request): Promise<Response> {
 
       if (conditioned.images.length > 0) {
         const editPrompt = buildImageConditionedEditPrompt(sceneRefPkg, panelPrompt);
-
         try {
-          console.log(
-            `[generate-story-panel-image] attempting images.edit with ${conditionedImageCount} File inputs`
-          );
-
+          console.log(`[generate-story-panel-image] images.edit with ${conditionedImageCount} File inputs`);
           const editResponse = await openai.images.edit({
-            model: imageModel,
+            model: modelId,
             image: conditioned.images.map((fi) => fi.file) as Parameters<typeof openai.images.edit>[0]["image"],
             prompt: editPrompt,
             n: 1,
@@ -550,54 +696,47 @@ export async function POST(request: Request): Promise<Response> {
             generationPrompt = editPrompt;
             console.log("[generate-story-panel-image] images.edit succeeded");
           } else {
-            fallbackReason = "Image edit returned no image data — falling back to prompt-only generation.";
-            console.warn("[generate-story-panel-image] images.edit returned no image data");
+            fallbackReason = "Image edit returned no data — fell back to prompt-only generation.";
           }
         } catch (editErr) {
           const editMsg = editErr instanceof Error ? editErr.message : String(editErr);
-          fallbackReason = `Image edit failed (${editMsg}) — falling back to prompt-only generation.`;
-          console.warn("[generate-story-panel-image] images.edit failed, will fall back:", editMsg);
+          fallbackReason = `Image edit failed (${editMsg}) — fell back to prompt-only generation.`;
+          console.warn("[generate-story-panel-image] images.edit failed:", editMsg);
         }
       } else {
-        fallbackReason = "No valid reference images could be prepared — falling back to prompt-only generation.";
-        console.warn("[generate-story-panel-image] no valid images after MIME check, falling back");
+        fallbackReason = "No valid reference images could be prepared — fell back to prompt-only generation.";
       }
-    } else {
-      fallbackReason = "Bundle has no assets for image conditioning — falling back to prompt-only generation.";
     }
 
-    if (!usedImageConditioning) {
-      referenceMode = "prompt-only-reference-bundle";
-    }
+    if (!usedImageConditioning) referenceMode = "prompt-only-reference-bundle";
   }
 
-  // ── Fall back to images.generate when edit was not used ──────────────────────
   if (!usedImageConditioning) {
     try {
       const generateResponse = await openai.images.generate({
-        model: imageModel,
+        model: modelId,
         prompt: generationPrompt,
         n: 1,
         size: "1024x1024",
       });
-
       const generateData = generateResponse.data?.[0] ?? {};
       b64 = typeof generateData.b64_json === "string" ? generateData.b64_json : undefined;
       resultImageUrl = typeof generateData.url === "string" ? generateData.url : undefined;
     } catch (generateErr) {
       const parsedError = parseProviderError(generateErr);
       console.error("[generate-story-panel-image] OpenAI generate error:", parsedError.providerMessage);
-
       return Response.json(
         {
           ok: false,
           status: parsedError.status,
-          message:
-            "The image provider could not generate the story panel draft. See the provider message for details.",
+          message: "Draft Mode generation failed. See provider message for details.",
           providerStatus: parsedError.providerStatus,
           providerMessage: parsedError.providerMessage,
           troubleshooting: parsedError.troubleshooting,
           generationPrompt,
+          generationMode,
+          provider,
+          modelId,
           referenceCharacters,
           referenceMode,
           referenceCounts,
@@ -609,6 +748,7 @@ export async function POST(request: Request): Promise<Response> {
           conditionedImageCount,
           skippedReferenceAssetCount,
           imageConditioningWarnings,
+          fallbackUsed: fallbackReason !== undefined,
           fallbackReason,
           warnings: refWarnings,
         } satisfies GenerateResult,
@@ -624,12 +764,11 @@ export async function POST(request: Request): Promise<Response> {
         status: "image_response_parse_error",
         message: "Image provider responded but did not return a usable image.",
         providerMessage: "No base64 or URL image data was returned.",
-        troubleshooting: [
-          "Confirm the image model is valid.",
-          "Try generating with a shorter prompt.",
-          "Try again later in case the image provider is temporarily unavailable.",
-        ],
+        troubleshooting: ["Confirm the model is valid.", "Try a shorter prompt.", "Try again later."],
         generationPrompt,
+        generationMode,
+        provider,
+        modelId,
         referenceCharacters,
         referenceMode,
         referenceCounts,
@@ -641,6 +780,7 @@ export async function POST(request: Request): Promise<Response> {
         conditionedImageCount,
         skippedReferenceAssetCount,
         imageConditioningWarnings,
+        fallbackUsed: fallbackReason !== undefined,
         fallbackReason,
         warnings: refWarnings,
       } satisfies GenerateResult,
@@ -663,12 +803,11 @@ export async function POST(request: Request): Promise<Response> {
         promptText: panelPrompt,
         createdAt: new Date().toISOString(),
       },
-      image: {
-        mimeType: "image/png",
-        base64: b64,
-        url: resultImageUrl,
-      },
+      image: { mimeType: "image/png", base64: b64, url: resultImageUrl },
       generationPrompt,
+      generationMode,
+      provider,
+      modelId,
       referenceCharacters,
       referenceMode,
       referenceCounts,
@@ -681,6 +820,7 @@ export async function POST(request: Request): Promise<Response> {
       conditionedImageCount,
       skippedReferenceAssetCount,
       imageConditioningWarnings,
+      fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       warnings: refWarnings,
       notes: [

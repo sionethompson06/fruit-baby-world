@@ -109,6 +109,61 @@ export function buildStrictFidelityMandate(
   return sections.join("\n\n");
 }
 
+// ─── Production-mode fidelity prompt (stronger, for Fal.ai path) ─────────────
+
+export function buildProductionFidelityPrompt(
+  sceneRefPkg: SceneReferencePackage,
+  panelPrompt: string
+): string {
+  const charNames = sceneRefPkg.characterPackages
+    .map((p) => p.characterName)
+    .join(", ");
+  const hasTiki = sceneRefPkg.characterPackages.some(
+    (p) => p.characterSlug === "tiki" || p.characterSlug === "tiki-trouble"
+  );
+
+  const lines: string[] = [
+    "PRODUCTION CHARACTER FIDELITY GENERATION — Fruit Baby World",
+    "",
+    "The attached image shows an official, trademark-protected Fruit Baby character design.",
+    "This reference is the PRIMARY and ONLY visual source of truth for character appearance.",
+    "",
+    "SCENE TO GENERATE:",
+    panelPrompt,
+    "",
+    "STRICT PRODUCTION REQUIREMENTS — DO NOT DEVIATE:",
+    "• Reproduce the character's exact body shape, silhouette, and proportions from the reference.",
+    "• Match the exact color palette — no hue shifts, no saturation changes, no approximation.",
+    "• Match the exact eye shape, pupil style, and expression style.",
+    "• Match the exact mouth style, blush marks, and cheek details.",
+    "• Match the exact leaf/crown shape and all character-specific fruit features.",
+    "• Preserve cute baby-like proportions — do not make characters taller, older, or more realistic.",
+    "• Do NOT redesign, reinterpret, or loosely approximate the character.",
+    "• Do NOT create an 'inspired by' version — the character must match the official design exactly.",
+    "• Do NOT add features, accessories, or details not present in the official reference.",
+    "• All content must remain kid-friendly, warm, playful, and emotionally safe.",
+    "• No violence, horror, adult themes, or scary imagery.",
+  ];
+
+  if (hasTiki) {
+    lines.push(
+      "• Tiki Trouble must appear mischievous and funny — NOT scary, cruel, evil, or threatening.",
+      "• Tiki is a mischievous rival character — keep this tone strictly playful and comedic."
+    );
+  }
+
+  if (charNames) {
+    lines.push("", `Characters in this scene: ${charNames}`);
+  }
+
+  lines.push(
+    "",
+    "Generate the scene exactly as described while preserving every character's official appearance with full production fidelity."
+  );
+
+  return lines.join("\n");
+}
+
 // ─── Image-conditioned edit prompt ────────────────────────────────────────────
 
 export function buildImageConditionedEditPrompt(

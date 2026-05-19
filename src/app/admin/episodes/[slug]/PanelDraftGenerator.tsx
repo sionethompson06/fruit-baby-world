@@ -34,6 +34,9 @@ type GenApiResult = {
   providerMessage?: string;
   troubleshooting?: string[];
   generationPrompt?: string;
+  generationMode?: "draft" | "production";
+  provider?: "openai" | "fal";
+  modelId?: string;
   referenceCharacters?: string[];
   referenceMode?:
     | "image-conditioned-reference-bundle"
@@ -53,6 +56,7 @@ type GenApiResult = {
   conditionedImageCount?: number;
   skippedReferenceAssetCount?: number;
   imageConditioningWarnings?: string[];
+  fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
   notes?: string[];
@@ -130,6 +134,24 @@ const REFERENCE_MODE_LABELS: Record<string, { label: string; className: string }
   "no-references-available": {
     label: "No References Available",
     className: "bg-tiki-brown/8 text-tiki-brown/55 border-tiki-brown/15",
+  },
+};
+
+const PROVIDER_LABELS: Record<string, string> = {
+  openai: "OpenAI",
+  fal: "Fal.ai",
+};
+
+const MODE_LABELS: Record<string, { label: string; description: string; className: string }> = {
+  draft: {
+    label: "Draft Mode",
+    description: "OpenAI — fast concept generation",
+    className: "border-ube-purple/30 text-ube-purple",
+  },
+  production: {
+    label: "Production Mode",
+    description: "Fal.ai — strict reference fidelity target",
+    className: "border-tropical-green/40 text-tropical-green",
   },
 };
 
@@ -508,6 +530,7 @@ export default function PanelDraftGenerator({
   const [genStatus, setGenStatus] = useState<GenStatus>("idle");
   const [result, setResult] = useState<GenApiResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
+  const [generationMode, setGenerationMode] = useState<"draft" | "production">("draft");
 
   // Fidelity review state — local only
   const checklistItems: FidelityChecklistItem[] = fidelityChecklist ?? [];
@@ -600,7 +623,7 @@ export default function PanelDraftGenerator({
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ episodeSlug, sceneNumber, panelPrompt, referenceCharacters }),
+        body: JSON.stringify({ episodeSlug, sceneNumber, panelPrompt, referenceCharacters, generationMode }),
       });
 
       if (res.status === 401) {
@@ -932,6 +955,32 @@ export default function PanelDraftGenerator({
         </p>
       </div>
 
+      {/* Generation mode selector */}
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Generation Mode</p>
+        <div className="flex flex-wrap gap-2">
+          {(["draft", "production"] as const).map((mode) => {
+            const m = MODE_LABELS[mode];
+            const active = generationMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => setGenerationMode(mode)}
+                disabled={isLoading}
+                className={`flex flex-col items-start px-3 py-2 rounded-xl border text-left transition-colors disabled:opacity-50 ${
+                  active
+                    ? `${m.className} bg-white font-bold`
+                    : "border-tiki-brown/15 text-tiki-brown/50 hover:border-tiki-brown/30"
+                }`}
+              >
+                <span className="text-xs font-bold">{active ? "● " : "○ "}{m.label}</span>
+                <span className="text-xs font-normal opacity-70">{m.description}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         <button
@@ -1009,15 +1058,19 @@ export default function PanelDraftGenerator({
                 : result.message}
             </p>
           </div>
-          {result.referenceMode && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Reference Mode</p>
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
-                {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
-              </span>
-              {result.referenceCounts && result.referenceCounts.total > 0 && (
-                <span className="text-xs text-tiki-brown/50">
-                  {result.referenceCounts.total} asset{result.referenceCounts.total !== 1 ? "s" : ""} in bundle
+          {(result.generationMode || result.provider || result.referenceMode) && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-tiki-brown/60">
+              {result.generationMode && (
+                <span><span className="font-bold text-tiki-brown/45 uppercase">Mode </span>
+                <span className="font-semibold">{result.generationMode === "production" ? "Production" : "Draft"}</span></span>
+              )}
+              {result.provider && (
+                <span><span className="font-bold text-tiki-brown/45 uppercase">Provider </span>
+                <span className="font-semibold">{PROVIDER_LABELS[result.provider] ?? result.provider}</span></span>
+              )}
+              {result.referenceMode && (
+                <span className={`font-bold px-2 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
+                  {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
                 </span>
               )}
             </div>
@@ -1068,8 +1121,41 @@ export default function PanelDraftGenerator({
               {/* Draft metadata */}
               <div className="flex flex-col gap-2 text-xs">
 
-                {/* Reference mode + counts */}
+                {/* Generation metadata */}
                 <div className="bg-tiki-brown/4 rounded-xl px-3 py-2.5 flex flex-col gap-2">
+
+                  {/* Mode + Provider + Model */}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-tiki-brown/60">
+                    {result.generationMode && (
+                      <span>
+                        <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">Mode </span>
+                        <span className={`font-bold text-xs ${result.generationMode === "production" ? "text-tropical-green" : "text-ube-purple"}`}>
+                          {result.generationMode === "production" ? "Production" : "Draft"}
+                        </span>
+                      </span>
+                    )}
+                    {result.provider && (
+                      <span>
+                        <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">Provider </span>
+                        <span className="font-semibold text-xs">{PROVIDER_LABELS[result.provider] ?? result.provider}</span>
+                      </span>
+                    )}
+                    {result.modelId && (
+                      <span>
+                        <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">Model </span>
+                        <span className="font-mono text-xs text-tiki-brown/55">{result.modelId}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Fallback notice */}
+                  {result.fallbackUsed && result.fallbackReason && (
+                    <div className="flex items-start gap-1.5 bg-pineapple-yellow/15 border border-pineapple-yellow/30 rounded-lg px-2.5 py-1.5">
+                      <span className="text-xs flex-shrink-0">↩</span>
+                      <span className="text-xs text-tiki-brown/65">{result.fallbackReason}</span>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-bold text-tiki-brown/50 uppercase tracking-wide">Reference Mode</span>
                     {result.referenceMode && (
