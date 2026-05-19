@@ -3224,11 +3224,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1765067,
       "uploadedAt": "2026-05-19T03:14:50.886Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:42:22.633Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:42:22.633Z"
     },
     {
       "id": "ref-1779160573607-2e24d5",
