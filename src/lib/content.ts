@@ -196,6 +196,7 @@ const products: Product[] = [
 
 // ─── Character helpers ────────────────────────────────────────────────────────
 
+// Legacy: returns only the 6 original static characters. Use loadAllCharactersFromDisk() / getPublicCharactersFromDisk() from characterContent.ts for runtime workflows.
 export function getAllCharacters(): Character[] {
   return characters;
 }

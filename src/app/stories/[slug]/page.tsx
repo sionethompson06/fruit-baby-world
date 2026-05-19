@@ -598,6 +598,7 @@ export default async function StoryDetailPage({
 
   // Character lookup — prefer disk-loaded chars so new approved characters resolve correctly
   let diskChars: Character[] = [];
+  // getAllCharacters() fallback is legacy (6 originals only); kept as last resort if disk load fails
   try { diskChars = loadAllCharactersFromDisk(); } catch { diskChars = getAllCharacters(); }
   const charMap = Object.fromEntries(diskChars.map((c) => [c.id, c]));
 
