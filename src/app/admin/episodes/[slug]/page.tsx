@@ -68,6 +68,8 @@ import {
 } from "@/lib/storyPanelFidelityReview";
 import { buildReferenceAwareStoryPanelPrompt } from "@/lib/storyPanelPromptBuilder";
 import EpisodeCommandCenterSection from "./EpisodeCommandCenterSection";
+import FinalVideoAssemblyPreviewSection from "./FinalVideoAssemblyPreviewSection";
+import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -583,6 +585,9 @@ export default async function EpisodeDetailPage({
     sceneRefPackages: episodeRefPackages.scenePackages,
   });
 
+  // Final video assembly plan (preview only — no rendering)
+  const finalVideoPkg = buildFinalVideoAssemblyPackage(raw);
+
   const narrationProviderStatus = getAudioNarrationProviderStatus();
   const narrationReadiness = getNarrationReadinessForEpisode(raw);
   const narrationScriptDraft = buildNarrationScriptDraftFromEpisode(raw);
@@ -774,6 +779,7 @@ export default async function EpisodeDetailPage({
             { href: "#picture-panels", label: "Picture Panels" },
             { href: "#audio-story", label: "Audio" },
             { href: "#animated-clips", label: "Video" },
+            { href: "#final-video-plan", label: "Video Plan" },
             { href: "#publish-readiness", label: "Publish" },
             { href: "#advanced-tools", label: "Advanced" },
           ].map(({ href, label }) => (
@@ -1070,7 +1076,15 @@ export default async function EpisodeDetailPage({
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* F. PUBLISH READINESS                                              */}
+        {/* F. FINAL VIDEO ASSEMBLY PLAN                                      */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="final-video-plan" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="🎬" title="Final Story Video Plan" subtitle="Preview how this episode could be assembled into a complete story video. Rendering comes in a future phase." />
+          <FinalVideoAssemblyPreviewSection pkg={finalVideoPkg} />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* G. PUBLISH READINESS                                              */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="publish-readiness" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader icon="🚀" title="Publish Readiness" subtitle="Check all blockers and publish when ready." />
