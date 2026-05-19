@@ -299,11 +299,24 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
   const [attachResult, setAttachResult] = useState<VideoAttachResult | null>(null);
   const [attachFetchError, setAttachFetchError] = useState<string | null>(null);
 
+  // ── Approve & Save (one-click) state ────────────────────────────────────────
+  type VideoApproveSaveStatus = "idle" | "uploading" | "attaching" | "done" | "error";
+  const [approveAndSaveStatus, setApproveAndSaveStatus] = useState<VideoApproveSaveStatus>("idle");
+  const [approveAndSaveError, setApproveAndSaveError] = useState<string | null>(null);
+  const [approveAndSaveErrorStep, setApproveAndSaveErrorStep] = useState<"upload" | "attach" | null>(null);
+  const [approveAndSaveUploadedVideo, setApproveAndSaveUploadedVideo] = useState<VideoUploadResult | null>(null);
+
   const allChecked = checklistItems.length > 0 && checklistItems.every((item) => checked[item.id]);
 
   const hasPlayableVideo = draft.kind === "video_draft_generated";
   const canUpload = hasPlayableVideo && decision === "looks-good" && !uploading && !uploadResult?.ok;
   const canAttach = uploadResult?.ok === true && !attaching && !attachResult?.ok;
+  const canApproveAndSave =
+    hasPlayableVideo &&
+    decision === "looks-good" &&
+    approveAndSaveStatus !== "uploading" &&
+    approveAndSaveStatus !== "attaching" &&
+    approveAndSaveStatus !== "done";
 
   async function handleUpload() {
     if (!canUpload || draft.kind !== "video_draft_generated") return;
@@ -386,6 +399,114 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
       setAttachFetchError(err instanceof Error ? err.message : "Failed to reach the server.");
     } finally {
       setAttaching(false);
+    }
+  }
+
+  async function handleApproveAndSave() {
+    if (!canApproveAndSave || draft.kind !== "video_draft_generated") return;
+
+    setApproveAndSaveStatus("uploading");
+    setApproveAndSaveError(null);
+    setApproveAndSaveErrorStep(null);
+    setApproveAndSaveUploadedVideo(null);
+
+    // Step 1: Upload to Blob
+    let savedUpload: VideoUploadResult;
+    try {
+      const res = await fetch("/api/video-generation/upload-approved-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug: draft.pkg.episodeSlug,
+          sceneId: draft.pkg.sceneId,
+          sceneNumber: draft.pkg.sceneNumber,
+          videoUrl: draft.videoUrl,
+          thumbnailUrl: draft.thumbnailUrl ?? "",
+          provider: draft.provider,
+          providerJobId: draft.providerJobId,
+          modelId: draft.modelId,
+          videoStyle: draft.videoStyle,
+          durationSeconds: draft.durationSeconds,
+          promptText: draft.pkg.finalPromptText,
+          referenceMode: draft.pkg.referenceMode,
+          reviewNotes,
+          approvedBy: "admin",
+        }),
+      });
+
+      const data = (await res.json()) as VideoUploadResult;
+      if (!data.ok) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(`Media upload failed: ${data.message}`);
+        setApproveAndSaveErrorStep("upload");
+        return;
+      }
+
+      savedUpload = data;
+      setApproveAndSaveUploadedVideo(data);
+    } catch (err) {
+      setApproveAndSaveStatus("error");
+      setApproveAndSaveError(err instanceof Error ? `Media upload failed: ${err.message}` : "Media upload failed — network error.");
+      setApproveAndSaveErrorStep("upload");
+      return;
+    }
+
+    // Step 2: Attach to episode JSON
+    setApproveAndSaveStatus("attaching");
+    if (!savedUpload.ok) return;
+    const v = savedUpload.video;
+
+    try {
+      const res = await fetch("/api/github/attach-video-clip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug: draft.pkg.episodeSlug,
+          sceneId: draft.pkg.sceneId,
+          sceneNumber: draft.pkg.sceneNumber,
+          video: {
+            id: v.id,
+            type: "animated-clip",
+            provider: v.provider,
+            providerJobId: v.providerJobId,
+            modelId: v.modelId,
+            videoStyle: v.videoStyle,
+            durationSeconds: v.durationSeconds,
+            url: v.url,
+            pathname: v.pathname,
+            thumbnailUrl: v.thumbnailUrl,
+            mimeType: v.mimeType,
+            sizeBytes: v.sizeBytes,
+            promptText: v.promptText,
+            referenceMode: v.referenceMode,
+            reviewNotes: v.reviewNotes,
+            approvedBy: v.approvedBy,
+            approvedAt: v.approvedAt,
+            createdAt: v.createdAt,
+          },
+        }),
+      });
+
+      const data = (await res.json()) as VideoAttachResult;
+      if (!data.ok) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(
+          `Attach to episode failed: ${data.message} The video was saved to media storage. Use Manual Controls to attach it.`
+        );
+        setApproveAndSaveErrorStep("attach");
+        return;
+      }
+
+      // Sync manual controls state
+      setUploadResult(savedUpload);
+      setAttachResult(data);
+      setApproveAndSaveStatus("done");
+    } catch (err) {
+      setApproveAndSaveStatus("error");
+      setApproveAndSaveError(
+        `Attach to episode failed — ${err instanceof Error ? err.message : "network error"}. The video was saved to media storage. Use Manual Controls to attach it.`
+      );
+      setApproveAndSaveErrorStep("attach");
     }
   }
 
@@ -599,186 +720,216 @@ export default function VideoClipFidelityReviewSection({ reviewData, draft }: Pr
         )}
       </div>
 
-      {/* Save approved video — only when a playable draft exists */}
-      {hasPlayableVideo && (
-        <div className="flex flex-col gap-3 pt-2 border-t border-tiki-brown/8">
-          <div>
-            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
-              Save Approved Video Clip to Media Storage
-            </p>
-            <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              Uploads the Temporary Draft to Vercel Blob. Lifecycle stage becomes Saved to
-              Media Storage. It will not be attached to the episode or published yet.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleUpload}
-            disabled={!canUpload || uploading}
-            className={`w-full rounded-2xl py-3 px-4 text-sm font-black uppercase tracking-wide transition-colors ${
-              canUpload && !uploading
-                ? "bg-tropical-green text-white hover:bg-tropical-green/85 active:bg-tropical-green/70"
-                : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
-            }`}
-          >
-            {uploading ? "Uploading Approved Video Clip…" : "Save Approved Video Clip to Media Storage"}
-          </button>
-
-          {!hasPlayableVideo && (
-            <p className="text-xs text-tiki-brown/45 text-center">
-              A playable video draft is required to save.
-            </p>
-          )}
-          {hasPlayableVideo && decision !== "looks-good" && !uploadResult?.ok && (
-            <p className="text-xs text-tiki-brown/45 text-center">
-              Mark the clip as Looks Good to enable saving.
-            </p>
-          )}
-
-          {/* Upload fetch error */}
-          {uploadFetchError && (
-            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
-              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">Request Error</p>
-              <p className="text-xs text-tiki-brown/65">{uploadFetchError}</p>
-            </div>
-          )}
-
-          {/* Upload error */}
-          {uploadResult && !uploadResult.ok && (
-            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
-              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide">
-                {uploadResult.status.replace(/_/g, " ")}
-              </p>
-              <p className="text-xs text-tiki-brown/70 leading-relaxed">{uploadResult.message}</p>
-            </div>
-          )}
-
-          {/* Upload success */}
-          {uploadResult && uploadResult.ok && (
-            <div className="bg-tropical-green/8 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80 uppercase tracking-wide">
-                  Saved to Media Storage
-                </span>
-                <span className="text-xs text-tiki-brown/50">Not yet attached to episode</span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: "Provider", value: uploadResult.video.provider },
-                  { label: "Style", value: uploadResult.video.videoStyle },
-                  { label: "Duration", value: `${uploadResult.video.durationSeconds}s` },
-                  { label: "Size", value: `${Math.round(uploadResult.video.sizeBytes / 1024 / 1024 * 10) / 10} MB` },
-                ].map(({ label, value }) => (
-                  <div
-                    key={label}
-                    className="flex flex-col items-center bg-white border border-tiki-brown/8 rounded-xl px-3 py-2 min-w-[72px]"
-                  >
-                    <span className="text-sm font-black text-tiki-brown">{value}</span>
-                    <span className="text-xs text-tiki-brown/45 text-center leading-tight">{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">Blob URL</p>
-                <p className="text-xs font-mono text-ube-purple break-all">{uploadResult.video.url}</p>
-              </div>
-
-              {uploadResult.video.pathname && (
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">Blob Path</p>
-                  <p className="text-xs font-mono text-tiki-brown/60 break-all">{uploadResult.video.pathname}</p>
-                </div>
-              )}
-
-              {uploadResult.video.modelId && (
-                <p className="text-xs text-tiki-brown/55">
-                  Model: <span className="font-mono">{uploadResult.video.modelId}</span>
-                </p>
-              )}
-
-              <p className="text-xs text-tiki-brown/50">
-                Approved: <span className="font-semibold">{uploadResult.video.approvedAt}</span>
-              </p>
-
-              {uploadResult.notes.map((n, i) => (
-                <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
-              ))}
-            </div>
-          )}
+      {/* ── Approve & Save Video Clip (primary one-click workflow) ── */}
+      <div className="flex flex-col gap-3 pt-2 border-t border-tiki-brown/8">
+        <div className="flex items-center gap-2">
+          <span className="text-base">✨</span>
+          <p className="text-sm font-black text-tiki-brown">Approve & Save Video Clip to Episode</p>
         </div>
-      )}
+        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+          This will save the approved clip to media storage and attach it to this episode scene. It will not make it public yet.
+        </p>
 
-      {/* Attach to episode — shown after successful Blob upload */}
-      {uploadResult?.ok && (
-        <div className="flex flex-col gap-3 pt-2 border-t border-tiki-brown/8">
-          <div>
-            <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
-              Attach Video Clip to Episode Scene
-            </p>
-            <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              Saves approved video metadata to this scene in the episode JSON. Lifecycle
-              stage becomes Attached to Episode. It will not be public yet.
-            </p>
-          </div>
+        {!hasPlayableVideo && (
+          <p className="text-xs text-tiki-brown/45">
+            A playable video URL is required before saving to media storage.
+          </p>
+        )}
 
+        {hasPlayableVideo && decision !== "looks-good" && approveAndSaveStatus === "idle" && !attachResult?.ok && (
+          <p className="text-xs text-tiki-brown/45">
+            Mark the clip as Looks Good to enable saving.
+          </p>
+        )}
+
+        {hasPlayableVideo && (approveAndSaveStatus === "idle" || approveAndSaveStatus === "error") && !attachResult?.ok && (
           <button
             type="button"
-            onClick={handleAttach}
-            disabled={!canAttach || attaching}
+            onClick={handleApproveAndSave}
+            disabled={!canApproveAndSave}
             className={`w-full rounded-2xl py-3 px-4 text-sm font-black uppercase tracking-wide transition-colors ${
-              canAttach && !attaching
+              canApproveAndSave
                 ? "bg-ube-purple text-white hover:bg-ube-purple/85 active:bg-ube-purple/70"
                 : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
             }`}
           >
-            {attaching
-              ? "Attaching Video Clip to Episode Scene…"
-              : attachResult?.ok
-              ? "Video Clip Attached"
-              : "Attach Video Clip to Episode Scene"}
+            {approveAndSaveStatus === "error" ? "Retry Approve & Save Video Clip to Episode" : "Approve & Save Video Clip to Episode"}
           </button>
+        )}
 
-          {/* Attach fetch error */}
-          {attachFetchError && (
-            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
-              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">Request Error</p>
-              <p className="text-xs text-tiki-brown/65">{attachFetchError}</p>
-            </div>
-          )}
+        {approveAndSaveStatus === "uploading" && (
+          <p className="text-xs text-tiki-brown/45 animate-pulse text-center">Saving to Media Storage…</p>
+        )}
+        {approveAndSaveStatus === "attaching" && (
+          <p className="text-xs text-tiki-brown/45 animate-pulse text-center">Attaching to Episode…</p>
+        )}
 
-          {/* Attach error */}
-          {attachResult && !attachResult.ok && (
-            <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
-              <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">
-                {attachResult.status.replace(/_/g, " ")}
-              </p>
-              <p className="text-xs text-tiki-brown/65">{attachResult.message}</p>
-            </div>
-          )}
-
-          {/* Attach success */}
-          {attachResult?.ok && (
-            <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
-                  Attached to Episode
-                </span>
-                <span className="text-xs text-tiki-brown/50">Saved to scene — not yet public</span>
+        {approveAndSaveStatus === "error" && (
+          <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
+            <p className="text-xs font-bold text-warm-coral uppercase tracking-wide">
+              {approveAndSaveErrorStep === "upload" ? "Media upload failed" : "Attach to episode failed"}
+            </p>
+            <p className="text-xs text-tiki-brown/65 leading-relaxed">{approveAndSaveError}</p>
+            {approveAndSaveErrorStep === "attach" && approveAndSaveUploadedVideo?.ok && (
+              <div className="bg-white/60 rounded-lg px-2 py-1.5 flex flex-col gap-0.5">
+                <p className="text-xs font-semibold text-tiki-brown/55">Saved to Media Storage:</p>
+                <p className="text-xs font-mono text-ube-purple break-all">{approveAndSaveUploadedVideo.video.url}</p>
+                <p className="text-xs text-tiki-brown/40">Use Manual Controls below to attach it to the episode.</p>
               </div>
-              <p className="text-xs font-mono text-tiki-brown/60 break-all">{attachResult.path}</p>
-              <p className="text-xs text-tiki-brown/55">
-                Commit: <span className="font-semibold">{attachResult.commitMessage}</span>
-              </p>
-              {attachResult.notes.map((n, i) => (
-                <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
-              ))}
-              <p className="text-xs text-tiki-brown/45 mt-1">Set visibility to Public Ready when public video display is ready.</p>
+            )}
+          </div>
+        )}
+
+        {(approveAndSaveStatus === "done" || attachResult?.ok) && attachResult?.ok && (
+          <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
+                Attached to Episode
+              </span>
+              <span className="text-xs text-tiki-brown/50">Saved to scene — not yet public</span>
             </div>
-          )}
-        </div>
+            <p className="text-xs font-mono text-tiki-brown/60 break-all">{attachResult.path}</p>
+            <p className="text-xs text-tiki-brown/55">
+              Commit: <span className="font-semibold">{attachResult.commitMessage}</span>
+            </p>
+            {attachResult.notes.map((n, i) => (
+              <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
+            ))}
+            <p className="text-xs text-tiki-brown/45 mt-1">Set visibility to Public Ready when public video display is ready.</p>
+          </div>
+        )}
+      </div>
+
+      {/* ── Manual Controls (upload + attach separately) ── */}
+      {hasPlayableVideo && (
+        <details className="group border border-tiki-brown/10 rounded-2xl overflow-hidden">
+          <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none bg-tiki-brown/3 hover:bg-tiki-brown/5 transition-colors list-none">
+            <span className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Manual Controls</span>
+            <span className="ml-auto text-xs text-tiki-brown/35">Upload and attach separately</span>
+          </summary>
+          <div className="flex flex-col gap-4 px-4 pt-3 pb-4">
+            <p className="text-xs text-tiki-brown/45 leading-relaxed">
+              Use manual controls if you need to upload and attach separately for debugging or recovery.
+            </p>
+
+            {/* Manual upload */}
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
+                Save Approved Video Clip to Media Storage
+              </p>
+
+              <button
+                type="button"
+                onClick={handleUpload}
+                disabled={!canUpload || uploading}
+                className={`w-full rounded-2xl py-3 px-4 text-sm font-black uppercase tracking-wide transition-colors ${
+                  canUpload && !uploading
+                    ? "bg-tropical-green text-white hover:bg-tropical-green/85 active:bg-tropical-green/70"
+                    : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
+                }`}
+              >
+                {uploading ? "Uploading Approved Video Clip…" : "Save Approved Video Clip to Media Storage"}
+              </button>
+
+              {decision !== "looks-good" && !uploadResult?.ok && (
+                <p className="text-xs text-tiki-brown/45 text-center">
+                  Mark the clip as Looks Good to enable saving.
+                </p>
+              )}
+
+              {uploadFetchError && (
+                <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
+                  <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">Request Error</p>
+                  <p className="text-xs text-tiki-brown/65">{uploadFetchError}</p>
+                </div>
+              )}
+
+              {uploadResult && !uploadResult.ok && (
+                <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3 flex flex-col gap-2">
+                  <p className="text-xs font-bold text-warm-coral uppercase tracking-wide">
+                    {uploadResult.status.replace(/_/g, " ")}
+                  </p>
+                  <p className="text-xs text-tiki-brown/70 leading-relaxed">{uploadResult.message}</p>
+                </div>
+              )}
+
+              {uploadResult && uploadResult.ok && (
+                <div className="bg-tropical-green/8 border border-tropical-green/25 rounded-2xl px-4 py-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-blue/20 text-sky-blue/80 uppercase tracking-wide">
+                      Saved to Media Storage
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: "Provider", value: uploadResult.video.provider },
+                      { label: "Style", value: uploadResult.video.videoStyle },
+                      { label: "Duration", value: `${uploadResult.video.durationSeconds}s` },
+                      { label: "Size", value: `${Math.round(uploadResult.video.sizeBytes / 1024 / 1024 * 10) / 10} MB` },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex flex-col items-center bg-white border border-tiki-brown/8 rounded-xl px-3 py-2 min-w-[72px]">
+                        <span className="text-sm font-black text-tiki-brown">{value}</span>
+                        <span className="text-xs text-tiki-brown/45 text-center leading-tight">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs font-mono text-ube-purple break-all">{uploadResult.video.url}</p>
+                  {uploadResult.notes.map((n, i) => (
+                    <p key={i} className="text-xs text-tiki-brown/55 leading-snug">• {n}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Manual attach */}
+            {uploadResult?.ok && (
+              <div className="flex flex-col gap-3 border-t border-tiki-brown/8 pt-3">
+                <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
+                  Attach Video Clip to Episode Scene
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleAttach}
+                  disabled={!canAttach || attaching}
+                  className={`w-full rounded-2xl py-3 px-4 text-sm font-black uppercase tracking-wide transition-colors ${
+                    canAttach && !attaching
+                      ? "bg-ube-purple text-white hover:bg-ube-purple/85 active:bg-ube-purple/70"
+                      : "bg-tiki-brown/8 text-tiki-brown/30 cursor-not-allowed"
+                  }`}
+                >
+                  {attaching ? "Attaching Video Clip to Episode Scene…" : attachResult?.ok ? "Video Clip Attached" : "Attach Video Clip to Episode Scene"}
+                </button>
+
+                {attachFetchError && (
+                  <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
+                    <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">Request Error</p>
+                    <p className="text-xs text-tiki-brown/65">{attachFetchError}</p>
+                  </div>
+                )}
+
+                {attachResult && !attachResult.ok && (
+                  <div className="bg-warm-coral/8 border border-warm-coral/25 rounded-2xl px-4 py-3">
+                    <p className="text-xs font-bold text-warm-coral uppercase tracking-wide mb-1">
+                      {attachResult.status.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-xs text-tiki-brown/65">{attachResult.message}</p>
+                  </div>
+                )}
+
+                {attachResult?.ok && (
+                  <div className="bg-ube-purple/8 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-2">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple self-start uppercase tracking-wide">
+                      Attached to Episode
+                    </span>
+                    <p className="text-xs font-mono text-tiki-brown/60 break-all">{attachResult.path}</p>
+                    <p className="text-xs text-tiki-brown/55">Commit: <span className="font-semibold">{attachResult.commitMessage}</span></p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </details>
       )}
 
     </div>

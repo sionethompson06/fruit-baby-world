@@ -8,6 +8,7 @@ import type { FidelityThumbnail, FidelityChecklistItem } from "@/lib/storyPanelF
 type GenStatus = "idle" | "loading" | "done" | "not_configured" | "error";
 type UploadStatus = "idle" | "loading" | "success" | "error";
 type AttachStatus = "idle" | "loading" | "success" | "error";
+type ApproveSaveStatus = "idle" | "uploading" | "attaching" | "success" | "error";
 
 type ReferenceMetaItem = {
   characterSlug: string;
@@ -472,6 +473,12 @@ export default function PanelDraftGenerator({
   const [attachResult, setAttachResult] = useState<AttachApiResult | null>(null);
   const [attachErrorMsg, setAttachErrorMsg] = useState<string>("");
 
+  // Approve & Save (one-click) state
+  const [approveAndSaveStatus, setApproveAndSaveStatus] = useState<ApproveSaveStatus>("idle");
+  const [approveAndSaveUploadedAsset, setApproveAndSaveUploadedAsset] = useState<UploadAsset | null>(null);
+  const [approveAndSaveError, setApproveAndSaveError] = useState<string>("");
+  const [approveAndSaveErrorStep, setApproveAndSaveErrorStep] = useState<"upload" | "attach" | null>(null);
+
   const hasImage = genStatus === "done" && !!result?.image?.base64;
   const hasDraft = genStatus === "done" || genStatus === "not_configured";
   const isLoading = genStatus === "loading";
@@ -484,6 +491,16 @@ export default function PanelDraftGenerator({
     fidelityApprovedForUpload &&
     attachStatus !== "success";
 
+  const allChecklistChecked =
+    checklistItems.length === 0 ||
+    (checkedItems.length === checklistItems.length && checkedItems.every(Boolean));
+  const canApproveAndSave =
+    hasImage &&
+    fidelityApprovedForUpload &&
+    approveAndSaveStatus !== "uploading" &&
+    approveAndSaveStatus !== "attaching" &&
+    approveAndSaveStatus !== "success";
+
   function resetReviewState() {
     setCheckedItems(new Array(checklistItems.length).fill(false));
     setReviewNotes("");
@@ -494,6 +511,10 @@ export default function PanelDraftGenerator({
     setAttachStatus("idle");
     setAttachResult(null);
     setAttachErrorMsg("");
+    setApproveAndSaveStatus("idle");
+    setApproveAndSaveUploadedAsset(null);
+    setApproveAndSaveError("");
+    setApproveAndSaveErrorStep(null);
   }
 
   function toggleItem(i: number) {
@@ -687,6 +708,154 @@ export default function PanelDraftGenerator({
     } catch {
       setAttachStatus("error");
       setAttachErrorMsg("Something went wrong while attaching this uploaded asset to episode JSON.");
+    }
+  }
+
+  async function handleApproveAndSave() {
+    if (!result?.image || !canApproveAndSave) return;
+
+    setApproveAndSaveStatus("uploading");
+    setApproveAndSaveUploadedAsset(null);
+    setApproveAndSaveError("");
+    setApproveAndSaveErrorStep(null);
+
+    const alt = buildAltText(sceneNumber, sceneTitle, sceneSummary);
+
+    // Step 1: Upload to Blob
+    let savedAsset: UploadAsset;
+    try {
+      const res = await fetch("/api/media/upload-story-panel-image", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          imageBase64: result.image.base64,
+          mimeType: result.image.mimeType,
+          alt,
+          referenceCharacters: result.referenceCharacters ?? referenceCharacters,
+          review: { characterFidelityApproved: true },
+        }),
+      });
+
+      if (res.status === 401) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError("Admin access is required. Please unlock the Story Studio again.");
+        setApproveAndSaveErrorStep("upload");
+        return;
+      }
+
+      let data: UploadApiResult;
+      try {
+        data = (await res.json()) as UploadApiResult;
+      } catch {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError("Media upload failed — could not parse server response.");
+        setApproveAndSaveErrorStep("upload");
+        return;
+      }
+
+      if (!data.ok || !data.asset) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(`Media upload failed: ${uploadErrorMessage(data.status, data.message)}`);
+        setApproveAndSaveErrorStep("upload");
+        return;
+      }
+
+      savedAsset = data.asset;
+      setApproveAndSaveUploadedAsset(savedAsset);
+    } catch {
+      setApproveAndSaveStatus("error");
+      setApproveAndSaveError("Media upload failed — network error. Check your connection and try again.");
+      setApproveAndSaveErrorStep("upload");
+      return;
+    }
+
+    // Step 2: Attach to episode JSON
+    setApproveAndSaveStatus("attaching");
+    const now = new Date().toISOString();
+
+    try {
+      const res = await fetch("/api/github/attach-story-panel-asset", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          panelAsset: {
+            sceneNumber,
+            panelTitle: sceneTitle ?? `Scene ${sceneNumber}`,
+            status: "approved",
+            approvalStatus: "approved",
+            referenceCharacters:
+              savedAsset.referenceCharacters.length > 0
+                ? savedAsset.referenceCharacters
+                : referenceCharacters,
+            prompt: panelPrompt,
+            asset: {
+              url: savedAsset.url,
+              pathname: savedAsset.pathname,
+              storageProvider: "vercel-blob",
+              mimeType: savedAsset.mimeType || "image/png",
+              width: null,
+              height: null,
+              alt: savedAsset.alt,
+              createdAt: savedAsset.uploadedAt,
+              approvedAt: now,
+            },
+            review: {
+              requiresHumanReview: true,
+              characterFidelityApproved: true,
+              notes: reviewNotes,
+            },
+            publicUse: { allowed: true, appearsOnPublicStoryPage: true },
+          },
+        }),
+      });
+
+      if (res.status === 401) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(
+          "Admin access is required. Please unlock the Story Studio again. The panel was saved to media storage — use Manual Controls to attach it."
+        );
+        setApproveAndSaveErrorStep("attach");
+        return;
+      }
+
+      let data: AttachApiResult;
+      try {
+        data = (await res.json()) as AttachApiResult;
+      } catch {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(
+          "Attach to episode failed — could not parse server response. The panel was saved to media storage. Use Manual Controls to attach it."
+        );
+        setApproveAndSaveErrorStep("attach");
+        return;
+      }
+
+      if (!data.ok) {
+        setApproveAndSaveStatus("error");
+        setApproveAndSaveError(
+          `Attach to episode failed: ${attachErrorMessage(data.status, data.message)} The panel was saved to media storage. Use Manual Controls to attach it.`
+        );
+        setApproveAndSaveErrorStep("attach");
+        return;
+      }
+
+      // Sync manual controls state so they reflect the completed work
+      setUploadStatus("success");
+      setUploadResult({ ok: true, status: "uploaded", asset: savedAsset });
+      setAttachStatus("success");
+      setAttachResult(data);
+      setApproveAndSaveStatus("success");
+    } catch {
+      setApproveAndSaveStatus("error");
+      setApproveAndSaveError(
+        "Attach to episode failed — network error. The panel was saved to media storage. Use Manual Controls to attach it."
+      );
+      setApproveAndSaveErrorStep("attach");
     }
   }
 
@@ -931,106 +1100,182 @@ export default function PanelDraftGenerator({
             </p>
           </div>
 
-          {/* ── Upload section ── */}
+          {/* ── Approve & Save Panel (primary one-click workflow) ── */}
           {hasImage && (
             <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-4">
               <div className="flex items-center gap-2">
-                <span className="text-base">☁️</span>
-                <h4 className="text-sm font-black text-tiki-brown">Upload to Media Storage</h4>
+                <span className="text-base">✨</span>
+                <h4 className="text-sm font-black text-tiki-brown">Approve & Save Panel to Episode</h4>
               </div>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                This will save the approved draft to media storage and attach it to this episode. It will not make it public yet.
+              </p>
 
-              {uploadStatus === "success" && uploadedAsset && (
-                <UploadSuccessPanel asset={uploadedAsset} />
+              {approveAndSaveStatus !== "success" && attachStatus !== "success" && (
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={fidelityApprovedForUpload}
+                    onChange={(e) => setFidelityApprovedForUpload(e.target.checked)}
+                    className="mt-0.5 flex-shrink-0 accent-tropical-green"
+                  />
+                  <span className="text-xs text-tiki-brown/70 leading-relaxed">
+                    <strong className="font-bold">I confirm</strong> this draft meets character fidelity standards and is ready to save to the episode.
+                  </span>
+                </label>
               )}
 
-              {uploadStatus === "error" && (
-                <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-                  <span className="text-sm flex-shrink-0">⚠️</span>
-                  <p className="text-xs text-warm-coral leading-relaxed font-semibold">{uploadErrorMsg}</p>
+              {!fidelityApprovedForUpload && approveAndSaveStatus === "idle" && (
+                <p className="text-xs text-tiki-brown/40 italic">Check the approval box above to enable saving.</p>
+              )}
+
+              {(approveAndSaveStatus === "idle" || approveAndSaveStatus === "error") && attachStatus !== "success" && (
+                <button
+                  onClick={handleApproveAndSave}
+                  disabled={!canApproveAndSave}
+                  className="self-start px-5 py-2.5 rounded-xl bg-ube-purple text-white text-sm font-black disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                >
+                  {approveAndSaveStatus === "error" ? "Retry Approve & Save Panel to Episode" : "Approve & Save Panel to Episode"}
+                </button>
+              )}
+
+              {approveAndSaveStatus === "uploading" && (
+                <p className="text-xs text-tiki-brown/45 animate-pulse">Saving to Media Storage…</p>
+              )}
+              {approveAndSaveStatus === "attaching" && (
+                <p className="text-xs text-tiki-brown/45 animate-pulse">Attaching to Episode…</p>
+              )}
+
+              {approveAndSaveStatus === "error" && (
+                <div className="flex flex-col gap-2 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
+                  <p className="text-xs font-bold text-warm-coral">
+                    {approveAndSaveErrorStep === "upload" ? "Media upload failed" : "Attach to episode failed"}
+                  </p>
+                  <p className="text-xs text-tiki-brown/70 leading-relaxed">{approveAndSaveError}</p>
+                  {approveAndSaveErrorStep === "attach" && approveAndSaveUploadedAsset && (
+                    <div className="flex flex-col gap-1 bg-white/60 rounded-lg px-2 py-1.5">
+                      <p className="text-xs font-semibold text-tiki-brown/55">Saved to Media Storage:</p>
+                      <a href={approveAndSaveUploadedAsset.url} target="_blank" rel="noopener noreferrer" className="text-xs text-ube-purple underline break-all">
+                        {approveAndSaveUploadedAsset.url}
+                      </a>
+                      <p className="text-xs text-tiki-brown/40">Use Manual Controls below to attach it to the episode.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {uploadStatus !== "success" && (
-                <>
-                  <label className="flex items-start gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={fidelityApprovedForUpload}
-                      onChange={(e) => setFidelityApprovedForUpload(e.target.checked)}
-                      className="mt-0.5 flex-shrink-0 accent-tropical-green"
-                    />
-                    <span className="text-xs text-tiki-brown/70 leading-relaxed">
-                      <strong className="font-bold">I confirm</strong> this draft meets character fidelity standards and is suitable for temporary media storage. I understand this does not attach the image to the episode or publish it.
-                    </span>
-                  </label>
-
-                  {!canUpload && (
-                    <p className="text-xs text-tiki-brown/40 italic">
-                      {!hasImage ? "Generate a draft image first." : "Check the approval box above to enable upload."}
-                    </p>
+              {(approveAndSaveStatus === "success" || attachStatus === "success") && attachResult && uploadedAsset && (
+                <div className="flex flex-col gap-2 bg-ube-purple/8 border border-ube-purple/20 rounded-xl px-3 py-2.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple">Attached to Episode</span>
+                  </div>
+                  <a href={uploadedAsset.url} target="_blank" rel="noopener noreferrer" className="text-xs text-ube-purple underline break-all hover:opacity-75">
+                    {uploadedAsset.url}
+                  </a>
+                  {attachResult.path && (
+                    <p className="text-xs font-mono text-tiki-brown/50 break-all">{attachResult.path}</p>
                   )}
-
-                  <button
-                    onClick={handleUpload}
-                    disabled={!canUpload || uploadStatus === "loading"}
-                    className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-                  >
-                    {uploadStatus === "loading" ? "Uploading…" : "Upload Reviewed Draft to Media Storage"}
-                  </button>
-
-                  <p className="text-xs text-tiki-brown/35 italic">
-                    Uploads to Vercel Blob storage only. Not attached to the episode JSON. Not published.
+                  <p className="text-xs text-tiki-brown/45 mt-0.5">
+                    Next step: Make Public Ready from the Saved Story Panel Assets section.
                   </p>
-                </>
+                </div>
               )}
             </div>
           )}
 
-          {/* ── Attach section ── */}
-          {uploadStatus === "success" && uploadedAsset && (
-            <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-4">
-              <div className="flex items-center gap-2">
-                <span className="text-base">📎</span>
-                <h4 className="text-sm font-black text-tiki-brown">Attach to Episode JSON</h4>
-              </div>
+          {/* ── Manual Controls (upload + attach separately) ── */}
+          {hasImage && (
+            <details className="group border border-tiki-brown/10 rounded-2xl overflow-hidden">
+              <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none bg-tiki-brown/3 hover:bg-tiki-brown/5 transition-colors list-none">
+                <span className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Manual Controls</span>
+                <span className="ml-auto text-xs text-tiki-brown/35">Upload and attach separately</span>
+              </summary>
+              <div className="flex flex-col gap-4 px-4 pt-3 pb-4">
+                <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                  Use manual controls if you need to upload and attach separately for debugging or recovery.
+                </p>
 
-              {attachStatus === "success" && attachResult && (
-                <AttachSuccessPanel result={attachResult} asset={uploadedAsset} sceneNumber={sceneNumber} />
-              )}
-
-              {attachStatus === "error" && (
-                <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-                  <span className="text-sm flex-shrink-0">⚠️</span>
-                  <p className="text-xs text-warm-coral leading-relaxed font-semibold">{attachErrorMsg}</p>
-                </div>
-              )}
-
-              {attachStatus !== "success" && (
+                {/* Manual upload */}
                 <div className="flex flex-col gap-3">
-                  <p className="text-xs text-tiki-brown/65 leading-relaxed">
-                    This will save the uploaded media asset URL into the episode JSON media manifest in GitHub. After Vercel redeploys, the episode will know about this approved story panel asset.
-                  </p>
-                  <div className="flex items-start gap-2 bg-pineapple-yellow/10 border border-pineapple-yellow/30 rounded-xl px-3 py-2.5">
-                    <span className="text-xs flex-shrink-0">⚠️</span>
-                    <p className="text-xs text-tiki-brown/65 leading-relaxed">
-                      This does not publish the image publicly yet. Public story panel display will be added in a later phase.
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">☁️</span>
+                    <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Upload to Media Storage</p>
                   </div>
-                  {attachStatus === "loading" && (
-                    <p className="text-sm text-tiki-brown/45 italic animate-pulse">
-                      Attaching uploaded asset to episode JSON…
-                    </p>
+
+                  {uploadStatus === "success" && uploadedAsset && (
+                    <UploadSuccessPanel asset={uploadedAsset} />
                   )}
-                  <button
-                    onClick={handleAttach}
-                    disabled={!canAttach || attachStatus === "loading"}
-                    className="self-start px-4 py-2 rounded-xl bg-tiki-brown text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-                  >
-                    {attachStatus === "loading" ? "Attaching…" : "Attach Uploaded Asset to Episode JSON"}
-                  </button>
+
+                  {uploadStatus === "error" && (
+                    <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                      <span className="text-sm flex-shrink-0">⚠️</span>
+                      <p className="text-xs text-warm-coral leading-relaxed font-semibold">{uploadErrorMsg}</p>
+                    </div>
+                  )}
+
+                  {uploadStatus !== "success" && (
+                    <>
+                      {!canUpload && (
+                        <p className="text-xs text-tiki-brown/40 italic">
+                          Check the approval checkbox above to enable upload.
+                        </p>
+                      )}
+                      <button
+                        onClick={handleUpload}
+                        disabled={!canUpload || uploadStatus === "loading"}
+                        className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                      >
+                        {uploadStatus === "loading" ? "Uploading…" : "Upload Reviewed Draft to Media Storage"}
+                      </button>
+                      <p className="text-xs text-tiki-brown/35 italic">
+                        Uploads to Vercel Blob storage only. Not attached to the episode JSON. Not published.
+                      </p>
+                    </>
+                  )}
                 </div>
-              )}
-            </div>
+
+                {/* Manual attach */}
+                {uploadStatus === "success" && uploadedAsset && (
+                  <div className="flex flex-col gap-3 border-t border-tiki-brown/8 pt-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">📎</span>
+                      <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Attach to Episode JSON</p>
+                    </div>
+
+                    {attachStatus === "success" && attachResult && (
+                      <AttachSuccessPanel result={attachResult} asset={uploadedAsset} sceneNumber={sceneNumber} />
+                    )}
+
+                    {attachStatus === "error" && (
+                      <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                        <span className="text-sm flex-shrink-0">⚠️</span>
+                        <p className="text-xs text-warm-coral leading-relaxed font-semibold">{attachErrorMsg}</p>
+                      </div>
+                    )}
+
+                    {attachStatus !== "success" && (
+                      <div className="flex flex-col gap-3">
+                        <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                          Saves the uploaded media asset URL into the episode JSON media manifest in GitHub. Does not publish the image publicly.
+                        </p>
+                        {attachStatus === "loading" && (
+                          <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                            Attaching uploaded asset to episode JSON…
+                          </p>
+                        )}
+                        <button
+                          onClick={handleAttach}
+                          disabled={!canAttach || attachStatus === "loading"}
+                          className="self-start px-4 py-2 rounded-xl bg-tiki-brown text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                        >
+                          {attachStatus === "loading" ? "Attaching…" : "Attach Uploaded Asset to Episode JSON"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </details>
           )}
 
           {/* API notes */}
