@@ -132,5 +132,25 @@
     "collectible figure"
   ],
   "mainReferenceAssetId": "ref-1778966466424-6veaqw",
-  "updatedAt": "2026-05-16T21:41:31.071Z"
+  "updatedAt": "2026-05-19T03:04:26.260Z",
+  "fruitType": "Kiwi",
+  "home": "Canopy Cove",
+  "favoriteQuote": "Every little thing is worth exploring",
+  "bodyShapeRules": [
+    "ABOUT KIWI BABY™",
+    "Chubby, rounded anthropomorphic kiwi character.",
+    "@ Fuzzy kiwi-brown body with a subtle green undertone for a fresh, natural look.",
+    "* Sliced kiwi top showing vibrant green flesh with black seeds.",
+    "Leaf crown and white kiwi blossom accent.",
+    "Large warm brown eyes with highlights.",
+    "Pink blush cheeks and a small smiling mouth.",
+    "Short rounded arms and feet.",
+    "Friendly, gentle, and kawaii"
+  ],
+  "generationRestrictions": [
+    "BRAND POSITIONING STATEMENT",
+    "Kiwi Baby™ is a gentle, fresh, and cheerful character who embodies the sweetness of nature and the joy of curiosity. With a heart full of kindness and a love for simple moments, Kiwi Baby™ brings calm, happiness, and a sense of wonder to the Fruit Baby Universe™, inspiring friendship, positivity, and connection in every adventure."
+  ],
+  "profileCompletedAt": "2026-05-19T03:04:26.260Z",
+  "profileGeneratedFromPrimaryReferenceAt": "2026-05-19T03:04:26.260Z"
 }

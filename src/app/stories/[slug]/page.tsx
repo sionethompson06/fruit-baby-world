@@ -10,6 +10,10 @@ import {
   getApprovedPublicStoryPanels,
   type ApprovedPanel,
 } from "@/lib/episodeScenes";
+import {
+  getPublicReadyVideoClipsForEpisode,
+  type PublicVideoClip,
+} from "@/lib/publicVideoClips";
 
 // ─── Public eligibility ───────────────────────────────────────────────────────
 
@@ -582,6 +586,43 @@ function ReadAloudSceneCard({
   );
 }
 
+// ─── Animated clip card (public) ─────────────────────────────────────────────
+
+function AnimatedClipCard({ clip }: { clip: PublicVideoClip }) {
+  const sceneLabel = clip.sceneTitle ? clip.sceneTitle : `Scene ${clip.sceneNumber}`;
+  const ariaLabel = `Animated clip — ${sceneLabel}${clip.durationSeconds ? `, ${clip.durationSeconds} seconds` : ""}`;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Scene label */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-blue/15 text-sky-blue flex-shrink-0">
+          Scene {clip.sceneNumber}
+        </span>
+        {clip.sceneTitle && (
+          <span className="text-sm font-bold text-tiki-brown">{clip.sceneTitle}</span>
+        )}
+        {clip.durationSeconds && (
+          <span className="text-xs text-tiki-brown/40 ml-auto">{clip.durationSeconds}s</span>
+        )}
+      </div>
+
+      {/* Video player */}
+      <video
+        src={clip.url}
+        controls
+        playsInline
+        preload="metadata"
+        className="w-full rounded-2xl border border-tiki-brown/10 bg-black shadow-sm"
+        aria-label={ariaLabel}
+        title={ariaLabel}
+      >
+        Your browser does not support the video element.
+      </video>
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StoryDetailPage({
@@ -616,6 +657,9 @@ export default async function StoryDetailPage({
 
   // Active-only scenes for public display (archived scenes excluded)
   const scenes = getActiveEpisodeScenes(raw);
+
+  // Public-ready animated clips — only shown when visibility === "public-ready"
+  const publicClips = getPublicReadyVideoClipsForEpisode(scenes);
 
   const merchTieIns = strArr(raw.merchTieIns);
 
@@ -764,12 +808,14 @@ export default async function StoryDetailPage({
           >
             🎙️ Read-Aloud
           </a>
-          <a
-            href="#animated-short"
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
-          >
-            🎬 Animated Short
-          </a>
+          {publicClips.length > 0 && (
+            <a
+              href="#animated-moments"
+              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-sky-blue/10 border border-sky-blue/30 text-sky-blue hover:bg-sky-blue/20 transition-colors"
+            >
+              🎬 Watch
+            </a>
+          )}
         </nav>
 
         {/* ── Story Mode cards ── */}
@@ -809,13 +855,19 @@ export default async function StoryDetailPage({
             </span>
           </div>
 
-          {/* Watch — coming soon */}
-          <div className="flex flex-col items-center gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-3 py-4 text-center shadow-sm">
+          {/* Watch — available or coming soon */}
+          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${publicClips.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
             <span className="text-2xl">🎬</span>
             <p className="text-xs font-black text-tiki-brown leading-snug">Watch Short</p>
-            <span className="text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-2 py-0.5 rounded-full">
-              Coming Soon
-            </span>
+            {publicClips.length > 0 ? (
+              <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
+                Available
+              </span>
+            ) : (
+              <span className="text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-2 py-0.5 rounded-full">
+                Coming Soon
+              </span>
+            )}
           </div>
         </div>
 
@@ -1111,44 +1163,42 @@ export default async function StoryDetailPage({
         )}
 
         {/* ══════════════════════════════════════════
-            WATCH ANIMATED SHORT — COMING SOON
+            WATCH THE ANIMATED MOMENTS
+            Only shown when public-ready clips exist
         ══════════════════════════════════════════ */}
 
-        <div
-          id="animated-short"
-          className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-              <span>🎬</span> Watch Animated Short
-            </h2>
-            <span className="flex-shrink-0 text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-3 py-1 rounded-full">
-              Coming Soon
-            </span>
-          </div>
-
-          <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            Animated story clips are planned for future releases after video assets are
-            created, reviewed, and approved.
-          </p>
-
-          {/* Video placeholder */}
-          <div className="flex flex-col items-center justify-center gap-4 h-44 bg-gradient-to-br from-pineapple-yellow/8 via-sky-blue/6 to-tropical-green/8 rounded-2xl border border-tiki-brown/8">
-            <span className="text-5xl select-none" aria-hidden="true">🎬</span>
-            <div className="text-center">
-              <p className="text-sm font-bold text-tiki-brown/45">Animation coming later</p>
-              {scenes.length > 0 && (
-                <p className="text-xs text-tiki-brown/30 mt-0.5">
-                  {scenes.length} planned {scenes.length === 1 ? "scene" : "scenes"}
+        {publicClips.length > 0 && (
+          <div
+            id="animated-moments"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
+          >
+            {/* Section header */}
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                  <span>🎬</span> Watch the Animated Moments
+                </h2>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Enjoy short cartoon-style moments from this story.
                 </p>
-              )}
+              </div>
+              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
+                {publicClips.length} {publicClips.length === 1 ? "animated clip" : "animated clips"}
+              </span>
             </div>
-          </div>
 
-          <p className="text-xs text-tiki-brown/40 leading-relaxed">
-            All animated clips will be reviewed and approved before appearing here.
-          </p>
-        </div>
+            {/* Clip cards */}
+            <div className="flex flex-col gap-6">
+              {publicClips.map((clip) => (
+                <AnimatedClipCard key={clip.id} clip={clip} />
+              ))}
+            </div>
+
+            <p className="text-xs text-tiki-brown/40 leading-relaxed">
+              All animated clips are reviewed and approved before appearing here.
+            </p>
+          </div>
+        )}
 
         {/* ══════════════════════════════════════════
             EXTRAS

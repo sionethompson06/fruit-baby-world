@@ -3,6 +3,7 @@ import type { EpisodePublishReadiness } from "@/lib/episodePublishReadiness";
 import type { StoryPanelCoverage } from "@/lib/storyPanelCoverage";
 import type { MediaLifecycleStage } from "@/lib/mediaLifecycle";
 import { getMediaLifecycleLabel } from "@/lib/mediaLifecycle";
+import type { FinalVideoAssemblyStatus } from "@/lib/finalVideoTypes";
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +13,7 @@ type Props = {
   panelCoverage: StoryPanelCoverage;
   audioLifecycleStage: MediaLifecycleStage;
   totalVideoClips: number;
+  finalVideoStatus?: FinalVideoAssemblyStatus;
 };
 
 // ─── Next action ──────────────────────────────────────────────────────────────
@@ -45,6 +47,7 @@ export default function EpisodeCommandCenterSection({
   panelCoverage,
   audioLifecycleStage,
   totalVideoClips,
+  finalVideoStatus,
 }: Props) {
   const activeSceneCount = panelCoverage.totalActiveScenes;
   const blockerCount = publishReadiness.blockers.length;
@@ -86,6 +89,13 @@ export default function EpisodeCommandCenterSection({
     { label: "Video Clips", value: totalVideoClips > 0 ? String(totalVideoClips) : "None" },
     { label: "Blockers", value: String(blockerCount), warn: blockerCount > 0 },
     { label: "Warnings", value: String(warningCount) },
+    ...(finalVideoStatus
+      ? [{
+          label: "Video Plan",
+          value: finalVideoStatus === "ready" ? "Ready" : finalVideoStatus === "needs-work" ? "Needs Work" : "Blocked",
+          warn: finalVideoStatus === "blocked",
+        }]
+      : []),
   ];
 
   return (

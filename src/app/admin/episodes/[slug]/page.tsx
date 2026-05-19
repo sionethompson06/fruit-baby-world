@@ -68,6 +68,12 @@ import {
 } from "@/lib/storyPanelFidelityReview";
 import { buildReferenceAwareStoryPanelPrompt } from "@/lib/storyPanelPromptBuilder";
 import EpisodeCommandCenterSection from "./EpisodeCommandCenterSection";
+import FinalVideoAssemblyPreviewSection from "./FinalVideoAssemblyPreviewSection";
+import FinalStoryVideoPreviewSection from "./FinalStoryVideoPreviewSection";
+import FinalVideoRenderReadinessSection from "./FinalVideoRenderReadinessSection";
+import FinalVideoProductionSection from "./FinalVideoProductionSection";
+import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
+import { isFinalVideoAsset } from "@/lib/finalVideoAssetTypes";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -583,6 +589,10 @@ export default async function EpisodeDetailPage({
     sceneRefPackages: episodeRefPackages.scenePackages,
   });
 
+  // Final video assembly plan (preview only — no rendering)
+  const finalVideoPkg = buildFinalVideoAssemblyPackage(raw);
+  const initialFinalVideo = isFinalVideoAsset(raw.finalVideo) ? raw.finalVideo : null;
+
   const narrationProviderStatus = getAudioNarrationProviderStatus();
   const narrationReadiness = getNarrationReadinessForEpisode(raw);
   const narrationScriptDraft = buildNarrationScriptDraftFromEpisode(raw);
@@ -765,6 +775,7 @@ export default async function EpisodeDetailPage({
           panelCoverage={panelCoverage}
           audioLifecycleStage={existingAudioLifecycleStage}
           totalVideoClips={totalVideoClips}
+          finalVideoStatus={finalVideoPkg.status}
         />
 
         {/* ── Section Navigation ── */}
@@ -774,6 +785,7 @@ export default async function EpisodeDetailPage({
             { href: "#picture-panels", label: "Picture Panels" },
             { href: "#audio-story", label: "Audio" },
             { href: "#animated-clips", label: "Video" },
+            { href: "#final-video-plan", label: "Video Plan" },
             { href: "#publish-readiness", label: "Publish" },
             { href: "#advanced-tools", label: "Advanced" },
           ].map(({ href, label }) => (
@@ -1066,11 +1078,32 @@ export default async function EpisodeDetailPage({
             videoReadiness={videoReadiness}
             sceneReviewData={sceneReviewData}
           />
-          <AttachedVideoClipsSection scenes={attachedVideoClipScenes} />
+          <AttachedVideoClipsSection episodeSlug={normalised.slug} scenes={attachedVideoClipScenes} />
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* F. PUBLISH READINESS                                              */}
+        {/* F. FINAL VIDEO ASSEMBLY PLAN                                      */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="final-video-plan" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader icon="🎬" title="Final Story Video Plan" subtitle="Preview how this episode could be assembled into a complete story video. Rendering comes in a future phase." />
+          <FinalVideoAssemblyPreviewSection pkg={finalVideoPkg} />
+          <div id="final-video-preview">
+            <FinalStoryVideoPreviewSection pkg={finalVideoPkg} />
+          </div>
+          <div id="final-video-render-readiness">
+            <FinalVideoRenderReadinessSection pkg={finalVideoPkg} />
+          </div>
+          <div id="final-video-production">
+            <FinalVideoProductionSection
+              pkg={finalVideoPkg}
+              episodeSlug={normalised.slug}
+              initialFinalVideo={initialFinalVideo}
+            />
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* G. PUBLISH READINESS                                              */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="publish-readiness" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader icon="🚀" title="Publish Readiness" subtitle="Check all blockers and publish when ready." />
