@@ -3238,6 +3238,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1779160600703-6qk337",
+      "characterSlug": "ube-baby",
+      "assetType": "official-profile-reference",
+      "title": "Ube Official Profile Sheet",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1779160599871-ube-baby-character-profile-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 2253678,
+      "uploadedAt": "2026-05-19T03:16:40.703Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
