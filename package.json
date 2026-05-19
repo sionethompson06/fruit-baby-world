@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test:e2e": "node -r ts-node/register tests/e2e/update-final-video-visibility.test.ts",
+    "test": "vitest",
     "start": "next start",
     "lint": "eslint"
   },
@@ -25,6 +27,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "ts-node": "^10",
+    "typescript": "^5",
+    "vitest": "^1.6.1"
   }
 }

@@ -14,6 +14,8 @@ import {
   getPublicReadyVideoClipsForEpisode,
   type PublicVideoClip,
 } from "@/lib/publicVideoClips";
+import { getPublicReadyFinalVideo } from "@/lib/publicFinalVideo";
+import PublicFinalVideoPlayer from "./components/PublicFinalVideoPlayer";
 
 // ─── Public eligibility ───────────────────────────────────────────────────────
 
@@ -702,6 +704,9 @@ export default async function StoryDetailPage({
     };
   })();
 
+  // Public-ready full final video — only shown when visibility === "public-ready"
+  const publicFinalVideo = getPublicReadyFinalVideo(raw);
+
   // Gradient colors from featured characters
   const heroColorA = featuredChars[0]?.visualIdentity.primaryColors[0] ?? "#FFD84D";
   const heroColorB = featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#7AC943";
@@ -940,6 +945,11 @@ export default async function StoryDetailPage({
             </p>
           )}
         </PublicSection>
+
+        {/* ── Full Final Video (public-ready only) ── */}
+        {publicFinalVideo && (
+          <PublicFinalVideoPlayer video={{ url: publicFinalVideo.url, mimeType: publicFinalVideo.mimeType, durationSeconds: publicFinalVideo.durationSeconds }} />
+        )}
 
         {/* ── Audio Story Player — public-ready audio only ── */}
         {publicAudio && (

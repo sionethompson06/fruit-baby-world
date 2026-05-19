@@ -732,6 +732,47 @@ function buildEpisodeIssues(
     }
   }
 
+  // ── Final story video checks (info/warning only — not a blocker)
+  const finalVideo = isRecord(raw.finalVideo) ? raw.finalVideo : null;
+  if (!finalVideo) {
+    issues.push({
+      id: `ep-${episodeSlug}-no-final-video`,
+      scope: "episode",
+      severity: "info",
+      title: `"${episodeTitle}": No final story video attached`,
+      message: `Episode "${episodeTitle}" has no attached final story video. Final videos are optional.`,
+      episodeSlug,
+      suggestedAction: "Attach a final video using the Final Video Production section when available.",
+    });
+  } else {
+    const fvUrl = str(finalVideo.url);
+    const fvVisibility = str(finalVideo.visibility);
+    if (!fvUrl || !isValidUrl(fvUrl)) {
+      issues.push({
+        id: `ep-${episodeSlug}-final-video-bad-url`,
+        scope: "episode",
+        severity: fvVisibility === "public-ready" ? "warning" : "info",
+        title: `"${episodeTitle}": Attached final video has invalid URL`,
+        message: fvVisibility === "public-ready"
+          ? `Final video is Public Ready but the URL is invalid or missing — it will not play on the public story page.`
+          : `Attached final video has an invalid or missing URL.`,
+        episodeSlug,
+        suggestedAction: "Re-attach the final video with a valid Blob URL",
+      });
+    }
+    if (fvVisibility === "admin-only") {
+      issues.push({
+        id: `ep-${episodeSlug}-final-video-admin-only`,
+        scope: "episode",
+        severity: "info",
+        title: `"${episodeTitle}": Final video attached but admin-only`,
+        message: `Final video is attached to the episode but not public-ready. Use visibility controls to publish it.`,
+        episodeSlug,
+        suggestedAction: "Set final video visibility to Public Ready in the Final Video section",
+      });
+    }
+  }
+
   return issues;
 }
 
