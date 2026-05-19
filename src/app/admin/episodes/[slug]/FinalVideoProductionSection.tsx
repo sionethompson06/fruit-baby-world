@@ -33,6 +33,8 @@ function StatusBadge({ status }: { status: FinalVideoAssemblyStatus }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+import FinalVideoVisibilityControls from "./FinalVideoVisibilityControls";
+
 type Props = {
   pkg: FinalVideoAssemblyPackage;
   episodeSlug: string;
@@ -126,21 +128,8 @@ export default function FinalVideoProductionSection({ pkg, episodeSlug, raw }: P
 
       {/* Existing final video (if already attached via manual/future test) */}
       {plan.existingFinalVideo && (
-        <div className="bg-tiki-brown/3 border border-tiki-brown/10 rounded-2xl px-4 py-4 flex flex-col gap-2">
-          <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
-            Existing Final Video
-          </p>
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-tiki-brown/55">
-            <span>ID: <span className="font-mono">{plan.existingFinalVideo.id}</span></span>
-            <span>Status: {plan.existingFinalVideo.status}</span>
-            <span>Visibility: {plan.existingFinalVideo.visibility}</span>
-            {plan.existingFinalVideo.durationSeconds && (
-              <span>Duration: {plan.existingFinalVideo.durationSeconds}s</span>
-            )}
-            {plan.existingFinalVideo.createdAt && (
-              <span>Created: {new Date(plan.existingFinalVideo.createdAt).toLocaleDateString()}</span>
-            )}
-          </div>
+        <div>
+          <FinalVideoVisibilityControls finalVideo={plan.existingFinalVideo} episodeSlug={episodeSlug} />
         </div>
       )}
 

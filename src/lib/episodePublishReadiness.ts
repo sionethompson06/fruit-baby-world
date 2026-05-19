@@ -527,6 +527,41 @@ export function buildEpisodePublishReadiness(
         : undefined,
   });
 
+  // 16c. Final story video (optional)
+  const finalVideo = isRecord(raw.finalVideo) ? raw.finalVideo : null;
+  if (finalVideo) {
+    const fvUrl = str(finalVideo.url);
+    const fvVisibility = str(finalVideo.visibility);
+    const fvUrlValid = fvUrl.startsWith("https://") || fvUrl.startsWith("/");
+    const isPublicReady = fvUrlValid && fvVisibility === "public-ready";
+    const isHidden = fvVisibility === "hidden";
+    checklist.push({
+      id: "episode-final-video",
+      label: "Final story video (optional)",
+      status: isPublicReady ? "pass" : isHidden ? "warning" : fvUrlValid ? "warning" : "warning",
+      message: !fvUrlValid
+        ? "Attached final video has an invalid or missing URL."
+        : isHidden
+        ? "Final video is attached but hidden — it will not appear publicly."
+        : isPublicReady
+        ? "Final video is attached and public-ready."
+        : "Final video is attached but not public-ready. Use visibility controls to mark it public-ready.",
+      suggestedAction: !fvUrlValid
+        ? "Re-attach the final video using a valid Blob URL."
+        : isPublicReady
+        ? undefined
+        : "In the Final Video section, use the visibility controls to mark it Public Ready.",
+    });
+  } else {
+    checklist.push({
+      id: "episode-final-video",
+      label: "Final story video (optional)",
+      status: "warning",
+      message: "No final story video attached yet. Final videos are optional for publishing.",
+      suggestedAction: "When ready, render and attach a final video then mark it Public Ready.",
+    });
+  }
+
   // 17. Archived scenes with panels
   if (archivedWithPanels.length > 0) {
     checklist.push({
