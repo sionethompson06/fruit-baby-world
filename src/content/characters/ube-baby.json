@@ -120,7 +120,7 @@
   ],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1778996538093-ube-happy-fun-listening.png",
-    "profileSheet": "/characters/ube-baby/Ube Profile.png",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1779160599871-ube-baby-character-profile-.png",
     "alt": "Official Ube Baby character profile sheet"
   },
   "merchPotential": [
@@ -131,5 +131,8 @@
     "collectible figure"
   ],
   "mainReferenceAssetId": "ref-1778996538911-w5r8jb",
-  "updatedAt": "2026-05-17T17:07:48.967Z"
+  "updatedAt": "2026-05-19T04:43:02.607Z",
+  "primaryReferenceAssetId": "ref-1779160600703-6qk337",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/ube-baby/1779160599871-ube-baby-character-profile-.png",
+  "primaryReferenceAssetType": "official-profile-reference"
 }

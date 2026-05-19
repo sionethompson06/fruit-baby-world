@@ -3182,11 +3182,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2204090,
       "uploadedAt": "2026-05-19T03:11:54.165Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:41:39.923Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:41:39.923Z"
     },
     {
       "id": "ref-1779160448572-ddwbsy",
@@ -3199,11 +3203,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2283214,
       "uploadedAt": "2026-05-19T03:14:08.572Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:41:58.205Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:41:58.205Z"
     },
     {
       "id": "ref-1779160490886-83kx7a",
@@ -3216,11 +3224,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 1765067,
       "uploadedAt": "2026-05-19T03:14:50.886Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:42:22.633Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:42:22.633Z"
     },
     {
       "id": "ref-1779160573607-2e24d5",
@@ -3233,11 +3245,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 3268715,
       "uploadedAt": "2026-05-19T03:16:13.607Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:42:51.486Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:42:51.486Z"
     },
     {
       "id": "ref-1779160600703-6qk337",
@@ -3250,11 +3266,15 @@
       "mimeType": "image/png",
       "fileSizeBytes": 2253678,
       "uploadedAt": "2026-05-19T03:16:40.703Z",
-      "approvedForGeneration": false,
-      "requiresReview": true,
-      "reviewStatus": "needs-review",
-      "reviewedAt": null,
-      "reviewedBy": null
+      "approvedForGeneration": true,
+      "requiresReview": false,
+      "reviewStatus": "approved-for-generation",
+      "reviewedAt": "2026-05-19T04:43:01.422Z",
+      "reviewedBy": "admin",
+      "generationUseAllowed": true,
+      "publicUseAllowed": false,
+      "isOfficialReference": true,
+      "updatedAt": "2026-05-19T04:43:01.422Z"
     }
   ]
 }

@@ -106,7 +106,7 @@
   ],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1778997147499-tiki-angry-mad-serious-yelling-.png",
-    "profileSheet": "/characters/tiki/Tiki Profile.png",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1779160572714-tiki-trouble-character-profile-.png",
     "alt": "Official Tiki Trouble character profile sheet"
   },
   "merchPotential": [
@@ -117,5 +117,8 @@
     "antagonist pack"
   ],
   "mainReferenceAssetId": "ref-1778997148476-ov437d",
-  "updatedAt": "2026-05-17T16:43:30.180Z"
+  "updatedAt": "2026-05-19T04:42:52.735Z",
+  "primaryReferenceAssetId": "ref-1779160573607-2e24d5",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1779160572714-tiki-trouble-character-profile-.png",
+  "primaryReferenceAssetType": "official-profile-reference"
 }

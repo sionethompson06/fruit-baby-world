@@ -127,7 +127,7 @@
   ],
   "image": {
     "main": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1778966553575-mango-happy-fun-enjoy-playing.png",
-    "profileSheet": "/characters/mango-baby/Mango Profile.png",
+    "profileSheet": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1779160447753-mango-character-profile.png",
     "alt": "Official Mango Baby character profile sheet"
   },
   "merchPotential": [
@@ -138,7 +138,10 @@
     "collectible figure"
   ],
   "mainReferenceAssetId": "ref-1778966554128-xv62qr",
-  "updatedAt": "2026-05-19T03:06:53.984Z",
+  "updatedAt": "2026-05-19T04:41:59.354Z",
   "profileCompletedAt": "2026-05-19T03:06:53.984Z",
-  "profileGeneratedFromPrimaryReferenceAt": "2026-05-19T03:06:53.984Z"
+  "profileGeneratedFromPrimaryReferenceAt": "2026-05-19T03:06:53.984Z",
+  "primaryReferenceAssetId": "ref-1779160448572-ddwbsy",
+  "primaryReferenceAssetUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/mango-baby/1779160447753-mango-character-profile.png",
+  "primaryReferenceAssetType": "official-profile-reference"
 }
