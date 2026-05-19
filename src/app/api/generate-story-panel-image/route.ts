@@ -430,7 +430,7 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Image generation ──────────────────────────────────────────────────────────
   const apiKey = process.env.OPENAI_API_KEY;
-  const imageModel = process.env.OPENAI_IMAGE_MODEL?.trim() || "dall-e-3";
+  const imageModel = process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-1";
 
   if (!apiKey) {
     return Response.json(

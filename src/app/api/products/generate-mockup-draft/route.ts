@@ -246,7 +246,7 @@ export async function POST(request: Request): Promise<Response> {
     const openai = new OpenAI({ apiKey });
 
     const imageResponse = await openai.images.generate({
-      model: "dall-e-3",
+      model: process.env.OPENAI_IMAGE_MODEL?.trim() || "gpt-image-1",
       prompt: generationPrompt,
       n: 1,
       size: "1024x1024",
