@@ -79,6 +79,10 @@ type GenerateResult =
       fidelityRulesSummary: string;
       usedImageConditioning: boolean;
       providerSupportsImageReferences: boolean;
+      selectedReferenceAssetCount: number;
+      conditionedImageCount: number;
+      skippedReferenceAssetCount: number;
+      imageConditioningWarnings: string[];
       fallbackReason?: string;
       warnings: string[];
       notes: string[];
@@ -104,6 +108,10 @@ type GenerateResult =
       referencesOmitted?: ReferenceMetaItem[];
       usedImageConditioning?: boolean;
       providerSupportsImageReferences?: boolean;
+      selectedReferenceAssetCount?: number;
+      conditionedImageCount?: number;
+      skippedReferenceAssetCount?: number;
+      imageConditioningWarnings?: string[];
       fallbackReason?: string;
       warnings?: string[];
     };
@@ -476,27 +484,56 @@ export async function POST(request: Request): Promise<Response> {
   let resultImageUrl: string | undefined;
   let usedImageConditioning = false;
   let fallbackReason: string | undefined;
+  let selectedReferenceAssetCount = 0;
+  let conditionedImageCount = 0;
+  let skippedReferenceAssetCount = 0;
+  let imageConditioningWarnings: string[] = [];
 
   const hasBundle = referenceCounts.total > 0 && genPkg !== null && sceneRefPkg !== null;
 
   if (hasBundle && genPkg && sceneRefPkg) {
     const bundleAssets = buildStoryPanelReferenceBundle(sceneRefPkg).assets;
+    selectedReferenceAssetCount = bundleAssets.length;
+
+    console.log(
+      `[generate-story-panel-image] bundle: ${selectedReferenceAssetCount} assets, model: ${imageModel}`
+    );
 
     if (bundleAssets.length > 0) {
       const conditioned = await fetchConditionedImages(bundleAssets).catch((err) => {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn("[generate-story-panel-image] fetchConditionedImages threw:", msg);
-        return { images: [], failedAssetIds: [] as string[], warnings: [`Fetch error: ${msg}`] };
+        return {
+          images: [] as import("@/lib/storyPanelImageConditioner").FetchedReferenceImage[],
+          failedAssetIds: [] as string[],
+          warnings: [`Fetch error: ${msg}`],
+        };
       });
+
+      conditionedImageCount = conditioned.images.length;
+      skippedReferenceAssetCount = conditioned.failedAssetIds.length;
+      imageConditioningWarnings = conditioned.warnings;
+
+      console.log(
+        `[generate-story-panel-image] conditioned: ${conditionedImageCount} valid, ${skippedReferenceAssetCount} skipped`
+      );
+      if (conditioned.warnings.length > 0) {
+        console.log("[generate-story-panel-image] conditioning warnings:", conditioned.warnings);
+      }
+
       refWarnings.push(...conditioned.warnings);
 
       if (conditioned.images.length > 0) {
         const editPrompt = buildImageConditionedEditPrompt(sceneRefPkg, panelPrompt);
 
         try {
+          console.log(
+            `[generate-story-panel-image] attempting images.edit with ${conditionedImageCount} File inputs`
+          );
+
           const editResponse = await openai.images.edit({
             model: imageModel,
-            image: conditioned.images.map((fi) => fi.response) as Parameters<typeof openai.images.edit>[0]["image"],
+            image: conditioned.images.map((fi) => fi.file) as Parameters<typeof openai.images.edit>[0]["image"],
             prompt: editPrompt,
             n: 1,
             size: "1024x1024",
@@ -511,8 +548,10 @@ export async function POST(request: Request): Promise<Response> {
             usedImageConditioning = true;
             referenceMode = "image-conditioned-reference-bundle";
             generationPrompt = editPrompt;
+            console.log("[generate-story-panel-image] images.edit succeeded");
           } else {
             fallbackReason = "Image edit returned no image data — falling back to prompt-only generation.";
+            console.warn("[generate-story-panel-image] images.edit returned no image data");
           }
         } catch (editErr) {
           const editMsg = editErr instanceof Error ? editErr.message : String(editErr);
@@ -520,7 +559,8 @@ export async function POST(request: Request): Promise<Response> {
           console.warn("[generate-story-panel-image] images.edit failed, will fall back:", editMsg);
         }
       } else {
-        fallbackReason = "No reference images could be fetched — falling back to prompt-only generation.";
+        fallbackReason = "No valid reference images could be prepared — falling back to prompt-only generation.";
+        console.warn("[generate-story-panel-image] no valid images after MIME check, falling back");
       }
     } else {
       fallbackReason = "Bundle has no assets for image conditioning — falling back to prompt-only generation.";
@@ -565,6 +605,10 @@ export async function POST(request: Request): Promise<Response> {
           referencesOmitted,
           usedImageConditioning: false,
           providerSupportsImageReferences: true,
+          selectedReferenceAssetCount,
+          conditionedImageCount,
+          skippedReferenceAssetCount,
+          imageConditioningWarnings,
           fallbackReason,
           warnings: refWarnings,
         } satisfies GenerateResult,
@@ -593,6 +637,10 @@ export async function POST(request: Request): Promise<Response> {
         referencesOmitted,
         usedImageConditioning,
         providerSupportsImageReferences: true,
+        selectedReferenceAssetCount,
+        conditionedImageCount,
+        skippedReferenceAssetCount,
+        imageConditioningWarnings,
         fallbackReason,
         warnings: refWarnings,
       } satisfies GenerateResult,
@@ -629,6 +677,10 @@ export async function POST(request: Request): Promise<Response> {
       fidelityRulesSummary,
       usedImageConditioning,
       providerSupportsImageReferences: true,
+      selectedReferenceAssetCount,
+      conditionedImageCount,
+      skippedReferenceAssetCount,
+      imageConditioningWarnings,
       fallbackReason,
       warnings: refWarnings,
       notes: [

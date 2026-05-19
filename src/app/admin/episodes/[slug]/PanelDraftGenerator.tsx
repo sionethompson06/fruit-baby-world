@@ -49,6 +49,10 @@ type GenApiResult = {
   fidelityRulesSummary?: string;
   usedImageConditioning?: boolean;
   providerSupportsImageReferences?: boolean;
+  selectedReferenceAssetCount?: number;
+  conditionedImageCount?: number;
+  skippedReferenceAssetCount?: number;
+  imageConditioningWarnings?: string[];
   fallbackReason?: string;
   warnings?: string[];
   notes?: string[];
@@ -1080,7 +1084,7 @@ export default function PanelDraftGenerator({
                     <div className="flex items-center gap-1.5 text-tropical-green font-semibold">
                       <span>✅</span>
                       <span>
-                        Image-conditioned generation — {result.referenceCounts?.total ?? 0} reference image{(result.referenceCounts?.total ?? 0) !== 1 ? "s" : ""} used as visual inputs
+                        Image-conditioned generation — {result.conditionedImageCount ?? 0} reference image{(result.conditionedImageCount ?? 0) !== 1 ? "s" : ""} used as visual inputs
                       </span>
                     </div>
                   )}
@@ -1088,6 +1092,29 @@ export default function PanelDraftGenerator({
                     <div className="flex items-start gap-1.5 text-ube-purple/80">
                       <span className="flex-shrink-0">↩</span>
                       <span>Prompt-only fallback — {result.fallbackReason}</span>
+                    </div>
+                  )}
+
+                  {/* Reference asset prep counts */}
+                  {(result.selectedReferenceAssetCount ?? 0) > 0 && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-tiki-brown/50">
+                      <span>Selected: {result.selectedReferenceAssetCount}</span>
+                      <span>Passed to provider: {result.conditionedImageCount ?? 0}</span>
+                      {(result.skippedReferenceAssetCount ?? 0) > 0 && (
+                        <span className="text-pineapple-yellow-dark font-semibold">
+                          Skipped: {result.skippedReferenceAssetCount}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Skipped asset warnings */}
+                  {result.imageConditioningWarnings && result.imageConditioningWarnings.length > 0 && (
+                    <div className="flex flex-col gap-0.5 bg-pineapple-yellow/10 border border-pineapple-yellow/25 rounded-xl px-3 py-2 text-xs">
+                      <span className="font-bold text-tiki-brown/50 uppercase tracking-wide">Reference Image Warnings</span>
+                      {result.imageConditioningWarnings.map((w, i) => (
+                        <span key={i} className="text-tiki-brown/60">⚠ {w}</span>
+                      ))}
                     </div>
                   )}
 
