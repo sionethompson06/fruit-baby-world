@@ -162,6 +162,12 @@ function parseProviderError(err: unknown) {
       }
     }
 
+    if (providerMessage.includes("response_format") || providerMessage.includes("Unknown parameter")) {
+      troubleshooting.unshift(
+        "The image request included an unsupported response_format parameter. This should be removed for gpt-image models."
+      );
+    }
+
     if (
       providerStatus === 408 ||
       providerStatus === 429 ||
@@ -451,15 +457,17 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const openai = new OpenAI({ apiKey });
+    const isGptImageModel = imageModel.startsWith("gpt-image");
 
-    const imageResponse = await openai.images.generate({
+    const imageRequest = {
       model: imageModel,
       prompt: generationPrompt,
       n: 1,
       size: "1024x1024",
-      response_format: "b64_json",
-    });
+      ...(isGptImageModel ? {} : { response_format: "b64_json" }),
+    };
 
+    const imageResponse = await openai.images.generate(imageRequest as any);
     const imageData = imageResponse.data?.[0] ?? {};
     const b64 = typeof imageData.b64_json === "string" ? imageData.b64_json : undefined;
     const url = typeof imageData.url === "string" ? imageData.url : undefined;
