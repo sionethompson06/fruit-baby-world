@@ -17,7 +17,7 @@ const ASSET_TYPE_OPTIONS = [
   { value: "expression-sheet", label: "Expression Sheet" },
   { value: "pose-reference", label: "Pose Reference" },
   { value: "turnaround-reference", label: "Turnaround Reference" },
-  { value: "character-environment-reference", label: "Character Environment / Home Reference" },
+  { value: "character-environment-reference", label: "Environment / Home Reference" },
   { value: "scene-style-reference", label: "Scene / Style Reference" },
   { value: "product-reference", label: "Product Reference" },
   { value: "brand-guide", label: "Brand Guide" },
@@ -229,10 +229,29 @@ export default function CharacterReferenceUploadForm({
             </option>
           ))}
         </select>
-        <p className="text-xs text-tiki-brown/40 mt-1.5 leading-relaxed">
-          Choose how this file should help the character system. Most action, mood, expression, and detail images should be{" "}
-          <strong className="font-semibold text-tiki-brown/55">Supporting References</strong>. Environment/Home references describe where the character lives or where stories happen.
-        </p>
+        {assetType === "supporting-reference" && (
+          <p className="text-xs text-tiki-brown/55 mt-1.5 leading-relaxed bg-sky-blue/8 border border-sky-blue/15 rounded-lg px-3 py-2">
+            <strong className="font-semibold">Supporting Reference</strong> — Use for expressions,
+            poses, moods, detail views, and style guides. These help AI preserve the character's
+            trademark look across future story panels and animation clips.
+          </p>
+        )}
+        {assetType === "character-environment-reference" && (
+          <p className="text-xs text-tiki-brown/55 mt-1.5 leading-relaxed bg-sky-blue/8 border border-sky-blue/15 rounded-lg px-3 py-2">
+            <strong className="font-semibold">Environment / Home Reference</strong> — Use for
+            images of where this character lives, plays, or appears. These help the story builder
+            describe locations and support future background prompts, scene planning, and animation
+            settings.
+          </p>
+        )}
+        {!assetType && (
+          <p className="text-xs text-tiki-brown/40 mt-1.5 leading-relaxed">
+            Choose how this file should help the character system. Most action, mood, expression,
+            and detail images should be{" "}
+            <strong className="font-semibold text-tiki-brown/55">Supporting Reference</strong>.
+            Environment references describe where the character lives or where stories happen.
+          </p>
+        )}
       </div>
 
       {/* Title */}

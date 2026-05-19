@@ -240,14 +240,18 @@ export default function CharacterWorkspaceCard({
           {character.role && (
             <p className="text-xs text-tiki-brown/55 mt-0.5">{character.role}</p>
           )}
-          <div className="flex flex-wrap items-center gap-3 mt-1.5">
+          <div className="flex flex-wrap items-center gap-2 mt-1.5">
             <span className="text-xs font-mono text-tiki-brown/35">{character.slug}</span>
-            <span className="text-xs text-tiki-brown/40">
-              Approved refs:{" "}
-              <strong className={approvedRefCount > 0 ? "text-tropical-green" : "text-tiki-brown/35"}>
-                {approvedRefCount}
-              </strong>
-            </span>
+            {approvedSupportingCount > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-lg bg-tropical-green/8 border border-tropical-green/20 text-tropical-green font-semibold">
+                {approvedSupportingCount} supporting
+              </span>
+            )}
+            {approvedEnvironmentCount > 0 && (
+              <span className="text-xs px-2 py-0.5 rounded-lg bg-sky-blue/12 border border-sky-blue/20 text-tiki-brown/60 font-semibold">
+                {approvedEnvironmentCount} env
+              </span>
+            )}
             <Link
               href={`/characters/${character.slug}`}
               className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
@@ -255,6 +259,20 @@ export default function CharacterWorkspaceCard({
               View Profile →
             </Link>
           </div>
+          {/* Next action hint */}
+          {!hasPrimaryRef_ ? (
+            <p className="text-xs font-semibold text-warm-coral/70 mt-1.5">
+              Next: Upload a primary reference image
+            </p>
+          ) : pendingCount > 0 ? (
+            <p className="text-xs font-semibold text-pineapple-yellow/80 mt-1.5">
+              Next: Review {pendingCount} pending asset{pendingCount !== 1 ? "s" : ""}
+            </p>
+          ) : isDraft && assetSummary.readyForReferenceAnchoredGeneration ? (
+            <p className="text-xs font-semibold text-ube-purple/70 mt-1.5">
+              Next: Promote to official when ready
+            </p>
+          ) : null}
         </div>
       </div>
 
