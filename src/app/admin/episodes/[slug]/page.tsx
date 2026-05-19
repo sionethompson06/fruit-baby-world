@@ -69,6 +69,7 @@ import {
 import { buildReferenceAwareStoryPanelPrompt } from "@/lib/storyPanelPromptBuilder";
 import EpisodeCommandCenterSection from "./EpisodeCommandCenterSection";
 import FinalVideoAssemblyPreviewSection from "./FinalVideoAssemblyPreviewSection";
+import FinalStoryVideoPreviewSection from "./FinalStoryVideoPreviewSection";
 import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
 
 export const dynamic = "force-dynamic";
@@ -770,6 +771,7 @@ export default async function EpisodeDetailPage({
           panelCoverage={panelCoverage}
           audioLifecycleStage={existingAudioLifecycleStage}
           totalVideoClips={totalVideoClips}
+          finalVideoStatus={finalVideoPkg.status}
         />
 
         {/* ── Section Navigation ── */}
@@ -1081,6 +1083,9 @@ export default async function EpisodeDetailPage({
         <div id="final-video-plan" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader icon="🎬" title="Final Story Video Plan" subtitle="Preview how this episode could be assembled into a complete story video. Rendering comes in a future phase." />
           <FinalVideoAssemblyPreviewSection pkg={finalVideoPkg} />
+          <div id="final-video-preview">
+            <FinalStoryVideoPreviewSection pkg={finalVideoPkg} />
+          </div>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
