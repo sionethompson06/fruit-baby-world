@@ -3221,6 +3221,23 @@
       "reviewStatus": "needs-review",
       "reviewedAt": null,
       "reviewedBy": null
+    },
+    {
+      "id": "ref-1779160573607-2e24d5",
+      "characterSlug": "tiki",
+      "assetType": "official-profile-reference",
+      "title": "Tiki Official Profile Sheet",
+      "description": "",
+      "notes": "",
+      "blobUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/tiki/1779160572714-tiki-trouble-character-profile-.png",
+      "mimeType": "image/png",
+      "fileSizeBytes": 3268715,
+      "uploadedAt": "2026-05-19T03:16:13.607Z",
+      "approvedForGeneration": false,
+      "requiresReview": true,
+      "reviewStatus": "needs-review",
+      "reviewedAt": null,
+      "reviewedBy": null
     }
   ]
 }
