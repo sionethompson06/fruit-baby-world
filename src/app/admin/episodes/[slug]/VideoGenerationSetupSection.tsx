@@ -62,21 +62,31 @@ export default function VideoGenerationSetupSection({
       <div>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="text-lg">🎬</span>
-          <h2 className="text-base font-black text-tiki-brown">Video Generation Setup</h2>
-          <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 uppercase tracking-wide">
-            Setup Only
-          </span>
+          <h2 className="text-base font-black text-tiki-brown">Video Clip Production</h2>
+          {providerStatus.configured ? (
+            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green uppercase tracking-wide">
+              Provider Ready
+            </span>
+          ) : (
+            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral uppercase tracking-wide">
+              Setup Required
+            </span>
+          )}
         </div>
         <p className="text-sm text-tiki-brown/60 leading-relaxed">
-          Video generation is not active in this phase. This section confirms whether the app has
-          the provider configuration and scene animation context needed for future video clip drafts.
+          Generate, review, upload, and attach approved video clips for this episode.
         </p>
+        {!providerStatus.configured && (
+          <p className="text-xs text-warm-coral mt-1.5 leading-relaxed">
+            Video provider is not fully configured. Add Fal.ai environment variables to enable video clip generation.
+          </p>
+        )}
       </div>
 
       {/* Provider section */}
       <div className="bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl p-4 flex flex-col gap-3">
         <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-          Video Provider
+          Provider Status
         </p>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-black text-tiki-brown">{providerStatus.providerLabel}</span>
@@ -97,7 +107,7 @@ export default function VideoGenerationSetupSection({
             ok={providerStatus.provider !== "none"}
             detail={
               providerStatus.provider === "none"
-                ? "Set VIDEO_GENERATION_PROVIDER in your .env.local file. Supported: runway, luma, fal, replicate."
+                ? "Set VIDEO_GENERATION_PROVIDER in Vercel environment variables. Supported: runway, luma, fal, replicate."
                 : undefined
             }
           />
@@ -106,19 +116,26 @@ export default function VideoGenerationSetupSection({
             ok={providerStatus.configured}
             detail={
               !providerStatus.configured && providerStatus.provider !== "none"
-                ? `Set the API key for ${providerStatus.providerLabel} in your .env.local file.`
+                ? `Set the API key for ${providerStatus.providerLabel} in Vercel environment variables.`
                 : undefined
             }
           />
-          <StatusRow
-            label="Model ID configured"
-            ok={providerStatus.modelIdConfigured}
-            detail={
-              !providerStatus.modelIdConfigured
-                ? "Set VIDEO_GENERATION_MODEL_ID (optional, will use provider default in next phase)."
-                : undefined
-            }
-          />
+          <div className="flex items-start gap-2.5">
+            <span className="inline-block w-2 h-2 rounded-full flex-shrink-0 mt-0.5 bg-tropical-green" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="text-xs font-semibold text-tiki-brown/70">
+                Model ID configured:{" "}
+                <span className={`font-black ${providerStatus.modelIdConfigured ? "text-tropical-green" : "text-tiki-brown/45"}`}>
+                  {providerStatus.modelIdConfigured ? "Yes" : "Optional — using provider default"}
+                </span>
+              </span>
+              {!providerStatus.modelIdConfigured && (
+                <span className="text-xs text-tiki-brown/45 leading-relaxed">
+                  Set VIDEO_GENERATION_MODEL_ID to pin a specific model. Provider default is used if unset.
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         {providerStatus.missing.length > 0 && (
@@ -242,27 +259,16 @@ export default function VideoGenerationSetupSection({
         )}
       </div>
 
-      {/* Future workflow preview */}
-      <div className="bg-ube-purple/6 border border-ube-purple/15 rounded-2xl px-4 py-3 flex flex-col gap-2">
+      {/* Next action */}
+      <div className="bg-ube-purple/6 border border-ube-purple/15 rounded-2xl px-4 py-3 flex flex-col gap-1.5">
         <p className="text-xs font-bold text-ube-purple/70 uppercase tracking-wide">
-          Upcoming Video Workflow
+          Next Action
         </p>
-        <ol className="flex flex-col gap-1.5">
-          {[
-            ["14B", "Generate video clip draft from animation prompt"],
-            ["14C", "Admin video review"],
-            ["14D", "Upload & save approved video to storage"],
-            ["14E", "Attach video metadata to episode"],
-            ["14F", "Public video story player"],
-          ].map(([phase, label]) => (
-            <li key={phase} className="flex items-start gap-2 text-xs text-tiki-brown/55">
-              <span className="font-bold text-ube-purple/50 flex-shrink-0 w-8">{phase}</span>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="text-xs text-tiki-brown/40 mt-1 leading-relaxed">
-          No video is generated, saved, or published until approved through the full admin review workflow.
+        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+          Use the <strong className="font-semibold">Video Clip Draft</strong> section below to generate a temporary clip, review it, upload the approved video, and attach it to the episode.
+        </p>
+        <p className="text-xs text-tiki-brown/40 leading-relaxed">
+          No video is saved or published until explicitly approved and uploaded.
         </p>
       </div>
 
