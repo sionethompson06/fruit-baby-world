@@ -619,6 +619,45 @@ export function buildImageConditionedEditPrompt(
   return lines.join("\n");
 }
 
+// ─── Refine current draft prompt ──────────────────────────────────────────────
+
+export function buildRefineCurrentDraftPrompt(options: {
+  refineInstruction: string;
+  characterSlugs?: string[];
+}): string {
+  const { refineInstruction, characterSlugs = [] } = options;
+  const hasTiki = characterSlugs.some((s) => s === "tiki" || s === "tiki-trouble");
+
+  const lines: string[] = [
+    "REFINE CURRENT DRAFT — Fruit Baby World",
+    "",
+    "Base: the attached/provided image.",
+    "Preserve: composition, characters, colors, poses, environment, lighting, camera angle, and style.",
+    "",
+    "Apply only this edit:",
+    `"${refineInstruction.trim()}"`,
+    "",
+    "CHARACTER FIDELITY — preserve for all characters:",
+    "• Official fruit identity, body color, body shape, and texture",
+    "• Top feature (crown / leaves / stem) — do not swap between characters",
+    "• Short rounded baby arms — must remain visible",
+    "• Baby proportions — short, round, plump body",
+    "• Do not redesign, replace, add, remove, or duplicate any character",
+    "",
+    "COMPOSITION:",
+    "• Do not move characters unless the edit explicitly requests it",
+    "• Do not change background or environment unless the edit explicitly requests it",
+    "• Do not convert this into a character sheet, grid, lineup, or reference layout",
+    "• Keep content kid-friendly, warm, and playful",
+  ];
+
+  if (hasTiki) {
+    lines.push("• Tiki Trouble: keep mischievous and funny, not scary or violent");
+  }
+
+  return lines.join("\n");
+}
+
 // ─── Summary string (for API response metadata) ───────────────────────────────
 
 export function getFidelityRulesSummary(
