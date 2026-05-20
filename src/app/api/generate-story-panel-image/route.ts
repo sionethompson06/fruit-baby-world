@@ -31,6 +31,7 @@ import {
   getFidelityRulesSummary,
   buildImageConditionedEditPrompt,
   buildProductionFidelityPrompt,
+  buildAdminSceneDirectionBlock,
   type ProductionFidelityResult,
 } from "@/lib/storyPanelFidelityRules";
 import {
@@ -125,6 +126,9 @@ type GenerateResult =
       environmentReferenceUsedAsText: boolean;
       exactCastCharacters: string[];
       duplicatePreventionUsed: boolean;
+      adminSceneDirectionUsed: boolean;
+      adminSceneDirectionLength: number;
+      adminSceneDirectionPreview?: string;
       fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
@@ -177,6 +181,9 @@ type GenerateResult =
       environmentReferenceUsedAsText?: boolean;
       exactCastCharacters?: string[];
       duplicatePreventionUsed?: boolean;
+      adminSceneDirectionUsed?: boolean;
+      adminSceneDirectionLength?: number;
+      adminSceneDirectionPreview?: string;
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
@@ -523,6 +530,26 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // ── Admin scene direction ─────────────────────────────────────────────────────
+  let adminSceneDirection: string | undefined;
+  if (body.adminSceneDirection !== undefined && body.adminSceneDirection !== "") {
+    if (typeof body.adminSceneDirection !== "string") {
+      return Response.json(
+        { ok: false, status: "validation_error", message: "adminSceneDirection must be a string." } satisfies GenerateResult,
+        { status: 400 }
+      );
+    }
+    // Strip obvious HTML/script tags for safety
+    const stripped = body.adminSceneDirection.replace(/<[^>]*>/g, "").trim();
+    if (stripped.length > 1200) {
+      return Response.json(
+        { ok: false, status: "validation_error", message: "Manual Scene Direction must be 1,200 characters or fewer." } satisfies GenerateResult,
+        { status: 400 }
+      );
+    }
+    adminSceneDirection = stripped || undefined;
+  }
+
   // ── Load canonical character data ─────────────────────────────────────────────
   const { refs, missing } = loadCharacterRefs(referenceCharacters);
   if (missing.length > 0) {
@@ -568,6 +595,11 @@ export async function POST(request: Request): Promise<Response> {
     refWarnings = ["Reference asset loading failed — using legacy prompt builder as fallback."];
   }
 
+  // Append admin scene direction to draft-mode generation prompt if provided
+  if (adminSceneDirection) {
+    generationPrompt = generationPrompt + "\n\n" + buildAdminSceneDirectionBlock(adminSceneDirection);
+  }
+
   // ══════════════════════════════════════════════════════════════════════════════
   // PRODUCTION MODE — Fal.ai
   // ══════════════════════════════════════════════════════════════════════════════
@@ -611,7 +643,7 @@ export async function POST(request: Request): Promise<Response> {
       : null;
 
     const fidelityResult: ProductionFidelityResult | null = sceneRefPkg
-      ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt, charBySlug)
+      ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt, charBySlug, adminSceneDirection)
       : null;
     const productionPrompt = fidelityResult?.prompt ?? panelPrompt;
 
@@ -676,6 +708,9 @@ export async function POST(request: Request): Promise<Response> {
           environmentReferenceUsedAsText: productionRefSet?.environmentReferenceUsedAsText ?? false,
           exactCastCharacters: fidelityResult?.exactCastCharacters ?? [],
           duplicatePreventionUsed: fidelityResult?.duplicatePreventionUsed ?? false,
+          adminSceneDirectionUsed: fidelityResult?.adminSceneDirectionUsed ?? false,
+          adminSceneDirectionLength: fidelityResult?.adminSceneDirectionLength ?? 0,
+          adminSceneDirectionPreview: fidelityResult?.adminSceneDirectionPreview,
           fallbackUsed: false,
           warnings: refWarnings,
           notes: [
@@ -814,7 +849,10 @@ export async function POST(request: Request): Promise<Response> {
       refWarnings.push(...conditioned.warnings);
 
       if (conditioned.images.length > 0) {
-        const editPrompt = buildImageConditionedEditPrompt(sceneRefPkg, panelPrompt);
+        let editPrompt = buildImageConditionedEditPrompt(sceneRefPkg, panelPrompt);
+        if (adminSceneDirection) {
+          editPrompt = editPrompt + "\n\n" + buildAdminSceneDirectionBlock(adminSceneDirection);
+        }
         try {
           console.log(`[generate-story-panel-image] images.edit with ${conditionedImageCount} File inputs`);
           const editResponse = await openai.images.edit({
@@ -978,6 +1016,9 @@ export async function POST(request: Request): Promise<Response> {
       environmentReferenceUsedAsText: false,
       exactCastCharacters: [],
       duplicatePreventionUsed: false,
+      adminSceneDirectionUsed: Boolean(adminSceneDirection),
+      adminSceneDirectionLength: adminSceneDirection?.length ?? 0,
+      adminSceneDirectionPreview: adminSceneDirection?.slice(0, 120) || undefined,
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       warnings: refWarnings,

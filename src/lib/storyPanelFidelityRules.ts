@@ -226,6 +226,9 @@ export type ProductionFidelityResult = {
   referenceUsageRulesUsed: boolean;
   exactCastCharacters: string[];
   duplicatePreventionUsed: boolean;
+  adminSceneDirectionUsed: boolean;
+  adminSceneDirectionLength: number;
+  adminSceneDirectionPreview: string | undefined;
 };
 
 // ─── Scene composition block builders (internal) ──────────────────────────────
@@ -390,6 +393,21 @@ function buildBabyProportionLockLines(): string[] {
   ];
 }
 
+// ─── Admin scene direction block (exported) ───────────────────────────────────
+
+export function buildAdminSceneDirectionBlock(adminSceneDirection: string): string {
+  const trimmed = adminSceneDirection.trim();
+  if (!trimmed) return "";
+  return [
+    "ADMIN SCENE DIRECTION:",
+    `"${trimmed}"`,
+    "",
+    "Use this for: composition, staging, props, emotion, action, camera angle, and environment details.",
+    "If any part conflicts with official character identity, feature locks, top-feature separation rules,",
+    "missing-part prevention, or approved references — ignore that part and follow official character fidelity rules.",
+  ].join("\n");
+}
+
 // ─── Fruit label helper (internal) ───────────────────────────────────────────
 
 function getFruitLabel(slug: string, char?: Character): string {
@@ -409,7 +427,8 @@ function getFruitLabel(slug: string, char?: Character): string {
 export function buildProductionFidelityPrompt(
   sceneRefPkg: SceneReferencePackage,
   panelPrompt: string,
-  charBySlug: Record<string, Character> = {}
+  charBySlug: Record<string, Character> = {},
+  adminSceneDirection?: string
 ): ProductionFidelityResult {
   const charPkgs = sceneRefPkg.characterPackages;
   const slugs = charPkgs.map((p) => p.characterSlug);
@@ -491,21 +510,24 @@ export function buildProductionFidelityPrompt(
   // ── 9. Reference usage rules ──────────────────────────────────────────────
   const referenceUsageLines = buildReferenceUsageRulesLines();
 
-  // ── Assemble prompt — scene-first order ───────────────────────────────────
+  // ── 10. Admin scene direction ─────────────────────────────────────────────
+  const adminTrimmed = adminSceneDirection?.trim() ?? "";
+  const adminBlock = adminTrimmed ? buildAdminSceneDirectionBlock(adminTrimmed) : null;
+
+  // ── Assemble prompt: feature locks first, then admin direction, then scene ─
   const lines: string[] = [
     "PRODUCTION STORY SCENE GENERATION — Fruit Baby World",
     "",
-    "PRIORITY: Generate the story scene described below. The attached reference images show character appearances — use them as identity guides, not layout templates.",
-    "",
     ...compositionLockLines,
     ...exactCastLines,
-    "SCENE TO GENERATE:",
-    panelPrompt,
-    "",
     ...featureLockLines,
     ...topFeatureLines,
     ...missingPartLines,
     ...proportionLines,
+    ...(adminBlock ? [adminBlock, ""] : []),
+    "SCENE TO GENERATE:",
+    panelPrompt,
+    "",
     ...identityLockLines,
     ...contaminationLines,
     ...referenceUsageLines,
@@ -550,6 +572,9 @@ export function buildProductionFidelityPrompt(
     referenceUsageRulesUsed: true,
     exactCastCharacters,
     duplicatePreventionUsed: true,
+    adminSceneDirectionUsed: Boolean(adminTrimmed),
+    adminSceneDirectionLength: adminTrimmed.length,
+    adminSceneDirectionPreview: adminTrimmed ? adminTrimmed.slice(0, 120) : undefined,
   };
 }
 

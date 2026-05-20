@@ -75,6 +75,9 @@ type GenApiResult = {
   environmentReferenceUsedAsText?: boolean;
   exactCastCharacters?: string[];
   duplicatePreventionUsed?: boolean;
+  adminSceneDirectionUsed?: boolean;
+  adminSceneDirectionLength?: number;
+  adminSceneDirectionPreview?: string;
   fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
@@ -122,6 +125,18 @@ type AttachApiResult = {
   panelAsset?: unknown;
   notes?: string[];
 };
+
+// ─── Quick direction chips ────────────────────────────────────────────────────
+
+const QUICK_DIRECTION_CHIPS = [
+  "Show all characters clearly.",
+  "Keep characters short and round.",
+  "Make arms visible.",
+  "Use one continuous scene.",
+  "Warm lighting.",
+  "Do not crop feet.",
+  "More storybook style.",
+] as const;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -550,6 +565,7 @@ export default function PanelDraftGenerator({
   const [result, setResult] = useState<GenApiResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [generationMode, setGenerationMode] = useState<"draft" | "production">("draft");
+  const [adminSceneDirection, setAdminSceneDirection] = useState<string>("");
 
   // Fidelity review state — local only
   const checklistItems: FidelityChecklistItem[] = fidelityChecklist ?? [];
@@ -628,6 +644,7 @@ export default function PanelDraftGenerator({
     setGenStatus("idle");
     setResult(null);
     setErrorMsg("");
+    setAdminSceneDirection("");
     resetReviewState();
   }
 
@@ -642,7 +659,14 @@ export default function PanelDraftGenerator({
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ episodeSlug, sceneNumber, panelPrompt, referenceCharacters, generationMode }),
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          panelPrompt,
+          referenceCharacters,
+          generationMode,
+          adminSceneDirection: adminSceneDirection.trim() || undefined,
+        }),
       });
 
       if (res.status === 401) {
@@ -1000,6 +1024,50 @@ export default function PanelDraftGenerator({
         </div>
       </div>
 
+      {/* Manual Scene Direction */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+          Manual Scene Direction
+          <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
+        </label>
+        <p className="text-xs text-tiki-brown/50 leading-relaxed">
+          Add specific visual instructions for this panel. These notes guide the scene, composition, emotion, props, and environment — but cannot override official character fidelity rules.
+        </p>
+        <textarea
+          value={adminSceneDirection}
+          onChange={(e) => setAdminSceneDirection(e.target.value)}
+          placeholder="Example: Place Mango Baby on the right holding the flower. Keep Ube Baby seated and shy. Make Pineapple Baby comforting and smiling. Use a warm classroom rug and soft afternoon light. Make sure Mango Baby's short rounded arms are visible."
+          rows={3}
+          maxLength={1200}
+          disabled={isLoading}
+          className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-ube-purple/40 disabled:opacity-50"
+        />
+        {/* Quick chips */}
+        <div className="flex flex-wrap gap-1.5">
+          {QUICK_DIRECTION_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              disabled={isLoading}
+              onClick={() =>
+                setAdminSceneDirection((prev) => {
+                  const trimmed = prev.trimEnd();
+                  return trimmed ? `${trimmed} ${chip}` : chip;
+                })
+              }
+              className="text-xs px-2.5 py-1 rounded-full border border-tiki-brown/18 text-tiki-brown/55 bg-white hover:bg-tiki-brown/5 hover:border-tiki-brown/30 disabled:opacity-40 transition-colors"
+            >
+              + {chip}
+            </button>
+          ))}
+        </div>
+        {adminSceneDirection.trim().length > 0 && (
+          <p className="text-xs text-tiki-brown/35 text-right">
+            {adminSceneDirection.trim().length}/1200
+          </p>
+        )}
+      </div>
+
       {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         <button
@@ -1293,6 +1361,21 @@ export default function PanelDraftGenerator({
                       </div>
                     </div>
                   )}
+
+                  {/* Admin scene direction (shown for both modes when used) */}
+                  <div className={`flex flex-col gap-1 rounded-xl px-3 py-2 ${result.adminSceneDirectionUsed ? "bg-ube-purple/6 border border-ube-purple/18" : "bg-tiki-brown/4 border border-tiki-brown/10"}`}>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-tiki-brown/50 uppercase tracking-wide text-xs">Admin Scene Direction</span>
+                      <span className={`text-xs font-semibold ${result.adminSceneDirectionUsed ? "text-ube-purple" : "text-tiki-brown/35"}`}>
+                        {result.adminSceneDirectionUsed ? "Used" : "Not used"}
+                      </span>
+                    </div>
+                    {result.adminSceneDirectionUsed && result.adminSceneDirectionPreview && (
+                      <p className="text-xs text-tiki-brown/60 italic leading-relaxed">
+                        &ldquo;{result.adminSceneDirectionPreview}{(result.adminSceneDirectionLength ?? 0) > 120 ? "…" : ""}&rdquo;
+                      </p>
+                    )}
+                  </div>
 
                   {/* Reference asset prep counts (draft mode) */}
                   {result.generationMode !== "production" && (result.selectedReferenceAssetCount ?? 0) > 0 && (
