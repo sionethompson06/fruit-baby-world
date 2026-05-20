@@ -62,6 +62,11 @@ import {
   PROVIDER_PROMPT_SOFT_LIMIT,
   type CompactionResult,
 } from "@/lib/storyPanelPromptCompactor";
+import {
+  buildStoryPanelAssemblyPlan,
+  summarizeAssemblyPlanForUi,
+} from "@/lib/storyPanelAssemblyPlanner";
+import type { AssemblyPlanUiSummary } from "@/lib/storyPanelAssemblyTypes";
 import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -150,6 +155,13 @@ type GenerateResult =
       baseDraftModelId?: string;
       hybridStage1Status?: "success" | "failed";
       hybridStage2Status?: "success" | "failed";
+      assemblyPlanAvailable: boolean;
+      assemblyPlanSummary?: AssemblyPlanUiSummary;
+      assemblyPlanWarnings: string[];
+      assemblyPlanCharacterCount: number;
+      assemblyPlanSetting: string;
+      assemblyPlanMood: string;
+      assemblyPlanAdminDirectionUsed: boolean;
       warnings: string[];
       notes: string[];
     }
@@ -458,6 +470,62 @@ async function generateWithFal(
   };
 }
 
+// ─── Assembly plan helper ─────────────────────────────────────────────────────
+
+type AssemblyPlanFields = {
+  assemblyPlanAvailable: boolean;
+  assemblyPlanSummary?: AssemblyPlanUiSummary;
+  assemblyPlanWarnings: string[];
+  assemblyPlanCharacterCount: number;
+  assemblyPlanSetting: string;
+  assemblyPlanMood: string;
+  assemblyPlanAdminDirectionUsed: boolean;
+};
+
+function buildAssemblyPlanSafe(options: {
+  episodeSlug: string | undefined;
+  sceneId: string | undefined;
+  sceneNumber: number | undefined;
+  mode: StoryPanelGenerationMode;
+  characterSlugs: string[];
+  sceneText: string;
+  adminSceneDirection?: string;
+  referenceAssetIds: string[];
+}): AssemblyPlanFields {
+  try {
+    const plan = buildStoryPanelAssemblyPlan({
+      episodeSlug: options.episodeSlug ?? "unknown",
+      sceneId: options.sceneId ?? null,
+      sceneNumber: options.sceneNumber ?? null,
+      panelId: null,
+      mode: options.mode,
+      characterSlugs: options.characterSlugs,
+      sceneText: options.sceneText,
+      adminSceneDirection: options.adminSceneDirection ?? null,
+      referenceAssetIds: options.referenceAssetIds,
+    });
+    const summary = summarizeAssemblyPlanForUi(plan);
+    return {
+      assemblyPlanAvailable: true,
+      assemblyPlanSummary: summary,
+      assemblyPlanWarnings: plan.metadata.warnings,
+      assemblyPlanCharacterCount: plan.cast.length,
+      assemblyPlanSetting: plan.scene.settingLabel,
+      assemblyPlanMood: plan.scene.mood,
+      assemblyPlanAdminDirectionUsed: plan.prompts.adminDirectionUsed !== null,
+    };
+  } catch {
+    return {
+      assemblyPlanAvailable: false,
+      assemblyPlanWarnings: ["Assembly planning failed — will not affect image generation."],
+      assemblyPlanCharacterCount: 0,
+      assemblyPlanSetting: "Unknown",
+      assemblyPlanMood: "Unknown",
+      assemblyPlanAdminDirectionUsed: false,
+    };
+  }
+}
+
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(request: Request): Promise<Response> {
@@ -683,6 +751,16 @@ export async function POST(request: Request): Promise<Response> {
 
     try {
       const falResult = await generateWithFal(falApiKey, modelId, providerPrompt, productionRefSet);
+      const assemblyPlan = buildAssemblyPlanSafe({
+        episodeSlug,
+        sceneId,
+        sceneNumber,
+        mode: generationMode,
+        characterSlugs: referenceCharacters,
+        sceneText: panelPrompt,
+        adminSceneDirection,
+        referenceAssetIds: referencesUsed.map((r) => r.characterSlug),
+      });
 
       return Response.json(
         {
@@ -748,6 +826,7 @@ export async function POST(request: Request): Promise<Response> {
           promptCompactionWarnings: productionCompaction.warnings,
           promptSectionsRemovedOrShortened: productionCompaction.removedSections,
           fallbackUsed: false,
+          ...assemblyPlan,
           warnings: refWarnings,
           notes: [
             "This story panel draft has not been saved.",
@@ -1060,6 +1139,16 @@ export async function POST(request: Request): Promise<Response> {
 
     const hybridFinalProvider: StoryPanelProvider = usedHybridEnhancement ? "fal" : "openai";
     const hybridFinalModelId = usedHybridEnhancement ? falModelId : openAiModelId;
+    const hybridAssemblyPlan = buildAssemblyPlanSafe({
+      episodeSlug,
+      sceneId,
+      sceneNumber,
+      mode: generationMode,
+      characterSlugs: referenceCharacters,
+      sceneText: panelPrompt,
+      adminSceneDirection,
+      referenceAssetIds: referencesUsed.map((r) => r.characterSlug),
+    });
 
     return Response.json(
       {
@@ -1127,6 +1216,7 @@ export async function POST(request: Request): Promise<Response> {
         baseDraftModelId: openAiModelId,
         hybridStage1Status: "success",
         hybridStage2Status,
+        ...hybridAssemblyPlan,
         warnings: refWarnings,
         notes: [
           "This story panel draft has not been saved.",
@@ -1354,6 +1444,17 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
+  const draftAssemblyPlan = buildAssemblyPlanSafe({
+    episodeSlug,
+    sceneId,
+    sceneNumber,
+    mode: generationMode,
+    characterSlugs: referenceCharacters,
+    sceneText: panelPrompt,
+    adminSceneDirection,
+    referenceAssetIds: referencesUsed.map((r) => r.characterSlug),
+  });
+
   return Response.json(
     {
       ok: true,
@@ -1415,6 +1516,7 @@ export async function POST(request: Request): Promise<Response> {
       promptSectionsRemovedOrShortened: compactionResult?.removedSections ?? [],
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
+      ...draftAssemblyPlan,
       warnings: refWarnings,
       notes: [
         "This story panel draft has not been saved.",

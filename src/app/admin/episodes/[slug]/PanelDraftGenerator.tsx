@@ -97,6 +97,28 @@ type GenApiResult = {
   promptSectionsRemovedOrShortened?: string[];
   fallbackUsed?: boolean;
   fallbackReason?: string;
+  assemblyPlanAvailable?: boolean;
+  assemblyPlanSummary?: {
+    available: boolean;
+    settingLabel: string;
+    mood: string;
+    characterCount: number;
+    characters: Array<{
+      slug: string;
+      name: string;
+      placement: string;
+      emotion: string;
+      action: string;
+    }>;
+    backgroundSummary: string;
+    warnings: string[];
+    adminDirectionUsed: string | null;
+  };
+  assemblyPlanWarnings?: string[];
+  assemblyPlanCharacterCount?: number;
+  assemblyPlanSetting?: string;
+  assemblyPlanMood?: string;
+  assemblyPlanAdminDirectionUsed?: boolean;
   warnings?: string[];
   notes?: string[];
   draft?: {
@@ -1697,6 +1719,52 @@ export default function PanelDraftGenerator({
                       <span key={i} className="text-tiki-brown/60">⚠ {w}</span>
                     ))}
                   </div>
+                )}
+
+                {/* Scene Assembly Plan */}
+                {result.assemblyPlanAvailable && result.assemblyPlanSummary && (
+                  <details className="mt-1">
+                    <summary className="cursor-pointer list-none select-none py-0.5">
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-bold text-tiki-brown/45 uppercase tracking-wide">Scene Assembly Plan</span>
+                        <span className="px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold text-xs">
+                          {result.assemblyPlanCharacterCount ?? 0} character{(result.assemblyPlanCharacterCount ?? 0) !== 1 ? "s" : ""}
+                        </span>
+                        <span className="text-tiki-brown/35 text-xs">▸ expand</span>
+                      </div>
+                    </summary>
+                    <div className="mt-2 flex flex-col gap-2 rounded-xl bg-ube-purple/4 border border-ube-purple/12 px-3 py-2.5">
+                      <p className="text-xs text-tiki-brown/40 leading-relaxed">
+                        Assembly planning prepares future background + per-character rendering. No images are generated here.
+                      </p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+                        <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.settingLabel}</span></span>
+                        <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.mood}</span></span>
+                      </div>
+                      {result.assemblyPlanSummary.characters.length > 0 && (
+                        <div className="flex flex-col gap-1.5 mt-0.5">
+                          <span className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide">Character Layers</span>
+                          {result.assemblyPlanSummary.characters.map((c) => (
+                            <div key={c.slug} className="flex flex-col gap-0.5 rounded-lg bg-white/60 px-2.5 py-1.5 border border-tiki-brown/8">
+                              <span className="text-xs font-semibold text-tiki-brown/75">{c.name}</span>
+                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/50">
+                                <span>Placement: <span className="font-medium">{c.placement}</span></span>
+                                <span>Emotion: <span className="font-medium">{c.emotion}</span></span>
+                                <span>Action: <span className="font-medium">{c.action}</span></span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {result.assemblyPlanSummary.warnings.length > 0 && (
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          {result.assemblyPlanSummary.warnings.map((w, i) => (
+                            <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </details>
                 )}
               </div>
 
