@@ -10,7 +10,7 @@ import OpenAI from "openai";
 import { put } from "@vercel/blob";
 import { buildRefineCurrentDraftPrompt } from "@/lib/storyPanelFidelityRules";
 import {
-  getProductionModelId,
+  getFalRefineModelId,
   getFalApiKey,
   isProductionProviderConfigured,
   getDraftModelId,
@@ -194,7 +194,7 @@ export async function POST(request: Request): Promise<Response> {
   // FAL.AI PATH
   // ══════════════════════════════════════════════════════════════════════════════
   if (useFal && falApiKey && imageUrlForFal) {
-    const modelId = getProductionModelId();
+    const modelId = getFalRefineModelId();
     const provider: StoryPanelProvider = "fal";
 
     console.log(`[refine] Fal path: model=${modelId}, promptLen=${refinePrompt.length}`);

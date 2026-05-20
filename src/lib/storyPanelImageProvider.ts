@@ -15,6 +15,8 @@ export const DEFAULT_DRAFT_PROVIDER: StoryPanelProvider = "openai";
 export const DEFAULT_DRAFT_MODEL_ID = "gpt-image-1";
 export const DEFAULT_PRODUCTION_PROVIDER: StoryPanelProvider = "fal";
 export const DEFAULT_PRODUCTION_MODEL_ID = "fal-ai/flux-kontext-pro";
+// Refine uses the single-image Kontext endpoint — never the multi-reference variant.
+export const DEFAULT_REFINE_MODEL_ID = "fal-ai/flux-pro/kontext";
 
 // ─── Config readers ───────────────────────────────────────────────────────────
 
@@ -31,6 +33,15 @@ export function getProductionProvider(): StoryPanelProvider {
 export function getProductionModelId(): string {
   return (
     process.env.STORY_PANEL_PRODUCTION_MODEL_ID?.trim() || DEFAULT_PRODUCTION_MODEL_ID
+  );
+}
+
+// Returns the Fal model used for refining an existing draft image.
+// Always defaults to the single-image Kontext endpoint — never the /multi variant,
+// which requires image_url as an array and is incompatible with single-base-image edits.
+export function getFalRefineModelId(): string {
+  return (
+    process.env.STORY_PANEL_REFINE_MODEL_ID?.trim() || DEFAULT_REFINE_MODEL_ID
   );
 }
 
