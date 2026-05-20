@@ -517,7 +517,8 @@ function buildAssemblyPlanSafe(options: {
       assemblyPlanAdminDirectionUsed: plan.prompts.adminDirectionUsed !== null,
       assemblyPlanBackgroundPrompt: plan.prompts.backgroundPrompt,
     };
-  } catch {
+  } catch (err) {
+    console.error("[generate-story-panel-image] Assembly planning failed:", err);
     return {
       assemblyPlanAvailable: false,
       assemblyPlanWarnings: ["Assembly planning failed — will not affect image generation."],

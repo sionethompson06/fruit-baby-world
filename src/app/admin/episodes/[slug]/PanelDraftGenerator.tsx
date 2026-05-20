@@ -1188,7 +1188,8 @@ export default function PanelDraftGenerator({
   }
 
   async function handleGenerateBackground() {
-    if (!result?.assemblyPlanBackgroundPrompt) return;
+    const backgroundPrompt = result?.assemblyPlanBackgroundPrompt ?? panelPrompt;
+    if (!backgroundPrompt) return;
     setBgDraftStatus("loading");
     setBgDraft(null);
     setBgDraftError("");
@@ -1197,11 +1198,11 @@ export default function PanelDraftGenerator({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          backgroundPrompt: result.assemblyPlanBackgroundPrompt,
+          backgroundPrompt,
           episodeSlug,
           sceneNumber,
-          settingLabel: result.assemblyPlanSetting,
-          mood: result.assemblyPlanMood,
+          settingLabel: result?.assemblyPlanSetting,
+          mood: result?.assemblyPlanMood,
           adminSceneDirection: adminSceneDirection || undefined,
           backgroundDirection: bgDirection || undefined,
         }),
@@ -1787,6 +1788,12 @@ export default function PanelDraftGenerator({
                 )}
 
                 {/* Scene Assembly Plan */}
+                {!result.assemblyPlanAvailable && (
+                  <div className="flex items-center gap-2 mt-1 text-xs text-tiki-brown/35">
+                    <span className="font-bold uppercase tracking-wide">Scene Assembly Plan</span>
+                    <span className="text-pineapple-yellow-dark">⚠ Planning unavailable — image generated without assembly plan.</span>
+                  </div>
+                )}
                 {result.assemblyPlanAvailable && result.assemblyPlanSummary && (
                   <details className="mt-1">
                     <summary className="cursor-pointer list-none select-none py-0.5">
@@ -2195,7 +2202,7 @@ export default function PanelDraftGenerator({
       )}
 
       {/* ─── Background Layer Draft ─────────────────────────────────────────── */}
-      {result?.ok && result.assemblyPlanAvailable && result.assemblyPlanBackgroundPrompt && (
+      {result?.ok && (
         <details className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
           <summary className="cursor-pointer list-none select-none px-4 py-3 bg-tiki-brown/3 hover:bg-tiki-brown/5 transition-colors">
             <div className="flex items-center gap-2 flex-wrap">
