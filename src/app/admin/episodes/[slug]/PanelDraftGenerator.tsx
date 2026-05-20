@@ -1402,6 +1402,209 @@ export default function PanelDraftGenerator({
         </div>
       )}
 
+      {/* ─── Scene Assembly Plan ──────────────────────────────────────────────── */}
+      {panelPrompt && (
+        <div className="border border-ube-purple/15 rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-ube-purple/3">
+            <span className="text-sm">🗺</span>
+            <span className="text-sm font-black text-tiki-brown">Scene Assembly Plan</span>
+            {result?.assemblyPlanAvailable && result.assemblyPlanSummary && (
+              <span className="px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold text-xs">
+                {result.assemblyPlanCharacterCount ?? 0} character{(result.assemblyPlanCharacterCount ?? 0) !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <div className="px-4 py-3 flex flex-col gap-2">
+            {!result && (
+              <p className="text-xs text-tiki-brown/45 italic">
+                Scene Assembly Plan will appear after you generate a panel draft.
+              </p>
+            )}
+            {result && !result.assemblyPlanAvailable && (
+              <p className="text-xs text-pineapple-yellow-dark">
+                ⚠ Planning unavailable — image generated without assembly plan. Background generation will use the current panel prompt as fallback.
+              </p>
+            )}
+            {result?.assemblyPlanAvailable && result.assemblyPlanSummary && (
+              <>
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+                  <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.settingLabel}</span></span>
+                  <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.mood}</span></span>
+                </div>
+                {result.assemblyPlanSummary.characters.length > 0 && (
+                  <details>
+                    <summary className="cursor-pointer list-none select-none py-0.5">
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="font-bold text-tiki-brown/40 uppercase tracking-wide">Character Layers</span>
+                        <span className="text-tiki-brown/30">▸ expand</span>
+                      </div>
+                    </summary>
+                    <div className="mt-1.5 flex flex-col gap-1.5">
+                      {result.assemblyPlanSummary.characters.map((c) => (
+                        <div key={c.slug} className="flex flex-col gap-0.5 rounded-lg bg-white/60 px-2.5 py-1.5 border border-tiki-brown/8">
+                          <span className="text-xs font-semibold text-tiki-brown/75">{c.name}</span>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/50">
+                            <span>Placement: <span className="font-medium">{c.placement}</span></span>
+                            <span>Emotion: <span className="font-medium">{c.emotion}</span></span>
+                            <span>Action: <span className="font-medium">{c.action}</span></span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+                {result.assemblyPlanSummary.warnings.length > 0 && (
+                  <div className="flex flex-col gap-0.5">
+                    {result.assemblyPlanSummary.warnings.map((w, i) => (
+                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Background Layer Draft ───────────────────────────────────────────── */}
+      {panelPrompt && (
+        <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
+            <span className="text-sm">🌄</span>
+            <span className="text-sm font-black text-tiki-brown">Background Layer Draft</span>
+            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
+              Optional
+            </span>
+          </div>
+          <div className="p-4 flex flex-col gap-4">
+            <p className="text-xs text-tiki-brown/50 leading-relaxed">
+              Generate a background-only scene layer with no characters. This prepares the staged assembly pipeline.
+            </p>
+
+            {result && !result.assemblyPlanAvailable && (
+              <div className="flex items-start gap-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-3 py-2">
+                <span className="text-xs flex-shrink-0 mt-0.5">⚠</span>
+                <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                  Assembly plan unavailable. Background prompt will use the current panel prompt.
+                </p>
+              </div>
+            )}
+
+            {result?.assemblyPlanAvailable && (
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+                <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSetting ?? "—"}</span></span>
+                <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanMood ?? "—"}</span></span>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                Background Direction
+                <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
+              </label>
+              <textarea
+                value={bgDirection}
+                onChange={(e) => setBgDirection(e.target.value)}
+                placeholder="Example: Make the classroom warmer with a rug and window light, but leave open space in the center."
+                rows={2}
+                maxLength={600}
+                disabled={bgDraftStatus === "loading"}
+                className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-tiki-brown/30 disabled:opacity-50"
+              />
+            </div>
+
+            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                No characters will be generated. The background prompt explicitly forbids Fruit Baby characters, faces, arms, crowns, stems, and silhouettes.
+              </p>
+            </div>
+
+            <button
+              onClick={handleGenerateBackground}
+              disabled={bgDraftStatus === "loading"}
+              className="self-start px-4 py-2 rounded-xl bg-tiki-brown/80 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
+            >
+              {bgDraftStatus === "loading" ? "Generating background…" : "Generate Background Draft"}
+            </button>
+
+            {bgDraftStatus === "loading" && (
+              <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                Generating background-only scene layer…
+              </p>
+            )}
+
+            {bgDraftStatus === "error" && (
+              <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                <span className="text-xs font-bold text-warm-coral">Background generation failed</span>
+                {bgDraftError && <p className="text-xs text-tiki-brown/60">{bgDraftError}</p>}
+              </div>
+            )}
+
+            {bgDraftStatus === "done" && bgDraft?.ok && bgDraft.draft && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
+                    Background-only temporary draft — not a story panel
+                  </span>
+                  {bgDraft.draft.promptWasCompacted && (
+                    <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
+                  )}
+                </div>
+                {(bgDraft.draft.imageBase64 || bgDraft.draft.imageUrl) && (
+                  <div className="flex flex-col gap-1.5">
+                    {bgDraft.draft.imageBase64 ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={`data:${bgDraft.draft.mimeType};base64,${bgDraft.draft.imageBase64}`}
+                        alt="Background-only temporary draft"
+                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                      />
+                    ) : bgDraft.draft.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={bgDraft.draft.imageUrl}
+                        alt="Background-only temporary draft"
+                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                      />
+                    ) : null}
+                    <p className="text-xs text-tiki-brown/35 italic">
+                      Review the background. If characters appear, regenerate with stronger no-character direction.
+                    </p>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                  <span>Provider: <span className="font-semibold">{bgDraft.draft.provider === "openai" ? "OpenAI" : bgDraft.draft.provider}</span></span>
+                  {bgDraft.draft.modelId && (
+                    <span>Model: <span className="font-mono">{bgDraft.draft.modelId}</span></span>
+                  )}
+                  {bgDraft.draft.providerPromptLength !== undefined && (
+                    <span>Prompt: <span className="font-semibold">{bgDraft.draft.providerPromptLength}</span> chars</span>
+                  )}
+                  {bgDraft.draft.settingLabel && (
+                    <span>Setting: <span className="font-semibold">{bgDraft.draft.settingLabel}</span></span>
+                  )}
+                </div>
+                {bgDraft.draft.warnings.length > 0 && (
+                  <div className="flex flex-col gap-0.5">
+                    {bgDraft.draft.warnings.map((w, i) => (
+                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                    ))}
+                  </div>
+                )}
+                {bgDraft.notes && bgDraft.notes.length > 0 && (
+                  <ul className="flex flex-col gap-0.5">
+                    {bgDraft.notes.map((n, i) => (
+                      <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Side-by-side Fidelity Review (when draft is done) ── */}
       {genStatus === "done" && result && (
         <div className="flex flex-col gap-5 bg-tiki-brown/3 border border-tiki-brown/10 rounded-2xl p-4 mt-1">
@@ -1787,57 +1990,6 @@ export default function PanelDraftGenerator({
                   </div>
                 )}
 
-                {/* Scene Assembly Plan */}
-                {!result.assemblyPlanAvailable && (
-                  <div className="flex items-center gap-2 mt-1 text-xs text-tiki-brown/35">
-                    <span className="font-bold uppercase tracking-wide">Scene Assembly Plan</span>
-                    <span className="text-pineapple-yellow-dark">⚠ Planning unavailable — image generated without assembly plan.</span>
-                  </div>
-                )}
-                {result.assemblyPlanAvailable && result.assemblyPlanSummary && (
-                  <details className="mt-1">
-                    <summary className="cursor-pointer list-none select-none py-0.5">
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-bold text-tiki-brown/45 uppercase tracking-wide">Scene Assembly Plan</span>
-                        <span className="px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold text-xs">
-                          {result.assemblyPlanCharacterCount ?? 0} character{(result.assemblyPlanCharacterCount ?? 0) !== 1 ? "s" : ""}
-                        </span>
-                        <span className="text-tiki-brown/35 text-xs">▸ expand</span>
-                      </div>
-                    </summary>
-                    <div className="mt-2 flex flex-col gap-2 rounded-xl bg-ube-purple/4 border border-ube-purple/12 px-3 py-2.5">
-                      <p className="text-xs text-tiki-brown/40 leading-relaxed">
-                        Assembly planning prepares future background + per-character rendering. No images are generated here.
-                      </p>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
-                        <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.settingLabel}</span></span>
-                        <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.mood}</span></span>
-                      </div>
-                      {result.assemblyPlanSummary.characters.length > 0 && (
-                        <div className="flex flex-col gap-1.5 mt-0.5">
-                          <span className="text-xs font-bold text-tiki-brown/40 uppercase tracking-wide">Character Layers</span>
-                          {result.assemblyPlanSummary.characters.map((c) => (
-                            <div key={c.slug} className="flex flex-col gap-0.5 rounded-lg bg-white/60 px-2.5 py-1.5 border border-tiki-brown/8">
-                              <span className="text-xs font-semibold text-tiki-brown/75">{c.name}</span>
-                              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/50">
-                                <span>Placement: <span className="font-medium">{c.placement}</span></span>
-                                <span>Emotion: <span className="font-medium">{c.emotion}</span></span>
-                                <span>Action: <span className="font-medium">{c.action}</span></span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {result.assemblyPlanSummary.warnings.length > 0 && (
-                        <div className="flex flex-col gap-0.5 mt-0.5">
-                          {result.assemblyPlanSummary.warnings.map((w, i) => (
-                            <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </details>
-                )}
               </div>
 
               {/* Reference characters */}
@@ -2201,147 +2353,6 @@ export default function PanelDraftGenerator({
         </div>
       )}
 
-      {/* ─── Background Layer Draft ─────────────────────────────────────────── */}
-      {result?.ok && (
-        <details className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
-          <summary className="cursor-pointer list-none select-none px-4 py-3 bg-tiki-brown/3 hover:bg-tiki-brown/5 transition-colors">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm">🌄</span>
-              <span className="text-sm font-black text-tiki-brown">Background Layer Draft</span>
-              <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
-                Optional
-              </span>
-            </div>
-            <p className="text-xs text-tiki-brown/50 mt-1 leading-relaxed">
-              Generate the environment without characters. Prepares a clean background layer for future staged character compositing.
-            </p>
-          </summary>
-
-          <div className="p-4 flex flex-col gap-4">
-            {/* Assembly plan context */}
-            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
-              <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSetting ?? "—"}</span></span>
-              <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanMood ?? "—"}</span></span>
-            </div>
-
-            {/* Background direction */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                Background Direction
-                <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
-              </label>
-              <textarea
-                value={bgDirection}
-                onChange={(e) => setBgDirection(e.target.value)}
-                placeholder="Example: Make the classroom warmer with a rug and window light, but leave open space in the center."
-                rows={2}
-                maxLength={600}
-                disabled={bgDraftStatus === "loading"}
-                className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-tiki-brown/30 disabled:opacity-50"
-              />
-            </div>
-
-            {/* Disclaimer */}
-            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
-              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
-              <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                No characters will be generated. The background prompt explicitly forbids Fruit Baby characters, faces, arms, crowns, stems, and silhouettes.
-              </p>
-            </div>
-
-            {/* Generate button */}
-            <button
-              onClick={handleGenerateBackground}
-              disabled={bgDraftStatus === "loading"}
-              className="self-start px-4 py-2 rounded-xl bg-tiki-brown/80 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
-            >
-              {bgDraftStatus === "loading" ? "Generating background…" : "Generate Background Draft"}
-            </button>
-
-            {/* Loading */}
-            {bgDraftStatus === "loading" && (
-              <p className="text-sm text-tiki-brown/45 italic animate-pulse">
-                Generating background-only scene layer…
-              </p>
-            )}
-
-            {/* Error */}
-            {bgDraftStatus === "error" && (
-              <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-                <span className="text-sm flex-shrink-0">⚠️</span>
-                <p className="text-xs text-warm-coral leading-relaxed font-semibold">{bgDraftError}</p>
-              </div>
-            )}
-
-            {/* Background draft result */}
-            {bgDraftStatus === "done" && bgDraft?.ok && bgDraft.draft && (
-              <div className="flex flex-col gap-3">
-                {/* Label */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
-                    Background-only temporary draft — not a story panel
-                  </span>
-                  {bgDraft.draft.promptWasCompacted && (
-                    <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
-                  )}
-                </div>
-
-                {/* Preview image */}
-                {(bgDraft.draft.imageBase64 || bgDraft.draft.imageUrl) && (
-                  <div className="flex flex-col gap-1.5">
-                    {bgDraft.draft.imageBase64 ? (
-                      <img
-                        src={`data:${bgDraft.draft.mimeType};base64,${bgDraft.draft.imageBase64}`}
-                        alt="Background-only temporary draft"
-                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
-                      />
-                    ) : bgDraft.draft.imageUrl ? (
-                      <img
-                        src={bgDraft.draft.imageUrl}
-                        alt="Background-only temporary draft"
-                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
-                      />
-                    ) : null}
-                    <p className="text-xs text-tiki-brown/35 italic">
-                      Review the background. If characters appear, regenerate with stronger no-character direction.
-                    </p>
-                  </div>
-                )}
-
-                {/* Metadata */}
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
-                  <span>Provider: <span className="font-semibold">{bgDraft.draft.provider === "openai" ? "OpenAI" : bgDraft.draft.provider}</span></span>
-                  {bgDraft.draft.modelId && (
-                    <span>Model: <span className="font-mono">{bgDraft.draft.modelId}</span></span>
-                  )}
-                  {bgDraft.draft.providerPromptLength !== undefined && (
-                    <span>Prompt: <span className="font-semibold">{bgDraft.draft.providerPromptLength}</span> chars</span>
-                  )}
-                  {bgDraft.draft.settingLabel && (
-                    <span>Setting: <span className="font-semibold">{bgDraft.draft.settingLabel}</span></span>
-                  )}
-                </div>
-
-                {bgDraft.draft.warnings.length > 0 && (
-                  <div className="flex flex-col gap-0.5">
-                    {bgDraft.draft.warnings.map((w, i) => (
-                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
-                    ))}
-                  </div>
-                )}
-
-                {bgDraft.notes && bgDraft.notes.length > 0 && (
-                  <ul className="flex flex-col gap-0.5">
-                    {bgDraft.notes.map((n, i) => (
-                      <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        </details>
-      )}
     </div>
   );
 }
