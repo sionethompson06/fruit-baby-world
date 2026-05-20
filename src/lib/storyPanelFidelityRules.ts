@@ -221,7 +221,67 @@ export type ProductionFidelityResult = {
   babyProportionLockUsed: boolean;
   topFeatureSeparationUsed: boolean;
   characterFeatureWarnings: string[];
+  storySceneCompositionLockUsed: boolean;
+  exactCastLockUsed: boolean;
+  referenceUsageRulesUsed: boolean;
+  exactCastCharacters: string[];
+  duplicatePreventionUsed: boolean;
 };
+
+// ─── Scene composition block builders (internal) ──────────────────────────────
+
+function buildStorySceneCompositionLockLines(charNames: string): string[] {
+  return [
+    "STORY SCENE COMPOSITION LOCK:",
+    "This request generates ONE story scene — a single illustrated panel from a children's book.",
+    "• Output must be a SINGLE unified story scene — one environment, one moment in time.",
+    "• Do NOT generate a reference sheet, character sheet, grid, quadrant layout, or lineup.",
+    "• Do NOT arrange characters side by side against a plain background.",
+    "• Do NOT output multiple panels, multiple frames, or multiple images within one image.",
+    "• Do NOT output a collage, mood board, poster layout, or flat character lineup.",
+    "• Characters must appear naturally within the scene environment — not posed for reference.",
+    `• Characters in this scene: ${charNames}`,
+    "",
+  ];
+}
+
+function buildExactCastLockLines(charPkgs: CharacterReferencePackage[]): string[] {
+  if (charPkgs.length === 0) return [];
+
+  const lines: string[] = [
+    "EXACT CAST LOCK:",
+    `This scene contains exactly ${charPkgs.length} character${charPkgs.length !== 1 ? "s" : ""}:`,
+    "",
+  ];
+
+  charPkgs.forEach((pkg, i) => {
+    lines.push(`  [CHARACTER ${i + 1}] ${pkg.characterName} — exactly 1 instance`);
+  });
+
+  lines.push(
+    "",
+    "• Each character must appear EXACTLY ONCE in the scene.",
+    "• Do NOT duplicate any character.",
+    "• Do NOT create additional copies or clones of any character.",
+    "• Do NOT add extra characters not listed above.",
+    ""
+  );
+
+  return lines;
+}
+
+function buildReferenceUsageRulesLines(): string[] {
+  return [
+    "REFERENCE USAGE RULES:",
+    "The attached reference images define each character's appearance — they are identity guides, not layout subjects.",
+    "• Reference images show how a character looks. They do NOT dictate the scene layout or composition.",
+    "• Do NOT reproduce the reference image's background, setting, or composition in the output.",
+    "• Do NOT arrange characters in the same positions as they appear in the reference images.",
+    "• Do NOT create a side-by-side lineup just because multiple reference images are attached.",
+    "• Use each reference image ONLY to reproduce that character's colors, shape, and features in the new scene.",
+    "",
+  ];
+}
 
 // ─── Feature lock block builders (internal) ───────────────────────────────────
 
@@ -359,21 +419,28 @@ export function buildProductionFidelityPrompt(
 
   const featureWarnings: string[] = [];
 
-  // ── 1. Required character feature locks ───────────────────────────────────
+  // ── 1. Story scene composition lock ───────────────────────────────────────
+  const compositionLockLines = buildStorySceneCompositionLockLines(charNames);
+
+  // ── 2. Exact cast lock ────────────────────────────────────────────────────
+  const exactCastLines = buildExactCastLockLines(charPkgs);
+  const exactCastCharacters = charPkgs.map((p) => p.characterName);
+
+  // ── 3. Required character feature locks ───────────────────────────────────
   const featureLockLines = buildRequiredCharacterFeatureLockLines(slugs, charBySlug, featureWarnings);
   const lockedCount = slugs.filter((s) => CANONICAL_FEATURE_LOCKS[s] !== undefined).length;
 
-  // ── 2. Top-feature separation ──────────────────────────────────────────────
+  // ── 4. Top-feature separation ─────────────────────────────────────────────
   const topFeatureLines = buildTopFeatureSeparationLines(slugs);
   const topFeatureSeparationUsed = topFeatureLines.length > 0;
 
-  // ── 3. Missing-part prevention ────────────────────────────────────────────
+  // ── 5. Missing-part prevention ────────────────────────────────────────────
   const missingPartLines = buildMissingPartPreventionLines(slugs);
 
-  // ── 4. Baby proportion lock ───────────────────────────────────────────────
+  // ── 6. Baby proportion lock ───────────────────────────────────────────────
   const proportionLines = buildBabyProportionLockLines();
 
-  // ── 5. Character identity locks (numbered, tied to reference images) ──────
+  // ── 7. Character identity locks (numbered, tied to reference images) ──────
   const identityLockLines: string[] = [
     "CHARACTER IDENTITY LOCKS:",
     "Each reference image belongs exclusively to ONE character. Do not mix, blend, or transfer features.",
@@ -398,7 +465,7 @@ export function buildProductionFidelityPrompt(
     identityLockLines.push("");
   });
 
-  // ── 6. Cross-character contamination bans ─────────────────────────────────
+  // ── 8. Cross-character contamination bans ─────────────────────────────────
   const contaminationLines: string[] = [];
   if (isMultiCharacter) {
     contaminationLines.push(
@@ -421,13 +488,19 @@ export function buildProductionFidelityPrompt(
     );
   }
 
-  // ── Assemble prompt (priority order) ──────────────────────────────────────
+  // ── 9. Reference usage rules ──────────────────────────────────────────────
+  const referenceUsageLines = buildReferenceUsageRulesLines();
+
+  // ── Assemble prompt — scene-first order ───────────────────────────────────
   const lines: string[] = [
-    "PRODUCTION CHARACTER FIDELITY GENERATION — Fruit Baby World",
+    "PRODUCTION STORY SCENE GENERATION — Fruit Baby World",
     "",
-    "The attached reference images are official, trademark-protected Fruit Baby character designs.",
-    "Each reference image is the PRIMARY and ONLY visual source of truth for one specific character.",
-    "CHARACTER ACCURACY IS MORE IMPORTANT THAN SCENE STYLE. Apply feature locks before stylistic choices.",
+    "PRIORITY: Generate the story scene described below. The attached reference images show character appearances — use them as identity guides, not layout templates.",
+    "",
+    ...compositionLockLines,
+    ...exactCastLines,
+    "SCENE TO GENERATE:",
+    panelPrompt,
     "",
     ...featureLockLines,
     ...topFeatureLines,
@@ -435,9 +508,7 @@ export function buildProductionFidelityPrompt(
     ...proportionLines,
     ...identityLockLines,
     ...contaminationLines,
-    "SCENE TO GENERATE:",
-    panelPrompt,
-    "",
+    ...referenceUsageLines,
     "STRICT PRODUCTION REQUIREMENTS — DO NOT DEVIATE:",
     "• Reproduce each character's exact body shape, silhouette, and proportions from their reference image.",
     "• Match each character's exact color palette — no hue shifts, no saturation changes, no approximation.",
@@ -463,7 +534,7 @@ export function buildProductionFidelityPrompt(
 
   lines.push(
     "",
-    "Generate the scene exactly as described while preserving every character's official appearance with full production fidelity."
+    "Generate the story scene exactly as described. Every character must match their official reference appearance with full production fidelity."
   );
 
   return {
@@ -474,6 +545,11 @@ export function buildProductionFidelityPrompt(
     babyProportionLockUsed: true,
     topFeatureSeparationUsed,
     characterFeatureWarnings: featureWarnings,
+    storySceneCompositionLockUsed: true,
+    exactCastLockUsed: exactCastLines.length > 0,
+    referenceUsageRulesUsed: true,
+    exactCastCharacters,
+    duplicatePreventionUsed: true,
   };
 }
 

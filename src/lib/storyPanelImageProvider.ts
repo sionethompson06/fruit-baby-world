@@ -77,3 +77,12 @@ export function isFalMultiReferenceModel(modelId: string): boolean {
 export function getProductionPayloadMode(modelId: string): ProductionPayloadMode {
   return isFalMultiReferenceModel(modelId) ? "multi-reference" : "single-reference";
 }
+
+// ─── Environment image reference flag ─────────────────────────────────────────
+// Controls whether the environment reference image is passed to the provider.
+// Default false — environment is described in text instead, to prevent grid/
+// collage output when the model receives multiple reference images at once.
+export function useEnvironmentImageReference(): boolean {
+  const raw = process.env.STORY_PANEL_USE_ENV_IMAGE_REFERENCE?.trim().toLowerCase();
+  return raw === "true" || raw === "1";
+}

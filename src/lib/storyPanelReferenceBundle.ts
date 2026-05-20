@@ -73,11 +73,14 @@ export type ProductionReferenceSet = {
   environmentReferenceCount: number;
   passedToProviderCount: number;
   sceneCharacterCount: number;
+  environmentReferenceUsedAsImage: boolean;
+  environmentReferenceUsedAsText: boolean;
   warnings: string[];
 };
 
 export function buildProductionReferenceSet(
-  sceneRefPkg: SceneReferencePackage
+  sceneRefPkg: SceneReferencePackage,
+  useEnvImageRef: boolean = false
 ): ProductionReferenceSet {
   const warnings: string[] = [];
   const characterRefs: ProductionCharacterRef[] = [];
@@ -123,7 +126,7 @@ export function buildProductionReferenceSet(
 
   const allUrls: string[] = [
     ...characterRefs.map((r) => r.canonicalUrl),
-    ...(environmentUrl ? [environmentUrl] : []),
+    ...(useEnvImageRef && environmentUrl ? [environmentUrl] : []),
   ];
 
   return {
@@ -135,6 +138,8 @@ export function buildProductionReferenceSet(
     environmentReferenceCount: environmentUrl ? 1 : 0,
     passedToProviderCount: allUrls.length,
     sceneCharacterCount: sceneRefPkg.characterPackages.length,
+    environmentReferenceUsedAsImage: useEnvImageRef && Boolean(environmentUrl),
+    environmentReferenceUsedAsText: !useEnvImageRef && Boolean(environmentUrl),
     warnings,
   };
 }

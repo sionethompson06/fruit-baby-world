@@ -51,6 +51,7 @@ import {
   getProductionSetupError,
   getDraftModelId,
   getProductionPayloadMode,
+  useEnvironmentImageReference,
 } from "@/lib/storyPanelImageProvider";
 import type { Character } from "@/lib/content";
 
@@ -117,6 +118,13 @@ type GenerateResult =
       babyProportionLockUsed: boolean;
       topFeatureSeparationUsed: boolean;
       characterFeatureWarnings: string[];
+      storySceneCompositionLockUsed: boolean;
+      exactCastLockUsed: boolean;
+      referenceUsageRulesUsed: boolean;
+      environmentReferenceUsedAsImage: boolean;
+      environmentReferenceUsedAsText: boolean;
+      exactCastCharacters: string[];
+      duplicatePreventionUsed: boolean;
       fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
@@ -162,6 +170,13 @@ type GenerateResult =
       babyProportionLockUsed?: boolean;
       topFeatureSeparationUsed?: boolean;
       characterFeatureWarnings?: string[];
+      storySceneCompositionLockUsed?: boolean;
+      exactCastLockUsed?: boolean;
+      referenceUsageRulesUsed?: boolean;
+      environmentReferenceUsedAsImage?: boolean;
+      environmentReferenceUsedAsText?: boolean;
+      exactCastCharacters?: string[];
+      duplicatePreventionUsed?: boolean;
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
@@ -589,9 +604,10 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const falApiKey = getFalApiKey()!;
+    const useEnvImageRef = useEnvironmentImageReference();
     const hasBundle = referenceCounts.total > 0 && sceneRefPkg !== null;
     const productionRefSet = hasBundle && sceneRefPkg
-      ? buildProductionReferenceSet(sceneRefPkg)
+      ? buildProductionReferenceSet(sceneRefPkg, useEnvImageRef)
       : null;
 
     const fidelityResult: ProductionFidelityResult | null = sceneRefPkg
@@ -653,6 +669,13 @@ export async function POST(request: Request): Promise<Response> {
             ...(fidelityResult?.characterFeatureWarnings ?? []),
             ...(productionRefSet?.warnings ?? []),
           ],
+          storySceneCompositionLockUsed: fidelityResult?.storySceneCompositionLockUsed ?? false,
+          exactCastLockUsed: fidelityResult?.exactCastLockUsed ?? false,
+          referenceUsageRulesUsed: fidelityResult?.referenceUsageRulesUsed ?? false,
+          environmentReferenceUsedAsImage: productionRefSet?.environmentReferenceUsedAsImage ?? false,
+          environmentReferenceUsedAsText: productionRefSet?.environmentReferenceUsedAsText ?? false,
+          exactCastCharacters: fidelityResult?.exactCastCharacters ?? [],
+          duplicatePreventionUsed: fidelityResult?.duplicatePreventionUsed ?? false,
           fallbackUsed: false,
           warnings: refWarnings,
           notes: [
@@ -948,6 +971,13 @@ export async function POST(request: Request): Promise<Response> {
       babyProportionLockUsed: false,
       topFeatureSeparationUsed: false,
       characterFeatureWarnings: [],
+      storySceneCompositionLockUsed: false,
+      exactCastLockUsed: false,
+      referenceUsageRulesUsed: false,
+      environmentReferenceUsedAsImage: false,
+      environmentReferenceUsedAsText: false,
+      exactCastCharacters: [],
+      duplicatePreventionUsed: false,
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       warnings: refWarnings,

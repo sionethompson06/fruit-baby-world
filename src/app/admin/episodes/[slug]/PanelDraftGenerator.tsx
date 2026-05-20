@@ -68,6 +68,13 @@ type GenApiResult = {
   babyProportionLockUsed?: boolean;
   topFeatureSeparationUsed?: boolean;
   characterFeatureWarnings?: string[];
+  storySceneCompositionLockUsed?: boolean;
+  exactCastLockUsed?: boolean;
+  referenceUsageRulesUsed?: boolean;
+  environmentReferenceUsedAsImage?: boolean;
+  environmentReferenceUsedAsText?: boolean;
+  exactCastCharacters?: string[];
+  duplicatePreventionUsed?: boolean;
   fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
@@ -1258,6 +1265,32 @@ export default function PanelDraftGenerator({
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* Scene composition lock (production mode only) */}
+                  {result.generationMode === "production" && result.storySceneCompositionLockUsed && (
+                    <div className="flex flex-col gap-1 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+                      <span className="font-bold text-tiki-brown/50 uppercase tracking-wide text-xs">Scene Composition Lock</span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/55">
+                        {result.exactCastLockUsed && (result.exactCastCharacters?.length ?? 0) > 0 && (
+                          <span>
+                            <span className="font-semibold text-tiki-brown/70">{result.exactCastCharacters?.length}</span> character cast locked
+                          </span>
+                        )}
+                        {result.referenceUsageRulesUsed && (
+                          <span className="text-tiki-brown/70 font-semibold">Reference usage rules: On</span>
+                        )}
+                        {result.duplicatePreventionUsed && (
+                          <span className="text-tiki-brown/70 font-semibold">Duplicate prevention: On</span>
+                        )}
+                        {result.environmentReferenceUsedAsText && (
+                          <span className="text-tiki-brown/45">Env ref: text-only</span>
+                        )}
+                        {result.environmentReferenceUsedAsImage && (
+                          <span className="text-tiki-brown/45">Env ref: image</span>
+                        )}
+                      </div>
                     </div>
                   )}
 
