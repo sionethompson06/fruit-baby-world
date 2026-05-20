@@ -42,12 +42,14 @@ import { fetchConditionedImages } from "@/lib/storyPanelImageConditioner";
 import {
   type StoryPanelGenerationMode,
   type StoryPanelProvider,
+  type ProductionPayloadMode,
   getProductionProvider,
   getProductionModelId,
   getFalApiKey,
   isProductionProviderConfigured,
   getProductionSetupError,
   getDraftModelId,
+  getProductionPayloadMode,
 } from "@/lib/storyPanelImageProvider";
 import type { Character } from "@/lib/content";
 
@@ -107,6 +109,7 @@ type GenerateResult =
       supportingReferenceCount: number;
       environmentReferenceCount: number;
       passedToProviderCount: number;
+      productionPayloadMode?: ProductionPayloadMode;
       fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
@@ -145,6 +148,7 @@ type GenerateResult =
       supportingReferenceCount?: number;
       environmentReferenceCount?: number;
       passedToProviderCount?: number;
+      productionPayloadMode?: ProductionPayloadMode;
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
@@ -266,6 +270,7 @@ type FalImageResult = {
   supportingReferenceCount: number;
   environmentReferenceCount: number;
   passedToProviderCount: number;
+  productionPayloadMode: ProductionPayloadMode;
 };
 
 async function generateWithFal(
@@ -283,25 +288,43 @@ async function generateWithFal(
     passedToProviderCount = 0,
   } = productionRefSet ?? {};
 
-  const referenceMode: ReferenceModeValue =
-    passedToProviderCount > 0
-      ? "image-conditioned-reference-bundle"
-      : "prompt-only-reference-bundle";
+  const payloadMode = getProductionPayloadMode(modelId);
 
-  console.log(
-    `[generate-story-panel-image] production: model=${modelId}, chars=${characterReferenceCount}, env=${environmentReferenceCount}, total=${passedToProviderCount}`
-  );
-
+  // Build the image_url payload according to model capability.
+  // Single-reference models (fal-ai/flux-pro/kontext and most others):
+  //   image_url must be a string — sending an array causes a 422.
+  // Multi-reference models (modelId contains "/multi"):
+  //   image_url can be a string array.
+  let actualPassedCount = 0;
   const requestBody: Record<string, unknown> = {
     prompt: productionPrompt,
     num_images: 1,
   };
 
-  if (allUrls.length === 1) {
-    requestBody.image_url = allUrls[0];
-  } else if (allUrls.length > 1) {
+  if (payloadMode === "multi-reference" && allUrls.length > 0) {
     requestBody.image_url = allUrls;
+    actualPassedCount = allUrls.length;
+  } else {
+    // Single-reference: pick the strongest canonical URL.
+    // Priority: first character's canonical ref → environment ref → any available URL.
+    const singleUrl =
+      productionRefSet?.characterRefs[0]?.canonicalUrl ??
+      productionRefSet?.environmentUrl ??
+      allUrls[0];
+    if (singleUrl) {
+      requestBody.image_url = singleUrl;
+      actualPassedCount = 1;
+    }
   }
+
+  const referenceMode: ReferenceModeValue =
+    actualPassedCount > 0
+      ? "image-conditioned-reference-bundle"
+      : "prompt-only-reference-bundle";
+
+  console.log(
+    `[generate-story-panel-image] production: model=${modelId}, mode=${payloadMode}, passed=${actualPassedCount}, chars=${characterReferenceCount}`
+  );
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 120_000);
@@ -323,6 +346,16 @@ async function generateWithFal(
 
   if (!falResp.ok) {
     const errText = await falResp.text().catch(() => "");
+    // Surface 422 image_url validation errors with actionable guidance
+    if (
+      falResp.status === 422 &&
+      errText.toLowerCase().includes("image_url")
+    ) {
+      throw new Error(
+        `Fal.ai image_url validation error (422): This model requires image_url to be a single string. ` +
+        `To enable multi-reference generation, set STORY_PANEL_PRODUCTION_MODEL_ID=fal-ai/flux-pro/kontext/multi.`
+      );
+    }
     throw new Error(`Fal.ai ${falResp.status}: ${errText.slice(0, 300)}`);
   }
 
@@ -355,7 +388,8 @@ async function generateWithFal(
     characterReferenceCount,
     supportingReferenceCount,
     environmentReferenceCount,
-    passedToProviderCount,
+    passedToProviderCount: actualPassedCount,
+    productionPayloadMode: payloadMode,
   };
 }
 
@@ -590,6 +624,7 @@ export async function POST(request: Request): Promise<Response> {
           supportingReferenceCount: falResult.supportingReferenceCount,
           environmentReferenceCount: falResult.environmentReferenceCount,
           passedToProviderCount: falResult.passedToProviderCount,
+          productionPayloadMode: falResult.productionPayloadMode,
           fallbackUsed: false,
           warnings: refWarnings,
           notes: [
@@ -604,6 +639,22 @@ export async function POST(request: Request): Promise<Response> {
       const isAbort = falErr instanceof Error && falErr.name === "AbortError";
       const errMsg = falErr instanceof Error ? falErr.message : String(falErr);
       console.error("[generate-story-panel-image] Fal.ai production error:", errMsg);
+
+      const is422ImageUrlError = errMsg.includes("image_url validation error");
+      const payloadModeOnError = getProductionPayloadMode(modelId);
+
+      const troubleshootingItems: string[] = is422ImageUrlError
+        ? [
+            "This Fal model only accepts a single image_url string, not an array.",
+            `Set STORY_PANEL_PRODUCTION_MODEL_ID=fal-ai/flux-pro/kontext/multi to enable multi-reference generation.`,
+            "Or keep the single-reference model — it will use the strongest one character reference.",
+          ]
+        : [
+            `Confirm model ID is correct: ${modelId}`,
+            "Confirm FAL_KEY is valid and has sufficient credits.",
+            "Try again — Fal.ai may be temporarily unavailable.",
+            "Switch to Draft Mode to continue with OpenAI generation.",
+          ];
 
       return Response.json(
         {
@@ -632,13 +683,9 @@ export async function POST(request: Request): Promise<Response> {
           supportingReferenceCount: productionRefSet?.supportingReferenceCount ?? 0,
           environmentReferenceCount: productionRefSet?.environmentReferenceCount ?? 0,
           passedToProviderCount: productionRefSet?.passedToProviderCount ?? 0,
+          productionPayloadMode: payloadModeOnError,
           fallbackUsed: false,
-          troubleshooting: [
-            "Confirm FAL_KEY is valid and has sufficient credits.",
-            `Confirm model ID is correct: ${modelId}`,
-            "Try again — Fal.ai may be temporarily unavailable.",
-            "Switch to Draft Mode to continue with OpenAI generation.",
-          ],
+          troubleshooting: troubleshootingItems,
           warnings: refWarnings,
         } satisfies GenerateResult,
         { status: 502 }

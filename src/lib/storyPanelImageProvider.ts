@@ -62,3 +62,18 @@ export function getProviderLabel(provider: StoryPanelProvider): string {
     case "fal":    return "Fal.ai";
   }
 }
+
+// ─── Payload mode ─────────────────────────────────────────────────────────────
+
+export type ProductionPayloadMode = "single-reference" | "multi-reference";
+
+// Models that accept image_url as an array of strings.
+// Detection: model ID contains "/multi".
+// All other Fal models are treated as single-reference (image_url must be a string).
+export function isFalMultiReferenceModel(modelId: string): boolean {
+  return modelId.toLowerCase().includes("/multi");
+}
+
+export function getProductionPayloadMode(modelId: string): ProductionPayloadMode {
+  return isFalMultiReferenceModel(modelId) ? "multi-reference" : "single-reference";
+}

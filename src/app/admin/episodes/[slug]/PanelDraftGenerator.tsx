@@ -61,6 +61,7 @@ type GenApiResult = {
   supportingReferenceCount?: number;
   environmentReferenceCount?: number;
   passedToProviderCount?: number;
+  productionPayloadMode?: "single-reference" | "multi-reference";
   fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
@@ -1188,18 +1189,18 @@ export default function PanelDraftGenerator({
 
                   {/* Production identity inputs (production mode only) */}
                   {result.generationMode === "production" && (result.sceneCharacterCount ?? 0) > 0 && (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5">
                       <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">
                         Production Identity Inputs
                       </span>
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-tiki-brown/50">
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-tiki-brown/50 text-xs">
                         <span>
                           <span className="font-semibold">{result.sceneCharacterCount}</span> character{result.sceneCharacterCount !== 1 ? "s" : ""} in scene
                         </span>
                         <span>
                           <span className={`font-semibold ${(result.characterReferenceCount ?? 0) === (result.sceneCharacterCount ?? 0) ? "text-tropical-green" : "text-pineapple-yellow-dark"}`}>
                             {result.characterReferenceCount ?? 0}
-                          </span> character ref{(result.characterReferenceCount ?? 0) !== 1 ? "s" : ""}
+                          </span> character ref{(result.characterReferenceCount ?? 0) !== 1 ? "s" : ""} selected
                         </span>
                         {(result.environmentReferenceCount ?? 0) > 0 && (
                           <span>
@@ -1212,6 +1213,17 @@ export default function PanelDraftGenerator({
                           </span> passed to provider
                         </span>
                       </div>
+                      {result.productionPayloadMode === "single-reference" && (result.sceneCharacterCount ?? 0) > 1 && (
+                        <p className="text-xs text-tiki-brown/40 italic leading-relaxed">
+                          Single-reference endpoint — model accepts one image_url. Strongest character reference used.
+                          To pass one ref per character, set STORY_PANEL_PRODUCTION_MODEL_ID=fal-ai/flux-pro/kontext/multi.
+                        </p>
+                      )}
+                      {result.productionPayloadMode === "multi-reference" && (
+                        <p className="text-xs text-tropical-green/70 font-semibold">
+                          Multi-reference endpoint — one reference per character passed.
+                        </p>
+                      )}
                     </div>
                   )}
 
