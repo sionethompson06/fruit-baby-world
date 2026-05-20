@@ -162,6 +162,7 @@ type GenerateResult =
       assemblyPlanSetting: string;
       assemblyPlanMood: string;
       assemblyPlanAdminDirectionUsed: boolean;
+      assemblyPlanBackgroundPrompt?: string;
       warnings: string[];
       notes: string[];
     }
@@ -480,6 +481,7 @@ type AssemblyPlanFields = {
   assemblyPlanSetting: string;
   assemblyPlanMood: string;
   assemblyPlanAdminDirectionUsed: boolean;
+  assemblyPlanBackgroundPrompt?: string;
 };
 
 function buildAssemblyPlanSafe(options: {
@@ -513,6 +515,7 @@ function buildAssemblyPlanSafe(options: {
       assemblyPlanSetting: plan.scene.settingLabel,
       assemblyPlanMood: plan.scene.mood,
       assemblyPlanAdminDirectionUsed: plan.prompts.adminDirectionUsed !== null,
+      assemblyPlanBackgroundPrompt: plan.prompts.backgroundPrompt,
     };
   } catch {
     return {

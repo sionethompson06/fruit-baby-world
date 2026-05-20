@@ -119,6 +119,7 @@ type GenApiResult = {
   assemblyPlanSetting?: string;
   assemblyPlanMood?: string;
   assemblyPlanAdminDirectionUsed?: boolean;
+  assemblyPlanBackgroundPrompt?: string;
   warnings?: string[];
   notes?: string[];
   draft?: {
@@ -162,6 +163,31 @@ type AttachApiResult = {
   commitMessage?: string;
   htmlUrl?: string;
   panelAsset?: unknown;
+  notes?: string[];
+};
+
+// ─── Background draft API result ─────────────────────────────────────────────
+
+type BgDraftResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  troubleshooting?: string[];
+  draft?: {
+    id: string;
+    type: "background-only-draft";
+    imageBase64?: string;
+    imageUrl?: string;
+    mimeType: string;
+    promptText: string;
+    providerPromptLength?: number;
+    promptWasCompacted?: boolean;
+    settingLabel?: string;
+    provider: string;
+    modelId?: string;
+    createdAt: string;
+    warnings: string[];
+  };
   notes?: string[];
 };
 
@@ -670,6 +696,12 @@ export default function PanelDraftGenerator({
   const [approveAndSaveError, setApproveAndSaveError] = useState<string>("");
   const [approveAndSaveErrorStep, setApproveAndSaveErrorStep] = useState<"upload" | "attach" | null>(null);
 
+  // Background draft state (separate from story panel draft)
+  const [bgDraftStatus, setBgDraftStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [bgDraft, setBgDraft] = useState<BgDraftResult | null>(null);
+  const [bgDraftError, setBgDraftError] = useState<string>("");
+  const [bgDirection, setBgDirection] = useState<string>("");
+
   const hasImage =
     genStatus === "done" &&
     (!!result?.image?.base64 || !!result?.image?.url || !!result?.draft?.imageBase64 || !!result?.draft?.imageUrl);
@@ -1152,6 +1184,39 @@ export default function PanelDraftGenerator({
     } catch {
       setRefineStatus("error");
       setRefineErrorMsg("Refinement failed — network error. The current draft was not changed.");
+    }
+  }
+
+  async function handleGenerateBackground() {
+    if (!result?.assemblyPlanBackgroundPrompt) return;
+    setBgDraftStatus("loading");
+    setBgDraft(null);
+    setBgDraftError("");
+    try {
+      const resp = await fetch("/api/generate-story-panel-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          backgroundPrompt: result.assemblyPlanBackgroundPrompt,
+          episodeSlug,
+          sceneNumber,
+          settingLabel: result.assemblyPlanSetting,
+          mood: result.assemblyPlanMood,
+          adminSceneDirection: adminSceneDirection || undefined,
+          backgroundDirection: bgDirection || undefined,
+        }),
+      });
+      const data: BgDraftResult = await resp.json();
+      setBgDraft(data);
+      if (data.ok) {
+        setBgDraftStatus("done");
+      } else {
+        setBgDraftStatus("error");
+        setBgDraftError(data.message ?? "Background generation failed.");
+      }
+    } catch {
+      setBgDraftStatus("error");
+      setBgDraftError("Network error — could not reach background generation API.");
     }
   }
 
@@ -2127,6 +2192,148 @@ export default function PanelDraftGenerator({
           )}
 
         </div>
+      )}
+
+      {/* ─── Background Layer Draft ─────────────────────────────────────────── */}
+      {result?.ok && result.assemblyPlanAvailable && result.assemblyPlanBackgroundPrompt && (
+        <details className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+          <summary className="cursor-pointer list-none select-none px-4 py-3 bg-tiki-brown/3 hover:bg-tiki-brown/5 transition-colors">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm">🌄</span>
+              <span className="text-sm font-black text-tiki-brown">Background Layer Draft</span>
+              <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
+                Optional
+              </span>
+            </div>
+            <p className="text-xs text-tiki-brown/50 mt-1 leading-relaxed">
+              Generate the environment without characters. Prepares a clean background layer for future staged character compositing.
+            </p>
+          </summary>
+
+          <div className="p-4 flex flex-col gap-4">
+            {/* Assembly plan context */}
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+              <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSetting ?? "—"}</span></span>
+              <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanMood ?? "—"}</span></span>
+            </div>
+
+            {/* Background direction */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                Background Direction
+                <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
+              </label>
+              <textarea
+                value={bgDirection}
+                onChange={(e) => setBgDirection(e.target.value)}
+                placeholder="Example: Make the classroom warmer with a rug and window light, but leave open space in the center."
+                rows={2}
+                maxLength={600}
+                disabled={bgDraftStatus === "loading"}
+                className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-tiki-brown/30 disabled:opacity-50"
+              />
+            </div>
+
+            {/* Disclaimer */}
+            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                No characters will be generated. The background prompt explicitly forbids Fruit Baby characters, faces, arms, crowns, stems, and silhouettes.
+              </p>
+            </div>
+
+            {/* Generate button */}
+            <button
+              onClick={handleGenerateBackground}
+              disabled={bgDraftStatus === "loading"}
+              className="self-start px-4 py-2 rounded-xl bg-tiki-brown/80 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
+            >
+              {bgDraftStatus === "loading" ? "Generating background…" : "Generate Background Draft"}
+            </button>
+
+            {/* Loading */}
+            {bgDraftStatus === "loading" && (
+              <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                Generating background-only scene layer…
+              </p>
+            )}
+
+            {/* Error */}
+            {bgDraftStatus === "error" && (
+              <div className="flex items-start gap-2.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                <span className="text-sm flex-shrink-0">⚠️</span>
+                <p className="text-xs text-warm-coral leading-relaxed font-semibold">{bgDraftError}</p>
+              </div>
+            )}
+
+            {/* Background draft result */}
+            {bgDraftStatus === "done" && bgDraft?.ok && bgDraft.draft && (
+              <div className="flex flex-col gap-3">
+                {/* Label */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
+                    Background-only temporary draft — not a story panel
+                  </span>
+                  {bgDraft.draft.promptWasCompacted && (
+                    <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
+                  )}
+                </div>
+
+                {/* Preview image */}
+                {(bgDraft.draft.imageBase64 || bgDraft.draft.imageUrl) && (
+                  <div className="flex flex-col gap-1.5">
+                    {bgDraft.draft.imageBase64 ? (
+                      <img
+                        src={`data:${bgDraft.draft.mimeType};base64,${bgDraft.draft.imageBase64}`}
+                        alt="Background-only temporary draft"
+                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                      />
+                    ) : bgDraft.draft.imageUrl ? (
+                      <img
+                        src={bgDraft.draft.imageUrl}
+                        alt="Background-only temporary draft"
+                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                      />
+                    ) : null}
+                    <p className="text-xs text-tiki-brown/35 italic">
+                      Review the background. If characters appear, regenerate with stronger no-character direction.
+                    </p>
+                  </div>
+                )}
+
+                {/* Metadata */}
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                  <span>Provider: <span className="font-semibold">{bgDraft.draft.provider === "openai" ? "OpenAI" : bgDraft.draft.provider}</span></span>
+                  {bgDraft.draft.modelId && (
+                    <span>Model: <span className="font-mono">{bgDraft.draft.modelId}</span></span>
+                  )}
+                  {bgDraft.draft.providerPromptLength !== undefined && (
+                    <span>Prompt: <span className="font-semibold">{bgDraft.draft.providerPromptLength}</span> chars</span>
+                  )}
+                  {bgDraft.draft.settingLabel && (
+                    <span>Setting: <span className="font-semibold">{bgDraft.draft.settingLabel}</span></span>
+                  )}
+                </div>
+
+                {bgDraft.draft.warnings.length > 0 && (
+                  <div className="flex flex-col gap-0.5">
+                    {bgDraft.draft.warnings.map((w, i) => (
+                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                    ))}
+                  </div>
+                )}
+
+                {bgDraft.notes && bgDraft.notes.length > 0 && (
+                  <ul className="flex flex-col gap-0.5">
+                    {bgDraft.notes.map((n, i) => (
+                      <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </details>
       )}
     </div>
   );

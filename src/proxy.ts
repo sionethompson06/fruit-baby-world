@@ -46,6 +46,7 @@ export const config = {
     "/api/github/update-episode-scene-status",
     "/api/github/backfill-episode-scene-ids",
     "/api/generate-story-panel-image",
+    "/api/generate-story-panel-background",
     "/api/media/upload-story-panel-image",
     "/api/reference-assets/upload-character-reference",
     "/api/reference-assets/review-character-reference",
