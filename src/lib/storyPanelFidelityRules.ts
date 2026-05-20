@@ -619,6 +619,56 @@ export function buildImageConditionedEditPrompt(
   return lines.join("\n");
 }
 
+// ─── Hybrid Fal enhancement prompt ────────────────────────────────────────────
+// Used in Hybrid Mode Stage 2: enhances the OpenAI story draft for character
+// fidelity and polish while preserving the scene composition exactly.
+
+export function buildHybridFalEnhancePrompt(options: {
+  characterSlugs?: string[];
+  adminSceneDirection?: string;
+}): string {
+  const { characterSlugs = [], adminSceneDirection } = options;
+  const hasTiki = characterSlugs.some((s) => s === "tiki" || s === "tiki-trouble");
+
+  const lines: string[] = [
+    "ENHANCE STORY SCENE — Fruit Baby World",
+    "",
+    "Base: the attached image (an OpenAI story scene draft).",
+    "Task: improve character fidelity, polish, and Fruit Baby style while preserving the scene exactly.",
+    "",
+    "PRESERVE COMPLETELY:",
+    "• Scene composition and character placement",
+    "• Character emotions, poses, and actions",
+    "• Story environment and background",
+    "• Camera angle and lighting mood",
+    "• Narrative moment depicted",
+    "",
+    "IMPROVE:",
+    "• Character body colors — match official Fruit Baby designs",
+    "• Top features (crown, leaves, stem) — sharpen and correct per character",
+    "• Baby arms and feet — short, rounded, and visible",
+    "• Baby proportions — short, round, plump bodies",
+    "• Fruit textures and surface details",
+    "• Overall polish and Fruit Baby storybook style quality",
+    "",
+    "CHARACTER RULES:",
+    "• Do not redesign, add, remove, or duplicate any character",
+    "• Do not swap top features between characters",
+    "• Do not convert this into a character sheet, grid, lineup, or reference layout",
+    "• Keep content kid-friendly, warm, and playful",
+  ];
+
+  if (hasTiki) {
+    lines.push("• Tiki Trouble: keep mischievous and funny, not scary or violent");
+  }
+
+  if (adminSceneDirection?.trim()) {
+    lines.push("", `SCENE CONTEXT: "${adminSceneDirection.trim()}"`, "Preserve this composition. Do not change staging.");
+  }
+
+  return lines.join("\n");
+}
+
 // ─── Refine current draft prompt ──────────────────────────────────────────────
 
 export function buildRefineCurrentDraftPrompt(options: {

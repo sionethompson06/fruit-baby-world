@@ -6,7 +6,7 @@
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type StoryPanelGenerationMode = "draft" | "production";
+export type StoryPanelGenerationMode = "draft" | "production" | "hybrid";
 export type StoryPanelProvider = "openai" | "fal";
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────

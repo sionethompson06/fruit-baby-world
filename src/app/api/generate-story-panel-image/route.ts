@@ -12,6 +12,7 @@
 // Phase:   18D — production provider adapter (Fal.ai).
 
 import OpenAI from "openai";
+import { put } from "@vercel/blob";
 import {
   validateSlug,
   loadCharacterRefs,
@@ -32,6 +33,7 @@ import {
   buildImageConditionedEditPrompt,
   buildProductionFidelityPrompt,
   buildAdminSceneDirectionBlock,
+  buildHybridFalEnhancePrompt,
   type ProductionFidelityResult,
 } from "@/lib/storyPanelFidelityRules";
 import {
@@ -48,6 +50,7 @@ import {
   getProductionProvider,
   getProductionModelId,
   getFalApiKey,
+  getFalRefineModelId,
   isProductionProviderConfigured,
   getProductionSetupError,
   getDraftModelId,
@@ -142,6 +145,11 @@ type GenerateResult =
       promptSectionsRemovedOrShortened: string[];
       fallbackUsed: boolean;
       fallbackReason?: string;
+      usedHybridEnhancement?: boolean;
+      baseDraftProvider?: StoryPanelProvider;
+      baseDraftModelId?: string;
+      hybridStage1Status?: "success" | "failed";
+      hybridStage2Status?: "success" | "failed";
       warnings: string[];
       notes: string[];
     }
@@ -481,7 +489,9 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Generation mode ───────────────────────────────────────────────────────────
   const generationMode: StoryPanelGenerationMode =
-    body.generationMode === "production" ? "production" : "draft";
+    body.generationMode === "production" ? "production"
+    : body.generationMode === "hybrid" ? "hybrid"
+    : "draft";
 
   const referenceCharacters = extractReferenceSlugs(body);
   const unsafeSlugs = referenceCharacters.filter((slug) => !validateSlug(slug));
@@ -811,6 +821,323 @@ export async function POST(request: Request): Promise<Response> {
         { status: 502 }
       );
     }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  // HYBRID MODE — OpenAI Story Draft → Fal.ai Fidelity Enhance
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  if (generationMode === "hybrid") {
+    const openAiKey = process.env.OPENAI_API_KEY;
+    const hybridFalApiKey = getFalApiKey();
+    const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+    const openAiModelId = getDraftModelId();
+    const falModelId = getFalRefineModelId();
+
+    if (!openAiKey) {
+      return Response.json(
+        {
+          ok: false,
+          status: "setup_required",
+          message: "Hybrid Mode requires OPENAI_API_KEY for Stage 1. Add it to Vercel environment variables and redeploy.",
+          generationMode,
+          troubleshooting: ["Add OPENAI_API_KEY to Vercel environment variables.", "Redeploy after adding the key."],
+          referenceCharacters,
+          referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          warnings: refWarnings,
+        } satisfies GenerateResult,
+        { status: 503 }
+      );
+    }
+
+    if (!hybridFalApiKey) {
+      return Response.json(
+        {
+          ok: false,
+          status: "setup_required",
+          message: "Hybrid Mode requires FAL_KEY for Stage 2 fidelity enhancement. Add it to Vercel environment variables and redeploy.",
+          generationMode,
+          troubleshooting: ["Add FAL_KEY to Vercel environment variables.", "Redeploy after adding the key."],
+          referenceCharacters,
+          referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          warnings: refWarnings,
+        } satisfies GenerateResult,
+        { status: 503 }
+      );
+    }
+
+    // ── Stage 1: OpenAI story draft ───────────────────────────────────────────
+    const stage1Compaction = compactStoryPanelPrompt({
+      fullPrompt: generationPrompt,
+      panelPrompt,
+      charPkgs: sceneRefPkg?.characterPackages ?? [],
+      adminSceneDirection,
+    });
+    const stage1Prompt = stage1Compaction.prompt;
+
+    console.log(
+      `[generate-story-panel-image] hybrid stage 1: openai model=${openAiModelId}, promptLen=${stage1Prompt.length}`
+    );
+
+    let stage1B64: string | undefined;
+    let stage1Url: string | undefined;
+
+    try {
+      const openai = new OpenAI({ apiKey: openAiKey });
+      const stage1Resp = await openai.images.generate({
+        model: openAiModelId,
+        prompt: stage1Prompt,
+        n: 1,
+        size: "1024x1024",
+      });
+      const stage1Data = stage1Resp.data?.[0] ?? {};
+      stage1B64 = typeof stage1Data.b64_json === "string" ? stage1Data.b64_json : undefined;
+      stage1Url = typeof stage1Data.url === "string" ? stage1Data.url : undefined;
+    } catch (stage1Err) {
+      const parsedError = parseProviderError(stage1Err);
+      console.error("[generate-story-panel-image] Hybrid Stage 1 (OpenAI) failed:", parsedError.providerMessage);
+      return Response.json(
+        {
+          ok: false,
+          status: parsedError.status,
+          message: `Hybrid Mode Stage 1 failed — OpenAI error: ${parsedError.providerMessage.slice(0, 200)}`,
+          providerStatus: parsedError.providerStatus,
+          providerMessage: parsedError.providerMessage,
+          troubleshooting: parsedError.troubleshooting,
+          generationMode,
+          provider: "openai",
+          modelId: openAiModelId,
+          referenceCharacters,
+          referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          warnings: refWarnings,
+        } satisfies GenerateResult,
+        { status: 502 }
+      );
+    }
+
+    if (!stage1B64 && !stage1Url) {
+      return Response.json(
+        {
+          ok: false,
+          status: "image_response_parse_error",
+          message: "Hybrid Mode Stage 1 — OpenAI returned no usable image data.",
+          generationMode,
+          provider: "openai",
+          modelId: openAiModelId,
+          referenceCharacters,
+          referenceMode,
+          referenceCounts,
+          referencesUsed,
+          referencesOmitted,
+          warnings: refWarnings,
+        } satisfies GenerateResult,
+        { status: 502 }
+      );
+    }
+
+    // ── Prepare image URL for Fal Stage 2 ────────────────────────────────────
+    let hybridBaseImageUrl: string | null = stage1Url ?? null;
+
+    if (!hybridBaseImageUrl && stage1B64 && blobToken) {
+      try {
+        const imageBuffer = Buffer.from(stage1B64, "base64");
+        const blob = await put(
+          `hybrid-temp/${Date.now()}.png`,
+          imageBuffer,
+          { access: "public", contentType: "image/png", token: blobToken }
+        );
+        hybridBaseImageUrl = blob.url;
+        console.log("[generate-story-panel-image] Hybrid: uploaded Stage 1 to Blob:", hybridBaseImageUrl);
+      } catch (uploadErr) {
+        const msg = uploadErr instanceof Error ? uploadErr.message : String(uploadErr);
+        console.warn("[generate-story-panel-image] Hybrid: Blob upload failed:", msg);
+      }
+    }
+
+    // ── Stage 2: Fal.ai fidelity enhance ─────────────────────────────────────
+    let finalB64 = stage1B64;
+    let finalImageUrl = stage1Url;
+    let usedHybridEnhancement = false;
+    let hybridStage2Status: "success" | "failed" = "failed";
+    let hybridFallbackReason: string | undefined;
+
+    if (hybridBaseImageUrl) {
+      const enhancePrompt = buildHybridFalEnhancePrompt({
+        characterSlugs: referenceCharacters,
+        adminSceneDirection,
+      });
+      const enhanceCompaction = compactStoryPanelPrompt({
+        fullPrompt: enhancePrompt,
+        panelPrompt,
+        charPkgs: sceneRefPkg?.characterPackages ?? [],
+        adminSceneDirection,
+      });
+      const finalEnhancePrompt = enhanceCompaction.prompt;
+
+      console.log(
+        `[generate-story-panel-image] hybrid stage 2: fal model=${falModelId}, promptLen=${finalEnhancePrompt.length}`
+      );
+
+      const falController = new AbortController();
+      const falTimeout = setTimeout(() => falController.abort(), 120_000);
+
+      try {
+        const falResp = await fetch(`https://fal.run/${falModelId}`, {
+          method: "POST",
+          headers: {
+            Authorization: `Key ${hybridFalApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            prompt: finalEnhancePrompt,
+            image_url: hybridBaseImageUrl,
+            num_images: 1,
+          }),
+          signal: falController.signal,
+        });
+        clearTimeout(falTimeout);
+
+        if (falResp.ok) {
+          const falData = (await falResp.json()) as Record<string, unknown>;
+          const firstImage =
+            (Array.isArray(falData.images) ? falData.images[0] : null) ??
+            (isRecord(falData.image) ? falData.image : null);
+          const falImageUrl =
+            typeof (firstImage as Record<string, unknown> | null)?.url === "string"
+              ? ((firstImage as Record<string, unknown>).url as string)
+              : typeof falData.url === "string"
+              ? falData.url
+              : undefined;
+
+          if (falImageUrl) {
+            const imgResp = await fetch(falImageUrl);
+            if (imgResp.ok) {
+              const imgBuffer = await imgResp.arrayBuffer();
+              finalB64 = Buffer.from(imgBuffer).toString("base64");
+              finalImageUrl = falImageUrl;
+              usedHybridEnhancement = true;
+              hybridStage2Status = "success";
+              console.log("[generate-story-panel-image] Hybrid Stage 2 succeeded:", falImageUrl);
+            } else {
+              hybridFallbackReason = `Hybrid fallback — Fal.ai enhancement image could not be downloaded (HTTP ${imgResp.status}). Showing OpenAI story draft.`;
+              console.warn("[generate-story-panel-image] Hybrid: Fal result download failed:", imgResp.status);
+            }
+          } else {
+            hybridFallbackReason = "Hybrid fallback — Fal.ai returned no image URL. Showing OpenAI story draft.";
+            console.warn("[generate-story-panel-image] Hybrid: Fal returned no image URL");
+          }
+        } else {
+          const errText = await falResp.text().catch(() => "");
+          hybridFallbackReason = `Hybrid fallback — Fal.ai enhancement returned ${falResp.status}. Showing OpenAI story draft.`;
+          console.warn("[generate-story-panel-image] Hybrid Stage 2 Fal error:", falResp.status, errText.slice(0, 100));
+        }
+      } catch (falErr) {
+        clearTimeout(falTimeout);
+        const isAbort = falErr instanceof Error && falErr.name === "AbortError";
+        hybridFallbackReason = isAbort
+          ? "Hybrid fallback — Fal.ai enhancement timed out. Showing OpenAI story draft."
+          : "Hybrid fallback — Fal.ai enhancement failed. Showing OpenAI story draft.";
+        console.warn(
+          "[generate-story-panel-image] Hybrid Stage 2 error:",
+          falErr instanceof Error ? falErr.message : String(falErr)
+        );
+      }
+    } else {
+      hybridFallbackReason = blobToken
+        ? "Hybrid fallback — Stage 1 OpenAI image URL could not be prepared for Fal.ai. Showing OpenAI story draft."
+        : "Hybrid fallback — BLOB_READ_WRITE_TOKEN is required to prepare the OpenAI draft for Fal.ai enhancement. Showing OpenAI story draft.";
+      console.warn("[generate-story-panel-image] Hybrid: no base image URL for Stage 2:", hybridFallbackReason);
+    }
+
+    const hybridFinalProvider: StoryPanelProvider = usedHybridEnhancement ? "fal" : "openai";
+    const hybridFinalModelId = usedHybridEnhancement ? falModelId : openAiModelId;
+
+    return Response.json(
+      {
+        ok: true,
+        status: "story_panel_draft_generated",
+        draft: {
+          id: `story-panel-draft-${Date.now()}`,
+          episodeSlug,
+          sceneId,
+          sceneNumber,
+          mimeType: "image/png",
+          imageBase64: finalB64,
+          imageUrl: finalImageUrl,
+          promptText: panelPrompt,
+          createdAt: new Date().toISOString(),
+        },
+        image: { mimeType: "image/png", base64: finalB64, url: finalImageUrl },
+        generationPrompt: stage1Prompt,
+        generationMode,
+        provider: hybridFinalProvider,
+        modelId: hybridFinalModelId,
+        referenceCharacters,
+        referenceMode: "prompt-only-reference-bundle",
+        referenceCounts,
+        referencesUsed,
+        referencesOmitted,
+        fidelityRulesSummary,
+        usedImageConditioning: false,
+        providerSupportsImageReferences: true,
+        selectedReferenceAssetCount: 0,
+        conditionedImageCount: 0,
+        skippedReferenceAssetCount: 0,
+        imageConditioningWarnings: [],
+        sceneCharacterCount: 0,
+        characterReferenceCount: 0,
+        supportingReferenceCount: 0,
+        environmentReferenceCount: 0,
+        passedToProviderCount: 0,
+        requiredFeatureLocksUsed: false,
+        characterFeatureLockCount: 0,
+        missingPartPreventionUsed: false,
+        babyProportionLockUsed: false,
+        topFeatureSeparationUsed: false,
+        characterFeatureWarnings: [],
+        storySceneCompositionLockUsed: false,
+        exactCastLockUsed: false,
+        referenceUsageRulesUsed: false,
+        environmentReferenceUsedAsImage: false,
+        environmentReferenceUsedAsText: false,
+        exactCastCharacters: [],
+        duplicatePreventionUsed: false,
+        adminSceneDirectionUsed: Boolean(adminSceneDirection),
+        adminSceneDirectionLength: adminSceneDirection?.length ?? 0,
+        adminSceneDirectionPreview: adminSceneDirection?.slice(0, 120) || undefined,
+        promptWasCompacted: stage1Compaction.wasCompacted,
+        originalPromptLength: stage1Compaction.originalLength,
+        providerPromptLength: stage1Compaction.compactedLength,
+        providerPromptLimit: PROVIDER_PROMPT_SOFT_LIMIT,
+        promptCompactionWarnings: stage1Compaction.warnings,
+        promptSectionsRemovedOrShortened: stage1Compaction.removedSections,
+        fallbackUsed: !usedHybridEnhancement && hybridFallbackReason !== undefined,
+        fallbackReason: hybridFallbackReason,
+        usedHybridEnhancement,
+        baseDraftProvider: "openai",
+        baseDraftModelId: openAiModelId,
+        hybridStage1Status: "success",
+        hybridStage2Status,
+        warnings: refWarnings,
+        notes: [
+          "This story panel draft has not been saved.",
+          usedHybridEnhancement
+            ? "Hybrid Mode — OpenAI story draft enhanced by Fal.ai fidelity pass."
+            : `Hybrid Mode — ${hybridFallbackReason ?? "Fal.ai enhancement skipped."}`,
+          "Review it before approving and saving to the episode.",
+        ],
+      } satisfies GenerateResult,
+      { status: 200 }
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════════

@@ -35,7 +35,12 @@ type GenApiResult = {
   providerMessage?: string;
   troubleshooting?: string[];
   generationPrompt?: string;
-  generationMode?: "draft" | "production";
+  generationMode?: "draft" | "production" | "hybrid";
+  usedHybridEnhancement?: boolean;
+  baseDraftProvider?: string;
+  baseDraftModelId?: string;
+  hybridStage1Status?: string;
+  hybridStage2Status?: string;
   provider?: "openai" | "fal";
   modelId?: string;
   referenceCharacters?: string[];
@@ -215,6 +220,7 @@ const REFERENCE_MODE_LABELS: Record<string, { label: string; className: string }
 const PROVIDER_LABELS: Record<string, string> = {
   openai: "OpenAI",
   fal: "Fal.ai",
+  hybrid: "Hybrid",
 };
 
 const MODE_LABELS: Record<string, { label: string; description: string; className: string }> = {
@@ -227,6 +233,11 @@ const MODE_LABELS: Record<string, { label: string; description: string; classNam
     label: "Production Mode",
     description: "Fal.ai — strict reference fidelity target",
     className: "border-tropical-green/40 text-tropical-green",
+  },
+  hybrid: {
+    label: "Hybrid Mode",
+    description: "OpenAI story draft → Fal.ai fidelity enhance",
+    className: "border-pineapple-yellow/50 text-pineapple-yellow-dark",
   },
 };
 
@@ -605,7 +616,7 @@ export default function PanelDraftGenerator({
   const [genStatus, setGenStatus] = useState<GenStatus>("idle");
   const [result, setResult] = useState<GenApiResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
-  const [generationMode, setGenerationMode] = useState<"draft" | "production">("draft");
+  const [generationMode, setGenerationMode] = useState<"draft" | "production" | "hybrid">("draft");
   const [adminSceneDirection, setAdminSceneDirection] = useState<string>("");
 
   // Refine state
@@ -1139,7 +1150,7 @@ export default function PanelDraftGenerator({
       <div className="flex flex-col gap-1.5">
         <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Generation Mode</p>
         <div className="flex flex-wrap gap-2">
-          {(["draft", "production"] as const).map((mode) => {
+          {(["draft", "production", "hybrid"] as const).map((mode) => {
             const m = MODE_LABELS[mode];
             const active = generationMode === mode;
             return (
@@ -1286,7 +1297,7 @@ export default function PanelDraftGenerator({
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-tiki-brown/60">
               {result.generationMode && (
                 <span><span className="font-bold text-tiki-brown/45 uppercase">Mode </span>
-                <span className="font-semibold">{result.generationMode === "production" ? "Production" : "Draft"}</span></span>
+                <span className="font-semibold">{result.generationMode === "production" ? "Production" : result.generationMode === "hybrid" ? "Hybrid" : "Draft"}</span></span>
               )}
               {result.provider && (
                 <span><span className="font-bold text-tiki-brown/45 uppercase">Provider </span>
@@ -1353,8 +1364,8 @@ export default function PanelDraftGenerator({
                     {result.generationMode && (
                       <span>
                         <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">Mode </span>
-                        <span className={`font-bold text-xs ${result.generationMode === "production" ? "text-tropical-green" : "text-ube-purple"}`}>
-                          {result.generationMode === "production" ? "Production" : "Draft"}
+                        <span className={`font-bold text-xs ${result.generationMode === "production" ? "text-tropical-green" : result.generationMode === "hybrid" ? "text-pineapple-yellow-dark" : "text-ube-purple"}`}>
+                          {result.generationMode === "production" ? "Production" : result.generationMode === "hybrid" ? "Hybrid" : "Draft"}
                         </span>
                       </span>
                     )}
@@ -1388,6 +1399,35 @@ export default function PanelDraftGenerator({
                       </span>
                     )}
                   </div>
+
+                  {/* Hybrid pipeline status */}
+                  {result.generationMode === "hybrid" && (
+                    <div className="flex flex-col gap-1 rounded-xl px-3 py-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25">
+                      <span className="font-bold text-tiki-brown/50 uppercase tracking-wide text-xs">Hybrid Pipeline</span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/60">
+                        <span>
+                          Stage 1:{" "}
+                          <span className={`font-semibold ${result.hybridStage1Status === "success" ? "text-tropical-green" : "text-warm-coral"}`}>
+                            OpenAI story draft {result.hybridStage1Status === "success" ? "✓" : "✗"}
+                          </span>
+                        </span>
+                        <span>
+                          Stage 2:{" "}
+                          <span className={`font-semibold ${result.hybridStage2Status === "success" ? "text-tropical-green" : "text-pineapple-yellow-dark"}`}>
+                            Fal.ai fidelity enhance {result.hybridStage2Status === "success" ? "✓" : "—"}
+                          </span>
+                        </span>
+                      </div>
+                      {result.baseDraftModelId && (
+                        <span className="text-xs text-tiki-brown/45">Stage 1 model: <span className="font-mono">{result.baseDraftModelId}</span></span>
+                      )}
+                      {result.usedHybridEnhancement ? (
+                        <span className="text-xs text-tropical-green font-semibold">✅ Final image: Fal.ai enhanced</span>
+                      ) : (
+                        <span className="text-xs text-pineapple-yellow-dark font-semibold">↩ Final image: OpenAI draft (Fal.ai stage skipped or failed)</span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Image conditioning status */}
                   {result.usedImageConditioning === true && (
