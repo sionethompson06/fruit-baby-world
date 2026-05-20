@@ -294,7 +294,7 @@ async function generateWithFal(
   // Single-reference models (fal-ai/flux-pro/kontext and most others):
   //   image_url must be a string — sending an array causes a 422.
   // Multi-reference models (modelId contains "/multi"):
-  //   image_url can be a string array.
+  //   use image_urls (plural) with a string array — NOT image_url.
   let actualPassedCount = 0;
   const requestBody: Record<string, unknown> = {
     prompt: productionPrompt,
@@ -302,7 +302,7 @@ async function generateWithFal(
   };
 
   if (payloadMode === "multi-reference" && allUrls.length > 0) {
-    requestBody.image_url = allUrls;
+    requestBody.image_urls = allUrls;   // plural field for multi endpoint
     actualPassedCount = allUrls.length;
   } else {
     // Single-reference: pick the strongest canonical URL.
@@ -312,7 +312,7 @@ async function generateWithFal(
       productionRefSet?.environmentUrl ??
       allUrls[0];
     if (singleUrl) {
-      requestBody.image_url = singleUrl;
+      requestBody.image_url = singleUrl; // singular string for single endpoint
       actualPassedCount = 1;
     }
   }
@@ -346,15 +346,20 @@ async function generateWithFal(
 
   if (!falResp.ok) {
     const errText = await falResp.text().catch(() => "");
-    // Surface 422 image_url validation errors with actionable guidance
-    if (
-      falResp.status === 422 &&
-      errText.toLowerCase().includes("image_url")
-    ) {
-      throw new Error(
-        `Fal.ai image_url validation error (422): This model requires image_url to be a single string. ` +
-        `To enable multi-reference generation, set STORY_PANEL_PRODUCTION_MODEL_ID=fal-ai/flux-pro/kontext/multi.`
-      );
+    if (falResp.status === 422) {
+      const lower = errText.toLowerCase();
+      if (payloadMode === "multi-reference" && (lower.includes("image_url") || lower.includes("image_urls"))) {
+        throw new Error(
+          `Fal.ai multi-reference payload error (422): The multi-reference endpoint received an unexpected field. ` +
+          `Expected image_urls (array). Raw error: ${errText.slice(0, 200)}`
+        );
+      }
+      if (payloadMode === "single-reference" && lower.includes("image_url")) {
+        throw new Error(
+          `Fal.ai image_url validation error (422): This model requires image_url to be a single string. ` +
+          `To enable multi-reference generation, set STORY_PANEL_PRODUCTION_MODEL_ID=fal-ai/flux-pro/kontext/multi.`
+        );
+      }
     }
     throw new Error(`Fal.ai ${falResp.status}: ${errText.slice(0, 300)}`);
   }
@@ -640,7 +645,9 @@ export async function POST(request: Request): Promise<Response> {
       const errMsg = falErr instanceof Error ? falErr.message : String(falErr);
       console.error("[generate-story-panel-image] Fal.ai production error:", errMsg);
 
-      const is422ImageUrlError = errMsg.includes("image_url validation error");
+      const is422ImageUrlError =
+        errMsg.includes("image_url validation error") ||
+        errMsg.includes("multi-reference payload error");
       const payloadModeOnError = getProductionPayloadMode(modelId);
 
       const troubleshootingItems: string[] = is422ImageUrlError
