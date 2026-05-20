@@ -846,62 +846,70 @@ export default function PanelDraftGenerator({
   async function handleApproveAndSave() {
     if (!result?.image || !canApproveAndSave) return;
 
-    setApproveAndSaveStatus("uploading");
-    setApproveAndSaveUploadedAsset(null);
     setApproveAndSaveError("");
     setApproveAndSaveErrorStep(null);
 
-    const alt = buildAltText(sceneNumber, sceneTitle, sceneSummary);
-
-    // Step 1: Upload to Blob
+    // If a previous run already uploaded successfully (attach failed), skip upload and retry attach only
+    const reuseUpload = approveAndSaveUploadedAsset !== null;
     let savedAsset: UploadAsset;
-    try {
-      const res = await fetch("/api/media/upload-story-panel-image", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          episodeSlug,
-          sceneNumber,
-          imageBase64: result.image.base64,
-          mimeType: result.image.mimeType,
-          alt,
-          referenceCharacters: result.referenceCharacters ?? referenceCharacters,
-          review: { characterFidelityApproved: true },
-        }),
-      });
 
-      if (res.status === 401) {
-        setApproveAndSaveStatus("error");
-        setApproveAndSaveError("Admin access is required. Please unlock the Story Studio again.");
-        setApproveAndSaveErrorStep("upload");
-        return;
-      }
+    if (reuseUpload) {
+      savedAsset = approveAndSaveUploadedAsset!;
+    } else {
+      // Step 1: Upload to Blob
+      setApproveAndSaveStatus("uploading");
+      setApproveAndSaveUploadedAsset(null);
 
-      let data: UploadApiResult;
+      const alt = buildAltText(sceneNumber, sceneTitle, sceneSummary);
+
       try {
-        data = (await res.json()) as UploadApiResult;
+        const res = await fetch("/api/media/upload-story-panel-image", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            episodeSlug,
+            sceneNumber,
+            imageBase64: result.image.base64,
+            mimeType: result.image.mimeType,
+            alt,
+            referenceCharacters: result.referenceCharacters ?? referenceCharacters,
+            review: { characterFidelityApproved: true },
+          }),
+        });
+
+        if (res.status === 401) {
+          setApproveAndSaveStatus("error");
+          setApproveAndSaveError("Admin access is required. Please unlock the Story Studio again.");
+          setApproveAndSaveErrorStep("upload");
+          return;
+        }
+
+        let data: UploadApiResult;
+        try {
+          data = (await res.json()) as UploadApiResult;
+        } catch {
+          setApproveAndSaveStatus("error");
+          setApproveAndSaveError("Media upload failed — could not parse server response.");
+          setApproveAndSaveErrorStep("upload");
+          return;
+        }
+
+        if (!data.ok || !data.asset) {
+          setApproveAndSaveStatus("error");
+          setApproveAndSaveError(`Media upload failed: ${uploadErrorMessage(data.status, data.message)}`);
+          setApproveAndSaveErrorStep("upload");
+          return;
+        }
+
+        savedAsset = data.asset;
+        setApproveAndSaveUploadedAsset(savedAsset);
       } catch {
         setApproveAndSaveStatus("error");
-        setApproveAndSaveError("Media upload failed — could not parse server response.");
+        setApproveAndSaveError("Media upload failed — network error. Check your connection and try again.");
         setApproveAndSaveErrorStep("upload");
         return;
       }
-
-      if (!data.ok || !data.asset) {
-        setApproveAndSaveStatus("error");
-        setApproveAndSaveError(`Media upload failed: ${uploadErrorMessage(data.status, data.message)}`);
-        setApproveAndSaveErrorStep("upload");
-        return;
-      }
-
-      savedAsset = data.asset;
-      setApproveAndSaveUploadedAsset(savedAsset);
-    } catch {
-      setApproveAndSaveStatus("error");
-      setApproveAndSaveError("Media upload failed — network error. Check your connection and try again.");
-      setApproveAndSaveErrorStep("upload");
-      return;
     }
 
     // Step 2: Attach to episode JSON
@@ -949,7 +957,7 @@ export default function PanelDraftGenerator({
       if (res.status === 401) {
         setApproveAndSaveStatus("error");
         setApproveAndSaveError(
-          "Admin access is required. Please unlock the Story Studio again. The panel was saved to media storage — use Manual Controls to attach it."
+          "Admin access is required. Please unlock the Story Studio again."
         );
         setApproveAndSaveErrorStep("attach");
         return;
@@ -961,7 +969,7 @@ export default function PanelDraftGenerator({
       } catch {
         setApproveAndSaveStatus("error");
         setApproveAndSaveError(
-          "Attach to episode failed — could not parse server response. The panel was saved to media storage. Use Manual Controls to attach it."
+          "Attach to episode failed — could not parse server response."
         );
         setApproveAndSaveErrorStep("attach");
         return;
@@ -970,7 +978,7 @@ export default function PanelDraftGenerator({
       if (!data.ok) {
         setApproveAndSaveStatus("error");
         setApproveAndSaveError(
-          `Attach to episode failed: ${attachErrorMessage(data.status, data.message)} The panel was saved to media storage. Use Manual Controls to attach it.`
+          attachErrorMessage(data.status, data.message)
         );
         setApproveAndSaveErrorStep("attach");
         return;
@@ -985,7 +993,7 @@ export default function PanelDraftGenerator({
     } catch {
       setApproveAndSaveStatus("error");
       setApproveAndSaveError(
-        "Attach to episode failed — network error. The panel was saved to media storage. Use Manual Controls to attach it."
+        "Attach to episode failed — network error. Check your connection and try again."
       );
       setApproveAndSaveErrorStep("attach");
     }
@@ -1628,7 +1636,11 @@ export default function PanelDraftGenerator({
                   disabled={!canApproveAndSave}
                   className="self-start px-5 py-2.5 rounded-xl bg-ube-purple text-white text-sm font-black disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                 >
-                  {approveAndSaveStatus === "error" ? "Retry Approve & Save Panel to Episode" : "Approve & Save Panel to Episode"}
+                  {approveAndSaveStatus === "error" && approveAndSaveErrorStep === "attach"
+                    ? "Retry Attach to Episode JSON"
+                    : approveAndSaveStatus === "error"
+                    ? "Retry Approve & Save Panel to Episode"
+                    : "Approve & Save Panel to Episode"}
                 </button>
               )}
 
@@ -1651,7 +1663,7 @@ export default function PanelDraftGenerator({
                       <a href={approveAndSaveUploadedAsset.url} target="_blank" rel="noopener noreferrer" className="text-xs text-ube-purple underline break-all">
                         {approveAndSaveUploadedAsset.url}
                       </a>
-                      <p className="text-xs text-tiki-brown/40">Use Manual Controls below to attach it to the episode.</p>
+                      <p className="text-xs text-tiki-brown/40">Click Retry above — the uploaded image will be reused without a new upload.</p>
                     </div>
                   )}
                 </div>

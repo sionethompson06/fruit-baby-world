@@ -2,11 +2,10 @@
 // Attaches an approved Vercel Blob story panel asset reference to a saved episode JSON in GitHub.
 //
 // Auth:    Protected by proxy.ts — requires valid admin cookie.
-// Safety:  Requires review.characterFidelityApproved === true.
-//          Requires episode.review.approvedForSave === true.
+// Safety:  Requires panelAsset.review.characterFidelityApproved === true.
+//          Requires valid HTTPS Blob URL, scene number, and episode slug.
 //          Does not publish. Does not change episode status or publishing flags.
 //          Does not accept arbitrary file paths — slug is validated and path is server-controlled.
-// Phase:   6H — foundation only. Not connected to UI yet.
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,7 +26,6 @@ type AttachResult =
         | "setup_required"
         | "episode_not_found"
         | "invalid_episode_json"
-        | "not_approved_for_save"
         | "github_error";
       message: string;
       githubStatus?: number;
@@ -385,19 +383,6 @@ export async function POST(request: Request): Promise<Response> {
         message: "Failed to reach the GitHub API.",
       } satisfies AttachResult,
       { status: 502 }
-    );
-  }
-
-  // ── Require episode eligibility ───────────────────────────────────────────────
-  const episodeReview = episode.review;
-  if (!isRecord(episodeReview) || episodeReview.approvedForSave !== true) {
-    return Response.json(
-      {
-        ok: false,
-        status: "not_approved_for_save",
-        message: "Episode must be approved for save before media assets can be attached.",
-      } satisfies AttachResult,
-      { status: 422 }
     );
   }
 
