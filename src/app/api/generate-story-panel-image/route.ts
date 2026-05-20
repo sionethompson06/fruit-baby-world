@@ -54,6 +54,11 @@ import {
   getProductionPayloadMode,
   useEnvironmentImageReference,
 } from "@/lib/storyPanelImageProvider";
+import {
+  compactStoryPanelPrompt,
+  PROVIDER_PROMPT_SOFT_LIMIT,
+  type CompactionResult,
+} from "@/lib/storyPanelPromptCompactor";
 import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -129,6 +134,12 @@ type GenerateResult =
       adminSceneDirectionUsed: boolean;
       adminSceneDirectionLength: number;
       adminSceneDirectionPreview?: string;
+      promptWasCompacted: boolean;
+      originalPromptLength: number;
+      providerPromptLength: number;
+      providerPromptLimit: number;
+      promptCompactionWarnings: string[];
+      promptSectionsRemovedOrShortened: string[];
       fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
@@ -184,6 +195,12 @@ type GenerateResult =
       adminSceneDirectionUsed?: boolean;
       adminSceneDirectionLength?: number;
       adminSceneDirectionPreview?: string;
+      promptWasCompacted?: boolean;
+      originalPromptLength?: number;
+      providerPromptLength?: number;
+      providerPromptLimit?: number;
+      promptCompactionWarnings?: string[];
+      promptSectionsRemovedOrShortened?: string[];
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
@@ -462,13 +479,6 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  if (panelPrompt.length > 5000) {
-    return Response.json(
-      { ok: false, status: "validation_error", message: "The story panel prompt is too long. Shorten it to 5000 characters or less and try again." } satisfies GenerateResult,
-      { status: 400 }
-    );
-  }
-
   // ── Generation mode ───────────────────────────────────────────────────────────
   const generationMode: StoryPanelGenerationMode =
     body.generationMode === "production" ? "production" : "draft";
@@ -575,6 +585,7 @@ export async function POST(request: Request): Promise<Response> {
   let genPkg: StoryPanelGenerationPackage | null = null;
   let sceneRefPkg: ReturnType<typeof buildSceneReferencePackage> | null = null;
   let charBySlug: Record<string, Character> = {};
+  let compactionResult: CompactionResult | null = null;
 
   try {
     const allAssets = loadReferenceAssets();
@@ -647,12 +658,21 @@ export async function POST(request: Request): Promise<Response> {
       : null;
     const productionPrompt = fidelityResult?.prompt ?? panelPrompt;
 
+    // Compact the full production fidelity prompt to provider-safe length
+    const productionCompaction = compactStoryPanelPrompt({
+      fullPrompt: productionPrompt,
+      panelPrompt,
+      charPkgs: sceneRefPkg?.characterPackages ?? [],
+      adminSceneDirection,
+    });
+    const providerPrompt = productionCompaction.prompt;
+
     console.log(
-      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, chars=${productionRefSet?.characterReferenceCount ?? 0}, total=${productionRefSet?.passedToProviderCount ?? 0}, featureLocks=${fidelityResult?.characterFeatureLockCount ?? 0}`
+      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, chars=${productionRefSet?.characterReferenceCount ?? 0}, total=${productionRefSet?.passedToProviderCount ?? 0}, featureLocks=${fidelityResult?.characterFeatureLockCount ?? 0}, promptLen=${providerPrompt.length}${productionCompaction.wasCompacted ? ` (compacted from ${productionCompaction.originalLength})` : ""}`
     );
 
     try {
-      const falResult = await generateWithFal(falApiKey, modelId, productionPrompt, productionRefSet);
+      const falResult = await generateWithFal(falApiKey, modelId, providerPrompt, productionRefSet);
 
       return Response.json(
         {
@@ -670,7 +690,7 @@ export async function POST(request: Request): Promise<Response> {
             createdAt: new Date().toISOString(),
           },
           image: { mimeType: "image/png", base64: falResult.b64, url: falResult.imageUrl },
-          generationPrompt: productionPrompt,
+          generationPrompt: providerPrompt,
           generationMode,
           provider,
           modelId,
@@ -711,6 +731,12 @@ export async function POST(request: Request): Promise<Response> {
           adminSceneDirectionUsed: fidelityResult?.adminSceneDirectionUsed ?? false,
           adminSceneDirectionLength: fidelityResult?.adminSceneDirectionLength ?? 0,
           adminSceneDirectionPreview: fidelityResult?.adminSceneDirectionPreview,
+          promptWasCompacted: productionCompaction.wasCompacted,
+          originalPromptLength: productionCompaction.originalLength,
+          providerPromptLength: productionCompaction.compactedLength,
+          providerPromptLimit: PROVIDER_PROMPT_SOFT_LIMIT,
+          promptCompactionWarnings: productionCompaction.warnings,
+          promptSectionsRemovedOrShortened: productionCompaction.removedSections,
           fallbackUsed: false,
           warnings: refWarnings,
           notes: [
@@ -772,6 +798,12 @@ export async function POST(request: Request): Promise<Response> {
           environmentReferenceCount: productionRefSet?.environmentReferenceCount ?? 0,
           passedToProviderCount: productionRefSet?.passedToProviderCount ?? 0,
           productionPayloadMode: payloadModeOnError,
+          promptWasCompacted: productionCompaction.wasCompacted,
+          originalPromptLength: productionCompaction.originalLength,
+          providerPromptLength: productionCompaction.compactedLength,
+          providerPromptLimit: PROVIDER_PROMPT_SOFT_LIMIT,
+          promptCompactionWarnings: productionCompaction.warnings,
+          promptSectionsRemovedOrShortened: productionCompaction.removedSections,
           fallbackUsed: false,
           troubleshooting: troubleshootingItems,
           warnings: refWarnings,
@@ -818,6 +850,15 @@ export async function POST(request: Request): Promise<Response> {
   let skippedReferenceAssetCount = 0;
   let imageConditioningWarnings: string[] = [];
 
+  // Compact the generation prompt for the fallback images.generate path
+  compactionResult = compactStoryPanelPrompt({
+    fullPrompt: generationPrompt,
+    panelPrompt,
+    charPkgs: sceneRefPkg?.characterPackages ?? [],
+    adminSceneDirection,
+  });
+  generationPrompt = compactionResult.prompt;
+
   const hasBundle = referenceCounts.total > 0 && genPkg !== null && sceneRefPkg !== null;
 
   if (hasBundle && genPkg && sceneRefPkg) {
@@ -853,6 +894,13 @@ export async function POST(request: Request): Promise<Response> {
         if (adminSceneDirection) {
           editPrompt = editPrompt + "\n\n" + buildAdminSceneDirectionBlock(adminSceneDirection);
         }
+        const editCompaction = compactStoryPanelPrompt({
+          fullPrompt: editPrompt,
+          panelPrompt,
+          charPkgs: sceneRefPkg.characterPackages,
+          adminSceneDirection,
+        });
+        editPrompt = editCompaction.prompt;
         try {
           console.log(`[generate-story-panel-image] images.edit with ${conditionedImageCount} File inputs`);
           const editResponse = await openai.images.edit({
@@ -872,6 +920,7 @@ export async function POST(request: Request): Promise<Response> {
             usedImageConditioning = true;
             referenceMode = "image-conditioned-reference-bundle";
             generationPrompt = editPrompt;
+            compactionResult = editCompaction;
             console.log("[generate-story-panel-image] images.edit succeeded");
           } else {
             fallbackReason = "Image edit returned no data — fell back to prompt-only generation.";
@@ -926,6 +975,12 @@ export async function POST(request: Request): Promise<Response> {
           conditionedImageCount,
           skippedReferenceAssetCount,
           imageConditioningWarnings,
+          promptWasCompacted: compactionResult?.wasCompacted,
+          originalPromptLength: compactionResult?.originalLength,
+          providerPromptLength: compactionResult?.compactedLength,
+          providerPromptLimit: PROVIDER_PROMPT_SOFT_LIMIT,
+          promptCompactionWarnings: compactionResult?.warnings,
+          promptSectionsRemovedOrShortened: compactionResult?.removedSections,
           fallbackUsed: fallbackReason !== undefined,
           fallbackReason,
           warnings: refWarnings,
@@ -958,6 +1013,12 @@ export async function POST(request: Request): Promise<Response> {
         conditionedImageCount,
         skippedReferenceAssetCount,
         imageConditioningWarnings,
+        promptWasCompacted: compactionResult?.wasCompacted,
+        originalPromptLength: compactionResult?.originalLength,
+        providerPromptLength: compactionResult?.compactedLength,
+        providerPromptLimit: PROVIDER_PROMPT_SOFT_LIMIT,
+        promptCompactionWarnings: compactionResult?.warnings,
+        promptSectionsRemovedOrShortened: compactionResult?.removedSections,
         fallbackUsed: fallbackReason !== undefined,
         fallbackReason,
         warnings: refWarnings,
@@ -1019,6 +1080,12 @@ export async function POST(request: Request): Promise<Response> {
       adminSceneDirectionUsed: Boolean(adminSceneDirection),
       adminSceneDirectionLength: adminSceneDirection?.length ?? 0,
       adminSceneDirectionPreview: adminSceneDirection?.slice(0, 120) || undefined,
+      promptWasCompacted: compactionResult?.wasCompacted ?? false,
+      originalPromptLength: compactionResult?.originalLength ?? generationPrompt.length,
+      providerPromptLength: compactionResult?.compactedLength ?? generationPrompt.length,
+      providerPromptLimit: PROVIDER_PROMPT_SOFT_LIMIT,
+      promptCompactionWarnings: compactionResult?.warnings ?? [],
+      promptSectionsRemovedOrShortened: compactionResult?.removedSections ?? [],
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       warnings: refWarnings,

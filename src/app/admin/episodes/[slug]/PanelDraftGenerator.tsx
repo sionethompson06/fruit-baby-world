@@ -78,6 +78,12 @@ type GenApiResult = {
   adminSceneDirectionUsed?: boolean;
   adminSceneDirectionLength?: number;
   adminSceneDirectionPreview?: string;
+  promptWasCompacted?: boolean;
+  originalPromptLength?: number;
+  providerPromptLength?: number;
+  providerPromptLimit?: number;
+  promptCompactionWarnings?: string[];
+  promptSectionsRemovedOrShortened?: string[];
   fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
@@ -1376,6 +1382,37 @@ export default function PanelDraftGenerator({
                       </p>
                     )}
                   </div>
+
+                  {/* Prompt safety / compaction status */}
+                  {result.originalPromptLength !== undefined && (
+                    <div className={`flex flex-col gap-1 rounded-xl px-3 py-2 ${result.promptWasCompacted ? "bg-pineapple-yellow/10 border border-pineapple-yellow/25" : "bg-tiki-brown/4 border border-tiki-brown/10"}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-tiki-brown/50 uppercase tracking-wide text-xs">Prompt Safety</span>
+                        <span className={`text-xs font-semibold ${result.promptWasCompacted ? "text-pineapple-yellow-dark" : "text-tropical-green"}`}>
+                          {result.promptWasCompacted ? "Compacted" : "Under limit"}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/55">
+                        <span>Original: <span className="font-semibold">{result.originalPromptLength}</span> chars</span>
+                        <span>Sent to provider: <span className="font-semibold">{result.providerPromptLength}</span> chars</span>
+                        {result.providerPromptLimit && (
+                          <span>Limit: <span className="font-semibold">{result.providerPromptLimit}</span></span>
+                        )}
+                      </div>
+                      {result.promptWasCompacted && (
+                        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                          Prompt was automatically shortened for provider limits while preserving character fidelity rules and admin scene direction.
+                        </p>
+                      )}
+                      {result.promptCompactionWarnings && result.promptCompactionWarnings.length > 0 && (
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          {result.promptCompactionWarnings.map((w, i) => (
+                            <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Reference asset prep counts (draft mode) */}
                   {result.generationMode !== "production" && (result.selectedReferenceAssetCount ?? 0) > 0 && (
