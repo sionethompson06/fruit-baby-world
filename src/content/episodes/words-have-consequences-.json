@@ -130,7 +130,7 @@
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-20T05:10:52.363Z",
+  "updatedAt": "2026-05-20T18:13:40.191Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
@@ -179,15 +179,15 @@
           ],
           "prompt": "Create a kid-friendly still storybook panel for Scene 2, Empathy. Show pineapple-baby, mango-baby in the episode setting. Preserve official Fruit Baby character designs exactly to very close to the uploaded references. Do not redesign characters.",
           "asset": {
-            "url": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/words-have-consequences-/story-panels/scene-2-1779253851301.png",
-            "pathname": "episodes/words-have-consequences-/story-panels/scene-2-1779253851301.png",
+            "url": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/words-have-consequences-/story-panels/scene-2-1779300819288.png",
+            "pathname": "episodes/words-have-consequences-/story-panels/scene-2-1779300819288.png",
             "storageProvider": "vercel-blob",
             "mimeType": "image/png",
             "width": null,
             "height": null,
             "alt": "Story panel for Scene 2: Empathy: Pineapple Baby speaks to Mango Baby and ask where she go the flower from. Mango Baby tells a story of how she was given",
-            "createdAt": "2026-05-20T05:10:51.816Z",
-            "approvedAt": "2026-05-20T05:10:51.826Z"
+            "createdAt": "2026-05-20T18:13:39.716Z",
+            "approvedAt": "2026-05-20T18:13:39.771Z"
           },
           "review": {
             "requiresHumanReview": true,
