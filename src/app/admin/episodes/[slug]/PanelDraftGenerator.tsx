@@ -6,6 +6,7 @@ import type { FidelityThumbnail, FidelityChecklistItem } from "@/lib/storyPanelF
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type GenStatus = "idle" | "loading" | "done" | "not_configured" | "error";
+type RefineStatus = "idle" | "loading" | "done" | "error";
 type UploadStatus = "idle" | "loading" | "success" | "error";
 type AttachStatus = "idle" | "loading" | "success" | "error";
 type ApproveSaveStatus = "idle" | "uploading" | "attaching" | "success" | "error";
@@ -78,6 +79,11 @@ type GenApiResult = {
   adminSceneDirectionUsed?: boolean;
   adminSceneDirectionLength?: number;
   adminSceneDirectionPreview?: string;
+  refinedFromPreviousDraft?: boolean;
+  refineInstructionPreview?: string;
+  refineProvider?: string;
+  refineModelId?: string;
+  refinementCreatedAt?: string;
   promptWasCompacted?: boolean;
   originalPromptLength?: number;
   providerPromptLength?: number;
@@ -132,6 +138,22 @@ type AttachApiResult = {
   notes?: string[];
 };
 
+// ─── Refine API result ────────────────────────────────────────────────────────
+
+type RefineApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  image?: { mimeType: string; base64?: string; url?: string };
+  refineInstruction?: string;
+  refineInstructionPreview?: string;
+  provider?: string;
+  modelId?: string;
+  refinedFromPreviousDraft?: boolean;
+  refinementCreatedAt?: string;
+  troubleshooting?: string[];
+};
+
 // ─── Quick direction chips ────────────────────────────────────────────────────
 
 const QUICK_DIRECTION_CHIPS = [
@@ -142,6 +164,19 @@ const QUICK_DIRECTION_CHIPS = [
   "Warm lighting.",
   "Do not crop feet.",
   "More storybook style.",
+] as const;
+
+// ─── Quick refine chips ───────────────────────────────────────────────────────
+
+const QUICK_REFINE_CHIPS = [
+  "Make expression sadder",
+  "Make arms visible",
+  "Add small prop",
+  "Warm lighting",
+  "Do not move characters",
+  "Keep composition the same",
+  "Fix top leaves",
+  "Do not change background",
 ] as const;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -573,6 +608,11 @@ export default function PanelDraftGenerator({
   const [generationMode, setGenerationMode] = useState<"draft" | "production">("draft");
   const [adminSceneDirection, setAdminSceneDirection] = useState<string>("");
 
+  // Refine state
+  const [refineInstruction, setRefineInstruction] = useState<string>("");
+  const [refineStatus, setRefineStatus] = useState<RefineStatus>("idle");
+  const [refineErrorMsg, setRefineErrorMsg] = useState<string>("");
+
   // Fidelity review state — local only
   const checklistItems: FidelityChecklistItem[] = fidelityChecklist ?? [];
   const [checkedItems, setCheckedItems] = useState<boolean[]>(() =>
@@ -651,6 +691,9 @@ export default function PanelDraftGenerator({
     setResult(null);
     setErrorMsg("");
     setAdminSceneDirection("");
+    setRefineInstruction("");
+    setRefineStatus("idle");
+    setRefineErrorMsg("");
     resetReviewState();
   }
 
@@ -658,6 +701,9 @@ export default function PanelDraftGenerator({
     setGenStatus("loading");
     setResult(null);
     setErrorMsg("");
+    setRefineInstruction("");
+    setRefineStatus("idle");
+    setRefineErrorMsg("");
     resetReviewState();
 
     try {
@@ -996,6 +1042,83 @@ export default function PanelDraftGenerator({
         "Attach to episode failed — network error. Check your connection and try again."
       );
       setApproveAndSaveErrorStep("attach");
+    }
+  }
+
+  async function handleRefine() {
+    if (!result || !hasImage || !refineInstruction.trim()) return;
+
+    setRefineStatus("loading");
+    setRefineErrorMsg("");
+
+    const imageBase64 = result.image?.base64 ?? result.draft?.imageBase64;
+    const imageUrl = result.image?.url ?? result.draft?.imageUrl;
+    const mimeType = result.image?.mimeType ?? "image/png";
+
+    try {
+      const res = await fetch("/api/generate-story-panel-image/refine", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentDraftImageBase64: imageBase64,
+          currentDraftImageUrl: imageUrl,
+          currentDraftMimeType: mimeType,
+          refineInstruction: refineInstruction.trim(),
+          characterSlugs: result.referenceCharacters ?? referenceCharacters,
+          episodeSlug,
+          sceneNumber,
+        }),
+      });
+
+      if (res.status === 401) {
+        setRefineStatus("error");
+        setRefineErrorMsg("Admin access is required. Please unlock the Story Studio again.");
+        return;
+      }
+
+      let data: RefineApiResult;
+      try {
+        data = (await res.json()) as RefineApiResult;
+      } catch {
+        setRefineStatus("error");
+        setRefineErrorMsg("Refinement failed — could not parse server response. The current draft was not changed.");
+        return;
+      }
+
+      if (data.ok && data.image) {
+        // Replace draft image with refined image, preserve all other metadata
+        setResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                image: data.image!,
+                draft: prev.draft
+                  ? {
+                      ...prev.draft,
+                      imageBase64: data.image!.base64,
+                      imageUrl: data.image!.url,
+                    }
+                  : prev.draft,
+                refinedFromPreviousDraft: true,
+                refineInstructionPreview: data.refineInstructionPreview,
+                refineProvider: data.provider,
+                refineModelId: data.modelId,
+                refinementCreatedAt: data.refinementCreatedAt,
+              }
+            : null
+        );
+        setRefineStatus("done");
+        resetReviewState();
+      } else {
+        setRefineStatus("error");
+        setRefineErrorMsg(
+          data.message ?? "Refinement failed. The current draft was not changed."
+        );
+      }
+    } catch {
+      setRefineStatus("error");
+      setRefineErrorMsg("Refinement failed — network error. The current draft was not changed.");
     }
   }
 
@@ -1391,6 +1514,27 @@ export default function PanelDraftGenerator({
                     )}
                   </div>
 
+                  {/* Refinement metadata (when draft was refined) */}
+                  {result.refinedFromPreviousDraft && (
+                    <div className="flex flex-col gap-1 rounded-xl px-3 py-2 bg-ube-purple/6 border border-ube-purple/18">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-tiki-brown/50 uppercase tracking-wide text-xs">Refinement</span>
+                        <span className="text-xs font-semibold text-ube-purple">Applied</span>
+                      </div>
+                      {result.refineInstructionPreview && (
+                        <p className="text-xs text-tiki-brown/60 italic leading-relaxed">
+                          &ldquo;{result.refineInstructionPreview}{(result.refineInstructionPreview?.length ?? 0) >= 120 ? "…" : ""}&rdquo;
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/55 mt-0.5">
+                        {result.refineProvider && (
+                          <span>Provider: <span className="font-semibold">{PROVIDER_LABELS[result.refineProvider] ?? result.refineProvider}</span></span>
+                        )}
+                        <span>Saved: <span className="font-semibold">No, temporary only</span></span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Prompt safety / compaction status */}
                   {result.originalPromptLength !== undefined && (
                     <div className={`flex flex-col gap-1 rounded-xl px-3 py-2 ${result.promptWasCompacted ? "bg-pineapple-yellow/10 border border-pineapple-yellow/25" : "bg-tiki-brown/4 border border-tiki-brown/10"}`}>
@@ -1600,6 +1744,80 @@ export default function PanelDraftGenerator({
               Upload only after the draft matches the official character references and scene environment. Compare against the official profile sheet and approved character references before uploading.
             </p>
           </div>
+
+          {/* ── Refine Current Draft ── */}
+          {hasImage && (
+            <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-base">✏️</span>
+                <h4 className="text-sm font-black text-tiki-brown">Refine Current Draft</h4>
+              </div>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                Apply a small controlled edit to the current draft without regenerating the whole scene. Composition, characters, colors, poses, and environment are preserved by default.
+              </p>
+              {result.refinedFromPreviousDraft && (
+                <div className="flex items-center gap-1.5 text-xs text-ube-purple font-semibold">
+                  <span>✓</span>
+                  <span>This draft was refined — you can refine it again.</span>
+                </div>
+              )}
+
+              {/* Quick chips */}
+              <div className="flex flex-wrap gap-1.5">
+                {QUICK_REFINE_CHIPS.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => setRefineInstruction((prev) => prev ? `${prev}, ${chip}` : chip)}
+                    className="text-xs px-2.5 py-1 rounded-full bg-ube-purple/10 text-ube-purple font-semibold hover:bg-ube-purple/20 transition-colors"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
+              {/* Edit instruction textarea */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                  Edit Instruction
+                </label>
+                <textarea
+                  value={refineInstruction}
+                  onChange={(e) => setRefineInstruction(e.target.value)}
+                  placeholder="e.g. Make Pineapple Baby's expression sadder, keep all other characters the same"
+                  rows={3}
+                  maxLength={800}
+                  className="w-full text-xs text-tiki-brown/75 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/30 focus:outline-none focus:border-ube-purple/40"
+                />
+                <p className="text-xs text-tiki-brown/35 text-right">
+                  {refineInstruction.length} / 800
+                </p>
+              </div>
+
+              {/* Refine button */}
+              <button
+                onClick={handleRefine}
+                disabled={refineStatus === "loading" || !refineInstruction.trim()}
+                className="self-start px-5 py-2.5 rounded-xl bg-ube-purple/80 text-white text-sm font-black disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+              >
+                {refineStatus === "loading" ? "Applying Edit…" : "Apply Edit to Current Draft"}
+              </button>
+
+              {/* Status messages */}
+              {refineStatus === "loading" && (
+                <p className="text-xs text-tiki-brown/45 animate-pulse">Sending to image provider — this may take up to 60 seconds…</p>
+              )}
+              {refineStatus === "done" && (
+                <p className="text-xs text-tropical-green font-semibold">✓ Draft refined. Review the updated image above.</p>
+              )}
+              {refineStatus === "error" && refineErrorMsg && (
+                <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/25 rounded-xl px-3 py-2.5">
+                  <p className="text-xs font-bold text-warm-coral">Refinement failed</p>
+                  <p className="text-xs text-tiki-brown/70 leading-relaxed">{refineErrorMsg}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Approve & Save Panel (primary one-click workflow) ── */}
           {hasImage && (
