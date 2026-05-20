@@ -51,6 +51,7 @@ export const config = {
     "/api/media/save-background-layer",
     "/api/generate-character-layer",
     "/api/media/save-character-layer",
+    "/api/assemble-story-panel-layers",
     "/api/reference-assets/upload-character-reference",
     "/api/reference-assets/review-character-reference",
     "/api/github/create-character-draft",

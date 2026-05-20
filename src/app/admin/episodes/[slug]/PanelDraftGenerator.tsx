@@ -299,6 +299,27 @@ type CharLayerSaveState = {
   error: string;
 };
 
+// ─── Assemble API result ──────────────────────────────────────────────────────
+
+type AssembleApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  draft?: {
+    id: string;
+    type: "assembled-story-panel-draft";
+    imageBase64?: string;
+    mimeType: "image/png";
+    backgroundLayerId: string;
+    characterLayerIds: string[];
+    canvasWidth: number;
+    canvasHeight: number;
+    createdAt: string;
+    warnings: string[];
+  };
+  notes?: string[];
+};
+
 // ─── Refine API result ────────────────────────────────────────────────────────
 
 type RefineApiResult = {
@@ -820,6 +841,11 @@ export default function PanelDraftGenerator({
   // Per-character layer draft and save state
   const [charLayerDrafts, setCharLayerDrafts] = useState<Record<string, CharLayerDraftState>>({});
   const [charLayerSaves, setCharLayerSaves] = useState<Record<string, CharLayerSaveState>>({});
+
+  // Assembly state (Phase 18D.12)
+  const [assembleStatus, setAssembleStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [assembleResult, setAssembleResult] = useState<AssembleApiResult | null>(null);
+  const [assembleError, setAssembleError] = useState<string>("");
 
   const hasImage =
     genStatus === "done" &&
@@ -1502,6 +1528,42 @@ export default function PanelDraftGenerator({
     }
   }
 
+  async function handleAssemble() {
+    setAssembleStatus("loading");
+    setAssembleResult(null);
+    setAssembleError("");
+    try {
+      const resp = await fetch("/api/assemble-story-panel-layers", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ episodeSlug, sceneNumber, sceneId: sceneId || undefined }),
+      });
+      const data: AssembleApiResult = await resp.json();
+      setAssembleResult(data);
+      if (data.ok) {
+        setAssembleStatus("done");
+      } else {
+        setAssembleStatus("error");
+        setAssembleError(data.message ?? "Assembly failed.");
+      }
+    } catch {
+      setAssembleStatus("error");
+      setAssembleError("Network error — could not reach assembly API.");
+    }
+  }
+
+  function handleUseAssembledAsDraft() {
+    const draft = assembleResult?.draft;
+    if (!draft?.imageBase64) return;
+    setResult((prev) => ({
+      ...(prev ?? { ok: true, status: "assembled" }),
+      image: { mimeType: draft.mimeType, base64: draft.imageBase64 },
+    } as unknown as GenApiResult));
+    setGenStatus("done");
+    resetReviewState();
+  }
+
   return (
     <div className="flex flex-col gap-3 pt-3 border-t border-sky-blue/25 mt-1">
 
@@ -2155,6 +2217,157 @@ export default function PanelDraftGenerator({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Assemble Draft Panel ────────────────────────────────────────────── */}
+      {panelPrompt && (
+        <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
+            <span className="text-sm">🖼</span>
+            <span className="text-sm font-black text-tiki-brown">Assemble Draft Panel</span>
+            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
+              Optional
+            </span>
+          </div>
+          <div className="p-4 flex flex-col gap-4">
+            <p className="text-xs text-tiki-brown/50 leading-relaxed">
+              Composite the saved background layer and saved character layers into a temporary
+              assembled panel draft. Nothing is saved or published — the result can be fed into
+              the Approve &amp; Save Panel flow below.
+            </p>
+
+            {/* Readiness checklist */}
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Readiness</p>
+              <div className="flex flex-col gap-1">
+                <div className={`flex items-center gap-2 text-xs ${bgSaveStatus === "saved" ? "text-tropical-green" : "text-tiki-brown/45"}`}>
+                  <span>{bgSaveStatus === "saved" ? "✅" : "○"}</span>
+                  <span>Background layer saved to scene</span>
+                </div>
+                {result?.assemblyPlanCharacterLayerPlans && result.assemblyPlanCharacterLayerPlans.length > 0 ? (
+                  (() => {
+                    const plans = result.assemblyPlanCharacterLayerPlans!;
+                    const savedCount = plans.filter((p) => charLayerSaves[p.characterSlug]?.status === "saved").length;
+                    const allSaved = savedCount === plans.length;
+                    return (
+                      <div className={`flex items-center gap-2 text-xs ${allSaved ? "text-tropical-green" : savedCount > 0 ? "text-pineapple-yellow-dark" : "text-tiki-brown/45"}`}>
+                        <span>{allSaved ? "✅" : savedCount > 0 ? "◑" : "○"}</span>
+                        <span>Character layers saved: {savedCount} of {plans.length}</span>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-tiki-brown/35">
+                    <span>○</span>
+                    <span>No character layer plans — generate a panel draft first to build the plan</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-tiki-brown/35 italic">
+                Assembly uses the latest saved layer per character from GitHub. You can assemble
+                even if character layers are missing — background-only compositing is supported.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                Assembly loads layers from the episode JSON in GitHub. It does not use the
+                in-session drafts above — save your layers first.
+              </p>
+            </div>
+
+            <button
+              onClick={handleAssemble}
+              disabled={assembleStatus === "loading" || bgSaveStatus !== "saved"}
+              className="self-start px-4 py-2 rounded-xl bg-tiki-brown/80 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
+            >
+              {assembleStatus === "loading" ? "Assembling…" : "Assemble Draft Panel"}
+            </button>
+
+            {bgSaveStatus !== "saved" && assembleStatus === "idle" && (
+              <p className="text-xs text-tiki-brown/35 italic">
+                Save a background layer first to enable assembly.
+              </p>
+            )}
+
+            {assembleStatus === "loading" && (
+              <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                Compositing layers — this may take a few seconds…
+              </p>
+            )}
+
+            {assembleStatus === "error" && (
+              <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                <span className="text-xs font-bold text-warm-coral">Assembly failed</span>
+                {assembleError && <p className="text-xs text-tiki-brown/60">{assembleError}</p>}
+              </div>
+            )}
+
+            {assembleStatus === "done" && assembleResult?.ok && assembleResult.draft && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
+                    Assembled temporary draft — not saved
+                  </span>
+                </div>
+
+                {assembleResult.draft.imageBase64 && (
+                  <div className="flex flex-col gap-1.5">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`data:${assembleResult.draft.mimeType};base64,${assembleResult.draft.imageBase64}`}
+                      alt="Assembled story panel draft"
+                      className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                    />
+                    <p className="text-xs text-tiki-brown/35 italic">
+                      Temporary composite — character white-box artifacts may appear if layers lack transparent backgrounds.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                  <span>Canvas: <span className="font-semibold">{assembleResult.draft.canvasWidth}×{assembleResult.draft.canvasHeight}</span></span>
+                  <span>Char layers: <span className="font-semibold">{assembleResult.draft.characterLayerIds.length}</span></span>
+                </div>
+
+                {assembleResult.draft.warnings.length > 0 && (
+                  <div className="flex flex-col gap-0.5">
+                    {assembleResult.draft.warnings.map((w, i) => (
+                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                    ))}
+                  </div>
+                )}
+
+                {assembleResult.notes && assembleResult.notes.length > 0 && (
+                  <ul className="flex flex-col gap-0.5">
+                    {assembleResult.notes.map((n, i) => (
+                      <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Use as panel draft */}
+                <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-2">
+                  <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
+                    Use Assembled Draft
+                  </p>
+                  <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                    Load this assembled composite into the Fidelity Review and Approve &amp; Save
+                    Panel section below. Nothing is saved automatically.
+                  </p>
+                  <button
+                    onClick={handleUseAssembledAsDraft}
+                    disabled={!assembleResult.draft.imageBase64}
+                    className="self-start px-4 py-2 rounded-xl bg-ube-purple text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                  >
+                    Use Assembled Draft as Panel Draft
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

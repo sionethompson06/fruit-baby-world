@@ -1,4 +1,4 @@
-// Story panel background and character layer types (Phase 18D.10 / 18D.10.2 / 18D.11).
+// Story panel background and character layer types (Phase 18D.10 / 18D.10.2 / 18D.11 / 18D.12).
 // StoryPanelBackgroundDraft — temporary in-memory draft, never saved.
 // EpisodeSceneBackgroundLayer — saved admin-only background layer in episode JSON.
 
@@ -113,6 +113,49 @@ export type StoryPanelBackgroundDraft = {
   assemblyPlanId?: string;
   settingLabel?: string;
   environmentDescription?: string;
+
+  createdAt: string;
+  warnings: string[];
+};
+
+// Assembled story panel draft — temporary composite of background + character layers.
+// Never saved automatically; used to feed the existing Approve & Save Panel flow.
+export type AssembledStoryPanelDraft = {
+  id: string;
+  type: "assembled-story-panel-draft";
+  status: "temporary";
+
+  episodeSlug?: string;
+  sceneId?: string;
+  sceneNumber?: number;
+  panelId?: string;
+
+  backgroundLayerId: string;
+  characterLayerIds: string[];
+
+  imageBase64?: string;
+  imageUrl?: string;
+  mimeType: "image/png";
+
+  assemblyPlanId?: string;
+  provider: "local-composite";
+  modelId?: "none";
+
+  canvasWidth: number;
+  canvasHeight: number;
+
+  placements: {
+    characterLayerId: string;
+    characterSlug: string;
+    characterName: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    placement: string;
+    relativeSize?: string;
+    facingDirection?: string;
+  }[];
 
   createdAt: string;
   warnings: string[];
