@@ -62,6 +62,12 @@ type GenApiResult = {
   environmentReferenceCount?: number;
   passedToProviderCount?: number;
   productionPayloadMode?: "single-reference" | "multi-reference";
+  requiredFeatureLocksUsed?: boolean;
+  characterFeatureLockCount?: number;
+  missingPartPreventionUsed?: boolean;
+  babyProportionLockUsed?: boolean;
+  topFeatureSeparationUsed?: boolean;
+  characterFeatureWarnings?: string[];
   fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
@@ -1223,6 +1229,34 @@ export default function PanelDraftGenerator({
                         <p className="text-xs text-tropical-green/70 font-semibold">
                           Multi-reference endpoint — one reference per character passed.
                         </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Feature fidelity locks (production mode only) */}
+                  {result.generationMode === "production" && result.requiredFeatureLocksUsed && (
+                    <div className="flex flex-col gap-1 bg-tropical-green/6 border border-tropical-green/20 rounded-xl px-3 py-2">
+                      <span className="font-bold text-tiki-brown/50 uppercase tracking-wide text-xs">Feature Fidelity Locks</span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/55">
+                        <span>
+                          <span className="font-semibold text-tropical-green">{result.characterFeatureLockCount}</span> character{(result.characterFeatureLockCount ?? 0) !== 1 ? "s" : ""} locked
+                        </span>
+                        {result.topFeatureSeparationUsed && (
+                          <span className="text-tropical-green font-semibold">Top-feature separation: On</span>
+                        )}
+                        {result.missingPartPreventionUsed && (
+                          <span className="text-tropical-green font-semibold">Missing-part prevention: On</span>
+                        )}
+                        {result.babyProportionLockUsed && (
+                          <span className="text-tropical-green font-semibold">Baby proportions: On</span>
+                        )}
+                      </div>
+                      {result.characterFeatureWarnings && result.characterFeatureWarnings.length > 0 && (
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          {result.characterFeatureWarnings.map((w, i) => (
+                            <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                          ))}
+                        </div>
                       )}
                     </div>
                   )}

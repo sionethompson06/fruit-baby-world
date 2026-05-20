@@ -31,6 +31,7 @@ import {
   getFidelityRulesSummary,
   buildImageConditionedEditPrompt,
   buildProductionFidelityPrompt,
+  type ProductionFidelityResult,
 } from "@/lib/storyPanelFidelityRules";
 import {
   buildStoryPanelReferenceBundle,
@@ -110,6 +111,12 @@ type GenerateResult =
       environmentReferenceCount: number;
       passedToProviderCount: number;
       productionPayloadMode?: ProductionPayloadMode;
+      requiredFeatureLocksUsed: boolean;
+      characterFeatureLockCount: number;
+      missingPartPreventionUsed: boolean;
+      babyProportionLockUsed: boolean;
+      topFeatureSeparationUsed: boolean;
+      characterFeatureWarnings: string[];
       fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
@@ -149,6 +156,12 @@ type GenerateResult =
       environmentReferenceCount?: number;
       passedToProviderCount?: number;
       productionPayloadMode?: ProductionPayloadMode;
+      requiredFeatureLocksUsed?: boolean;
+      characterFeatureLockCount?: number;
+      missingPartPreventionUsed?: boolean;
+      babyProportionLockUsed?: boolean;
+      topFeatureSeparationUsed?: boolean;
+      characterFeatureWarnings?: string[];
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
@@ -581,12 +594,13 @@ export async function POST(request: Request): Promise<Response> {
       ? buildProductionReferenceSet(sceneRefPkg)
       : null;
 
-    const productionPrompt = sceneRefPkg
+    const fidelityResult: ProductionFidelityResult | null = sceneRefPkg
       ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt, charBySlug)
-      : panelPrompt;
+      : null;
+    const productionPrompt = fidelityResult?.prompt ?? panelPrompt;
 
     console.log(
-      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, chars=${productionRefSet?.characterReferenceCount ?? 0}, total=${productionRefSet?.passedToProviderCount ?? 0}`
+      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, chars=${productionRefSet?.characterReferenceCount ?? 0}, total=${productionRefSet?.passedToProviderCount ?? 0}, featureLocks=${fidelityResult?.characterFeatureLockCount ?? 0}`
     );
 
     try {
@@ -630,6 +644,15 @@ export async function POST(request: Request): Promise<Response> {
           environmentReferenceCount: falResult.environmentReferenceCount,
           passedToProviderCount: falResult.passedToProviderCount,
           productionPayloadMode: falResult.productionPayloadMode,
+          requiredFeatureLocksUsed: fidelityResult?.requiredFeatureLocksUsed ?? false,
+          characterFeatureLockCount: fidelityResult?.characterFeatureLockCount ?? 0,
+          missingPartPreventionUsed: fidelityResult?.missingPartPreventionUsed ?? false,
+          babyProportionLockUsed: fidelityResult?.babyProportionLockUsed ?? false,
+          topFeatureSeparationUsed: fidelityResult?.topFeatureSeparationUsed ?? false,
+          characterFeatureWarnings: [
+            ...(fidelityResult?.characterFeatureWarnings ?? []),
+            ...(productionRefSet?.warnings ?? []),
+          ],
           fallbackUsed: false,
           warnings: refWarnings,
           notes: [
@@ -919,6 +942,12 @@ export async function POST(request: Request): Promise<Response> {
       supportingReferenceCount: 0,
       environmentReferenceCount: 0,
       passedToProviderCount: conditionedImageCount,
+      requiredFeatureLocksUsed: false,
+      characterFeatureLockCount: 0,
+      missingPartPreventionUsed: false,
+      babyProportionLockUsed: false,
+      topFeatureSeparationUsed: false,
+      characterFeatureWarnings: [],
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       warnings: refWarnings,

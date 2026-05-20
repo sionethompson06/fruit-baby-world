@@ -109,6 +109,227 @@ export function buildStrictFidelityMandate(
   return sections.join("\n\n");
 }
 
+// ─── Canonical character feature locks ───────────────────────────────────────
+// Hardcoded official feature requirements per character slug.
+// Used as the primary source for REQUIRED CHARACTER FEATURE LOCKS prompt block.
+
+type CanonicalFeatureLock = {
+  requiredBodyColor: string;
+  requiredBodyShape: string;
+  requiredTopFeature: string;
+  requiredArms: string;
+  forbiddenTraits: string[];
+};
+
+const CANONICAL_FEATURE_LOCKS: Record<string, CanonicalFeatureLock> = {
+  "pineapple-baby": {
+    requiredBodyColor: "warm golden-yellow pineapple — NEVER green or purple or orange",
+    requiredBodyShape: "short, plump rounded pineapple oval — compact and baby-like",
+    requiredTopFeature: "layered green pineapple crown leaves — multi-leaf, spiky, only on Pineapple Baby",
+    requiredArms: "two short rounded baby arms",
+    forbiddenTraits: [
+      "Do NOT color the body green (green is for the crown leaves only, not the body)",
+      "Do NOT remove pineapple diamond/crosshatch texture from body",
+      "Do NOT replace pineapple crown with Mango Baby's brown stem and single leaf",
+      "Do NOT replace pineapple crown with Ube Baby's heart-shaped leaf cluster",
+      "Do NOT apply Ube Baby's smooth purple body texture to this character",
+      "Do NOT apply Mango Baby's smooth mango gradient to this character",
+    ],
+  },
+  "ube-baby": {
+    requiredBodyColor: "soft purple/lavender ube taro — smooth round body, no pineapple texture",
+    requiredBodyShape: "round, plump, smooth, soft oval — no sharp edges",
+    requiredTopFeature: "official green heart-shaped leaf cluster on top — rounded heart shape, only on Ube Baby",
+    requiredArms: "two short rounded baby arms",
+    forbiddenTraits: [
+      "Do NOT give the body pineapple diamond/crosshatch texture",
+      "Do NOT replace heart-shaped leaf cluster with Mango Baby's brown stem and single mango leaf",
+      "Do NOT replace heart-shaped leaf cluster with Pineapple Baby's layered spiky pineapple crown",
+      "Do NOT color the body golden-yellow or orange (body must stay purple/lavender)",
+      "Do NOT apply mango color gradient to this character",
+    ],
+  },
+  "mango-baby": {
+    requiredBodyColor: "mango yellow/orange/green gradient — smooth, ripe mango tones",
+    requiredBodyShape: "plump rounded mango oval — smooth surface, no pineapple texture",
+    requiredTopFeature: "small brown mango stem with single green mango leaf — only on Mango Baby",
+    requiredArms: "two short rounded baby arms — MUST be visible in normal standing or sitting poses",
+    forbiddenTraits: [
+      "Do NOT omit both arms in normal standing or sitting poses — arms must be visible",
+      "Do NOT give the body pineapple diamond/crosshatch texture",
+      "Do NOT replace mango stem/leaf with Pineapple Baby's layered pineapple crown",
+      "Do NOT replace mango stem/leaf with Ube Baby's heart-shaped leaf cluster",
+      "Do NOT color the body purple (body must stay mango yellow/orange/green gradient)",
+    ],
+  },
+  "kiwi-baby": {
+    requiredBodyColor: "warm brown/fuzzy kiwi exterior with green kiwi interior hints",
+    requiredBodyShape: "oval kiwi shape — plump, compact, baby-like",
+    requiredTopFeature: "kiwi stem or small leaf feature — only on Kiwi Baby",
+    requiredArms: "two short rounded baby arms",
+    forbiddenTraits: [
+      "Do NOT apply pineapple diamond texture to this character",
+      "Do NOT borrow top features from other Fruit Baby characters",
+    ],
+  },
+  "coconut-baby": {
+    requiredBodyColor: "natural coconut brown/tan body",
+    requiredBodyShape: "rounded coconut oval — plump and compact, baby-like",
+    requiredTopFeature: "coconut palm sprout or husk feature on top — only on Coconut Baby",
+    requiredArms: "two short rounded baby arms",
+    forbiddenTraits: [
+      "Do NOT apply pineapple diamond texture to this character",
+      "Do NOT borrow top features from other Fruit Baby characters",
+    ],
+  },
+  tiki: {
+    requiredBodyColor: "warm carved wood tones — tropical tiki look",
+    requiredBodyShape: "compact totem-like shape",
+    requiredTopFeature: "tiki carved face / totem top feature",
+    requiredArms: "short stubby tiki arms",
+    forbiddenTraits: [
+      "Do NOT make Tiki scary, evil, or villain-like — keep mischievous and funny",
+      "Do NOT make Tiki violent or cruel",
+    ],
+  },
+  "tiki-trouble": {
+    requiredBodyColor: "warm carved wood tones — tropical tiki look",
+    requiredBodyShape: "compact totem-like shape",
+    requiredTopFeature: "tiki carved face / totem top feature",
+    requiredArms: "short stubby tiki arms",
+    forbiddenTraits: [
+      "Do NOT make Tiki Trouble scary, evil, or villain-like — keep mischievous and funny",
+      "Do NOT make Tiki Trouble violent or cruel",
+    ],
+  },
+};
+
+// Characters whose top features may conflict and need explicit separation rules
+const TOP_FEATURE_CONFLICT_SLUGS = new Set([
+  "pineapple-baby",
+  "ube-baby",
+  "mango-baby",
+]);
+
+// ─── Production fidelity result ───────────────────────────────────────────────
+
+export type ProductionFidelityResult = {
+  prompt: string;
+  requiredFeatureLocksUsed: boolean;
+  characterFeatureLockCount: number;
+  missingPartPreventionUsed: boolean;
+  babyProportionLockUsed: boolean;
+  topFeatureSeparationUsed: boolean;
+  characterFeatureWarnings: string[];
+};
+
+// ─── Feature lock block builders (internal) ───────────────────────────────────
+
+function buildRequiredCharacterFeatureLockLines(
+  slugs: string[],
+  charBySlug: Record<string, Character>,
+  featureWarnings: string[]
+): string[] {
+  const lines: string[] = [
+    "REQUIRED CHARACTER FEATURE LOCKS:",
+    "The following features are mandatory for each character. They take priority over scene style.",
+    "",
+  ];
+
+  for (const slug of slugs) {
+    const lock = CANONICAL_FEATURE_LOCKS[slug];
+    const char = charBySlug[slug];
+    const displayName = char?.name ?? slug;
+
+    if (!lock) {
+      featureWarnings.push(`No canonical feature lock for ${slug} — using generic rules only.`);
+      lines.push(`[${displayName}] — No specific feature locks. Preserve official design from reference image.`);
+      lines.push("");
+      continue;
+    }
+
+    lines.push(`[${displayName}]`);
+    lines.push(`  Body color:   ${lock.requiredBodyColor}`);
+    lines.push(`  Body shape:   ${lock.requiredBodyShape}`);
+    lines.push(`  Top feature:  ${lock.requiredTopFeature}`);
+    lines.push(`  Arms:         ${lock.requiredArms}`);
+    if (lock.forbiddenTraits.length > 0) {
+      lines.push("  FORBIDDEN:");
+      lock.forbiddenTraits.forEach((t) => lines.push(`    ✗ ${t}`));
+    }
+    lines.push("");
+  }
+
+  return lines;
+}
+
+function buildTopFeatureSeparationLines(slugs: string[]): string[] {
+  const conflictSlugs = slugs.filter((s) => TOP_FEATURE_CONFLICT_SLUGS.has(s));
+  if (conflictSlugs.length < 2) return [];
+
+  const lines: string[] = [
+    "TOP FEATURE SEPARATION RULES:",
+    "Each character's head/top feature is part of their trademarked identity. Do not swap, blend, or transfer these.",
+    "",
+  ];
+
+  if (conflictSlugs.includes("pineapple-baby")) {
+    lines.push("  • PINEAPPLE BABY: layered green pineapple crown — appears ONLY on Pineapple Baby");
+  }
+  if (conflictSlugs.includes("ube-baby")) {
+    lines.push("  • UBE BABY: green heart-shaped leaf cluster — appears ONLY on Ube Baby");
+  }
+  if (conflictSlugs.includes("mango-baby")) {
+    lines.push("  • MANGO BABY: small brown mango stem + single green mango leaf — appears ONLY on Mango Baby");
+  }
+
+  lines.push(
+    "",
+    "  ✗ Do NOT put Pineapple Baby's crown on Ube Baby or Mango Baby.",
+    "  ✗ Do NOT put Ube Baby's heart-leaf cluster on Pineapple Baby or Mango Baby.",
+    "  ✗ Do NOT put Mango Baby's stem on Ube Baby or Pineapple Baby.",
+    "  ✗ Do NOT create a hybrid top feature that blends two characters' styles.",
+    ""
+  );
+
+  return lines;
+}
+
+function buildMissingPartPreventionLines(slugs: string[]): string[] {
+  const hasMango = slugs.includes("mango-baby");
+
+  const lines: string[] = [
+    "MISSING PART PREVENTION:",
+    "  • Every visible character must include all required body parts from their reference image.",
+    "  • Do NOT omit arms unless they are clearly hidden behind the body or another object.",
+    "  • Do NOT omit feet unless hidden by a table, floor, or scene composition.",
+    "  • Do NOT remove top features (crowns, leaves, stems) — they are part of official character design.",
+    "  • Do NOT simplify characters into featureless round blobs.",
+    "  • Do NOT replace one character's top feature with another character's top feature.",
+  ];
+
+  if (hasMango) {
+    lines.push(
+      "  • MANGO BABY: must show two short rounded arms in normal standing or sitting poses — do not hide or omit."
+    );
+  }
+
+  lines.push("");
+  return lines;
+}
+
+function buildBabyProportionLockLines(): string[] {
+  return [
+    "BABY PROPORTION LOCK:",
+    "  • Characters must look short, round, plump, soft, and baby-like — not tall mascots.",
+    "  • Arms and legs must be short, rounded, and stubby — do not elongate.",
+    "  • Heads and bodies must remain compact and toy-like.",
+    "  • Do NOT draw taller, thinner, older, or more realistic body proportions.",
+    "  • Do NOT add mature or humanoid proportions.",
+    "",
+  ];
+}
+
 // ─── Fruit label helper (internal) ───────────────────────────────────────────
 
 function getFruitLabel(slug: string, char?: Character): string {
@@ -129,54 +350,60 @@ export function buildProductionFidelityPrompt(
   sceneRefPkg: SceneReferencePackage,
   panelPrompt: string,
   charBySlug: Record<string, Character> = {}
-): string {
+): ProductionFidelityResult {
   const charPkgs = sceneRefPkg.characterPackages;
+  const slugs = charPkgs.map((p) => p.characterSlug);
   const charNames = charPkgs.map((p) => p.characterName).join(", ");
-  const hasTiki = charPkgs.some(
-    (p) => p.characterSlug === "tiki" || p.characterSlug === "tiki-trouble"
-  );
+  const hasTiki = slugs.some((s) => s === "tiki" || s === "tiki-trouble");
   const isMultiCharacter = charPkgs.length > 1;
 
-  const lines: string[] = [
-    "PRODUCTION CHARACTER FIDELITY GENERATION — Fruit Baby World",
-    "",
-    "The attached reference images are official, trademark-protected Fruit Baby character designs.",
-    "Each image is the PRIMARY and ONLY visual source of truth for the one specific character it shows.",
+  const featureWarnings: string[] = [];
+
+  // ── 1. Required character feature locks ───────────────────────────────────
+  const featureLockLines = buildRequiredCharacterFeatureLockLines(slugs, charBySlug, featureWarnings);
+  const lockedCount = slugs.filter((s) => CANONICAL_FEATURE_LOCKS[s] !== undefined).length;
+
+  // ── 2. Top-feature separation ──────────────────────────────────────────────
+  const topFeatureLines = buildTopFeatureSeparationLines(slugs);
+  const topFeatureSeparationUsed = topFeatureLines.length > 0;
+
+  // ── 3. Missing-part prevention ────────────────────────────────────────────
+  const missingPartLines = buildMissingPartPreventionLines(slugs);
+
+  // ── 4. Baby proportion lock ───────────────────────────────────────────────
+  const proportionLines = buildBabyProportionLockLines();
+
+  // ── 5. Character identity locks (numbered, tied to reference images) ──────
+  const identityLockLines: string[] = [
+    "CHARACTER IDENTITY LOCKS:",
+    "Each reference image belongs exclusively to ONE character. Do not mix, blend, or transfer features.",
     "",
   ];
-
-  // CHARACTER IDENTITY LOCKS
-  if (charPkgs.length > 0) {
-    lines.push("CHARACTER IDENTITY LOCKS:");
-    lines.push(
-      "Each reference image is bound exclusively to ONE character. Do not mix, blend, or transfer features between images."
+  charPkgs.forEach((pkg, i) => {
+    const refNum = i + 1;
+    const char = charBySlug[pkg.characterSlug];
+    const fruitLabel = getFruitLabel(pkg.characterSlug, char);
+    identityLockLines.push(`[LOCK ${refNum}] ${pkg.characterName} → Reference Image ${refNum}`);
+    identityLockLines.push(
+      `  • Reference Image ${refNum} defines ${pkg.characterName} ONLY. Do NOT apply it to any other character.`
     );
-    lines.push("");
-    charPkgs.forEach((pkg, i) => {
-      const refNum = i + 1;
-      const char = charBySlug[pkg.characterSlug];
-      const fruitLabel = getFruitLabel(pkg.characterSlug, char);
-      lines.push(`[LOCK ${refNum}] ${pkg.characterName} → Reference Image ${refNum}`);
-      lines.push(
-        `  • Reference Image ${refNum} defines ${pkg.characterName} ONLY. Do NOT apply its appearance to any other character.`
-      );
-      lines.push(
-        `  • Match ${pkg.characterName}'s exact ${fruitLabel}body shape, proportions, color palette, and expression from this image.`
-      );
-      if (char) {
-        const rules = getCharacterRules(char);
-        const topRules = [...rules.doNotChangeRules, ...rules.neverRules].slice(0, 2);
-        topRules.forEach((r) => lines.push(`  • ${r}`));
-      }
-      lines.push("");
-    });
-  }
+    identityLockLines.push(
+      `  • Match ${pkg.characterName}'s exact ${fruitLabel}body shape, color palette, and expression from this image.`
+    );
+    if (char) {
+      const rules = getCharacterRules(char);
+      const topRules = [...rules.doNotChangeRules, ...rules.neverRules].slice(0, 2);
+      topRules.forEach((r) => identityLockLines.push(`  • ${r}`));
+    }
+    identityLockLines.push("");
+  });
 
-  // CROSS-CHARACTER CONTAMINATION BANS
+  // ── 6. Cross-character contamination bans ─────────────────────────────────
+  const contaminationLines: string[] = [];
   if (isMultiCharacter) {
-    lines.push("CROSS-CHARACTER TRAIT SEPARATION RULES:");
-    lines.push(
-      "No visual feature, color, texture, crown shape, or body design may transfer between characters."
+    contaminationLines.push(
+      "CROSS-CHARACTER TRAIT SEPARATION RULES:",
+      "No color, texture, crown shape, or body feature may transfer between characters."
     );
     charPkgs.forEach((pkg, i) => {
       const otherNames = charPkgs
@@ -184,36 +411,44 @@ export function buildProductionFidelityPrompt(
         .map((p) => p.characterName)
         .join(" or ");
       const fruitLabel = getFruitLabel(pkg.characterSlug, charBySlug[pkg.characterSlug]);
-      lines.push(
-        `• ${pkg.characterName}'s ${fruitLabel}body design and color palette (Reference Image ${i + 1}) must NOT appear on ${otherNames}.`
+      contaminationLines.push(
+        `• ${pkg.characterName}'s ${fruitLabel}body design and palette (Ref ${i + 1}) must NOT appear on ${otherNames}.`
       );
     });
-    lines.push(
-      "• Each character must remain visually distinct — different fruit identity, different colors, different crown/leaf shape.",
+    contaminationLines.push(
+      "• Each character must remain visually distinct — different fruit identity, different colors, different top feature.",
       ""
     );
   }
 
-  // SCENE TO GENERATE
-  lines.push("SCENE TO GENERATE:");
-  lines.push(panelPrompt);
-  lines.push("");
-
-  // STRICT PRODUCTION REQUIREMENTS
-  lines.push("STRICT PRODUCTION REQUIREMENTS — DO NOT DEVIATE:");
-  lines.push(
+  // ── Assemble prompt (priority order) ──────────────────────────────────────
+  const lines: string[] = [
+    "PRODUCTION CHARACTER FIDELITY GENERATION — Fruit Baby World",
+    "",
+    "The attached reference images are official, trademark-protected Fruit Baby character designs.",
+    "Each reference image is the PRIMARY and ONLY visual source of truth for one specific character.",
+    "CHARACTER ACCURACY IS MORE IMPORTANT THAN SCENE STYLE. Apply feature locks before stylistic choices.",
+    "",
+    ...featureLockLines,
+    ...topFeatureLines,
+    ...missingPartLines,
+    ...proportionLines,
+    ...identityLockLines,
+    ...contaminationLines,
+    "SCENE TO GENERATE:",
+    panelPrompt,
+    "",
+    "STRICT PRODUCTION REQUIREMENTS — DO NOT DEVIATE:",
     "• Reproduce each character's exact body shape, silhouette, and proportions from their reference image.",
     "• Match each character's exact color palette — no hue shifts, no saturation changes, no approximation.",
     "• Match each character's exact eye shape, pupil style, and expression style.",
     "• Match each character's exact mouth style, blush marks, and cheek details.",
-    "• Match each character's exact leaf/crown shape and all character-specific fruit features.",
-    "• Preserve cute baby-like proportions — do not make characters taller, older, or more realistic.",
+    "• Match each character's exact leaf/crown/stem shape and all character-specific features.",
     "• Do NOT redesign, reinterpret, or loosely approximate any character.",
     "• Do NOT create an 'inspired by' version — every character must match their official design exactly.",
-    "• Do NOT add features, accessories, or details not present in the official reference.",
     "• All content must remain kid-friendly, warm, playful, and emotionally safe.",
-    "• No violence, horror, adult themes, or scary imagery."
-  );
+    "• No violence, horror, adult themes, or scary imagery.",
+  ];
 
   if (hasTiki) {
     lines.push(
@@ -231,7 +466,15 @@ export function buildProductionFidelityPrompt(
     "Generate the scene exactly as described while preserving every character's official appearance with full production fidelity."
   );
 
-  return lines.join("\n");
+  return {
+    prompt: lines.join("\n"),
+    requiredFeatureLocksUsed: lockedCount > 0,
+    characterFeatureLockCount: lockedCount,
+    missingPartPreventionUsed: true,
+    babyProportionLockUsed: true,
+    topFeatureSeparationUsed,
+    characterFeatureWarnings: featureWarnings,
+  };
 }
 
 // ─── Image-conditioned edit prompt ────────────────────────────────────────────
