@@ -191,6 +191,30 @@ type BgDraftResult = {
   notes?: string[];
 };
 
+// ─── Background layer save result ───────────────────────────────────────────
+
+type BgSaveResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  backgroundLayer?: {
+    id: string;
+    imageUrl: string;
+    pathname?: string;
+    mimeType?: string;
+    provider?: string;
+    modelId?: string;
+    settingLabel?: string;
+    createdAt: string;
+    visibility: string;
+    status: string;
+  };
+  path?: string;
+  commitMessage?: string;
+  htmlUrl?: string;
+  notes?: string[];
+};
+
 // ─── Refine API result ────────────────────────────────────────────────────────
 
 type RefineApiResult = {
@@ -642,6 +666,7 @@ function AttachSuccessPanel({
 export default function PanelDraftGenerator({
   episodeSlug,
   sceneNumber,
+  sceneId,
   panelPrompt,
   referenceCharacters,
   sceneTitle,
@@ -652,6 +677,7 @@ export default function PanelDraftGenerator({
 }: {
   episodeSlug: string;
   sceneNumber: number;
+  sceneId?: string;
   panelPrompt: string;
   referenceCharacters: string[];
   sceneTitle?: string;
@@ -701,6 +727,11 @@ export default function PanelDraftGenerator({
   const [bgDraft, setBgDraft] = useState<BgDraftResult | null>(null);
   const [bgDraftError, setBgDraftError] = useState<string>("");
   const [bgDirection, setBgDirection] = useState<string>("");
+
+  // Background layer save state
+  const [bgSaveStatus, setBgSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [bgSaveResult, setBgSaveResult] = useState<BgSaveResult | null>(null);
+  const [bgSaveError, setBgSaveError] = useState<string>("");
 
   const hasImage =
     genStatus === "done" &&
@@ -1211,6 +1242,9 @@ export default function PanelDraftGenerator({
       setBgDraft(data);
       if (data.ok) {
         setBgDraftStatus("done");
+        setBgSaveStatus("idle");
+        setBgSaveResult(null);
+        setBgSaveError("");
       } else {
         setBgDraftStatus("error");
         setBgDraftError(data.message ?? "Background generation failed.");
@@ -1218,6 +1252,45 @@ export default function PanelDraftGenerator({
     } catch {
       setBgDraftStatus("error");
       setBgDraftError("Network error — could not reach background generation API.");
+    }
+  }
+
+  async function handleSaveBackground() {
+    const draft = bgDraft?.draft;
+    if (!draft) return;
+    setBgSaveStatus("saving");
+    setBgSaveResult(null);
+    setBgSaveError("");
+    try {
+      const resp = await fetch("/api/media/save-background-layer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          imageBase64: draft.imageBase64 || undefined,
+          imageUrl: draft.imageUrl || undefined,
+          mimeType: draft.mimeType,
+          provider: draft.provider,
+          modelId: draft.modelId,
+          promptText: draft.promptText,
+          settingLabel: draft.settingLabel,
+          environmentDescription: draft.promptText?.slice(0, 200) || undefined,
+          assemblyPlanId: undefined,
+        }),
+      });
+      const data: BgSaveResult = await resp.json();
+      setBgSaveResult(data);
+      if (data.ok) {
+        setBgSaveStatus("saved");
+      } else {
+        setBgSaveStatus("error");
+        setBgSaveError(data.message ?? "Background layer save failed.");
+      }
+    } catch {
+      setBgSaveStatus("error");
+      setBgSaveError("Network error — could not reach save API.");
     }
   }
 
@@ -1599,6 +1672,71 @@ export default function PanelDraftGenerator({
                     ))}
                   </ul>
                 )}
+
+                {/* ── Save Background Layer ── */}
+                <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Save Background Layer</p>
+                    <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                      Save this background-only image as an admin-only scene layer for future character assembly.
+                      It will not appear publicly and will not replace the story panel.
+                    </p>
+                  </div>
+
+                  {bgSaveStatus !== "saved" && (
+                    <button
+                      onClick={handleSaveBackground}
+                      disabled={bgSaveStatus === "saving"}
+                      className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                    >
+                      {bgSaveStatus === "saving" ? "Saving…" : "Save Background Layer"}
+                    </button>
+                  )}
+
+                  {bgSaveStatus === "saving" && (
+                    <p className="text-sm text-tiki-brown/45 italic animate-pulse">Uploading and saving background layer…</p>
+                  )}
+
+                  {bgSaveStatus === "error" && (
+                    <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                      <span className="text-xs font-bold text-warm-coral">Save failed</span>
+                      {bgSaveError && <p className="text-xs text-tiki-brown/60">{bgSaveError}</p>}
+                    </div>
+                  )}
+
+                  {bgSaveStatus === "saved" && bgSaveResult?.ok && bgSaveResult.backgroundLayer && (
+                    <div className="flex flex-col gap-2.5 bg-tropical-green/6 border border-tropical-green/20 rounded-xl px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-tropical-green">Background layer saved to this scene.</span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/10">
+                          Admin-only
+                        </span>
+                      </div>
+                      {bgSaveResult.backgroundLayer.imageUrl && (
+                        <a
+                          href={bgSaveResult.backgroundLayer.imageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-ube-purple underline break-all hover:opacity-75"
+                        >
+                          {bgSaveResult.backgroundLayer.imageUrl}
+                        </a>
+                      )}
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                        {bgSaveResult.backgroundLayer.provider && (
+                          <span>Provider: <span className="font-semibold">{bgSaveResult.backgroundLayer.provider === "openai" ? "OpenAI" : bgSaveResult.backgroundLayer.provider}</span></span>
+                        )}
+                        {bgSaveResult.backgroundLayer.settingLabel && (
+                          <span>Setting: <span className="font-semibold">{bgSaveResult.backgroundLayer.settingLabel}</span></span>
+                        )}
+                        <span>Saved: <span className="font-semibold">{bgSaveResult.backgroundLayer.createdAt.slice(0, 10)}</span></span>
+                      </div>
+                      <p className="text-xs text-tiki-brown/40 italic">
+                        Next step: Future phases will generate character layers and assemble them onto this background.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

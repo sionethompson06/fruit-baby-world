@@ -203,6 +203,7 @@ function PanelPromptCard({
 }) {
   const num = scene.sceneNumber ?? index + 1;
   const sceneNum = typeof num === "number" ? num : index + 1;
+  const sceneId = str(scene.sceneId);
   const title = str(scene.title);
   const summary = str(scene.summary);
   const characters = strArr(scene.characters);
@@ -486,6 +487,7 @@ function PanelPromptCard({
       <PanelDraftGenerator
         episodeSlug={episodeSlug}
         sceneNumber={sceneNum}
+        sceneId={sceneId || undefined}
         panelPrompt={promptText}
         referenceCharacters={refChars}
         sceneTitle={title}
