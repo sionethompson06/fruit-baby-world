@@ -68,21 +68,31 @@ export default function AudioNarrationSetupSection({
       <div>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="text-lg">🎙️</span>
-          <h2 className="text-base font-black text-tiki-brown">Audio Narration Setup</h2>
-          <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 uppercase tracking-wide">
-            Setup Only
-          </span>
+          <h2 className="text-base font-black text-tiki-brown">Audio Narration Production</h2>
+          {providerStatus.configured ? (
+            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/20 text-tropical-green uppercase tracking-wide">
+              Provider Ready
+            </span>
+          ) : (
+            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral uppercase tracking-wide">
+              Setup Required
+            </span>
+          )}
         </div>
         <p className="text-sm text-tiki-brown/60 leading-relaxed">
-          Audio narration is not generated in this phase. This section confirms whether the app has
-          the provider configuration and story script context needed for future narration drafts.
+          Generate, review, upload, and attach approved narration audio for this episode.
         </p>
+        {!providerStatus.configured && (
+          <p className="text-xs text-warm-coral mt-1.5 leading-relaxed">
+            Audio provider is not fully configured. Add ElevenLabs environment variables to enable narration generation.
+          </p>
+        )}
       </div>
 
       {/* Provider section */}
       <div className="bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl p-4 flex flex-col gap-3">
         <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-          Narration Provider
+          Provider Status
         </p>
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-black text-tiki-brown">{providerLabel}</span>
@@ -112,7 +122,7 @@ export default function AudioNarrationSetupSection({
             ok={providerStatus.defaultVoiceIdConfigured}
             detail={
               !providerStatus.defaultVoiceIdConfigured
-                ? "Set ELEVENLABS_DEFAULT_VOICE_ID (optional but recommended)."
+                ? "Set ELEVENLABS_DEFAULT_VOICE_ID in Vercel environment variables."
                 : undefined
             }
           />
@@ -121,7 +131,7 @@ export default function AudioNarrationSetupSection({
             ok={providerStatus.modelIdConfigured}
             detail={
               !providerStatus.modelIdConfigured
-                ? "Set ELEVENLABS_MODEL_ID (optional, will default in next phase)."
+                ? "Set ELEVENLABS_MODEL_ID in Vercel environment variables (optional, uses default if unset)."
                 : undefined
             }
           />
@@ -234,27 +244,16 @@ export default function AudioNarrationSetupSection({
         )}
       </div>
 
-      {/* Future workflow preview */}
-      <div className="bg-ube-purple/6 border border-ube-purple/15 rounded-2xl px-4 py-3 flex flex-col gap-2">
+      {/* Next action */}
+      <div className="bg-ube-purple/6 border border-ube-purple/15 rounded-2xl px-4 py-3 flex flex-col gap-1.5">
         <p className="text-xs font-bold text-ube-purple/70 uppercase tracking-wide">
-          Upcoming Audio Workflow
+          Next Action
         </p>
-        <ol className="flex flex-col gap-1.5">
-          {[
-            ["13B", "Generate temporary narration draft"],
-            ["13C", "Admin audio review"],
-            ["13D", "Upload & save approved audio to storage"],
-            ["13E", "Attach audio metadata to episode"],
-            ["13F", "Public audio story player"],
-          ].map(([phase, label]) => (
-            <li key={phase} className="flex items-start gap-2 text-xs text-tiki-brown/55">
-              <span className="font-bold text-ube-purple/50 flex-shrink-0 w-8">{phase}</span>
-              <span>{label}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="text-xs text-tiki-brown/40 mt-1 leading-relaxed">
-          No audio is generated, saved, or published until approved through the full admin review workflow.
+        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+          Use the <strong className="font-semibold">Audio Narration Draft</strong> section below to generate a temporary draft, review it, upload the approved audio, and attach it to the episode.
+        </p>
+        <p className="text-xs text-tiki-brown/40 leading-relaxed">
+          No audio is saved or published until explicitly approved and uploaded.
         </p>
       </div>
 
