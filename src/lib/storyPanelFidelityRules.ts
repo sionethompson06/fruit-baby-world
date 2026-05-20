@@ -109,41 +109,111 @@ export function buildStrictFidelityMandate(
   return sections.join("\n\n");
 }
 
+// ─── Fruit label helper (internal) ───────────────────────────────────────────
+
+function getFruitLabel(slug: string, char?: Character): string {
+  if (char) {
+    const raw = char as Character & Record<string, unknown>;
+    const fruitType = typeof raw.fruitType === "string" ? raw.fruitType.trim() : "";
+    if (fruitType) return `${fruitType}-specific `;
+  }
+  const match = slug.match(/^([a-z]+(?:-[a-z]+)?)-baby$/);
+  if (match) return `${match[1]}-specific `;
+  if (slug === "tiki" || slug === "tiki-trouble") return "tiki-specific ";
+  return "";
+}
+
 // ─── Production-mode fidelity prompt (stronger, for Fal.ai path) ─────────────
 
 export function buildProductionFidelityPrompt(
   sceneRefPkg: SceneReferencePackage,
-  panelPrompt: string
+  panelPrompt: string,
+  charBySlug: Record<string, Character> = {}
 ): string {
-  const charNames = sceneRefPkg.characterPackages
-    .map((p) => p.characterName)
-    .join(", ");
-  const hasTiki = sceneRefPkg.characterPackages.some(
+  const charPkgs = sceneRefPkg.characterPackages;
+  const charNames = charPkgs.map((p) => p.characterName).join(", ");
+  const hasTiki = charPkgs.some(
     (p) => p.characterSlug === "tiki" || p.characterSlug === "tiki-trouble"
   );
+  const isMultiCharacter = charPkgs.length > 1;
 
   const lines: string[] = [
     "PRODUCTION CHARACTER FIDELITY GENERATION — Fruit Baby World",
     "",
-    "The attached image shows an official, trademark-protected Fruit Baby character design.",
-    "This reference is the PRIMARY and ONLY visual source of truth for character appearance.",
+    "The attached reference images are official, trademark-protected Fruit Baby character designs.",
+    "Each image is the PRIMARY and ONLY visual source of truth for the one specific character it shows.",
     "",
-    "SCENE TO GENERATE:",
-    panelPrompt,
-    "",
-    "STRICT PRODUCTION REQUIREMENTS — DO NOT DEVIATE:",
-    "• Reproduce the character's exact body shape, silhouette, and proportions from the reference.",
-    "• Match the exact color palette — no hue shifts, no saturation changes, no approximation.",
-    "• Match the exact eye shape, pupil style, and expression style.",
-    "• Match the exact mouth style, blush marks, and cheek details.",
-    "• Match the exact leaf/crown shape and all character-specific fruit features.",
+  ];
+
+  // CHARACTER IDENTITY LOCKS
+  if (charPkgs.length > 0) {
+    lines.push("CHARACTER IDENTITY LOCKS:");
+    lines.push(
+      "Each reference image is bound exclusively to ONE character. Do not mix, blend, or transfer features between images."
+    );
+    lines.push("");
+    charPkgs.forEach((pkg, i) => {
+      const refNum = i + 1;
+      const char = charBySlug[pkg.characterSlug];
+      const fruitLabel = getFruitLabel(pkg.characterSlug, char);
+      lines.push(`[LOCK ${refNum}] ${pkg.characterName} → Reference Image ${refNum}`);
+      lines.push(
+        `  • Reference Image ${refNum} defines ${pkg.characterName} ONLY. Do NOT apply its appearance to any other character.`
+      );
+      lines.push(
+        `  • Match ${pkg.characterName}'s exact ${fruitLabel}body shape, proportions, color palette, and expression from this image.`
+      );
+      if (char) {
+        const rules = getCharacterRules(char);
+        const topRules = [...rules.doNotChangeRules, ...rules.neverRules].slice(0, 2);
+        topRules.forEach((r) => lines.push(`  • ${r}`));
+      }
+      lines.push("");
+    });
+  }
+
+  // CROSS-CHARACTER CONTAMINATION BANS
+  if (isMultiCharacter) {
+    lines.push("CROSS-CHARACTER TRAIT SEPARATION RULES:");
+    lines.push(
+      "No visual feature, color, texture, crown shape, or body design may transfer between characters."
+    );
+    charPkgs.forEach((pkg, i) => {
+      const otherNames = charPkgs
+        .filter((_, j) => j !== i)
+        .map((p) => p.characterName)
+        .join(" or ");
+      const fruitLabel = getFruitLabel(pkg.characterSlug, charBySlug[pkg.characterSlug]);
+      lines.push(
+        `• ${pkg.characterName}'s ${fruitLabel}body design and color palette (Reference Image ${i + 1}) must NOT appear on ${otherNames}.`
+      );
+    });
+    lines.push(
+      "• Each character must remain visually distinct — different fruit identity, different colors, different crown/leaf shape.",
+      ""
+    );
+  }
+
+  // SCENE TO GENERATE
+  lines.push("SCENE TO GENERATE:");
+  lines.push(panelPrompt);
+  lines.push("");
+
+  // STRICT PRODUCTION REQUIREMENTS
+  lines.push("STRICT PRODUCTION REQUIREMENTS — DO NOT DEVIATE:");
+  lines.push(
+    "• Reproduce each character's exact body shape, silhouette, and proportions from their reference image.",
+    "• Match each character's exact color palette — no hue shifts, no saturation changes, no approximation.",
+    "• Match each character's exact eye shape, pupil style, and expression style.",
+    "• Match each character's exact mouth style, blush marks, and cheek details.",
+    "• Match each character's exact leaf/crown shape and all character-specific fruit features.",
     "• Preserve cute baby-like proportions — do not make characters taller, older, or more realistic.",
-    "• Do NOT redesign, reinterpret, or loosely approximate the character.",
-    "• Do NOT create an 'inspired by' version — the character must match the official design exactly.",
+    "• Do NOT redesign, reinterpret, or loosely approximate any character.",
+    "• Do NOT create an 'inspired by' version — every character must match their official design exactly.",
     "• Do NOT add features, accessories, or details not present in the official reference.",
     "• All content must remain kid-friendly, warm, playful, and emotionally safe.",
-    "• No violence, horror, adult themes, or scary imagery.",
-  ];
+    "• No violence, horror, adult themes, or scary imagery."
+  );
 
   if (hasTiki) {
     lines.push(

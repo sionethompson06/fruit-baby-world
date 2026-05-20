@@ -56,6 +56,11 @@ type GenApiResult = {
   conditionedImageCount?: number;
   skippedReferenceAssetCount?: number;
   imageConditioningWarnings?: string[];
+  sceneCharacterCount?: number;
+  characterReferenceCount?: number;
+  supportingReferenceCount?: number;
+  environmentReferenceCount?: number;
+  passedToProviderCount?: number;
   fallbackUsed?: boolean;
   fallbackReason?: string;
   warnings?: string[];
@@ -1181,8 +1186,37 @@ export default function PanelDraftGenerator({
                     </div>
                   )}
 
-                  {/* Reference asset prep counts */}
-                  {(result.selectedReferenceAssetCount ?? 0) > 0 && (
+                  {/* Production identity inputs (production mode only) */}
+                  {result.generationMode === "production" && (result.sceneCharacterCount ?? 0) > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-tiki-brown/45 uppercase tracking-wide text-xs">
+                        Production Identity Inputs
+                      </span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-tiki-brown/50">
+                        <span>
+                          <span className="font-semibold">{result.sceneCharacterCount}</span> character{result.sceneCharacterCount !== 1 ? "s" : ""} in scene
+                        </span>
+                        <span>
+                          <span className={`font-semibold ${(result.characterReferenceCount ?? 0) === (result.sceneCharacterCount ?? 0) ? "text-tropical-green" : "text-pineapple-yellow-dark"}`}>
+                            {result.characterReferenceCount ?? 0}
+                          </span> character ref{(result.characterReferenceCount ?? 0) !== 1 ? "s" : ""}
+                        </span>
+                        {(result.environmentReferenceCount ?? 0) > 0 && (
+                          <span>
+                            <span className="font-semibold">{result.environmentReferenceCount}</span> env ref
+                          </span>
+                        )}
+                        <span>
+                          <span className={`font-bold ${(result.passedToProviderCount ?? 0) > 0 ? "text-tropical-green" : "text-warm-coral"}`}>
+                            {result.passedToProviderCount ?? 0}
+                          </span> passed to provider
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reference asset prep counts (draft mode) */}
+                  {result.generationMode !== "production" && (result.selectedReferenceAssetCount ?? 0) > 0 && (
                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-tiki-brown/50">
                       <span>Selected: {result.selectedReferenceAssetCount}</span>
                       <span>Passed to provider: {result.conditionedImageCount ?? 0}</span>

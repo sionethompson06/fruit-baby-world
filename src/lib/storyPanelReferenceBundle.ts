@@ -54,6 +54,91 @@ export type StoryPanelReferenceBundle = {
   promptContextBlock: string;
 };
 
+// ─── Production reference set (one canonical URL per character) ───────────────
+
+export type ProductionCharacterRef = {
+  characterSlug: string;
+  characterName: string;
+  canonicalUrl: string;
+  canonicalRole: BundleAssetRole;
+  canonicalTitle: string;
+};
+
+export type ProductionReferenceSet = {
+  characterRefs: ProductionCharacterRef[];
+  environmentUrl: string | undefined;
+  allUrls: string[];
+  characterReferenceCount: number;
+  supportingReferenceCount: number;
+  environmentReferenceCount: number;
+  passedToProviderCount: number;
+  sceneCharacterCount: number;
+  warnings: string[];
+};
+
+export function buildProductionReferenceSet(
+  sceneRefPkg: SceneReferencePackage
+): ProductionReferenceSet {
+  const warnings: string[] = [];
+  const characterRefs: ProductionCharacterRef[] = [];
+  let environmentUrl: string | undefined;
+
+  for (const charPkg of sceneRefPkg.characterPackages) {
+    // Priority: mainReferences[0] → profileSheets[0] → supportingReferences[0]
+    const canonicalRaw =
+      charPkg.mainReferences[0] ??
+      charPkg.profileSheets[0] ??
+      charPkg.supportingReferences[0];
+
+    if (!canonicalRaw?.blobUrl) {
+      warnings.push(
+        `${charPkg.characterName}: No reference asset found — character will appear without a visual reference anchor.`
+      );
+      continue;
+    }
+
+    const canonicalRole: BundleAssetRole =
+      charPkg.mainReferences.length > 0
+        ? "main-reference"
+        : charPkg.profileSheets.length > 0
+        ? "profile-sheet"
+        : "supporting";
+
+    characterRefs.push({
+      characterSlug: charPkg.characterSlug,
+      characterName: charPkg.characterName,
+      canonicalUrl: canonicalRaw.blobUrl,
+      canonicalRole,
+      canonicalTitle: canonicalRaw.title || canonicalRaw.assetType,
+    });
+  }
+
+  // One environment ref for the whole scene — first available from any character
+  for (const charPkg of sceneRefPkg.characterPackages) {
+    const envAsset = charPkg.environmentReferences[0];
+    if (!environmentUrl && envAsset?.blobUrl) {
+      environmentUrl = envAsset.blobUrl;
+    }
+  }
+
+  const allUrls: string[] = [
+    ...characterRefs.map((r) => r.canonicalUrl),
+    ...(environmentUrl ? [environmentUrl] : []),
+  ];
+
+  return {
+    characterRefs,
+    environmentUrl,
+    allUrls,
+    characterReferenceCount: characterRefs.length,
+    supportingReferenceCount: 0,
+    environmentReferenceCount: environmentUrl ? 1 : 0,
+    passedToProviderCount: allUrls.length,
+    sceneCharacterCount: sceneRefPkg.characterPackages.length,
+    warnings,
+  };
+}
+
 // ─── Selection limits ─────────────────────────────────────────────────────────
 
 const MAX_PROFILE_SHEETS_PER_CHAR = 1;

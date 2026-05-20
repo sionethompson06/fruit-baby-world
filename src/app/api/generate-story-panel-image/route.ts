@@ -34,7 +34,9 @@ import {
 } from "@/lib/storyPanelFidelityRules";
 import {
   buildStoryPanelReferenceBundle,
+  buildProductionReferenceSet,
   type ReferenceBundleCounts,
+  type ProductionReferenceSet,
 } from "@/lib/storyPanelReferenceBundle";
 import { fetchConditionedImages } from "@/lib/storyPanelImageConditioner";
 import {
@@ -100,6 +102,11 @@ type GenerateResult =
       conditionedImageCount: number;
       skippedReferenceAssetCount: number;
       imageConditioningWarnings: string[];
+      sceneCharacterCount: number;
+      characterReferenceCount: number;
+      supportingReferenceCount: number;
+      environmentReferenceCount: number;
+      passedToProviderCount: number;
       fallbackUsed: boolean;
       fallbackReason?: string;
       warnings: string[];
@@ -133,6 +140,11 @@ type GenerateResult =
       conditionedImageCount?: number;
       skippedReferenceAssetCount?: number;
       imageConditioningWarnings?: string[];
+      sceneCharacterCount?: number;
+      characterReferenceCount?: number;
+      supportingReferenceCount?: number;
+      environmentReferenceCount?: number;
+      passedToProviderCount?: number;
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
@@ -248,39 +260,47 @@ function buildCharBySlug(chars: Character[]): Record<string, Character> {
 type FalImageResult = {
   b64: string | undefined;
   imageUrl: string | undefined;
-  selectedReferenceAssetCount: number;
-  conditionedImageCount: number;
   referenceMode: ReferenceModeValue;
+  sceneCharacterCount: number;
+  characterReferenceCount: number;
+  supportingReferenceCount: number;
+  environmentReferenceCount: number;
+  passedToProviderCount: number;
 };
 
 async function generateWithFal(
   falApiKey: string,
   modelId: string,
   productionPrompt: string,
-  bundleAssets: ReturnType<typeof buildStoryPanelReferenceBundle>["assets"]
+  productionRefSet: ProductionReferenceSet | null
 ): Promise<FalImageResult> {
-  const selectedReferenceAssetCount = bundleAssets.length;
+  const {
+    allUrls = [],
+    sceneCharacterCount = 0,
+    characterReferenceCount = 0,
+    supportingReferenceCount = 0,
+    environmentReferenceCount = 0,
+    passedToProviderCount = 0,
+  } = productionRefSet ?? {};
 
-  // Pick best reference image URL: profile-sheet → main-reference → any
-  const primaryReferenceUrl =
-    bundleAssets.find((a) => a.role === "profile-sheet")?.url ??
-    bundleAssets.find((a) => a.role === "main-reference")?.url ??
-    bundleAssets[0]?.url;
-
-  const conditionedImageCount = primaryReferenceUrl ? 1 : 0;
   const referenceMode: ReferenceModeValue =
-    primaryReferenceUrl ? "image-conditioned-reference-bundle" : "prompt-only-reference-bundle";
+    passedToProviderCount > 0
+      ? "image-conditioned-reference-bundle"
+      : "prompt-only-reference-bundle";
 
   console.log(
-    `[generate-story-panel-image] production: model=${modelId}, ref=${primaryReferenceUrl ? "yes" : "none"}`
+    `[generate-story-panel-image] production: model=${modelId}, chars=${characterReferenceCount}, env=${environmentReferenceCount}, total=${passedToProviderCount}`
   );
 
   const requestBody: Record<string, unknown> = {
     prompt: productionPrompt,
     num_images: 1,
   };
-  if (primaryReferenceUrl) {
-    requestBody.image_url = primaryReferenceUrl;
+
+  if (allUrls.length === 1) {
+    requestBody.image_url = allUrls[0];
+  } else if (allUrls.length > 1) {
+    requestBody.image_url = allUrls;
   }
 
   const controller = new AbortController();
@@ -327,7 +347,16 @@ async function generateWithFal(
   const imgBuffer = await imgResp.arrayBuffer();
   const b64 = Buffer.from(imgBuffer).toString("base64");
 
-  return { b64, imageUrl: falImageUrl, selectedReferenceAssetCount, conditionedImageCount, referenceMode };
+  return {
+    b64,
+    imageUrl: falImageUrl,
+    referenceMode,
+    sceneCharacterCount,
+    characterReferenceCount,
+    supportingReferenceCount,
+    environmentReferenceCount,
+    passedToProviderCount,
+  };
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -451,11 +480,12 @@ export async function POST(request: Request): Promise<Response> {
   let refWarnings: string[] = [];
   let genPkg: StoryPanelGenerationPackage | null = null;
   let sceneRefPkg: ReturnType<typeof buildSceneReferencePackage> | null = null;
+  let charBySlug: Record<string, Character> = {};
 
   try {
     const allAssets = loadReferenceAssets();
     const allChars = loadAllCharactersFromDisk();
-    const charBySlug = buildCharBySlug(allChars);
+    charBySlug = buildCharBySlug(allChars);
 
     sceneRefPkg = buildSceneReferencePackage(sceneNumber ?? 1, referenceCharacters, allAssets, charBySlug);
     genPkg = buildStoryPanelGenerationPackage(sceneRefPkg, panelPrompt, { sceneNumber });
@@ -508,20 +538,20 @@ export async function POST(request: Request): Promise<Response> {
 
     const falApiKey = getFalApiKey()!;
     const hasBundle = referenceCounts.total > 0 && sceneRefPkg !== null;
-    const bundleAssets = hasBundle && sceneRefPkg
-      ? buildStoryPanelReferenceBundle(sceneRefPkg).assets
-      : [];
+    const productionRefSet = hasBundle && sceneRefPkg
+      ? buildProductionReferenceSet(sceneRefPkg)
+      : null;
 
     const productionPrompt = sceneRefPkg
-      ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt)
+      ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt, charBySlug)
       : panelPrompt;
 
     console.log(
-      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, bundle=${bundleAssets.length} assets`
+      `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, chars=${productionRefSet?.characterReferenceCount ?? 0}, total=${productionRefSet?.passedToProviderCount ?? 0}`
     );
 
     try {
-      const falResult = await generateWithFal(falApiKey, modelId, productionPrompt, bundleAssets);
+      const falResult = await generateWithFal(falApiKey, modelId, productionPrompt, productionRefSet);
 
       return Response.json(
         {
@@ -549,12 +579,17 @@ export async function POST(request: Request): Promise<Response> {
           referencesUsed,
           referencesOmitted,
           fidelityRulesSummary,
-          usedImageConditioning: falResult.conditionedImageCount > 0,
+          usedImageConditioning: falResult.passedToProviderCount > 0,
           providerSupportsImageReferences: true,
-          selectedReferenceAssetCount: falResult.selectedReferenceAssetCount,
-          conditionedImageCount: falResult.conditionedImageCount,
+          selectedReferenceAssetCount: falResult.passedToProviderCount,
+          conditionedImageCount: falResult.passedToProviderCount,
           skippedReferenceAssetCount: 0,
-          imageConditioningWarnings: [],
+          imageConditioningWarnings: [...(productionRefSet?.warnings ?? [])],
+          sceneCharacterCount: falResult.sceneCharacterCount,
+          characterReferenceCount: falResult.characterReferenceCount,
+          supportingReferenceCount: falResult.supportingReferenceCount,
+          environmentReferenceCount: falResult.environmentReferenceCount,
+          passedToProviderCount: falResult.passedToProviderCount,
           fallbackUsed: false,
           warnings: refWarnings,
           notes: [
@@ -588,10 +623,15 @@ export async function POST(request: Request): Promise<Response> {
           referencesOmitted,
           usedImageConditioning: false,
           providerSupportsImageReferences: true,
-          selectedReferenceAssetCount: bundleAssets.length,
+          selectedReferenceAssetCount: productionRefSet?.passedToProviderCount ?? 0,
           conditionedImageCount: 0,
           skippedReferenceAssetCount: 0,
           imageConditioningWarnings: [],
+          sceneCharacterCount: productionRefSet?.sceneCharacterCount ?? 0,
+          characterReferenceCount: productionRefSet?.characterReferenceCount ?? 0,
+          supportingReferenceCount: productionRefSet?.supportingReferenceCount ?? 0,
+          environmentReferenceCount: productionRefSet?.environmentReferenceCount ?? 0,
+          passedToProviderCount: productionRefSet?.passedToProviderCount ?? 0,
           fallbackUsed: false,
           troubleshooting: [
             "Confirm FAL_KEY is valid and has sufficient credits.",
@@ -820,6 +860,11 @@ export async function POST(request: Request): Promise<Response> {
       conditionedImageCount,
       skippedReferenceAssetCount,
       imageConditioningWarnings,
+      sceneCharacterCount: 0,
+      characterReferenceCount: 0,
+      supportingReferenceCount: 0,
+      environmentReferenceCount: 0,
+      passedToProviderCount: conditionedImageCount,
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       warnings: refWarnings,
