@@ -53,7 +53,24 @@
         "ube-baby",
         "tiki"
       ],
-      "visualNotes": "Warm sunset colors. Tiki's retreat is dramatic but hints at a softer side. Ube Baby and Pineapple Baby share a cozy hug."
+      "visualNotes": "Warm sunset colors. Tiki's retreat is dramatic but hints at a softer side. Ube Baby and Pineapple Baby share a cozy hug.",
+      "backgroundLayers": [
+        {
+          "id": "bg-layer-1779313599485",
+          "type": "background-layer",
+          "status": "saved",
+          "visibility": "admin-only",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/sample-episode/background-layers/scene-4-1779313598578.png",
+          "pathname": "episodes/sample-episode/background-layers/scene-4-1779313598578.png",
+          "mimeType": "image/png",
+          "provider": "openai",
+          "modelId": "gpt-image-1",
+          "promptText": "=== A. PANEL TASK ===\nCreate a single still storybook illustration panel for Scene 4 — \"A Surprising Return\".\nStyle: children's picture book, colorful, warm, soft, and rounded.\nCapture a single clear, readable story moment for young children.\n\n=== B. SCENE CONTENT ===\nScene: Tiki grumpily gives back the star fruit, muttering that he didn't even want it anyway. Ube Baby thanks him gently. Tiki stomps off but secretly glances back with a tiny smile.\nSetting: Starlight Garden and the edge of Trouble Island\nVisual notes: Warm sunset colors. Tiki's retreat is dramatic but hints at a softer side. Ube Baby and Pineapple Baby share a cozy hug.\n\n=== C. CHARACTERS IN SCENE ===\nPineapple Baby:\n  Description: Pineapple Baby is the warm, brave heart of the Fruit Baby Universe! Always ready to help a friend, share a smile, or jump into a new adventure — Pineapple Baby leads with kindness and lights up every room.\n  Personality: Kind, Curious, Nurturing, Brave\n  Story role: Main character. Pineapple Baby drives the adventure, solves problems through kindness, and brings the group together.\n  Visual identity: Bright sunshine yellow body with a bold green leafy crown. Warm brown eyes, pink blush cheeks, and a diamond pattern on the front. Soft, rounded, and cheerful.\n  Color palette: Sunshine Yellow (#FFD84D), Golden Orange (#FFB347), Leaf Green (#7AC943), Warm Brown (#5C3A1E), Blush Pink (#FFB8C8)\n  Always: Lead with kindness; Support and encourage friends; Stay optimistic even when things go wrong\n  Never: Be mean or dismissive to friends; Give up on someone who needs help; Act selfishly\n\nUbe Baby:\n  Description: Ube Baby is the dreamy, gentle sparkle of Fruit Baby Universe! Soft, imaginative, and full of cozy magic, Ube Baby loves making friends feel safe, loved, and inspired. Though a little shy at first, Ube Baby shines through kindness, wonder, and sweet little wishes.\n  Personality: Sweet — kind-hearted and caring, Imaginative — sees magic in little things, Gentle — calm, com",
+          "environmentDescription": "=== A. PANEL TASK ===\nCreate a single still storybook illustration panel for Scene 4 — \"A Surprising Return\".\nStyle: children's picture book, colorful, warm, soft, and rounded.\nCapture a single clear,",
+          "createdAt": "2026-05-20T21:46:39.485Z",
+          "updatedAt": "2026-05-20T21:46:39.485Z"
+        }
+      ]
     }
   ],
   "merchTieIns": [
@@ -163,5 +180,5 @@
       ]
     }
   },
-  "updatedAt": "2026-05-20T17:12:45.262Z"
+  "updatedAt": "2026-05-20T21:46:39.485Z"
 }
