@@ -11,7 +11,68 @@ import type {
   CharacterFacingDirection,
 } from "@/lib/storyPanelAssemblyTypes";
 
-const PLANNER_VERSION = "1.0.0";
+const PLANNER_VERSION = "1.1.0";
+
+// ─── Interaction verb heuristics ──────────────────────────────────────────────
+
+const INTERACTION_VERBS = [
+  "comforting", "helping", "giving", "handing", "hugging", "holding hands",
+  "looking at", "talking to", "speaking to", "pointing at", "reaching toward",
+  "high-fiving", "sharing", "offering", "showing", "waving at", "consoling",
+  "patting", "cheering", "encouraging", "calling to", "passing to",
+];
+
+function detectInteraction(
+  sceneText: string,
+  actorName: string,
+  otherSlugs: string[],
+  nameMap: Record<string, string>
+): { targetSlug: string | null; targetName: string | null; verb: string | null } {
+  if (!sceneText || otherSlugs.length === 0) return { targetSlug: null, targetName: null, verb: null };
+
+  const lower = sceneText.toLowerCase();
+  const actorFirstWord = actorName.toLowerCase().split(/\s+/)[0] ?? "";
+
+  for (const verb of INTERACTION_VERBS) {
+    const verbIdx = lower.indexOf(verb);
+    if (verbIdx === -1) continue;
+
+    const actorIdx = lower.indexOf(actorFirstWord);
+    if (actorIdx === -1 || Math.abs(actorIdx - verbIdx) > 150) continue;
+
+    for (const otherSlug of otherSlugs) {
+      const otherName = nameMap[otherSlug] ?? otherSlug;
+      const otherFirstWord = otherName.toLowerCase().split(/\s+/)[0] ?? "";
+      const otherIdx = lower.indexOf(otherFirstWord);
+      if (otherIdx !== -1 && Math.abs(otherIdx - verbIdx) < 200) {
+        return { targetSlug: otherSlug, targetName: otherName, verb };
+      }
+    }
+  }
+
+  return { targetSlug: null, targetName: null, verb: null };
+}
+
+function preBuildPlacementMap(
+  characterSlugs: string[],
+  signals: SceneAssemblySignals
+): Record<string, CharacterPlacement> {
+  const map: Record<string, CharacterPlacement> = {};
+  for (let i = 0; i < characterSlugs.length; i++) {
+    const slug = characterSlugs[i];
+    if (slug) map[slug] = signals.placementCues[slug] ?? defaultPlacementByIndex(i, characterSlugs.length);
+  }
+  return map;
+}
+
+function buildNameMap(characterSlugs: string[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const slug of characterSlugs) {
+    const canonical = CHARACTER_CANONICAL[slug] ?? GENERIC_FRUIT_BABY_CANONICAL;
+    map[slug] = canonical.name !== "Fruit Baby" ? canonical.name : slug;
+  }
+  return map;
+}
 
 // ─── Per-character canonical data ─────────────────────────────────────────────
 
@@ -294,8 +355,19 @@ export function buildCharacterLayerPlan(options: {
   castSize: number;
   referenceAssetIds?: string[];
   sceneText?: string;
+  placementMap?: Record<string, CharacterPlacement>;
+  nameMap?: Record<string, string>;
 }): StoryPanelCharacterLayerPlan {
-  const { characterSlug, signals, indexInCast, castSize, referenceAssetIds = [], sceneText = "" } = options;
+  const {
+    characterSlug,
+    signals,
+    indexInCast,
+    castSize,
+    referenceAssetIds = [],
+    sceneText = "",
+    placementMap = {},
+    nameMap = {},
+  } = options;
 
   const canonical = CHARACTER_CANONICAL[characterSlug] ?? GENERIC_FRUIT_BABY_CANONICAL;
   const name = canonical.name !== "Fruit Baby" ? canonical.name : characterSlug;
@@ -303,25 +375,72 @@ export function buildCharacterLayerPlan(options: {
   const emotion = signals.emotionCues[characterSlug] ?? "warm and expressive";
   const action = signals.actionCues[characterSlug] ?? inferDefaultAction(signals.settingLabel);
 
-  // Placement: use cue if present, else spread by index
-  let placement: CharacterPlacement =
+  // Placement: use prebuilt map if available, else cue, else default by index
+  const placement: CharacterPlacement =
+    placementMap[characterSlug] ??
     signals.placementCues[characterSlug] ??
     defaultPlacementByIndex(indexInCast, castSize);
 
   const roleInScene: StoryPanelCharacterLayerPlan["roleInScene"] =
     indexInCast === 0 ? "protagonist" : indexInCast <= 2 ? "supporting" : "background";
 
-  const facingDirection: CharacterFacingDirection =
-    placement === "left" || placement === "background-left"
-      ? "facing-right"
-      : placement === "right" || placement === "background-right"
-      ? "facing-left"
-      : "facing-viewer";
-
   const relativeSize: StoryPanelCharacterLayerPlan["relativeSize"] =
     roleInScene === "protagonist" ? "large" : roleInScene === "supporting" ? "medium" : "small";
 
   const placementDetail = describePlacement(placement, name);
+
+  // Detect interaction with another character
+  const otherSlugs = Object.keys(placementMap).filter((s) => s !== characterSlug);
+  const mergedNameMap = { ...nameMap };
+  if (!mergedNameMap[characterSlug]) mergedNameMap[characterSlug] = name;
+  const { targetSlug, targetName, verb } = detectInteraction(sceneText, name, otherSlugs, mergedNameMap);
+
+  const interactionTargetSlug: string | null = targetSlug;
+  const interactionTargetName: string | null = targetName;
+  const interactionTargetPlacement: string | null =
+    targetSlug ? (placementMap[targetSlug] ?? null) : null;
+  const interactionInstruction: string | null =
+    verb && targetName
+      ? `${name} is ${verb} ${targetName}${interactionTargetPlacement ? `, who will be at the ${interactionTargetPlacement} position` : ""}.`
+      : null;
+
+  // Facing direction: toward interaction target if one exists, else positional default
+  const facingDirection: CharacterFacingDirection = interactionTargetSlug
+    ? "toward-another-character"
+    : placement === "left" || placement === "background-left"
+    ? "facing-right"
+    : placement === "right" || placement === "background-right"
+    ? "facing-left"
+    : "facing-viewer";
+
+  // Scene-aware context fields
+  const castList = Object.entries(mergedNameMap)
+    .filter(([s]) => s !== characterSlug)
+    .map(([s, n]) => `${n} (${placementMap[s] ?? "unknown"})`)
+    .join(", ");
+
+  const storyContextSummary =
+    `${name} is ${action} with ${emotion} emotion in a ${signals.settingLabel.toLowerCase()} scene (mood: ${signals.mood}).` +
+    (castList ? ` Scene also includes: ${castList}.` : "");
+
+  const allCastEntries = Object.entries(mergedNameMap)
+    .map(([s, n]) => `${n} at ${placementMap[s] ?? "unknown"}`)
+    .join("; ");
+  const interactionNote = interactionInstruction ? ` Interaction: ${interactionInstruction}` : "";
+  const sceneRelationshipSummary =
+    `Full cast of ${castSize}: ${allCastEntries}.${interactionNote}`;
+
+  const facingDesc = interactionTargetPlacement
+    ? `facing toward ${interactionTargetName ?? "another character"} (${interactionTargetPlacement} position)`
+    : facingDirection === "facing-viewer"
+    ? "facing the viewer"
+    : facingDirection === "facing-right"
+    ? "facing right"
+    : "facing left";
+
+  const assemblyIntent =
+    `${name} will be placed at the ${placement} position, ${facingDesc}, at ${relativeSize} scale.` +
+    ` This is an isolated layer for later compositing into the full scene.`;
 
   const cleanRenderPrompt = buildCleanRenderPrompt({
     name,
@@ -335,6 +454,11 @@ export function buildCharacterLayerPlan(options: {
     mustShow: canonical.mustShow,
     officialFeatureLocks: canonical.officialFeatureLocks,
     settingDescription: signals.settingDescription,
+    interactionTargetName,
+    interactionTargetPlacement,
+    interactionInstruction,
+    storyContextSummary,
+    assemblyIntent,
   });
 
   return {
@@ -348,7 +472,13 @@ export function buildCharacterLayerPlan(options: {
     placementDetail,
     relativeSize,
     facingDirection,
-    interactionTargetSlug: null,
+    interactionTargetSlug,
+    interactionTargetName,
+    interactionTargetPlacement,
+    interactionInstruction,
+    storyContextSummary,
+    sceneRelationshipSummary,
+    assemblyIntent,
     mustShow: canonical.mustShow,
     mustAvoid: canonical.mustAvoid,
     officialFeatureLocks: canonical.officialFeatureLocks,
@@ -420,6 +550,11 @@ function buildCleanRenderPrompt(opts: {
   mustShow: string[];
   officialFeatureLocks: string[];
   settingDescription: string;
+  interactionTargetName: string | null;
+  interactionTargetPlacement: string | null;
+  interactionInstruction: string | null;
+  storyContextSummary: string;
+  assemblyIntent: string;
 }): string {
   const {
     name,
@@ -431,10 +566,17 @@ function buildCleanRenderPrompt(opts: {
     mustShow,
     officialFeatureLocks,
     settingDescription,
+    interactionTargetName,
+    interactionTargetPlacement,
+    interactionInstruction,
+    storyContextSummary,
+    assemblyIntent,
   } = opts;
 
   const directionLabel =
-    facingDirection === "facing-right"
+    facingDirection === "toward-another-character"
+      ? `facing toward ${interactionTargetName ?? "another character"}${interactionTargetPlacement ? ` (${interactionTargetPlacement} side)` : ""}`
+      : facingDirection === "facing-right"
       ? "facing right"
       : facingDirection === "facing-left"
       ? "facing left"
@@ -447,16 +589,19 @@ function buildCleanRenderPrompt(opts: {
 
   return [
     `Render ${name} as a clean isolated character layer for compositing.`,
-    `Setting context: ${settingDescription}.`,
+    `Scene context: ${storyContextSummary}`,
+    `Setting: ${settingDescription}.`,
     `Emotion: ${emotion}. Action: ${action}.`,
+    interactionInstruction ? `Interaction: ${interactionInstruction}` : "",
     `${placementDetail}, ${directionLabel}, ${relativeSize} scale.`,
+    `Assembly intent: ${assemblyIntent}`,
     `Official feature locks (must match exactly):`,
     featureLockBlock,
     `Must show:`,
     mustShowBlock,
     `Character must be immediately recognizable as official ${name}.`,
     `Cute baby-like proportions. No background — isolated character only.`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 // ─── Background prompt builder ─────────────────────────────────────────────────
@@ -543,6 +688,10 @@ export function buildStoryPanelAssemblyPlan(options: {
     warnings.push("Scene text is very short — setting and mood signals may be inaccurate.");
   }
 
+  // Pre-calculate placements and names so each character plan can reference others
+  const placementMap = preBuildPlacementMap(characterSlugs, signals);
+  const nameMap = buildNameMap(characterSlugs);
+
   const cast: StoryPanelCharacterLayerPlan[] = characterSlugs.map((slug, i) =>
     buildCharacterLayerPlan({
       characterSlug: slug,
@@ -551,6 +700,8 @@ export function buildStoryPanelAssemblyPlan(options: {
       castSize: characterSlugs.length,
       referenceAssetIds: referenceAssetIds,
       sceneText,
+      placementMap,
+      nameMap,
     })
   );
 
@@ -623,6 +774,9 @@ export function summarizeAssemblyPlanForUi(plan: StoryPanelAssemblyPlan): Assemb
       placement: c.placement,
       emotion: c.emotion,
       action: c.action,
+      interactionTargetName: c.interactionTargetName,
+      interactionInstruction: c.interactionInstruction,
+      assemblyIntent: c.assemblyIntent,
     })),
     backgroundSummary: plan.layout.backgroundDescription,
     warnings: plan.metadata.warnings,

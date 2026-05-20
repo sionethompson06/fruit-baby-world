@@ -66,7 +66,10 @@ import {
   buildStoryPanelAssemblyPlan,
   summarizeAssemblyPlanForUi,
 } from "@/lib/storyPanelAssemblyPlanner";
-import type { AssemblyPlanUiSummary } from "@/lib/storyPanelAssemblyTypes";
+import type {
+  AssemblyPlanUiSummary,
+  StoryPanelCharacterLayerPlan,
+} from "@/lib/storyPanelAssemblyTypes";
 import type { Character } from "@/lib/content";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -163,6 +166,7 @@ type GenerateResult =
       assemblyPlanMood: string;
       assemblyPlanAdminDirectionUsed: boolean;
       assemblyPlanBackgroundPrompt?: string;
+      assemblyPlanCharacterLayerPlans?: StoryPanelCharacterLayerPlan[];
       warnings: string[];
       notes: string[];
     }
@@ -482,6 +486,7 @@ type AssemblyPlanFields = {
   assemblyPlanMood: string;
   assemblyPlanAdminDirectionUsed: boolean;
   assemblyPlanBackgroundPrompt?: string;
+  assemblyPlanCharacterLayerPlans?: StoryPanelCharacterLayerPlan[];
 };
 
 function buildAssemblyPlanSafe(options: {
@@ -516,6 +521,7 @@ function buildAssemblyPlanSafe(options: {
       assemblyPlanMood: plan.scene.mood,
       assemblyPlanAdminDirectionUsed: plan.prompts.adminDirectionUsed !== null,
       assemblyPlanBackgroundPrompt: plan.prompts.backgroundPrompt,
+      assemblyPlanCharacterLayerPlans: plan.cast,
     };
   } catch (err) {
     console.error("[generate-story-panel-image] Assembly planning failed:", err);

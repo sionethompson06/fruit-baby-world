@@ -26,6 +26,7 @@ export type CharacterFacingDirection =
   | "facing-away"
   | "three-quarter-left"
   | "three-quarter-right"
+  | "toward-another-character"
   | "unknown";
 
 export type StoryPanelCharacterLayerPlan = {
@@ -40,6 +41,12 @@ export type StoryPanelCharacterLayerPlan = {
   relativeSize: "large" | "medium" | "small" | "unknown";
   facingDirection: CharacterFacingDirection;
   interactionTargetSlug: string | null;
+  interactionTargetName: string | null;
+  interactionTargetPlacement: string | null;
+  interactionInstruction: string | null;
+  storyContextSummary: string;
+  sceneRelationshipSummary: string;
+  assemblyIntent: string;
   mustShow: string[];
   mustAvoid: string[];
   officialFeatureLocks: string[];
@@ -118,6 +125,9 @@ export type AssemblyPlanUiSummary = {
     placement: string;
     emotion: string;
     action: string;
+    interactionTargetName: string | null;
+    interactionInstruction: string | null;
+    assemblyIntent: string;
   }>;
   backgroundSummary: string;
   warnings: string[];

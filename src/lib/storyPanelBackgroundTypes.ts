@@ -1,4 +1,4 @@
-// Story panel background-only draft types (Phase 18D.10 / 18D.10.2).
+// Story panel background and character layer types (Phase 18D.10 / 18D.10.2 / 18D.11).
 // StoryPanelBackgroundDraft — temporary in-memory draft, never saved.
 // EpisodeSceneBackgroundLayer — saved admin-only background layer in episode JSON.
 
@@ -23,6 +23,70 @@ export type EpisodeSceneBackgroundLayer = {
 
   createdAt: string;
   updatedAt?: string;
+};
+
+// Saved character layer stored in episode scene.characterLayers[].
+// admin-only — never public, never a story panel.
+export type EpisodeSceneCharacterLayer = {
+  id: string;
+  type: "character-layer";
+  status: "saved";
+  visibility: "admin-only";
+
+  characterSlug: string;
+  characterName: string;
+
+  imageUrl: string;
+  pathname?: string;
+  mimeType?: string;
+
+  provider?: string;
+  modelId?: string;
+  promptText?: string;
+  placement?: string;
+  emotion?: string;
+  action?: string;
+  facingDirection?: string;
+  interactionTargetSlug?: string | null;
+  assemblyPlanId?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// Temporary in-memory draft for a single character layer.
+export type StoryPanelCharacterLayerDraft = {
+  id: string;
+  type: "character-layer-draft";
+  status: "temporary";
+
+  characterSlug: string;
+  characterName: string;
+
+  episodeSlug?: string;
+  sceneId?: string;
+  sceneNumber?: number;
+
+  provider: "openai" | "fal";
+  modelId?: string;
+
+  imageBase64?: string;
+  imageUrl?: string;
+  mimeType: string;
+
+  promptText: string;
+  providerPromptLength?: number;
+  promptWasCompacted?: boolean;
+
+  placement?: string;
+  emotion?: string;
+  action?: string;
+  facingDirection?: string;
+  interactionTargetSlug?: string | null;
+  assemblyPlanId?: string;
+
+  createdAt: string;
+  warnings: string[];
 };
 
 export type StoryPanelBackgroundDraft = {

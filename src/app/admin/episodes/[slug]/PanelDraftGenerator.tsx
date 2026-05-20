@@ -109,6 +109,9 @@ type GenApiResult = {
       placement: string;
       emotion: string;
       action: string;
+      interactionTargetName: string | null;
+      interactionInstruction: string | null;
+      assemblyIntent: string;
     }>;
     backgroundSummary: string;
     warnings: string[];
@@ -120,6 +123,25 @@ type GenApiResult = {
   assemblyPlanMood?: string;
   assemblyPlanAdminDirectionUsed?: boolean;
   assemblyPlanBackgroundPrompt?: string;
+  assemblyPlanCharacterLayerPlans?: Array<{
+    characterSlug: string;
+    characterName: string;
+    placement: string;
+    emotion: string;
+    action: string;
+    pose: string;
+    facingDirection: string;
+    interactionTargetSlug: string | null;
+    interactionTargetName: string | null;
+    interactionTargetPlacement: string | null;
+    interactionInstruction: string | null;
+    storyContextSummary: string;
+    sceneRelationshipSummary: string;
+    assemblyIntent: string;
+    mustShow: string[];
+    mustAvoid: string[];
+    officialFeatureLocks: string[];
+  }>;
   warnings?: string[];
   notes?: string[];
   draft?: {
@@ -213,6 +235,68 @@ type BgSaveResult = {
   commitMessage?: string;
   htmlUrl?: string;
   notes?: string[];
+};
+
+// ─── Character layer draft and save result types ─────────────────────────────
+
+type CharLayerDraftResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  troubleshooting?: string[];
+  draft?: {
+    id: string;
+    type: "character-layer-draft";
+    characterSlug: string;
+    characterName: string;
+    imageBase64?: string;
+    imageUrl?: string;
+    mimeType: string;
+    promptText: string;
+    provider: string;
+    modelId?: string;
+    placement?: string;
+    emotion?: string;
+    action?: string;
+    facingDirection?: string;
+    interactionTargetSlug?: string | null;
+    createdAt: string;
+    warnings: string[];
+  };
+  referenceUrl?: string | null;
+  notes?: string[];
+};
+
+type CharLayerSaveResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  characterLayer?: {
+    id: string;
+    imageUrl: string;
+    pathname?: string;
+    characterSlug: string;
+    characterName: string;
+    createdAt: string;
+    visibility: string;
+    status: string;
+  };
+  path?: string;
+  commitMessage?: string;
+  htmlUrl?: string;
+  notes?: string[];
+};
+
+type CharLayerDraftState = {
+  status: "idle" | "loading" | "done" | "error";
+  draft: CharLayerDraftResult | null;
+  error: string;
+};
+
+type CharLayerSaveState = {
+  status: "idle" | "saving" | "saved" | "error";
+  result: CharLayerSaveResult | null;
+  error: string;
 };
 
 // ─── Refine API result ────────────────────────────────────────────────────────
@@ -732,6 +816,10 @@ export default function PanelDraftGenerator({
   const [bgSaveStatus, setBgSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [bgSaveResult, setBgSaveResult] = useState<BgSaveResult | null>(null);
   const [bgSaveError, setBgSaveError] = useState<string>("");
+
+  // Per-character layer draft and save state
+  const [charLayerDrafts, setCharLayerDrafts] = useState<Record<string, CharLayerDraftState>>({});
+  const [charLayerSaves, setCharLayerSaves] = useState<Record<string, CharLayerSaveState>>({});
 
   const hasImage =
     genStatus === "done" &&
@@ -1255,6 +1343,126 @@ export default function PanelDraftGenerator({
     }
   }
 
+  async function handleGenerateCharacterLayer(characterSlug: string) {
+    const plan = result?.assemblyPlanCharacterLayerPlans?.find(
+      (p) => p.characterSlug === characterSlug
+    );
+    if (!plan) return;
+
+    setCharLayerDrafts((prev) => ({
+      ...prev,
+      [characterSlug]: { status: "loading", draft: null, error: "" },
+    }));
+    setCharLayerSaves((prev) => ({
+      ...prev,
+      [characterSlug]: { status: "idle", result: null, error: "" },
+    }));
+
+    try {
+      const resp = await fetch("/api/generate-character-layer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          characterLayerPlan: plan,
+          panelPrompt,
+          adminSceneDirection: adminSceneDirection || undefined,
+        }),
+      });
+      const data: CharLayerDraftResult = await resp.json();
+      if (data.ok) {
+        setCharLayerDrafts((prev) => ({
+          ...prev,
+          [characterSlug]: { status: "done", draft: data, error: "" },
+        }));
+      } else {
+        setCharLayerDrafts((prev) => ({
+          ...prev,
+          [characterSlug]: {
+            status: "error",
+            draft: null,
+            error: data.message ?? "Character layer generation failed.",
+          },
+        }));
+      }
+    } catch {
+      setCharLayerDrafts((prev) => ({
+        ...prev,
+        [characterSlug]: {
+          status: "error",
+          draft: null,
+          error: "Network error — could not reach character layer generation API.",
+        },
+      }));
+    }
+  }
+
+  async function handleSaveCharacterLayer(characterSlug: string) {
+    const draftState = charLayerDrafts[characterSlug];
+    const draft = draftState?.draft?.draft;
+    if (!draft) return;
+    const plan = result?.assemblyPlanCharacterLayerPlans?.find(
+      (p) => p.characterSlug === characterSlug
+    );
+
+    setCharLayerSaves((prev) => ({
+      ...prev,
+      [characterSlug]: { status: "saving", result: null, error: "" },
+    }));
+
+    try {
+      const resp = await fetch("/api/media/save-character-layer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          characterSlug,
+          characterName: draft.characterName,
+          imageBase64: draft.imageBase64 || undefined,
+          imageUrl: draft.imageUrl || undefined,
+          mimeType: draft.mimeType,
+          provider: draft.provider,
+          modelId: draft.modelId,
+          promptText: draft.promptText,
+          placement: plan?.placement,
+          emotion: plan?.emotion,
+          action: plan?.action,
+          facingDirection: plan?.facingDirection,
+          interactionTargetSlug: plan?.interactionTargetSlug,
+        }),
+      });
+      const data: CharLayerSaveResult = await resp.json();
+      if (data.ok) {
+        setCharLayerSaves((prev) => ({
+          ...prev,
+          [characterSlug]: { status: "saved", result: data, error: "" },
+        }));
+      } else {
+        setCharLayerSaves((prev) => ({
+          ...prev,
+          [characterSlug]: {
+            status: "error",
+            result: null,
+            error: data.message ?? "Character layer save failed.",
+          },
+        }));
+      }
+    } catch {
+      setCharLayerSaves((prev) => ({
+        ...prev,
+        [characterSlug]: {
+          status: "error",
+          result: null,
+          error: "Network error — could not reach save API.",
+        },
+      }));
+    }
+  }
+
   async function handleSaveBackground() {
     const draft = bgDraft?.draft;
     if (!draft) return;
@@ -1739,6 +1947,214 @@ export default function PanelDraftGenerator({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Character Layer Drafts ──────────────────────────────────────────── */}
+      {panelPrompt && result?.assemblyPlanCharacterLayerPlans && result.assemblyPlanCharacterLayerPlans.length > 0 && (
+        <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
+            <span className="text-sm">🎭</span>
+            <span className="text-sm font-black text-tiki-brown">Character Layer Drafts</span>
+            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
+              Optional
+            </span>
+          </div>
+          <div className="p-4 flex flex-col gap-4">
+            <p className="text-xs text-tiki-brown/50 leading-relaxed">
+              Generate an isolated layer for each character. Each character is rendered alone but emotionally
+              and physically prepared for the final assembled scene — facing their interaction target, performing
+              their role in context.
+            </p>
+            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
+              <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                Each layer uses only that character's own approved references. No compositing happens here — layers
+                are saved as admin-only assets for future assembly.
+              </p>
+            </div>
+
+            {result.assemblyPlanCharacterLayerPlans.map((plan) => {
+              const draftState = charLayerDrafts[plan.characterSlug];
+              const saveState = charLayerSaves[plan.characterSlug];
+              const draft = draftState?.draft?.draft;
+
+              return (
+                <div key={plan.characterSlug} className="border border-tiki-brown/10 rounded-xl overflow-hidden">
+                  {/* Character header */}
+                  <div className="flex items-center gap-2 flex-wrap px-3 py-2.5 bg-white/60">
+                    <span className="text-xs font-black text-tiki-brown/80">{plan.characterName}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold capitalize">
+                      {plan.placement}
+                    </span>
+                    {plan.interactionTargetName && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-tropical-green/10 text-tropical-green font-semibold">
+                        → {plan.interactionTargetName}
+                      </span>
+                    )}
+                    <span className="text-xs text-tiki-brown/40 italic ml-auto">
+                      {plan.emotion} · {plan.action}
+                    </span>
+                  </div>
+
+                  <div className="p-3 flex flex-col gap-2.5">
+                    {/* Assembly intent */}
+                    <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                      {plan.assemblyIntent}
+                    </p>
+                    {plan.interactionInstruction && (
+                      <p className="text-xs text-tropical-green/70 font-semibold">
+                        {plan.interactionInstruction}
+                      </p>
+                    )}
+
+                    {/* Generate button */}
+                    {draftState?.status !== "done" && (
+                      <button
+                        onClick={() => handleGenerateCharacterLayer(plan.characterSlug)}
+                        disabled={draftState?.status === "loading"}
+                        className="self-start px-3 py-1.5 rounded-lg bg-tiki-brown/80 text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
+                      >
+                        {draftState?.status === "loading"
+                          ? "Generating…"
+                          : "Generate Character Layer Draft"}
+                      </button>
+                    )}
+
+                    {draftState?.status === "loading" && (
+                      <p className="text-xs text-tiki-brown/45 italic animate-pulse">
+                        Generating {plan.characterName} character layer…
+                      </p>
+                    )}
+
+                    {draftState?.status === "error" && (
+                      <div className="flex flex-col gap-1 bg-warm-coral/10 border border-warm-coral/30 rounded-lg px-3 py-2">
+                        <span className="text-xs font-bold text-warm-coral">Generation failed</span>
+                        {draftState.error && <p className="text-xs text-tiki-brown/60">{draftState.error}</p>}
+                        <button
+                          onClick={() => handleGenerateCharacterLayer(plan.characterSlug)}
+                          className="self-start text-xs text-warm-coral underline mt-0.5"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    )}
+
+                    {draftState?.status === "done" && draft && (
+                      <div className="flex flex-col gap-2.5">
+                        {/* Draft image */}
+                        {(draft.imageBase64 || draft.imageUrl) && (
+                          <div className="flex flex-col gap-1">
+                            {draft.imageBase64 ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={`data:${draft.mimeType};base64,${draft.imageBase64}`}
+                                alt={`${plan.characterName} character layer draft`}
+                                className="w-full max-w-xs rounded-xl border border-tiki-brown/10 shadow-sm"
+                              />
+                            ) : draft.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={draft.imageUrl}
+                                alt={`${plan.characterName} character layer draft`}
+                                className="w-full max-w-xs rounded-xl border border-tiki-brown/10 shadow-sm"
+                              />
+                            ) : null}
+                            <p className="text-xs text-tiki-brown/35 italic">
+                              Isolated layer — no background, no other characters.
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                          <span>Provider: <span className="font-semibold">{draft.provider}</span></span>
+                          {draft.modelId && (
+                            <span>Model: <span className="font-mono">{draft.modelId}</span></span>
+                          )}
+                          {draftState.draft?.referenceUrl && (
+                            <span className="text-tropical-green font-semibold">Reference used</span>
+                          )}
+                        </div>
+
+                        {draft.warnings.length > 0 && (
+                          <div className="flex flex-col gap-0.5">
+                            {draft.warnings.map((w, i) => (
+                              <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Regenerate button */}
+                        <button
+                          onClick={() => handleGenerateCharacterLayer(plan.characterSlug)}
+                          disabled={charLayerDrafts[plan.characterSlug]?.status === "loading"}
+                          className="self-start text-xs text-tiki-brown/45 underline"
+                        >
+                          Regenerate
+                        </button>
+
+                        {/* Save character layer */}
+                        <div className="border-t border-tiki-brown/10 pt-2.5 flex flex-col gap-2">
+                          <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
+                            Save Character Layer
+                          </p>
+                          <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                            Save this isolated character layer as an admin-only scene asset for future compositing.
+                          </p>
+
+                          {saveState?.status !== "saved" && (
+                            <button
+                              onClick={() => handleSaveCharacterLayer(plan.characterSlug)}
+                              disabled={saveState?.status === "saving"}
+                              className="self-start px-3 py-1.5 rounded-lg bg-tropical-green text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                            >
+                              {saveState?.status === "saving" ? "Saving…" : "Save Character Layer"}
+                            </button>
+                          )}
+
+                          {saveState?.status === "saving" && (
+                            <p className="text-xs text-tiki-brown/45 italic animate-pulse">
+                              Uploading and saving {plan.characterName} layer…
+                            </p>
+                          )}
+
+                          {saveState?.status === "error" && (
+                            <div className="flex flex-col gap-1 bg-warm-coral/10 border border-warm-coral/30 rounded-lg px-3 py-2">
+                              <span className="text-xs font-bold text-warm-coral">Save failed</span>
+                              {saveState.error && (
+                                <p className="text-xs text-tiki-brown/60">{saveState.error}</p>
+                              )}
+                            </div>
+                          )}
+
+                          {saveState?.status === "saved" && saveState.result?.characterLayer && (
+                            <div className="flex flex-col gap-1.5 bg-tropical-green/6 border border-tropical-green/20 rounded-lg px-3 py-2">
+                              <span className="text-xs font-bold text-tropical-green">
+                                Character layer saved.
+                              </span>
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/10 self-start">
+                                Admin-only
+                              </span>
+                              {saveState.result.characterLayer.imageUrl && (
+                                <a
+                                  href={saveState.result.characterLayer.imageUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-ube-purple underline break-all hover:opacity-75"
+                                >
+                                  {saveState.result.characterLayer.imageUrl}
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
