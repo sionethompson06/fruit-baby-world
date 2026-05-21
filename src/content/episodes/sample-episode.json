@@ -82,6 +82,27 @@
           "interactionTargetSlug": null,
           "createdAt": "2026-05-21T09:10:41.553Z",
           "updatedAt": "2026-05-21T09:10:41.553Z"
+        },
+        {
+          "id": "char-layer-1779354729205",
+          "type": "character-layer",
+          "status": "saved",
+          "visibility": "admin-only",
+          "characterSlug": "ube-baby",
+          "characterName": "Ube Baby",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/sample-episode/character-layers/scene-3/ube-baby-1779354728396.png",
+          "pathname": "episodes/sample-episode/character-layers/scene-3/ube-baby-1779354728396.png",
+          "mimeType": "image/png",
+          "provider": "fal",
+          "modelId": "fal-ai/flux-pro/kontext",
+          "promptText": "[CHARACTER LAYER — UBE BABY]\nGenerate an isolated character layer of Ube Baby only. This is an admin-only production asset for staged compositing.\nDo NOT include any other Fruit Baby characters in this layer.\n\n[STORY CONTEXT]\nUbe Baby is sitting attentively with happy emotion in a classroom scene (mood: joyful). Scene also includes: Pineapple Baby (left), tiki (right).\nSetting: Classroom — indoor school classroom setting. Mood: joyful.\nFull cast of 3: Pineapple Baby at left; Ube Baby at center; tiki at right.\n\n[ASSEMBLY INTENT]\nUbe Baby will be placed at the center position, facing the viewer, at medium scale. This is an isolated layer for later compositing into the full scene.\n\n[CHARACTER PERFORMANCE]\nEmotion: happy. Action: sitting attentively. Pose: seated pose.\nFacing: facing the viewer.\n\n[OFFICIAL FIDELITY]\nOfficial feature locks — match exactly:\n  - body: soft purple/lavender smooth oval\n  - texture: smooth, no crosshatch\n  - top: green heart-shaped leaf cluster\n  - arms: two short rounded baby arms\nMust show:\n  - soft purple/lavender smooth round body — no pineapple texture\n  - green heart-shaped leaf cluster on top\n  - two short rounded baby arms\n  - baby-like proportions with cute round face\nMust avoid:\n  - pineapple diamond/crosshatch body texture — body must be smooth purple\n  - golden-yellow or orange body — that belongs to Pineapple Baby\n  - mango orange/green gradient — that belongs to Mango Baby\n  - layered spiky pineapple crown — that belongs to Pineapple Baby\nCharacter must be immediately recognizable as official Ube Baby. Cute baby-like proportions.\n\n[CLEAN LAYER OUTPUT]\nWhite or transparent background — no environment. Full character body visible with padding.\nNo other characters, no other Fruit Baby characters. Ube Baby only.",
+          "placement": "center",
+          "emotion": "happy",
+          "action": "sitting attentively",
+          "facingDirection": "facing-viewer",
+          "interactionTargetSlug": null,
+          "createdAt": "2026-05-21T09:12:09.205Z",
+          "updatedAt": "2026-05-21T09:12:09.205Z"
         }
       ]
     },
@@ -236,5 +257,5 @@
       ]
     }
   },
-  "updatedAt": "2026-05-21T09:10:41.553Z"
+  "updatedAt": "2026-05-21T09:12:09.205Z"
 }
