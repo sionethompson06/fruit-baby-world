@@ -160,3 +160,41 @@ export type AssembledStoryPanelDraft = {
   createdAt: string;
   warnings: string[];
 };
+
+// Harmonized story panel draft — temporary result of a harmonization pass on an
+// assembled draft. Preserves composition/placement while improving visual cohesion.
+// Never saved automatically; eligible for existing Approve & Save Panel flow.
+export type HarmonizedStoryPanelDraft = {
+  id: string;
+  type: "harmonized-story-panel-draft";
+  status: "temporary";
+
+  episodeSlug?: string;
+  sceneId?: string;
+  sceneNumber?: number;
+  panelId?: string;
+
+  baseDraftId?: string;
+  baseDraftType?: "assembled-story-panel-draft";
+  backgroundLayerId?: string;
+  characterLayerIds?: string[];
+  assembledDraftWarnings?: string[];
+
+  imageBase64?: string;
+  imageUrl?: string;
+  mimeType: "image/png";
+
+  provider: "fal" | "openai";
+  modelId?: string;
+
+  harmonizationPrompt: string;
+  promptWasCompacted?: boolean;
+  providerPromptLength?: number;
+
+  preserveComposition: true;
+  preserveCharacterIdentity: true;
+  preservePlacement: true;
+
+  createdAt: string;
+  warnings: string[];
+};

@@ -358,6 +358,41 @@ type PlanApiResult = {
   assemblyPlanWarnings?: string[];
 };
 
+// ─── Harmonize API result ─────────────────────────────────────────────────────
+
+type HarmonizedDraft = {
+  id: string;
+  type: "harmonized-story-panel-draft";
+  imageBase64?: string;
+  imageUrl?: string;
+  mimeType: "image/png";
+  provider: string;
+  modelId?: string;
+  harmonizationPrompt: string;
+  promptWasCompacted?: boolean;
+  providerPromptLength?: number;
+  preserveComposition: true;
+  preserveCharacterIdentity: true;
+  preservePlacement: true;
+  backgroundLayerId?: string;
+  characterLayerIds?: string[];
+  createdAt: string;
+  warnings: string[];
+};
+
+type HarmonizeApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  troubleshooting?: string[];
+  draft?: HarmonizedDraft;
+  provider?: string;
+  modelId?: string;
+  harmonizationPromptLength?: number;
+  promptWasCompacted?: boolean;
+  notes?: string[];
+};
+
 // ─── Assemble API result ──────────────────────────────────────────────────────
 
 type AssembleApiResult = {
@@ -905,6 +940,11 @@ export default function PanelDraftGenerator({
   const [assembleStatus, setAssembleStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [assembleResult, setAssembleResult] = useState<AssembleApiResult | null>(null);
   const [assembleError, setAssembleError] = useState<string>("");
+
+  // Harmonization state (Phase 18D.13)
+  const [harmonizeStatus, setHarmonizeStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [harmonizeResult, setHarmonizeResult] = useState<HarmonizeApiResult | null>(null);
+  const [harmonizeError, setHarmonizeError] = useState<string>("");
 
   // Workflow mode selector (Phase 18D.12A)
   const [workflowMode, setWorkflowMode] = useState<"whole-scene" | "layered">("whole-scene");
@@ -1652,6 +1692,9 @@ export default function PanelDraftGenerator({
     setAssembleStatus("loading");
     setAssembleResult(null);
     setAssembleError("");
+    setHarmonizeStatus("idle");
+    setHarmonizeResult(null);
+    setHarmonizeError("");
     try {
       const resp = await fetch("/api/assemble-story-panel-layers", {
         method: "POST",
@@ -1673,12 +1716,58 @@ export default function PanelDraftGenerator({
     }
   }
 
+  async function handleHarmonize() {
+    const assembled = assembleResult?.draft;
+    if (!assembled?.imageBase64) return;
+
+    setHarmonizeStatus("loading");
+    setHarmonizeResult(null);
+    setHarmonizeError("");
+
+    try {
+      const resp = await fetch("/api/harmonize-story-panel-draft", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assembledDraftImageBase64: assembled.imageBase64,
+          mimeType: assembled.mimeType,
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          baseDraftId: assembled.id,
+          backgroundLayerId: assembled.backgroundLayerId,
+          characterLayerIds: assembled.characterLayerIds,
+          characterSlugs: referenceCharacters,
+          assembledDraftWarnings: assembled.warnings,
+          settingLabel: planSummary?.settingLabel ?? result?.assemblyPlanSetting,
+          mood: planSummary?.mood ?? result?.assemblyPlanMood,
+        }),
+      });
+      const data: HarmonizeApiResult = await resp.json();
+      setHarmonizeResult(data);
+      if (data.ok) {
+        setHarmonizeStatus("done");
+      } else {
+        setHarmonizeStatus("error");
+        setHarmonizeError(data.message ?? "Harmonization failed.");
+      }
+    } catch {
+      setHarmonizeStatus("error");
+      setHarmonizeError("Network error — could not reach harmonization API.");
+    }
+  }
+
   function handleUseAssembledAsDraft() {
-    const draft = assembleResult?.draft;
-    if (!draft?.imageBase64) return;
+    const assembled = assembleResult?.draft;
+    // Prefer harmonized image when available
+    const harmonizedBase64 = harmonizeResult?.draft?.imageBase64;
+    const activeBase64 = harmonizedBase64 || assembled?.imageBase64;
+    const activeMime = assembled?.mimeType ?? "image/png";
+    if (!activeBase64) return;
     setResult((prev) => ({
       ...(prev ?? { ok: true, status: "assembled" }),
-      image: { mimeType: draft.mimeType, base64: draft.imageBase64 },
+      image: { mimeType: activeMime, base64: activeBase64 },
     } as unknown as GenApiResult));
     setGenStatus("done");
     resetReviewState();
@@ -2573,21 +2662,119 @@ export default function PanelDraftGenerator({
                   </ul>
                 )}
 
+                {/* ── Step 4b: Harmonize Assembled Draft ── */}
+                <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-3">
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
+                      Step 4b — Harmonize Assembled Draft <span className="font-normal normal-case text-tiki-brown/35">(optional)</span>
+                    </p>
+                    <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                      Lightly blends the assembled background and character layers into one polished storybook panel while preserving character identity and placement. Uses the assembled draft as the base — no regeneration.
+                    </p>
+                  </div>
+
+                  {harmonizeStatus !== "done" && (
+                    <button
+                      onClick={handleHarmonize}
+                      disabled={harmonizeStatus === "loading" || !assembleResult.draft.imageBase64}
+                      className="self-start px-4 py-2 rounded-xl bg-tropical-green/90 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tropical-green transition-colors"
+                    >
+                      {harmonizeStatus === "loading" ? "Harmonizing…" : harmonizeStatus === "error" ? "Retry Harmonize" : "Harmonize Assembled Draft"}
+                    </button>
+                  )}
+
+                  {harmonizeStatus === "loading" && (
+                    <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                      Applying harmonization pass — preserving composition and character identity…
+                    </p>
+                  )}
+
+                  {harmonizeStatus === "error" && (
+                    <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                      <span className="text-xs font-bold text-warm-coral">Harmonization failed</span>
+                      <p className="text-xs text-tiki-brown/60">{harmonizeError}</p>
+                      <p className="text-xs text-tiki-brown/45 italic">The assembled draft above is unchanged — you can still use it or retry harmonization.</p>
+                      {harmonizeResult?.troubleshooting && harmonizeResult.troubleshooting.length > 0 && (
+                        <ul className="list-disc list-inside text-xs text-tiki-brown/55 space-y-0.5 mt-0.5">
+                          {harmonizeResult.troubleshooting.map((tip, i) => <li key={i}>{tip}</li>)}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+
+                  {harmonizeStatus === "done" && harmonizeResult?.ok && harmonizeResult.draft && (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green uppercase tracking-wide border border-tropical-green/25">
+                          Harmonized temporary draft — not saved
+                        </span>
+                        {harmonizeResult.promptWasCompacted && (
+                          <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
+                        )}
+                      </div>
+
+                      {harmonizeResult.draft.imageBase64 && (
+                        <div className="flex flex-col gap-1.5">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`data:${harmonizeResult.draft.mimeType};base64,${harmonizeResult.draft.imageBase64}`}
+                            alt="Harmonized story panel draft"
+                            className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                          />
+                          <p className="text-xs text-tiki-brown/35 italic">
+                            Harmonized — composition, characters, and placement preserved.
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                        <span>Harmonized: <span className="font-semibold text-tropical-green">Yes</span></span>
+                        <span>Provider: <span className="font-semibold">{harmonizeResult.provider === "openai" ? "OpenAI" : harmonizeResult.provider === "fal" ? "Fal.ai" : harmonizeResult.provider}</span></span>
+                        <span>Base: <span className="font-semibold">assembled draft</span></span>
+                        <span>Preserve composition: <span className="font-semibold text-tropical-green">On</span></span>
+                      </div>
+
+                      {harmonizeResult.draft.warnings.length > 0 && (
+                        <div className="flex flex-col gap-0.5">
+                          {harmonizeResult.draft.warnings.map((w, i) => (
+                            <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                          ))}
+                        </div>
+                      )}
+
+                      {harmonizeResult.notes && harmonizeResult.notes.length > 0 && (
+                        <ul className="flex flex-col gap-0.5">
+                          {harmonizeResult.notes.map((n, i) => (
+                            <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
+                          ))}
+                        </ul>
+                      )}
+
+                      <button
+                        onClick={() => { setHarmonizeStatus("idle"); setHarmonizeResult(null); setHarmonizeError(""); }}
+                        className="self-start text-xs text-tiki-brown/40 underline"
+                      >
+                        Discard harmonized — revert to assembled draft
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 {/* Use as panel draft */}
                 <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-2">
                   <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
-                    Step 5 — Use Assembled Draft
+                    Step 5 — Use {harmonizeStatus === "done" && harmonizeResult?.ok ? "Harmonized" : "Assembled"} Draft
                   </p>
                   <p className="text-xs text-tiki-brown/45 leading-relaxed">
-                    Load this composite into the Fidelity Review and Approve &amp; Save Panel section below.
-                    Source: Assembled Layer Draft. Not saved until approved.
+                    Load this {harmonizeStatus === "done" && harmonizeResult?.ok ? "harmonized" : "composite"} draft into the Fidelity Review and Approve &amp; Save Panel section below.
+                    Not saved until approved.
                   </p>
                   <button
                     onClick={handleUseAssembledAsDraft}
-                    disabled={!assembleResult.draft.imageBase64}
+                    disabled={!(harmonizeResult?.draft?.imageBase64 || assembleResult.draft.imageBase64)}
                     className="self-start px-4 py-2 rounded-xl bg-ube-purple text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
                   >
-                    Use Assembled Draft as Panel Draft
+                    Use {harmonizeStatus === "done" && harmonizeResult?.ok ? "Harmonized" : "Assembled"} Draft as Panel Draft
                   </button>
                 </div>
               </div>
