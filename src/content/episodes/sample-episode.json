@@ -60,6 +60,29 @@
           "createdAt": "2026-05-21T09:10:16.001Z",
           "updatedAt": "2026-05-21T09:10:16.001Z"
         }
+      ],
+      "characterLayers": [
+        {
+          "id": "char-layer-1779354641553",
+          "type": "character-layer",
+          "status": "saved",
+          "visibility": "admin-only",
+          "characterSlug": "pineapple-baby",
+          "characterName": "Pineapple Baby",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/sample-episode/character-layers/scene-3/pineapple-baby-1779354640724.png",
+          "pathname": "episodes/sample-episode/character-layers/scene-3/pineapple-baby-1779354640724.png",
+          "mimeType": "image/png",
+          "provider": "fal",
+          "modelId": "fal-ai/flux-pro/kontext",
+          "promptText": "[CHARACTER LAYER — PINEAPPLE BABY]\nGenerate an isolated character layer of Pineapple Baby only. This is an admin-only production asset for staged compositing.\nDo NOT include any other Fruit Baby characters in this layer.\n\n[STORY CONTEXT]\nPineapple Baby is sitting attentively with happy emotion in a classroom scene (mood: joyful). Scene also includes: Ube Baby (center), tiki (right).\nSetting: Classroom — indoor school classroom setting. Mood: joyful.\nFull cast of 3: Pineapple Baby at left; Ube Baby at center; tiki at right.\n\n[ASSEMBLY INTENT]\nPineapple Baby will be placed at the left position, facing right, at large scale. This is an isolated layer for later compositing into the full scene.\n\n[CHARACTER PERFORMANCE]\nEmotion: happy. Action: sitting attentively. Pose: seated pose.\nFacing: facing right.\n\n[OFFICIAL FIDELITY]\nOfficial feature locks — match exactly:\n  - body: warm golden-yellow pineapple oval\n  - texture: pineapple diamond/crosshatch pattern\n  - top: layered multi-leaf green spiky pineapple crown\n  - arms: two short rounded baby arms\nMust show:\n  - warm golden-yellow plump pineapple oval body\n  - pineapple diamond/crosshatch texture on body\n  - layered green spiky pineapple crown leaves on top\n  - two short rounded baby arms\nMust avoid:\n  - green body color — crown leaves are green, body is golden-yellow\n  - purple or lavender body — that belongs to Ube Baby\n  - mango orange/green gradient body — that belongs to Mango Baby\n  - heart-shaped leaf cluster — that belongs to Ube Baby\nCharacter must be immediately recognizable as official Pineapple Baby. Cute baby-like proportions.\n\n[CLEAN LAYER OUTPUT]\nWhite or transparent background — no environment. Full character body visible with padding.\nNo other characters, no other Fruit Baby characters. Pineapple Baby only.",
+          "placement": "left",
+          "emotion": "happy",
+          "action": "sitting attentively",
+          "facingDirection": "facing-right",
+          "interactionTargetSlug": null,
+          "createdAt": "2026-05-21T09:10:41.553Z",
+          "updatedAt": "2026-05-21T09:10:41.553Z"
+        }
       ]
     },
     {
@@ -213,5 +236,5 @@
       ]
     }
   },
-  "updatedAt": "2026-05-21T09:10:16.001Z"
+  "updatedAt": "2026-05-21T09:10:41.553Z"
 }
