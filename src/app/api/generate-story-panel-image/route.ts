@@ -29,6 +29,12 @@ import {
   type StoryPanelGenerationPackage,
 } from "@/lib/storyPanelGenerationPackage";
 import {
+  loadGoldenReferences,
+  selectGoldenReferencesForGeneration,
+  DEFAULT_GOLDEN_REFERENCE_REPLAY_SETTINGS,
+  buildGoldenReferenceReplayDiagnosticsStub,
+} from "@/lib/storyPanelGoldenReferences";
+import {
   getFidelityRulesSummary,
   buildImageConditionedEditPrompt,
   buildProductionFidelityPrompt,
@@ -113,6 +119,10 @@ type GenerateResult =
       modelId: string;
       referenceCharacters: string[];
       referenceMode: ReferenceModeValue;
+        goldenReferenceReplayEnabled?: boolean;
+        goldenReferencesConsidered?: number;
+        goldenReferencesUsed?: number;
+        goldenReferenceDiagnostics?: Record<string, unknown>;
       referenceCounts: ReferenceBundleCounts;
       referencesUsed: ReferenceMetaItem[];
       referencesOmitted: ReferenceMetaItem[];
@@ -229,6 +239,10 @@ type GenerateResult =
       fallbackUsed?: boolean;
       fallbackReason?: string;
       warnings?: string[];
+      goldenReferenceReplayEnabled?: boolean;
+      goldenReferencesConsidered?: number;
+      goldenReferencesUsed?: number;
+      goldenReferenceDiagnostics?: Record<string, unknown>;
     };
 
 const ALLOWED_REFERENCE_MODES = [
@@ -675,6 +689,12 @@ export async function POST(request: Request): Promise<Response> {
   let charBySlug: Record<string, Character> = {};
   let compactionResult: CompactionResult | null = null;
 
+  // Golden reference diagnostics/state
+  let goldenReferenceReplayEnabled = false;
+  let goldenReferencesConsidered = 0;
+  let goldenReferencesUsed = 0;
+  let goldenReferenceDiagnostics: Record<string, unknown> | null = null;
+
   try {
     const allAssets = loadReferenceAssets();
     const allChars = loadAllCharactersFromDisk();
@@ -697,6 +717,32 @@ export async function POST(request: Request): Promise<Response> {
   // Append admin scene direction to draft-mode generation prompt if provided
   if (adminSceneDirection) {
     generationPrompt = generationPrompt + "\n\n" + buildAdminSceneDirectionBlock(adminSceneDirection);
+  }
+
+  // --- Golden Reference selection & diagnostics ---
+  const useGoldenReferences = body.useGoldenReferences === undefined ? true : Boolean(body.useGoldenReferences);
+  try {
+    if (useGoldenReferences && sceneRefPkg) {
+      const allGolden = loadGoldenReferences();
+      const sel = selectGoldenReferencesForGeneration(sceneRefPkg, allGolden, "scene", {
+        settingTags: undefined,
+        settings: DEFAULT_GOLDEN_REFERENCE_REPLAY_SETTINGS,
+      });
+      goldenReferenceReplayEnabled = sel.diagnostics.enabled;
+      goldenReferencesConsidered = sel.diagnostics.consideredCount;
+      goldenReferencesUsed = sel.diagnostics.selectedCount;
+      goldenReferenceDiagnostics = sel.diagnostics as unknown as Record<string, unknown>;
+      if (sel.promptSection && sel.promptSection.trim().length > 0) {
+        generationPrompt = [generationPrompt, sel.promptSection].join("\n\n");
+      }
+    } else {
+      goldenReferenceDiagnostics = buildGoldenReferenceReplayDiagnosticsStub("disabled by admin");
+      goldenReferenceReplayEnabled = false;
+      goldenReferencesConsidered = 0;
+      goldenReferencesUsed = 0;
+    }
+  } catch (e) {
+    goldenReferenceDiagnostics = buildGoldenReferenceReplayDiagnosticsStub("selection_failed");
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -754,6 +800,22 @@ export async function POST(request: Request): Promise<Response> {
       adminSceneDirection,
     });
     const providerPrompt = productionCompaction.prompt;
+
+    // Append golden reference section for production if available
+    try {
+      if (useGoldenReferences && sceneRefPkg) {
+        const allGolden = loadGoldenReferences();
+        const sel = selectGoldenReferencesForGeneration(sceneRefPkg!, allGolden, "scene", {
+          settingTags: undefined,
+          settings: DEFAULT_GOLDEN_REFERENCE_REPLAY_SETTINGS,
+        });
+        if (sel.promptSection && sel.promptSection.trim().length > 0) {
+          productionPrompt = [productionPrompt, sel.promptSection].join("\n\n");
+        }
+      }
+    } catch {
+      // ignore selection errors for production prompt assembly
+    }
 
     console.log(
       `[generate-story-panel-image] production mode: provider=${provider}, model=${modelId}, chars=${productionRefSet?.characterReferenceCount ?? 0}, total=${productionRefSet?.passedToProviderCount ?? 0}, featureLocks=${fidelityResult?.characterFeatureLockCount ?? 0}, promptLen=${providerPrompt.length}${productionCompaction.wasCompacted ? ` (compacted from ${productionCompaction.originalLength})` : ""}`
@@ -843,6 +905,10 @@ export async function POST(request: Request): Promise<Response> {
             "Production Mode — Fal.ai — strict reference fidelity target.",
             "Review it before approving and saving to the episode.",
           ],
+          goldenReferenceReplayEnabled: goldenReferenceReplayEnabled,
+          goldenReferencesConsidered: goldenReferencesConsidered,
+          goldenReferencesUsed: goldenReferencesUsed,
+          goldenReferenceDiagnostics,
         } satisfies GenerateResult,
         { status: 200 }
       );
@@ -906,6 +972,10 @@ export async function POST(request: Request): Promise<Response> {
           fallbackUsed: false,
           troubleshooting: troubleshootingItems,
           warnings: refWarnings,
+          goldenReferenceReplayEnabled: goldenReferenceReplayEnabled,
+          goldenReferencesConsidered: goldenReferencesConsidered,
+          goldenReferencesUsed: goldenReferencesUsed,
+          goldenReferenceDiagnostics,
         } satisfies GenerateResult,
         { status: 502 }
       );
@@ -1262,6 +1332,10 @@ export async function POST(request: Request): Promise<Response> {
           "Add OPENAI_API_KEY to your Vercel environment variables.",
           "Redeploy after updating environment variables.",
         ],
+          goldenReferenceReplayEnabled: goldenReferenceReplayEnabled,
+          goldenReferencesConsidered: goldenReferencesConsidered,
+          goldenReferencesUsed: goldenReferencesUsed,
+          goldenReferenceDiagnostics,
       } satisfies GenerateResult,
       { status: 503 }
     );
@@ -1411,6 +1485,10 @@ export async function POST(request: Request): Promise<Response> {
           fallbackUsed: fallbackReason !== undefined,
           fallbackReason,
           warnings: refWarnings,
+          goldenReferenceReplayEnabled: goldenReferenceReplayEnabled,
+          goldenReferencesConsidered: goldenReferencesConsidered,
+          goldenReferencesUsed: goldenReferencesUsed,
+          goldenReferenceDiagnostics,
         } satisfies GenerateResult,
         { status: 502 }
       );
@@ -1449,6 +1527,10 @@ export async function POST(request: Request): Promise<Response> {
         fallbackUsed: fallbackReason !== undefined,
         fallbackReason,
         warnings: refWarnings,
+        goldenReferenceReplayEnabled: goldenReferenceReplayEnabled,
+        goldenReferencesConsidered: goldenReferencesConsidered,
+        goldenReferencesUsed: goldenReferencesUsed,
+        goldenReferenceDiagnostics,
       } satisfies GenerateResult,
       { status: 502 }
     );
@@ -1528,6 +1610,10 @@ export async function POST(request: Request): Promise<Response> {
       fallbackReason,
       ...draftAssemblyPlan,
       warnings: refWarnings,
+      goldenReferenceReplayEnabled: goldenReferenceReplayEnabled,
+      goldenReferencesConsidered: goldenReferencesConsidered,
+      goldenReferencesUsed: goldenReferencesUsed,
+      goldenReferenceDiagnostics,
       notes: [
         "This story panel draft has not been saved.",
         "Review it before approving and saving to the episode.",

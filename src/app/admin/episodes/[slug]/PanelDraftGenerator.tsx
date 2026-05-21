@@ -924,6 +924,7 @@ export default function PanelDraftGenerator({
   const [result, setResult] = useState<GenApiResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [generationMode, setGenerationMode] = useState<"draft" | "production" | "hybrid">("draft");
+  const [useGoldenReferences, setUseGoldenReferences] = useState<boolean>(true);
   const [adminSceneDirection, setAdminSceneDirection] = useState<string>("");
 
   // Refine state
@@ -1101,6 +1102,7 @@ export default function PanelDraftGenerator({
           referenceCharacters,
           generationMode,
           adminSceneDirection: adminSceneDirection.trim() || undefined,
+          useGoldenReferences,
         }),
       });
 
@@ -1877,6 +1879,29 @@ export default function PanelDraftGenerator({
           placeholder="Example: Place Mango Baby on the right holding the flower. Keep Ube Baby seated and shy. Make Pineapple Baby comforting and smiling. Use a warm classroom rug and soft afternoon light. Make sure Mango Baby's short rounded arms are visible."
           rows={3}
           maxLength={1200}
+        />
+      </div>
+
+      {/* Golden References toggle */}
+      <div className="flex items-start gap-2.5">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={useGoldenReferences}
+            onChange={(e) => setUseGoldenReferences(e.target.checked)}
+            className="mt-0.5 flex-shrink-0 accent-tropical-green"
+          />
+          <div className="text-xs">
+            <div className="font-semibold">Use Golden References</div>
+            <div className="text-tiki-brown/45">Use admin-approved Golden References as supporting guidance. Official character references remain the source of truth.</div>
+          </div>
+        </label>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={handleGenerate}
           disabled={isLoading}
           className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-ube-purple/40 disabled:opacity-50"
         />
@@ -3285,6 +3310,25 @@ export default function PanelDraftGenerator({
                   </div>
                 )}
 
+{/* Golden Reference diagnostics (compact) */}
+                  {(result as any)?.goldenReferenceReplayEnabled !== undefined && (
+                    <div className="mt-2 bg-white/70 border border-tiki-brown/10 rounded-xl px-3 py-2 text-xs">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold">Golden References</span>
+                        <span className="text-tiki-brown/50">Enabled: {(result as any).goldenReferenceReplayEnabled ? "Yes" : "No"}</span>
+                        <span className="text-tiki-brown/50">Used: {(result as any).goldenReferencesUsed ?? 0}</span>
+                      </div>
+                      {((result as any).goldenReferenceDiagnostics?.selected ?? []).length > 0 ? (
+                        <div className="text-tiki-brown/60 text-xs mt-1">
+                          {((result as any).goldenReferenceDiagnostics.selected as any[]).map((s: any, i: number) => (
+                            <div key={i}>{s.title} — {s.role} — {s.matchReason}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-tiki-brown/45 italic mt-1">{(result as any).goldenReferenceDiagnostics?.skippedReason ?? "No Golden References used."}</div>
+                      )}
+                    </div>
+                  )}
               </div>
 
               {/* Reference characters */}
