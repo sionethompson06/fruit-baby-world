@@ -218,6 +218,7 @@ type BgDraftResult = {
   environmentReferenceMode?: "image-reference" | "text-only" | "none";
   environmentReferenceCount?: number;
   environmentReferenceTitles?: string[];
+  environmentReferenceUrlsUsed?: string[];
   notes?: string[];
 };
 
@@ -2344,10 +2345,16 @@ export default function PanelDraftGenerator({
                     <p className="text-xs font-semibold text-tropical-green/80">
                       {bgDraft.environmentReferenceCount} env reference{bgDraft.environmentReferenceCount !== 1 ? "s" : ""} used
                       {bgDraft.environmentReferenceMode === "text-only" && " (text guidance)"}
+                      {bgDraft.environmentReferenceMode === "image-reference" && " (image-conditioned)"}
                     </p>
                     {bgDraft.environmentReferenceTitles && bgDraft.environmentReferenceTitles.length > 0 && (
                       <p className="text-xs text-tiki-brown/50 italic">
                         {bgDraft.environmentReferenceTitles.join(" · ")}
+                      </p>
+                    )}
+                    {bgDraft.environmentReferenceUrlsUsed && bgDraft.environmentReferenceUrlsUsed.length > 0 && (
+                      <p className="text-xs text-tiki-brown/45">
+                        Selected environment reference passed to provider.
                       </p>
                     )}
                   </div>

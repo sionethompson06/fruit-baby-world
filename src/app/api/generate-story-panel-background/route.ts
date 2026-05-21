@@ -14,6 +14,7 @@ import {
 } from "@/lib/storyPanelBackgroundPrompt";
 import {
   getDraftModelId,
+  useEnvironmentImageReference,
   type StoryPanelProvider,
 } from "@/lib/storyPanelImageProvider";
 import { validateSlug } from "@/lib/storyPanelImageGeneration";
@@ -24,12 +25,15 @@ import {
 } from "@/lib/referenceAssetLoader";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import type { Character } from "@/lib/content";
+import { fetchConditionedImages } from "@/lib/storyPanelImageConditioner";
+import type { BundleAsset } from "@/lib/storyPanelReferenceBundle";
 import {
   getEnvironmentReferencesForScene,
   selectBestEnvironmentReferenceForBackground,
   buildEnvironmentReferenceSummary,
   buildEnvironmentReferencePromptSection,
   type EnvironmentReferenceSummary,
+  type SceneEnvironmentRef,
 } from "@/lib/storyPanelEnvironmentReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -201,7 +205,7 @@ export async function POST(request: Request): Promise<Response> {
 
   // ── Load environment references for scene characters ─────────────────────
   // Text-only mode: env ref titles/descriptions are injected into the prompt.
-  // OpenAI images.generate does not accept image URLs as conditioning input.
+  // If configured, the selected env ref image is also fetched and passed to OpenAI images.edit.
   let envRefSummary: EnvironmentReferenceSummary = {
     count: 0,
     ids: [],
@@ -212,7 +216,10 @@ export async function POST(request: Request): Promise<Response> {
     selectedCharacterSlug: undefined,
     mode: "none",
   };
+  let selectedEnvironmentReference: SceneEnvironmentRef | undefined;
   let environmentReferencePromptSection: string | undefined;
+  let environmentReferenceUrlsUsed: string[] = [];
+  const useEnvImageRef = useEnvironmentImageReference();
 
   if (referenceCharacters.length > 0) {
     try {
@@ -232,7 +239,8 @@ export async function POST(request: Request): Promise<Response> {
         settingLabel,
         primarySlug
       );
-      const mode = envRefs.length > 0 ? "text-only" : "none";
+      selectedEnvironmentReference = selected;
+      const mode = envRefs.length > 0 ? (useEnvImageRef ? "image-reference" : "text-only") : "none";
       envRefSummary = buildEnvironmentReferenceSummary(envRefs, selected, mode);
       environmentReferencePromptSection = buildEnvironmentReferencePromptSection(
         envRefs,
@@ -289,41 +297,107 @@ export async function POST(request: Request): Promise<Response> {
 
   let b64: string | undefined;
   let resultImageUrl: string | undefined;
+  let imageReferenceWarnings: string[] = [];
+  let usedImageReferenceConditioning = false;
 
-  try {
-    const resp = await openai.images.generate({
-      model: modelId,
-      prompt: providerPrompt,
-      n: 1,
-      size: "1024x1024",
+  if (envRefSummary.mode === "image-reference" && selectedEnvironmentReference) {
+    const selectedEnvRef = {
+      id: selectedEnvironmentReference.id,
+      characterSlug: selectedEnvironmentReference.characterSlug,
+      characterName: selectedEnvironmentReference.characterName,
+      title: selectedEnvironmentReference.title,
+      assetType: selectedEnvironmentReference.assetType,
+      url: selectedEnvironmentReference.url,
+      role: "environment" as const,
+      isOfficial: true,
+    } satisfies BundleAsset;
+
+    const conditioned = await fetchConditionedImages([selectedEnvRef]).catch((err) => {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn("[generate-story-panel-background] fetchConditionedImages threw:", msg);
+      return {
+        images: [] as import("@/lib/storyPanelImageConditioner").FetchedReferenceImage[],
+        failedAssetIds: [] as string[],
+        warnings: [`Fetch error: ${msg}`],
+      };
     });
-    clearTimeout(timeout);
 
-    const data = resp.data?.[0] ?? {};
-    b64 = typeof data.b64_json === "string" ? data.b64_json : undefined;
-    resultImageUrl = typeof data.url === "string" ? data.url : undefined;
-  } catch (err) {
-    clearTimeout(timeout);
-    const isAbort = err instanceof Error && err.name === "AbortError";
-    const msg = err instanceof Error ? err.message : String(err);
+    imageReferenceWarnings.push(...conditioned.warnings);
 
-    console.error("[generate-story-panel-background] OpenAI error:", msg);
+    if (conditioned.images.length > 0) {
+      try {
+        console.log(`[generate-story-panel-background] images.edit with ${conditioned.images.length} File input(s)`);
+        const resp = await openai.images.edit({
+          model: modelId,
+          image: conditioned.images.map((fi) => fi.file) as Parameters<typeof openai.images.edit>[0]["image"],
+          prompt: providerPrompt,
+          n: 1,
+          size: "1024x1024",
+          input_fidelity: "high",
+        });
+        clearTimeout(timeout);
 
-    return Response.json(
-      {
-        ok: false,
-        status: isAbort ? "provider_timeout" : "provider_error",
-        message: isAbort
-          ? "Background generation timed out after 90 seconds. Try again."
-          : `Background generation failed — OpenAI error: ${msg.slice(0, 200)}`,
-        troubleshooting: [
-          "Confirm OPENAI_API_KEY is valid.",
-          "Try again — the provider may be temporarily unavailable.",
-          "Try a simpler background direction.",
-        ],
-      } satisfies BackgroundResult,
-      { status: 502 }
-    );
+        const data = resp.data?.[0] ?? {};
+        b64 = typeof data.b64_json === "string" ? data.b64_json : undefined;
+        resultImageUrl = typeof data.url === "string" ? data.url : undefined;
+
+        if (b64 || resultImageUrl) {
+          usedImageReferenceConditioning = true;
+          environmentReferenceUrlsUsed = [selectedEnvironmentReference.url];
+          envRefSummary.mode = "image-reference";
+        } else {
+          envRefSummary.mode = "text-only";
+          imageReferenceWarnings.push("Environment image reference edit returned no image data. Falling back to text-only generation.");
+        }
+      } catch (err) {
+        clearTimeout(timeout);
+        const editMsg = err instanceof Error ? err.message : String(err);
+        console.warn("[generate-story-panel-background] images.edit failed:", editMsg);
+        envRefSummary.mode = "text-only";
+        imageReferenceWarnings.push(`Environment image reference conditioning failed: ${editMsg}`);
+      }
+    } else {
+      envRefSummary.mode = "text-only";
+      imageReferenceWarnings.push("No valid environment reference image could be fetched. Falling back to text-only generation.");
+    }
+  }
+
+  if (!usedImageReferenceConditioning) {
+    try {
+      const resp = await openai.images.generate({
+        model: modelId,
+        prompt: providerPrompt,
+        n: 1,
+        size: "1024x1024",
+      });
+      clearTimeout(timeout);
+
+      const data = resp.data?.[0] ?? {};
+      b64 = typeof data.b64_json === "string" ? data.b64_json : undefined;
+      resultImageUrl = typeof data.url === "string" ? data.url : undefined;
+    } catch (err) {
+      clearTimeout(timeout);
+      const isAbort = err instanceof Error && err.name === "AbortError";
+      const msg = err instanceof Error ? err.message : String(err);
+
+      console.error("[generate-story-panel-background] OpenAI error:", msg);
+
+      return Response.json(
+        {
+          ok: false,
+          status: isAbort ? "provider_timeout" : "provider_error",
+          message: isAbort
+            ? "Background generation timed out after 90 seconds. Try again."
+            : `Background generation failed — OpenAI error: ${msg.slice(0, 200)}`,
+          troubleshooting: [
+            "Confirm OPENAI_API_KEY is valid.",
+            "Try again — the provider may be temporarily unavailable.",
+            "Try a simpler background direction.",
+          ],
+        } satisfies BackgroundResult,
+        { status: 502 }
+      );
+    }
   }
 
   if (!b64 && !resultImageUrl) {
@@ -357,9 +431,10 @@ export async function POST(request: Request): Promise<Response> {
     settingLabel,
     environmentDescription: backgroundPrompt.slice(0, 200),
     createdAt: new Date().toISOString(),
-    warnings: compaction.wasCompacted
-      ? ["Background prompt was compacted to meet provider limits."]
-      : [],
+    warnings: [
+      ...(compaction.wasCompacted ? ["Background prompt was compacted to meet provider limits."] : []),
+      ...imageReferenceWarnings,
+    ],
   };
 
   return Response.json(
@@ -375,16 +450,20 @@ export async function POST(request: Request): Promise<Response> {
         "It was not attached to the episode.",
         "Characters should be generated and assembled in future phases.",
         ...(envRefSummary.count > 0
-          ? [
-              `${envRefSummary.count} environment reference${envRefSummary.count !== 1 ? "s" : ""} used as text guidance: ${envRefSummary.titles.join(", ")}`,
-            ]
+          ? envRefSummary.mode === "image-reference"
+            ? [
+                `Environment reference image passed to provider for strict scene conditioning: ${envRefSummary.selectedTitle ?? "selected reference"}.`,
+              ]
+            : [
+                `${envRefSummary.count} environment reference${envRefSummary.count !== 1 ? "s" : ""} used as text guidance: ${envRefSummary.titles.join(", ")}`,
+              ]
           : []),
       ],
       environmentReferenceMode: envRefSummary.mode,
       environmentReferenceCount: envRefSummary.count,
       environmentReferenceIds: envRefSummary.ids,
       environmentReferenceTitles: envRefSummary.titles,
-      environmentReferenceUrlsUsed: [],
+      environmentReferenceUrlsUsed: environmentReferenceUrlsUsed,
     } satisfies BackgroundResult,
     { status: 200 }
   );
