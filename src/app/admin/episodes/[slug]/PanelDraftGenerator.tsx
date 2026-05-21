@@ -299,6 +299,60 @@ type CharLayerSaveState = {
   error: string;
 };
 
+// ─── Build assembly plan API result ─────────────────────────────────────────
+
+type AssemblyPlanSummary = {
+  available: boolean;
+  settingLabel: string;
+  mood: string;
+  characterCount: number;
+  characters: Array<{
+    slug: string;
+    name: string;
+    placement: string;
+    emotion: string;
+    action: string;
+    interactionTargetName: string | null;
+    interactionInstruction: string | null;
+    assemblyIntent: string;
+  }>;
+  backgroundSummary: string;
+  warnings: string[];
+  adminDirectionUsed: string | null;
+};
+
+type AssemblyCharacterLayerPlan = {
+  characterSlug: string;
+  characterName: string;
+  placement: string;
+  emotion: string;
+  action: string;
+  pose: string;
+  facingDirection: string;
+  interactionTargetSlug: string | null;
+  interactionTargetName: string | null;
+  interactionTargetPlacement: string | null;
+  interactionInstruction: string | null;
+  storyContextSummary: string;
+  sceneRelationshipSummary: string;
+  assemblyIntent: string;
+  mustShow: string[];
+  mustAvoid: string[];
+  officialFeatureLocks: string[];
+};
+
+type PlanApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  assemblyPlanSummary?: AssemblyPlanSummary;
+  assemblyPlanCharacterLayerPlans?: AssemblyCharacterLayerPlan[];
+  assemblyPlanBackgroundPrompt?: string;
+  assemblyPlanSetting?: string;
+  assemblyPlanMood?: string;
+  assemblyPlanWarnings?: string[];
+};
+
 // ─── Assemble API result ──────────────────────────────────────────────────────
 
 type AssembleApiResult = {
@@ -847,6 +901,16 @@ export default function PanelDraftGenerator({
   const [assembleResult, setAssembleResult] = useState<AssembleApiResult | null>(null);
   const [assembleError, setAssembleError] = useState<string>("");
 
+  // Workflow mode selector (Phase 18D.12A)
+  const [workflowMode, setWorkflowMode] = useState<"whole-scene" | "layered">("whole-scene");
+
+  // Independent assembly plan state (Phase 18D.12A)
+  const [planStatus, setPlanStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [planSummary, setPlanSummary] = useState<AssemblyPlanSummary | null>(null);
+  const [planCharacterLayerPlans, setPlanCharacterLayerPlans] = useState<AssemblyCharacterLayerPlan[] | null>(null);
+  const [planBackgroundPrompt, setPlanBackgroundPrompt] = useState<string>("");
+  const [planError, setPlanError] = useState<string>("");
+
   const hasImage =
     genStatus === "done" &&
     (!!result?.image?.base64 || !!result?.image?.url || !!result?.draft?.imageBase64 || !!result?.draft?.imageUrl);
@@ -871,6 +935,16 @@ export default function PanelDraftGenerator({
     approveAndSaveStatus !== "uploading" &&
     approveAndSaveStatus !== "attaching" &&
     approveAndSaveStatus !== "success";
+
+  // Active character layer plans — from independent plan state (preferred) or whole-scene result fallback
+  const activeCharacterLayerPlans: AssemblyCharacterLayerPlan[] | undefined =
+    planCharacterLayerPlans ?? result?.assemblyPlanCharacterLayerPlans;
+
+  // Active background prompt — from plan state (preferred) or whole-scene result fallback or panelPrompt
+  const activeBackgroundPrompt =
+    planBackgroundPrompt ||
+    result?.assemblyPlanBackgroundPrompt ||
+    panelPrompt;
 
   function resetReviewState() {
     setCheckedItems(new Array(checklistItems.length).fill(false));
@@ -955,6 +1029,13 @@ export default function PanelDraftGenerator({
       if (data.ok) {
         setGenStatus("done");
         setResult(data);
+        // Sync assembly plan state from whole-scene result so layered pipeline can use it
+        if (data.assemblyPlanAvailable && data.assemblyPlanSummary) {
+          setPlanSummary(data.assemblyPlanSummary);
+          if (data.assemblyPlanCharacterLayerPlans) setPlanCharacterLayerPlans(data.assemblyPlanCharacterLayerPlans);
+          if (data.assemblyPlanBackgroundPrompt) setPlanBackgroundPrompt(data.assemblyPlanBackgroundPrompt);
+          if (planStatus === "idle") setPlanStatus("ready");
+        }
       } else {
         setGenStatus("error");
         setResult(data);
@@ -1333,7 +1414,7 @@ export default function PanelDraftGenerator({
   }
 
   async function handleGenerateBackground() {
-    const backgroundPrompt = result?.assemblyPlanBackgroundPrompt ?? panelPrompt;
+    const backgroundPrompt = activeBackgroundPrompt;
     if (!backgroundPrompt) return;
     setBgDraftStatus("loading");
     setBgDraft(null);
@@ -1346,8 +1427,8 @@ export default function PanelDraftGenerator({
           backgroundPrompt,
           episodeSlug,
           sceneNumber,
-          settingLabel: result?.assemblyPlanSetting,
-          mood: result?.assemblyPlanMood,
+          settingLabel: planSummary?.settingLabel ?? result?.assemblyPlanSetting,
+          mood: planSummary?.mood ?? result?.assemblyPlanMood,
           adminSceneDirection: adminSceneDirection || undefined,
           backgroundDirection: bgDirection || undefined,
         }),
@@ -1370,7 +1451,7 @@ export default function PanelDraftGenerator({
   }
 
   async function handleGenerateCharacterLayer(characterSlug: string) {
-    const plan = result?.assemblyPlanCharacterLayerPlans?.find(
+    const plan = activeCharacterLayerPlans?.find(
       (p) => p.characterSlug === characterSlug
     );
     if (!plan) return;
@@ -1429,7 +1510,7 @@ export default function PanelDraftGenerator({
     const draftState = charLayerDrafts[characterSlug];
     const draft = draftState?.draft?.draft;
     if (!draft) return;
-    const plan = result?.assemblyPlanCharacterLayerPlans?.find(
+    const plan = activeCharacterLayerPlans?.find(
       (p) => p.characterSlug === characterSlug
     );
 
@@ -1528,6 +1609,39 @@ export default function PanelDraftGenerator({
     }
   }
 
+  async function handleBuildPlan() {
+    setPlanStatus("loading");
+    setPlanError("");
+    try {
+      const resp = await fetch("/api/build-story-panel-assembly-plan", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          panelPrompt,
+          referenceCharacters,
+          adminSceneDirection: adminSceneDirection.trim() || undefined,
+        }),
+      });
+      const data: PlanApiResult = await resp.json();
+      if (data.ok && data.assemblyPlanSummary) {
+        setPlanStatus("ready");
+        setPlanSummary(data.assemblyPlanSummary);
+        setPlanCharacterLayerPlans(data.assemblyPlanCharacterLayerPlans ?? null);
+        setPlanBackgroundPrompt(data.assemblyPlanBackgroundPrompt ?? "");
+      } else {
+        setPlanStatus("error");
+        setPlanError(data.message ?? "Assembly plan build failed.");
+      }
+    } catch {
+      setPlanStatus("error");
+      setPlanError("Network error — could not reach plan builder.");
+    }
+  }
+
   async function handleAssemble() {
     setAssembleStatus("loading");
     setAssembleResult(null);
@@ -1567,50 +1681,43 @@ export default function PanelDraftGenerator({
   return (
     <div className="flex flex-col gap-3 pt-3 border-t border-sky-blue/25 mt-1">
 
-      {/* Temporary draft disclaimer */}
-      <div className="flex items-start gap-2 bg-sky-blue/10 border border-sky-blue/25 rounded-xl px-3 py-2.5">
-        <span className="text-sm flex-shrink-0">⚠️</span>
-        <p className="text-xs text-tiki-brown/65 leading-relaxed">
-          <strong className="font-semibold">Temporary review draft only.</strong>{" "}
-          Generated images are not saved, uploaded, attached to this episode, committed to GitHub, or
-          published until explicitly approved and uploaded below.
-        </p>
-      </div>
-
-      {/* Generation mode selector */}
+      {/* ─── Image Workflow selector ─────────────────────────────────────────── */}
       <div className="flex flex-col gap-1.5">
-        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Generation Mode</p>
-        <div className="flex flex-wrap gap-2">
-          {(["draft", "production", "hybrid"] as const).map((mode) => {
-            const m = MODE_LABELS[mode];
-            const active = generationMode === mode;
-            return (
-              <button
-                key={mode}
-                onClick={() => setGenerationMode(mode)}
-                disabled={isLoading}
-                className={`flex flex-col items-start px-3 py-2 rounded-xl border text-left transition-colors disabled:opacity-50 ${
-                  active
-                    ? `${m.className} bg-white font-bold`
-                    : "border-tiki-brown/15 text-tiki-brown/50 hover:border-tiki-brown/30"
-                }`}
-              >
-                <span className="text-xs font-bold">{active ? "● " : "○ "}{m.label}</span>
-                <span className="text-xs font-normal opacity-70">{m.description}</span>
-              </button>
-            );
-          })}
+        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Image Workflow</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setWorkflowMode("whole-scene")}
+            className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-left transition-colors ${
+              workflowMode === "whole-scene"
+                ? "border-ube-purple/40 bg-ube-purple/8 text-ube-purple"
+                : "border-tiki-brown/15 text-tiki-brown/50 hover:border-tiki-brown/30"
+            }`}
+          >
+            <span className="text-xs font-bold">{workflowMode === "whole-scene" ? "● " : "○ "}Quick Whole-Scene Draft</span>
+            <span className="text-xs font-normal opacity-70 mt-0.5">Generate one full panel quickly using Draft, Production, or Hybrid Mode.</span>
+          </button>
+          <button
+            onClick={() => setWorkflowMode("layered")}
+            className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-left transition-colors ${
+              workflowMode === "layered"
+                ? "border-tropical-green/40 bg-tropical-green/8 text-tropical-green"
+                : "border-tiki-brown/15 text-tiki-brown/50 hover:border-tiki-brown/30"
+            }`}
+          >
+            <span className="text-xs font-bold">{workflowMode === "layered" ? "● " : "○ "}Layered Assembly Pipeline</span>
+            <span className="text-xs font-normal opacity-70 mt-0.5">Best for character fidelity. Generate background and each character separately, then assemble.</span>
+          </button>
         </div>
       </div>
 
-      {/* Manual Scene Direction */}
+      {/* ─── Shared: Manual Scene Direction ─────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
           Manual Scene Direction
-          <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
+          <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional — applies to both workflows)</span>
         </label>
         <p className="text-xs text-tiki-brown/50 leading-relaxed">
-          Add specific visual instructions for this panel. These notes guide the scene, composition, emotion, props, and environment — but cannot override official character fidelity rules.
+          Specific visual instructions for this panel. Guides scene, composition, emotion, props, and environment — cannot override official character fidelity rules.
         </p>
         <textarea
           value={adminSceneDirection}
@@ -1621,7 +1728,6 @@ export default function PanelDraftGenerator({
           disabled={isLoading}
           className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-ube-purple/40 disabled:opacity-50"
         />
-        {/* Quick chips */}
         <div className="flex flex-wrap gap-1.5">
           {QUICK_DIRECTION_CHIPS.map((chip) => (
             <button
@@ -1647,198 +1753,281 @@ export default function PanelDraftGenerator({
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={handleGenerate}
-          disabled={isLoading}
-          className="px-4 py-2 rounded-xl bg-ube-purple text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-        >
-          {isLoading ? "Generating…" : hasDraft ? "Regenerate Temporary Draft" : "Generate Temporary Panel Draft"}
-        </button>
+      {/* ─── Quick Whole-Scene Draft ─────────────────────────────────────────── */}
+      {workflowMode === "whole-scene" && (
+        <div className="flex flex-col gap-3">
 
-        {hasDraft && !isLoading && (
-          <button
-            onClick={handleClear}
-            className="px-4 py-2 rounded-xl border border-tiki-brown/20 text-tiki-brown/60 text-sm font-semibold hover:bg-tiki-brown/5 transition-colors"
-          >
-            Clear Temporary Draft
-          </button>
-        )}
-      </div>
-
-      {/* Loading */}
-      {isLoading && (
-        <p className="text-sm text-tiki-brown/45 italic animate-pulse">
-          Generating temporary panel draft…
-        </p>
-      )}
-
-      {/* Error */}
-      {genStatus === "error" && (
-        <div className="flex flex-col gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-          <div className="flex items-start gap-2.5">
+          {/* Temporary draft disclaimer */}
+          <div className="flex items-start gap-2 bg-sky-blue/10 border border-sky-blue/25 rounded-xl px-3 py-2.5">
             <span className="text-sm flex-shrink-0">⚠️</span>
-            <p className="text-xs text-warm-coral leading-relaxed font-semibold">{errorMsg}</p>
+            <p className="text-xs text-tiki-brown/65 leading-relaxed">
+              <strong className="font-semibold">Temporary review draft only.</strong>{" "}
+              The final story panel is created only when approved and saved below.
+              Generated images are not uploaded, attached, or published automatically.
+            </p>
           </div>
-          {result?.providerMessage && (
-            <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
-              <p className="font-semibold text-warm-coral/90">Provider message</p>
-              <p>{result.providerMessage}</p>
+
+          {/* Generation Mode selector */}
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">Generation Mode</p>
+            <div className="flex flex-wrap gap-2">
+              {(["draft", "production", "hybrid"] as const).map((mode) => {
+                const m = MODE_LABELS[mode];
+                const active = generationMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => setGenerationMode(mode)}
+                    disabled={isLoading}
+                    className={`flex flex-col items-start px-3 py-2 rounded-xl border text-left transition-colors disabled:opacity-50 ${
+                      active
+                        ? `${m.className} bg-white font-bold`
+                        : "border-tiki-brown/15 text-tiki-brown/50 hover:border-tiki-brown/30"
+                    }`}
+                  >
+                    <span className="text-xs font-bold">{active ? "● " : "○ "}{m.label}</span>
+                    <span className="text-xs font-normal opacity-70">{m.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleGenerate}
+              disabled={isLoading}
+              className="px-4 py-2 rounded-xl bg-ube-purple text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+            >
+              {isLoading ? "Generating…" : hasDraft ? "Regenerate Temporary Draft" : "Generate Temporary Panel Draft"}
+            </button>
+
+            {hasDraft && !isLoading && (
+              <button
+                onClick={handleClear}
+                className="px-4 py-2 rounded-xl border border-tiki-brown/20 text-tiki-brown/60 text-sm font-semibold hover:bg-tiki-brown/5 transition-colors"
+              >
+                Clear Temporary Draft
+              </button>
+            )}
+          </div>
+
+          {/* Loading */}
+          {isLoading && (
+            <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+              Generating temporary panel draft…
+            </p>
+          )}
+
+          {/* Error */}
+          {genStatus === "error" && (
+            <div className="flex flex-col gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+              <div className="flex items-start gap-2.5">
+                <span className="text-sm flex-shrink-0">⚠️</span>
+                <p className="text-xs text-warm-coral leading-relaxed font-semibold">{errorMsg}</p>
+              </div>
+              {result?.providerMessage && (
+                <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
+                  <p className="font-semibold text-warm-coral/90">Provider message</p>
+                  <p>{result.providerMessage}</p>
+                </div>
+              )}
+              {result?.providerStatus && (
+                <p className="text-xs text-tiki-brown/60">Provider status: {result.providerStatus}</p>
+              )}
+              {result?.troubleshooting && result.troubleshooting.length > 0 && (
+                <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
+                  <p className="font-semibold text-warm-coral/90">Troubleshooting</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {result.troubleshooting.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {result?.warnings && result.warnings.length > 0 && (
+                <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
+                  <p className="font-semibold text-warm-coral/90">Warnings</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    {result.warnings.map((warning, i) => (
+                      <li key={i}>{warning}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
-          {result?.providerStatus && (
-            <p className="text-xs text-tiki-brown/60">Provider status: {result.providerStatus}</p>
-          )}
-          {result?.troubleshooting && result.troubleshooting.length > 0 && (
-            <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
-              <p className="font-semibold text-warm-coral/90">Troubleshooting</p>
-              <ul className="list-disc list-inside space-y-1">
-                {result.troubleshooting.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
+
+          {/* Not configured */}
+          {genStatus === "not_configured" && result && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-xl px-3 py-2.5">
+                <span className="text-sm flex-shrink-0">🔑</span>
+                <p className="text-xs text-tiki-brown/70 leading-relaxed">
+                  {result.message?.includes("OPENAI_API_KEY")
+                    ? "OpenAI is not configured yet. Add OPENAI_API_KEY in your Vercel environment variables to enable generation."
+                    : result.message}
+                </p>
+              </div>
+              {(result.generationMode || result.provider || result.referenceMode) && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-tiki-brown/60">
+                  {result.generationMode && (
+                    <span><span className="font-bold text-tiki-brown/45 uppercase">Mode </span>
+                    <span className="font-semibold">{result.generationMode === "production" ? "Production" : result.generationMode === "hybrid" ? "Hybrid" : "Draft"}</span></span>
+                  )}
+                  {result.provider && (
+                    <span><span className="font-bold text-tiki-brown/45 uppercase">Provider </span>
+                    <span className="font-semibold">{PROVIDER_LABELS[result.provider] ?? result.provider}</span></span>
+                  )}
+                  {result.referenceMode && (
+                    <span className={`font-bold px-2 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
+                      {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
+                    </span>
+                  )}
+                </div>
+              )}
+              {result.generationPrompt && <GenerationPromptBlock prompt={result.generationPrompt} />}
             </div>
           )}
-          {result?.warnings && result.warnings.length > 0 && (
-            <div className="text-xs text-tiki-brown/70 bg-white/80 border border-warm-coral/20 rounded-xl px-3 py-2">
-              <p className="font-semibold text-warm-coral/90">Warnings</p>
-              <ul className="list-disc list-inside space-y-1">
-                {result.warnings.map((warning, i) => (
-                  <li key={i}>{warning}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+
         </div>
       )}
 
-      {/* Not configured */}
-      {genStatus === "not_configured" && result && (
+      {/* ─── Layered Assembly Pipeline ───────────────────────────────────────── */}
+      {workflowMode === "layered" && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-xl px-3 py-2.5">
-            <span className="text-sm flex-shrink-0">🔑</span>
-            <p className="text-xs text-tiki-brown/70 leading-relaxed">
-              {result.message?.includes("OPENAI_API_KEY")
-                ? "OpenAI is not configured yet. Add OPENAI_API_KEY in your Vercel environment variables to enable generation."
-                : result.message}
+
+          {/* Pipeline disclaimer */}
+          <div className="flex items-start gap-2 bg-tropical-green/8 border border-tropical-green/20 rounded-xl px-3 py-2.5">
+            <span className="text-sm flex-shrink-0">🎯</span>
+            <p className="text-xs text-tiki-brown/65 leading-relaxed">
+              <strong className="font-semibold">Layered Assembly Pipeline.</strong>{" "}
+              Each step generates an admin-only layer. Background and character layers are never published.
+              The final story panel is created only when you approve and save the assembled draft below.
             </p>
           </div>
-          {(result.generationMode || result.provider || result.referenceMode) && (
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-tiki-brown/60">
-              {result.generationMode && (
-                <span><span className="font-bold text-tiki-brown/45 uppercase">Mode </span>
-                <span className="font-semibold">{result.generationMode === "production" ? "Production" : result.generationMode === "hybrid" ? "Hybrid" : "Draft"}</span></span>
-              )}
-              {result.provider && (
-                <span><span className="font-bold text-tiki-brown/45 uppercase">Provider </span>
-                <span className="font-semibold">{PROVIDER_LABELS[result.provider] ?? result.provider}</span></span>
-              )}
-              {result.referenceMode && (
-                <span className={`font-bold px-2 py-0.5 rounded-full border ${(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).className}`}>
-                  {(REFERENCE_MODE_LABELS[result.referenceMode] ?? REFERENCE_MODE_LABELS["no-references-available"]).label}
+
+          {/* ── Step 1: Scene Assembly Plan ─── */}
+          <div className="border border-ube-purple/15 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-ube-purple/3">
+              <span className="text-sm">🗺</span>
+              <span className="text-sm font-black text-tiki-brown">Step 1 — Scene Assembly Plan</span>
+              {planStatus === "ready" && planSummary && (
+                <span className="px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green font-semibold text-xs">
+                  Ready — {planSummary.characterCount} character{planSummary.characterCount !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
-          )}
-          {result.generationPrompt && <GenerationPromptBlock prompt={result.generationPrompt} />}
-        </div>
-      )}
+            <div className="px-4 py-3 flex flex-col gap-2">
+              <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                Builds the background prompt and per-character layer plans from the scene description. No image generation.
+              </p>
 
-      {/* ─── Scene Assembly Plan ──────────────────────────────────────────────── */}
-      {panelPrompt && (
-        <div className="border border-ube-purple/15 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-ube-purple/3">
-            <span className="text-sm">🗺</span>
-            <span className="text-sm font-black text-tiki-brown">Scene Assembly Plan</span>
-            {result?.assemblyPlanAvailable && result.assemblyPlanSummary && (
-              <span className="px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple font-semibold text-xs">
-                {result.assemblyPlanCharacterCount ?? 0} character{(result.assemblyPlanCharacterCount ?? 0) !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <div className="px-4 py-3 flex flex-col gap-2">
-            {!result && (
-              <p className="text-xs text-tiki-brown/45 italic">
-                Scene Assembly Plan will appear after you generate a panel draft.
-              </p>
-            )}
-            {result && !result.assemblyPlanAvailable && (
-              <p className="text-xs text-pineapple-yellow-dark">
-                ⚠ Planning unavailable — image generated without assembly plan. Background generation will use the current panel prompt as fallback.
-              </p>
-            )}
-            {result?.assemblyPlanAvailable && result.assemblyPlanSummary && (
-              <>
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
-                  <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.settingLabel}</span></span>
-                  <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSummary.mood}</span></span>
+              {planStatus === "idle" && (
+                <p className="text-xs text-tiki-brown/40 italic">
+                  Build the plan to unlock background and character layer generation.
+                </p>
+              )}
+
+              {planStatus !== "ready" && (
+                <button
+                  onClick={handleBuildPlan}
+                  disabled={planStatus === "loading"}
+                  className="self-start px-4 py-2 rounded-xl bg-ube-purple text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                >
+                  {planStatus === "loading" ? "Building Plan…" : planStatus === "error" ? "Retry Build Plan" : "Build Scene Assembly Plan"}
+                </button>
+              )}
+
+              {planStatus === "loading" && (
+                <p className="text-xs text-tiki-brown/45 italic animate-pulse">Building assembly plan…</p>
+              )}
+
+              {planStatus === "error" && (
+                <div className="flex flex-col gap-1 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2">
+                  <span className="text-xs font-bold text-warm-coral">Plan build failed</span>
+                  {planError && <p className="text-xs text-tiki-brown/60">{planError}</p>}
                 </div>
-                {result.assemblyPlanSummary.characters.length > 0 && (
-                  <details>
-                    <summary className="cursor-pointer list-none select-none py-0.5">
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <span className="font-bold text-tiki-brown/40 uppercase tracking-wide">Character Layers</span>
-                        <span className="text-tiki-brown/30">▸ expand</span>
-                      </div>
-                    </summary>
-                    <div className="mt-1.5 flex flex-col gap-1.5">
-                      {result.assemblyPlanSummary.characters.map((c) => (
-                        <div key={c.slug} className="flex flex-col gap-0.5 rounded-lg bg-white/60 px-2.5 py-1.5 border border-tiki-brown/8">
-                          <span className="text-xs font-semibold text-tiki-brown/75">{c.name}</span>
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/50">
-                            <span>Placement: <span className="font-medium">{c.placement}</span></span>
-                            <span>Emotion: <span className="font-medium">{c.emotion}</span></span>
-                            <span>Action: <span className="font-medium">{c.action}</span></span>
-                          </div>
+              )}
+
+              {planStatus === "ready" && planSummary && (
+                <>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+                    <span>Setting: <span className="font-semibold text-tiki-brown/70">{planSummary.settingLabel}</span></span>
+                    <span>Mood: <span className="font-semibold text-tiki-brown/70">{planSummary.mood}</span></span>
+                  </div>
+                  {planSummary.characters.length > 0 && (
+                    <details>
+                      <summary className="cursor-pointer list-none select-none py-0.5">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="font-bold text-tiki-brown/40 uppercase tracking-wide">Character Plans</span>
+                          <span className="text-tiki-brown/30">▸ expand</span>
                         </div>
+                      </summary>
+                      <div className="mt-1.5 flex flex-col gap-1.5">
+                        {planSummary.characters.map((c) => (
+                          <div key={c.slug} className="flex flex-col gap-0.5 rounded-lg bg-white/60 px-2.5 py-1.5 border border-tiki-brown/8">
+                            <span className="text-xs font-semibold text-tiki-brown/75">{c.name}</span>
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/50">
+                              <span>Placement: <span className="font-medium">{c.placement}</span></span>
+                              <span>Emotion: <span className="font-medium">{c.emotion}</span></span>
+                              <span>Action: <span className="font-medium">{c.action}</span></span>
+                              {c.interactionTargetName && (
+                                <span className="text-tropical-green font-semibold">→ {c.interactionTargetName}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                  {planSummary.warnings.length > 0 && (
+                    <div className="flex flex-col gap-0.5">
+                      {planSummary.warnings.map((w, i) => (
+                        <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
                       ))}
                     </div>
-                  </details>
-                )}
-                {result.assemblyPlanSummary.warnings.length > 0 && (
-                  <div className="flex flex-col gap-0.5">
-                    {result.assemblyPlanSummary.warnings.map((w, i) => (
-                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
+                  )}
+                  <button
+                    onClick={handleBuildPlan}
+                    className="self-start text-xs text-tiki-brown/40 underline mt-0.5"
+                  >
+                    Rebuild Plan
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* ─── Background Layer Draft ───────────────────────────────────────────── */}
-      {panelPrompt && (
-        <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
-            <span className="text-sm">🌄</span>
-            <span className="text-sm font-black text-tiki-brown">Background Layer Draft</span>
-            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
-              Optional
-            </span>
-          </div>
-          <div className="p-4 flex flex-col gap-4">
-            <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              Generate a background-only scene layer with no characters. This prepares the staged assembly pipeline.
-            </p>
+          {/* ── Step 2: Background Layer ─── */}
+          <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
+              <span className="text-sm">🌄</span>
+              <span className="text-sm font-black text-tiki-brown">Step 2 — Background Layer</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/12">
+                Admin-only
+              </span>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                Generate a background-only scene layer with no characters. This layer is never published — it is used only for layer assembly.
+              </p>
 
-            {result && !result.assemblyPlanAvailable && (
-              <div className="flex items-start gap-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-3 py-2">
-                <span className="text-xs flex-shrink-0 mt-0.5">⚠</span>
-                <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                  Assembly plan unavailable. Background prompt will use the current panel prompt.
-                </p>
-              </div>
-            )}
-
-            {result?.assemblyPlanAvailable && (
-              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
-                <span>Setting: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanSetting ?? "—"}</span></span>
-                <span>Mood: <span className="font-semibold text-tiki-brown/70">{result.assemblyPlanMood ?? "—"}</span></span>
-              </div>
-            )}
+              {planStatus === "ready" && planSummary && (
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+                  <span>Setting: <span className="font-semibold text-tiki-brown/70">{planSummary.settingLabel}</span></span>
+                  <span>Mood: <span className="font-semibold text-tiki-brown/70">{planSummary.mood}</span></span>
+                </div>
+              )}
+              {planStatus !== "ready" && (
+                <div className="flex items-start gap-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-3 py-2">
+                  <span className="text-xs flex-shrink-0 mt-0.5">⚠</span>
+                  <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                    Build the Scene Assembly Plan first for the best background prompt. Background will use the panel prompt as fallback.
+                  </p>
+                </div>
+              )}
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
@@ -2002,42 +2191,40 @@ export default function PanelDraftGenerator({
                         <span>Saved: <span className="font-semibold">{bgSaveResult.backgroundLayer.createdAt.slice(0, 10)}</span></span>
                       </div>
                       <p className="text-xs text-tiki-brown/40 italic">
-                        Next step: Future phases will generate character layers and assemble them onto this background.
+                        Next step: Generate and save character layers in Step 3, then assemble in Step 4.
                       </p>
                     </div>
                   )}
                 </div>
               </div>
             )}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* ─── Character Layer Drafts ──────────────────────────────────────────── */}
-      {panelPrompt && result?.assemblyPlanCharacterLayerPlans && result.assemblyPlanCharacterLayerPlans.length > 0 && (
-        <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
-            <span className="text-sm">🎭</span>
-            <span className="text-sm font-black text-tiki-brown">Character Layer Drafts</span>
-            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
-              Optional
-            </span>
-          </div>
-          <div className="p-4 flex flex-col gap-4">
-            <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              Generate an isolated layer for each character. Each character is rendered alone but emotionally
-              and physically prepared for the final assembled scene — facing their interaction target, performing
-              their role in context.
-            </p>
-            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
-              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
-              <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                Each layer uses only that character's own approved references. No compositing happens here — layers
+          {/* ── Step 3: Character Layers ─── */}
+          {activeCharacterLayerPlans && activeCharacterLayerPlans.length > 0 ? (
+          <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
+              <span className="text-sm">🎭</span>
+              <span className="text-sm font-black text-tiki-brown">Step 3 — Character Layers</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/12">
+                Admin-only
+              </span>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
+              <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                Generate an isolated layer for each character. Each character is rendered alone but prepared
+                for their role in the assembled scene — facing their interaction target, with scene-aware emotion.
+              </p>
+              <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+                <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
+                <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                  Each layer uses only that character's own approved references. These layers are admin-only and never published. No compositing happens here — layers
                 are saved as admin-only assets for future assembly.
               </p>
             </div>
 
-            {result.assemblyPlanCharacterLayerPlans.map((plan) => {
+            {activeCharacterLayerPlans!.map((plan) => {
               const draftState = charLayerDrafts[plan.characterSlug];
               const saveState = charLayerSaves[plan.characterSlug];
               const draft = draftState?.draft?.draft;
@@ -2217,21 +2404,27 @@ export default function PanelDraftGenerator({
                 </div>
               );
             })}
+            </div>
           </div>
-        </div>
-      )}
+          ) : (
+            <div className="flex items-start gap-2 bg-tiki-brown/5 border border-tiki-brown/10 rounded-xl px-3 py-2.5">
+              <span className="text-xs flex-shrink-0 mt-0.5">○</span>
+              <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                Character layer plans will appear after you build the Scene Assembly Plan in Step 1.
+              </p>
+            </div>
+          )}
 
-      {/* ─── Assemble Draft Panel ────────────────────────────────────────────── */}
-      {panelPrompt && (
-        <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
-            <span className="text-sm">🖼</span>
-            <span className="text-sm font-black text-tiki-brown">Assemble Draft Panel</span>
-            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/55 uppercase tracking-wide">
-              Optional
-            </span>
-          </div>
-          <div className="p-4 flex flex-col gap-4">
+          {/* ── Step 4: Assemble Draft Panel ─── */}
+          <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 flex-wrap px-4 py-3 bg-tiki-brown/3">
+              <span className="text-sm">🖼</span>
+              <span className="text-sm font-black text-tiki-brown">Step 4 — Assemble Draft Panel</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/12">
+                Temporary
+              </span>
+            </div>
+            <div className="p-4 flex flex-col gap-4">
             <p className="text-xs text-tiki-brown/50 leading-relaxed">
               Composite the saved background layer and saved character layers into a temporary
               assembled panel draft. Nothing is saved or published — the result can be fed into
@@ -2352,11 +2545,11 @@ export default function PanelDraftGenerator({
                 {/* Use as panel draft */}
                 <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-2">
                   <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
-                    Use Assembled Draft
+                    Step 5 — Use Assembled Draft
                   </p>
                   <p className="text-xs text-tiki-brown/45 leading-relaxed">
-                    Load this assembled composite into the Fidelity Review and Approve &amp; Save
-                    Panel section below. Nothing is saved automatically.
+                    Load this composite into the Fidelity Review and Approve &amp; Save Panel section below.
+                    Source: Assembled Layer Draft. Not saved until approved.
                   </p>
                   <button
                     onClick={handleUseAssembledAsDraft}
@@ -2368,7 +2561,9 @@ export default function PanelDraftGenerator({
                 </div>
               </div>
             )}
+            </div>
           </div>
+
         </div>
       )}
 
