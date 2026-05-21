@@ -42,7 +42,25 @@
         "ube-baby",
         "tiki"
       ],
-      "visualNotes": "Dramatic Trouble Island scene. Tiki is caught in the act. Exaggerated expressions throughout."
+      "visualNotes": "Dramatic Trouble Island scene. Tiki is caught in the act. Exaggerated expressions throughout.",
+      "backgroundLayers": [
+        {
+          "id": "bg-layer-1779354616001",
+          "type": "background-layer",
+          "status": "saved",
+          "visibility": "admin-only",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/sample-episode/background-layers/scene-3-1779354614747.png",
+          "pathname": "episodes/sample-episode/background-layers/scene-3-1779354614747.png",
+          "mimeType": "image/png",
+          "provider": "openai",
+          "modelId": "gpt-image-1",
+          "promptText": "Background layer for a Fruit Baby story panel. Setting: Classroom — indoor school classroom setting during night with elements: lesson, garden, park, dream. Mood: joyful. Style: flat digital illustration, warm color palette, kid-friendly. No characters in this layer — background environment only. Consistent with the Fruit Baby brand aesthetic: tropical warmth, bold colors, clean lines.",
+          "settingLabel": "Classroom",
+          "environmentDescription": "Background layer for a Fruit Baby story panel. Setting: Classroom — indoor school classroom setting during night with elements: lesson, garden, park, dream. Mood: joyful. Style: flat digital illustrat",
+          "createdAt": "2026-05-21T09:10:16.001Z",
+          "updatedAt": "2026-05-21T09:10:16.001Z"
+        }
+      ]
     },
     {
       "sceneNumber": 4,
@@ -195,5 +213,5 @@
       ]
     }
   },
-  "updatedAt": "2026-05-20T23:17:19.051Z"
+  "updatedAt": "2026-05-21T09:10:16.001Z"
 }
