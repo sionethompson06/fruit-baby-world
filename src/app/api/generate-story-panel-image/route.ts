@@ -790,7 +790,7 @@ export async function POST(request: Request): Promise<Response> {
     const fidelityResult: ProductionFidelityResult | null = sceneRefPkg
       ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt, charBySlug, adminSceneDirection)
       : null;
-    const productionPrompt = fidelityResult?.prompt ?? panelPrompt;
+    let productionPrompt = fidelityResult?.prompt ?? panelPrompt;
 
     // Compact the full production fidelity prompt to provider-safe length
     const productionCompaction = compactStoryPanelPrompt({
