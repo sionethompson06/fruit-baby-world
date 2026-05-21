@@ -210,6 +210,9 @@ type BgDraftResult = {
     createdAt: string;
     warnings: string[];
   };
+  environmentReferenceMode?: "image-reference" | "text-only" | "none";
+  environmentReferenceCount?: number;
+  environmentReferenceTitles?: string[];
   notes?: string[];
 };
 
@@ -243,6 +246,8 @@ type CharLayerDraftResult = {
   ok: boolean;
   status: string;
   message?: string;
+  providerStatus?: number;
+  providerMessage?: string;
   troubleshooting?: string[];
   draft?: {
     id: string;
@@ -1427,6 +1432,7 @@ export default function PanelDraftGenerator({
           backgroundPrompt,
           episodeSlug,
           sceneNumber,
+          referenceCharacters,
           settingLabel: planSummary?.settingLabel ?? result?.assemblyPlanSetting,
           mood: planSummary?.mood ?? result?.assemblyPlanMood,
           adminSceneDirection: adminSceneDirection || undefined,
@@ -2117,6 +2123,23 @@ export default function PanelDraftGenerator({
                     <span>Setting: <span className="font-semibold">{bgDraft.draft.settingLabel}</span></span>
                   )}
                 </div>
+                {bgDraft.environmentReferenceCount !== undefined && bgDraft.environmentReferenceCount > 0 ? (
+                  <div className="flex flex-col gap-0.5 bg-tropical-green/6 border border-tropical-green/18 rounded-lg px-2.5 py-1.5">
+                    <p className="text-xs font-semibold text-tropical-green/80">
+                      {bgDraft.environmentReferenceCount} env reference{bgDraft.environmentReferenceCount !== 1 ? "s" : ""} used
+                      {bgDraft.environmentReferenceMode === "text-only" && " (text guidance)"}
+                    </p>
+                    {bgDraft.environmentReferenceTitles && bgDraft.environmentReferenceTitles.length > 0 && (
+                      <p className="text-xs text-tiki-brown/50 italic">
+                        {bgDraft.environmentReferenceTitles.join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-tiki-brown/35 italic">
+                    No environment references found for scene characters.
+                  </p>
+                )}
                 {bgDraft.draft.warnings.length > 0 && (
                   <div className="flex flex-col gap-0.5">
                     {bgDraft.draft.warnings.map((w, i) => (
@@ -2278,9 +2301,17 @@ export default function PanelDraftGenerator({
                     )}
 
                     {draftState?.status === "error" && (
-                      <div className="flex flex-col gap-1 bg-warm-coral/10 border border-warm-coral/30 rounded-lg px-3 py-2">
+                      <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-lg px-3 py-2">
                         <span className="text-xs font-bold text-warm-coral">Generation failed</span>
                         {draftState.error && <p className="text-xs text-tiki-brown/60">{draftState.error}</p>}
+                        {(draftState.draft as CharLayerDraftResult | null)?.providerStatus === 422 && (
+                          <p className="text-xs text-tiki-brown/55 italic">
+                            422 errors often indicate a payload mismatch. Make sure STORY_PANEL_CHARACTER_LAYER_MODEL_ID is set to a single-image model (e.g. fal-ai/flux-pro/kontext).
+                          </p>
+                        )}
+                        {(draftState.draft as CharLayerDraftResult | null)?.troubleshooting?.map((tip, i) => (
+                          <p key={i} className="text-xs text-tiki-brown/50 italic">{tip}</p>
+                        ))}
                         <button
                           onClick={() => handleGenerateCharacterLayer(plan.characterSlug)}
                           className="self-start text-xs text-warm-coral underline mt-0.5"

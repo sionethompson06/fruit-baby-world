@@ -17,6 +17,9 @@ export const DEFAULT_PRODUCTION_PROVIDER: StoryPanelProvider = "fal";
 export const DEFAULT_PRODUCTION_MODEL_ID = "fal-ai/flux-kontext-pro";
 // Refine uses the single-image Kontext endpoint — never the multi-reference variant.
 export const DEFAULT_REFINE_MODEL_ID = "fal-ai/flux-pro/kontext";
+// Character layer generation always uses a single-image endpoint to avoid /multi
+// payload conflicts when STORY_PANEL_PRODUCTION_MODEL_ID is set to a /multi variant.
+export const DEFAULT_CHARACTER_LAYER_MODEL_ID = "fal-ai/flux-pro/kontext";
 
 // ─── Config readers ───────────────────────────────────────────────────────────
 
@@ -86,6 +89,28 @@ export function isFalMultiReferenceModel(modelId: string): boolean {
 }
 
 export function getProductionPayloadMode(modelId: string): ProductionPayloadMode {
+  return isFalMultiReferenceModel(modelId) ? "multi-reference" : "single-reference";
+}
+
+// ─── Character layer provider config ─────────────────────────────────────────
+// Dedicated config for per-character layer generation, decoupled from the
+// whole-scene production model. Prevents /multi payload errors when
+// STORY_PANEL_PRODUCTION_MODEL_ID is set to a multi-reference variant.
+
+export function getCharacterLayerProvider(): StoryPanelProvider {
+  const raw = process.env.STORY_PANEL_CHARACTER_LAYER_PROVIDER?.trim().toLowerCase();
+  if (raw === "fal") return "fal";
+  return "fal";
+}
+
+export function getFalCharacterLayerModelId(): string {
+  return (
+    process.env.STORY_PANEL_CHARACTER_LAYER_MODEL_ID?.trim() ||
+    DEFAULT_CHARACTER_LAYER_MODEL_ID
+  );
+}
+
+export function getCharacterLayerPayloadMode(modelId: string): ProductionPayloadMode {
   return isFalMultiReferenceModel(modelId) ? "multi-reference" : "single-reference";
 }
 

@@ -18,6 +18,19 @@ import {
 } from "@/lib/storyPanelImageProvider";
 import { validateSlug } from "@/lib/storyPanelImageGeneration";
 import type { StoryPanelBackgroundDraft } from "@/lib/storyPanelBackgroundTypes";
+import {
+  loadReferenceAssets,
+  buildSceneReferencePackage,
+} from "@/lib/referenceAssetLoader";
+import { loadAllCharactersFromDisk } from "@/lib/characterContent";
+import type { Character } from "@/lib/content";
+import {
+  getEnvironmentReferencesForScene,
+  selectBestEnvironmentReferenceForBackground,
+  buildEnvironmentReferenceSummary,
+  buildEnvironmentReferencePromptSection,
+  type EnvironmentReferenceSummary,
+} from "@/lib/storyPanelEnvironmentReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +43,11 @@ type BackgroundResult =
       provider: StoryPanelProvider;
       modelId: string;
       notes: string[];
+      environmentReferenceMode: "image-reference" | "text-only" | "none";
+      environmentReferenceCount: number;
+      environmentReferenceIds: string[];
+      environmentReferenceTitles: string[];
+      environmentReferenceUrlsUsed: string[];
     }
   | {
       ok: false;
@@ -48,6 +66,19 @@ type BackgroundResult =
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
+}
+
+function buildCharBySlug(chars: Character[]): Record<string, Character> {
+  const map: Record<string, Character> = {};
+  for (const c of chars) {
+    map[c.slug] = c;
+    if ((c as Character & { id?: string }).id) {
+      map[(c as Character & { id?: string }).id!] = c;
+    }
+  }
+  if (map["tiki"] && !map["tiki-trouble"]) map["tiki-trouble"] = map["tiki"];
+  if (map["tiki-trouble"] && !map["tiki"]) map["tiki"] = map["tiki-trouble"];
+  return map;
 }
 
 // ─── Route handler ────────────────────────────────────────────────────────────
@@ -162,6 +193,59 @@ export async function POST(request: Request): Promise<Response> {
   const mood = typeof body.mood === "string" ? body.mood : undefined;
   const assemblyPlanId = typeof body.assemblyPlanId === "string" ? body.assemblyPlanId : undefined;
 
+  const referenceCharacters: string[] = Array.isArray(body.referenceCharacters)
+    ? (body.referenceCharacters as unknown[]).filter(
+        (s): s is string => typeof s === "string" && s.length > 0
+      )
+    : [];
+
+  // ── Load environment references for scene characters ─────────────────────
+  // Text-only mode: env ref titles/descriptions are injected into the prompt.
+  // OpenAI images.generate does not accept image URLs as conditioning input.
+  let envRefSummary: EnvironmentReferenceSummary = {
+    count: 0,
+    ids: [],
+    titles: [],
+    characterSlugs: [],
+    selectedUrl: undefined,
+    selectedTitle: undefined,
+    selectedCharacterSlug: undefined,
+    mode: "none",
+  };
+  let environmentReferencePromptSection: string | undefined;
+
+  if (referenceCharacters.length > 0) {
+    try {
+      const allAssets = loadReferenceAssets();
+      const allChars = loadAllCharactersFromDisk();
+      const charBySlug = buildCharBySlug(allChars);
+      const sceneRefPkg = buildSceneReferencePackage(
+        sceneNumber ?? 1,
+        referenceCharacters,
+        allAssets,
+        charBySlug
+      );
+      const envRefs = getEnvironmentReferencesForScene(sceneRefPkg);
+      const primarySlug = referenceCharacters[0];
+      const selected = selectBestEnvironmentReferenceForBackground(
+        envRefs,
+        settingLabel,
+        primarySlug
+      );
+      const mode = envRefs.length > 0 ? "text-only" : "none";
+      envRefSummary = buildEnvironmentReferenceSummary(envRefs, selected, mode);
+      environmentReferencePromptSection = buildEnvironmentReferencePromptSection(
+        envRefs,
+        selected
+      );
+    } catch (refErr) {
+      console.warn(
+        "[generate-story-panel-background] Environment reference loading failed, continuing without refs:",
+        refErr instanceof Error ? refErr.message : refErr
+      );
+    }
+  }
+
   // ── Validate OpenAI setup ─────────────────────────────────────────────────
   const openAiKey = process.env.OPENAI_API_KEY;
   if (!openAiKey) {
@@ -188,6 +272,7 @@ export async function POST(request: Request): Promise<Response> {
     backgroundDirection,
     settingLabel,
     mood,
+    environmentReferenceSummary: environmentReferencePromptSection,
   });
 
   const compaction = compactBackgroundPromptIfNeeded(fullPrompt);
@@ -289,7 +374,17 @@ export async function POST(request: Request): Promise<Response> {
         "This is a temporary background-only draft.",
         "It was not attached to the episode.",
         "Characters should be generated and assembled in future phases.",
+        ...(envRefSummary.count > 0
+          ? [
+              `${envRefSummary.count} environment reference${envRefSummary.count !== 1 ? "s" : ""} used as text guidance: ${envRefSummary.titles.join(", ")}`,
+            ]
+          : []),
       ],
+      environmentReferenceMode: envRefSummary.mode,
+      environmentReferenceCount: envRefSummary.count,
+      environmentReferenceIds: envRefSummary.ids,
+      environmentReferenceTitles: envRefSummary.titles,
+      environmentReferenceUrlsUsed: [],
     } satisfies BackgroundResult,
     { status: 200 }
   );

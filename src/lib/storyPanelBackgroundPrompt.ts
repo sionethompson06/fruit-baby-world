@@ -37,6 +37,7 @@ export function buildBackgroundOnlyPrompt(options: {
   backgroundDirection?: string | null;
   settingLabel?: string;
   mood?: string;
+  environmentReferenceSummary?: string;
 }): string {
   const {
     backgroundPrompt,
@@ -44,6 +45,7 @@ export function buildBackgroundOnlyPrompt(options: {
     backgroundDirection,
     settingLabel,
     mood,
+    environmentReferenceSummary,
   } = options;
 
   const parts: string[] = [];
@@ -61,20 +63,26 @@ export function buildBackgroundOnlyPrompt(options: {
   parts.push(backgroundPrompt.trim());
   parts.push("");
 
-  // 4. Optional background direction (admin-specified)
+  // 4. Official environment references (when available — visual source of truth)
+  if (environmentReferenceSummary?.trim()) {
+    parts.push(environmentReferenceSummary.trim());
+    parts.push("");
+  }
+
+  // 5. Optional background direction (admin-specified)
   if (backgroundDirection?.trim()) {
     parts.push(`BACKGROUND DIRECTION: "${backgroundDirection.trim()}"`);
     parts.push("");
   }
 
-  // 5. Optional admin scene direction (passed through for environment guidance only)
+  // 6. Optional admin scene direction (passed through for environment guidance only)
   if (adminSceneDirection?.trim()) {
     parts.push(`SCENE DIRECTION (environment context only): "${adminSceneDirection.trim()}"`);
     parts.push("Apply only to environment choices — ignore any character positioning implied here.");
     parts.push("");
   }
 
-  // 6. Style mandate
+  // 7. Style mandate
   const styleParts: string[] = [
     "Style: flat digital illustration, warm storybook color palette, kid-friendly and inviting.",
     "Background art only — this layer will have characters composited onto it later.",
@@ -89,7 +97,7 @@ export function buildBackgroundOnlyPrompt(options: {
   parts.push(styleParts.join(" "));
   parts.push("");
 
-  // 7. Explicit character prohibition (repeated at end for emphasis)
+  // 8. Explicit character prohibition (repeated at end for emphasis)
   parts.push("CRITICAL: This background must contain ZERO characters, figures, faces, eyes, or character-like shapes. Background environment only.");
 
   return parts.join("\n");

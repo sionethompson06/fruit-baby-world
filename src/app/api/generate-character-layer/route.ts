@@ -16,10 +16,10 @@ import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import { buildProductionReferenceSet } from "@/lib/storyPanelReferenceBundle";
 import {
   getFalApiKey,
-  getProductionModelId,
+  getFalCharacterLayerModelId,
   isProductionProviderConfigured,
   getProductionSetupError,
-  getProductionPayloadMode,
+  getCharacterLayerPayloadMode,
 } from "@/lib/storyPanelImageProvider";
 import {
   compactStoryPanelPrompt,
@@ -172,7 +172,8 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const falApiKey = getFalApiKey()!;
-  const modelId = getProductionModelId();
+  const modelId = getFalCharacterLayerModelId();
+  const payloadMode = getCharacterLayerPayloadMode(modelId);
 
   // ── Load THIS character's references only (reference isolation) ───────────────
   let referenceUrl: string | null = null;
@@ -190,20 +191,26 @@ export async function POST(request: Request): Promise<Response> {
       charBySlug
     );
 
-    const payloadMode = getProductionPayloadMode(modelId);
     const refSet = buildProductionReferenceSet(singleCharRefPkg, false);
-
-    if (payloadMode === "single-reference") {
-      referenceUrl =
-        refSet.characterRefs[0]?.canonicalUrl ?? refSet.allUrls[0] ?? null;
-    } else {
-      referenceUrl = refSet.allUrls[0] ?? null;
-    }
+    referenceUrl =
+      refSet.characterRefs[0]?.canonicalUrl ?? refSet.allUrls[0] ?? null;
   } catch (refErr) {
     console.warn(
       "[generate-character-layer] Reference loading failed, continuing without ref:",
       refErr instanceof Error ? refErr.message : refErr
     );
+  }
+
+  // ── Validate reference URL before sending to Fal ─────────────────────────────
+  if (referenceUrl) {
+    try {
+      new URL(referenceUrl);
+    } catch {
+      console.warn(
+        `[generate-character-layer] Reference URL invalid, omitting: ${referenceUrl.slice(0, 80)}`
+      );
+      referenceUrl = null;
+    }
   }
 
   // ── Build the character layer prompt ─────────────────────────────────────────
@@ -231,12 +238,18 @@ export async function POST(request: Request): Promise<Response> {
   );
 
   // ── Call Fal.ai ───────────────────────────────────────────────────────────────
+  // Single-image models (default fal-ai/flux-pro/kontext) require image_url as
+  // a string. Multi-reference models (/multi) require image_urls as an array.
   const requestBody: Record<string, unknown> = {
     prompt: providerPrompt,
     num_images: 1,
   };
   if (referenceUrl) {
-    requestBody.image_url = referenceUrl;
+    if (payloadMode === "multi-reference") {
+      requestBody.image_urls = [referenceUrl];
+    } else {
+      requestBody.image_url = referenceUrl;
+    }
   }
 
   const controller = new AbortController();
@@ -259,19 +272,34 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!falResp.ok) {
     const errText = await falResp.text().catch(() => "");
+    const is422 = falResp.status === 422;
     console.error(`[generate-character-layer] Fal.ai ${falResp.status}:`, errText.slice(0, 200));
+
+    const troubleshooting: string[] = [];
+    if (is422) {
+      troubleshooting.push(
+        referenceUrl
+          ? `Payload mode is "${payloadMode}" — reference sent as ${payloadMode === "multi-reference" ? "image_urls (array)" : "image_url (string)"}. If 422 persists, the reference URL may be unreachable by Fal.ai.`
+          : "No reference image was sent. 422 may indicate an invalid prompt field or model constraint."
+      );
+      troubleshooting.push(
+        `Model: ${modelId}. To avoid payload mismatches, set STORY_PANEL_CHARACTER_LAYER_MODEL_ID=fal-ai/flux-pro/kontext in env vars.`
+      );
+    }
+    troubleshooting.push(
+      `Confirm model ID is correct: ${modelId}`,
+      "Confirm FAL_KEY is valid and has sufficient credits.",
+      "Try again — Fal.ai may be temporarily unavailable."
+    );
+
     return Response.json(
       {
         ok: false,
         status: falResp.status === 408 || falResp.status === 504 ? "provider_timeout" : "provider_error",
-        message: `Character layer generation failed — Fal.ai error ${falResp.status}.`,
+        message: `Character layer generation failed — Fal.ai error ${falResp.status}${is422 ? " (payload validation error — check model and reference URL)" : ""}.`,
         providerStatus: falResp.status,
         providerMessage: errText.slice(0, 300),
-        troubleshooting: [
-          `Confirm model ID is correct: ${modelId}`,
-          "Confirm FAL_KEY is valid and has sufficient credits.",
-          "Try again — Fal.ai may be temporarily unavailable.",
-        ],
+        troubleshooting,
       } satisfies CharLayerResult,
       { status: 502 }
     );
