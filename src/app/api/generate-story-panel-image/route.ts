@@ -71,6 +71,12 @@ import type {
   StoryPanelCharacterLayerPlan,
 } from "@/lib/storyPanelAssemblyTypes";
 import type { Character } from "@/lib/content";
+import {
+  loadGoldenReferences,
+  selectGoldenReferencesForScene,
+  buildGoldenReferencePromptSection,
+  summarizeGoldenReferenceReplay,
+} from "@/lib/storyPanelGoldenReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -167,6 +173,11 @@ type GenerateResult =
       assemblyPlanAdminDirectionUsed: boolean;
       assemblyPlanBackgroundPrompt?: string;
       assemblyPlanCharacterLayerPlans?: StoryPanelCharacterLayerPlan[];
+      goldenReferencesUsed: boolean;
+      goldenReferenceCount: number;
+      goldenReferenceTitles: string[];
+      goldenReferenceRoles: string[];
+      goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
       warnings: string[];
       notes: string[];
     }
@@ -699,6 +710,34 @@ export async function POST(request: Request): Promise<Response> {
     generationPrompt = generationPrompt + "\n\n" + buildAdminSceneDirectionBlock(adminSceneDirection);
   }
 
+  // ── Load golden scene references ──────────────────────────────────────────────
+  let goldenRefPromptSection: string | undefined;
+  let goldenRefsUsed = false;
+  let goldenRefCount = 0;
+  let goldenRefTitles: string[] = [];
+  let goldenRefRoles: string[] = [];
+  let goldenRefMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+
+  try {
+    const allGoldenRefs = loadGoldenReferences();
+    const goldenSceneResult = selectGoldenReferencesForScene({
+      all: allGoldenRefs,
+      characterSlugs: referenceCharacters,
+    });
+    const replaySummary = summarizeGoldenReferenceReplay(goldenSceneResult);
+    goldenRefsUsed = replaySummary.used;
+    goldenRefCount = replaySummary.count;
+    goldenRefTitles = replaySummary.titles;
+    goldenRefRoles = replaySummary.roles;
+    goldenRefMode = replaySummary.mode;
+    if (goldenSceneResult.count > 0) {
+      goldenRefPromptSection = buildGoldenReferencePromptSection(goldenSceneResult.references, "scene");
+      generationPrompt = generationPrompt + "\n\n" + goldenRefPromptSection;
+    }
+  } catch (goldenErr) {
+    console.warn("[generate-story-panel-image] Golden reference loading failed:", goldenErr instanceof Error ? goldenErr.message : goldenErr);
+  }
+
   // ══════════════════════════════════════════════════════════════════════════════
   // PRODUCTION MODE — Fal.ai
   // ══════════════════════════════════════════════════════════════════════════════
@@ -744,7 +783,10 @@ export async function POST(request: Request): Promise<Response> {
     const fidelityResult: ProductionFidelityResult | null = sceneRefPkg
       ? buildProductionFidelityPrompt(sceneRefPkg, panelPrompt, charBySlug, adminSceneDirection)
       : null;
-    const productionPrompt = fidelityResult?.prompt ?? panelPrompt;
+    let productionPrompt = fidelityResult?.prompt ?? panelPrompt;
+    if (goldenRefPromptSection) {
+      productionPrompt = productionPrompt + "\n\n" + goldenRefPromptSection;
+    }
 
     // Compact the full production fidelity prompt to provider-safe length
     const productionCompaction = compactStoryPanelPrompt({
@@ -837,6 +879,11 @@ export async function POST(request: Request): Promise<Response> {
           promptSectionsRemovedOrShortened: productionCompaction.removedSections,
           fallbackUsed: false,
           ...assemblyPlan,
+          goldenReferencesUsed: goldenRefsUsed,
+          goldenReferenceCount: goldenRefCount,
+          goldenReferenceTitles: goldenRefTitles,
+          goldenReferenceRoles: goldenRefRoles,
+          goldenReferenceMode: goldenRefMode,
           warnings: refWarnings,
           notes: [
             "This story panel draft has not been saved.",
@@ -1227,6 +1274,11 @@ export async function POST(request: Request): Promise<Response> {
         hybridStage1Status: "success",
         hybridStage2Status,
         ...hybridAssemblyPlan,
+        goldenReferencesUsed: goldenRefsUsed,
+        goldenReferenceCount: goldenRefCount,
+        goldenReferenceTitles: goldenRefTitles,
+        goldenReferenceRoles: goldenRefRoles,
+        goldenReferenceMode: goldenRefMode,
         warnings: refWarnings,
         notes: [
           "This story panel draft has not been saved.",
@@ -1527,6 +1579,11 @@ export async function POST(request: Request): Promise<Response> {
       fallbackUsed: fallbackReason !== undefined,
       fallbackReason,
       ...draftAssemblyPlan,
+      goldenReferencesUsed: goldenRefsUsed,
+      goldenReferenceCount: goldenRefCount,
+      goldenReferenceTitles: goldenRefTitles,
+      goldenReferenceRoles: goldenRefRoles,
+      goldenReferenceMode: goldenRefMode,
       warnings: refWarnings,
       notes: [
         "This story panel draft has not been saved.",

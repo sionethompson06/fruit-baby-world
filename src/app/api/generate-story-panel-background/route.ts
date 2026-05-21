@@ -31,6 +31,12 @@ import {
   buildEnvironmentReferencePromptSection,
   type EnvironmentReferenceSummary,
 } from "@/lib/storyPanelEnvironmentReferences";
+import {
+  loadGoldenReferences,
+  selectGoldenReferencesForEnvironment,
+  buildGoldenReferencePromptSection,
+  summarizeGoldenReferenceReplay,
+} from "@/lib/storyPanelGoldenReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,6 +54,11 @@ type BackgroundResult =
       environmentReferenceIds: string[];
       environmentReferenceTitles: string[];
       environmentReferenceUrlsUsed: string[];
+      goldenReferencesUsed: boolean;
+      goldenReferenceCount: number;
+      goldenReferenceTitles: string[];
+      goldenReferenceRoles: string[];
+      goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
     }
   | {
       ok: false;
@@ -246,6 +257,34 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // ── Load golden environment references ────────────────────────────────────
+  let goldenRefPromptSection: string | undefined;
+  let goldenReferencesUsed = false;
+  let goldenReferenceCount = 0;
+  let goldenReferenceTitles: string[] = [];
+  let goldenReferenceRoles: string[] = [];
+  let goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+
+  try {
+    const allGoldenRefs = loadGoldenReferences();
+    const goldenEnvResult = selectGoldenReferencesForEnvironment({
+      all: allGoldenRefs,
+      characterSlugs: referenceCharacters,
+      settingLabel,
+    });
+    const replaySummary = summarizeGoldenReferenceReplay(goldenEnvResult);
+    goldenReferencesUsed = replaySummary.used;
+    goldenReferenceCount = replaySummary.count;
+    goldenReferenceTitles = replaySummary.titles;
+    goldenReferenceRoles = replaySummary.roles;
+    goldenReferenceMode = replaySummary.mode;
+    if (goldenEnvResult.count > 0) {
+      goldenRefPromptSection = buildGoldenReferencePromptSection(goldenEnvResult.references, "environment");
+    }
+  } catch (goldenErr) {
+    console.warn("[generate-story-panel-background] Golden reference loading failed:", goldenErr instanceof Error ? goldenErr.message : goldenErr);
+  }
+
   // ── Validate OpenAI setup ─────────────────────────────────────────────────
   const openAiKey = process.env.OPENAI_API_KEY;
   if (!openAiKey) {
@@ -273,6 +312,7 @@ export async function POST(request: Request): Promise<Response> {
     settingLabel,
     mood,
     environmentReferenceSummary: environmentReferencePromptSection,
+    goldenReferenceSummary: goldenRefPromptSection,
   });
 
   const compaction = compactBackgroundPromptIfNeeded(fullPrompt);
@@ -385,6 +425,11 @@ export async function POST(request: Request): Promise<Response> {
       environmentReferenceIds: envRefSummary.ids,
       environmentReferenceTitles: envRefSummary.titles,
       environmentReferenceUrlsUsed: [],
+      goldenReferencesUsed,
+      goldenReferenceCount,
+      goldenReferenceTitles,
+      goldenReferenceRoles,
+      goldenReferenceMode,
     } satisfies BackgroundResult,
     { status: 200 }
   );

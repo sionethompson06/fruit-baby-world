@@ -147,6 +147,11 @@ type GenApiResult = {
     mustAvoid: string[];
     officialFeatureLocks: string[];
   }>;
+  goldenReferencesUsed?: boolean;
+  goldenReferenceCount?: number;
+  goldenReferenceTitles?: string[];
+  goldenReferenceRoles?: string[];
+  goldenReferenceMode?: "none" | "prompt-guided" | "image-conditioned";
   warnings?: string[];
   notes?: string[];
   draft?: {
@@ -218,6 +223,11 @@ type BgDraftResult = {
   environmentReferenceMode?: "image-reference" | "text-only" | "none";
   environmentReferenceCount?: number;
   environmentReferenceTitles?: string[];
+  goldenReferencesUsed?: boolean;
+  goldenReferenceCount?: number;
+  goldenReferenceTitles?: string[];
+  goldenReferenceRoles?: string[];
+  goldenReferenceMode?: "none" | "prompt-guided" | "image-conditioned";
   notes?: string[];
 };
 
@@ -274,6 +284,11 @@ type CharLayerDraftResult = {
     warnings: string[];
   };
   referenceUrl?: string | null;
+  goldenReferencesUsed?: boolean;
+  goldenReferenceCount?: number;
+  goldenReferenceTitles?: string[];
+  goldenReferenceRoles?: string[];
+  goldenReferenceMode?: "none" | "prompt-guided" | "image-conditioned";
   notes?: string[];
 };
 
@@ -433,6 +448,17 @@ type RefineApiResult = {
   refinedFromPreviousDraft?: boolean;
   refinementCreatedAt?: string;
   troubleshooting?: string[];
+};
+
+// ─── Golden Reference save API result ────────────────────────────────────────
+
+type GoldenSaveApiResult = {
+  ok: boolean;
+  status: string;
+  message?: string;
+  goldenReference?: { id: string; title: string; referenceRole: string };
+  totalCount?: number;
+  htmlUrl?: string;
 };
 
 // ─── Quick direction chips ────────────────────────────────────────────────────
@@ -979,6 +1005,15 @@ export default function PanelDraftGenerator({
   const [harmonizeStatus, setHarmonizeStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [harmonizeResult, setHarmonizeResult] = useState<HarmonizeApiResult | null>(null);
   const [harmonizeError, setHarmonizeError] = useState<string>("");
+
+  // Golden Reference save state (Phase 18E)
+  const [goldenSaveStatus, setGoldenSaveStatus] = useState<"idle" | "loading" | "saved" | "error">("idle");
+  const [goldenSaveError, setGoldenSaveError] = useState<string>("");
+  const [goldenSaveTitle, setGoldenSaveTitle] = useState<string>("");
+  const [goldenSaveRole, setGoldenSaveRole] = useState<string>("scene-composition");
+  const [goldenSaveTags, setGoldenSaveTags] = useState<string>("");
+  const [goldenSaveDescription, setGoldenSaveDescription] = useState<string>("");
+  const [goldenSaveResult, setGoldenSaveResult] = useState<GoldenSaveApiResult | null>(null);
 
   // Current panel candidate source (Phase 18D.14)
   const [currentCandidateSource, setCurrentCandidateSource] = useState<CurrentCandidateSource>("none");
@@ -1814,6 +1849,45 @@ export default function PanelDraftGenerator({
     }
   }
 
+  async function handleSaveGoldenReference() {
+    const imageUrl = approveAndSaveUploadedAsset?.url;
+    if (!imageUrl || goldenSaveStatus === "loading" || goldenSaveStatus === "saved") return;
+    setGoldenSaveStatus("loading");
+    setGoldenSaveError("");
+    setGoldenSaveResult(null);
+    const tags = goldenSaveTags.split(",").map((t) => t.trim()).filter(Boolean);
+    try {
+      const res = await fetch("/api/github/save-golden-reference", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl,
+          title: goldenSaveTitle.trim() || `Scene ${sceneNumber} — ${goldenSaveRole}`,
+          referenceRole: goldenSaveRole,
+          sourceType: "story-panel",
+          episodeSlug,
+          sceneId: sceneId || undefined,
+          sceneNumber,
+          characterSlugs: referenceCharacters,
+          tags,
+          description: goldenSaveDescription.trim() || undefined,
+        }),
+      });
+      const data: GoldenSaveApiResult = await res.json();
+      setGoldenSaveResult(data);
+      if (data.ok) {
+        setGoldenSaveStatus("saved");
+      } else {
+        setGoldenSaveStatus("error");
+        setGoldenSaveError(data.message ?? "Failed to save golden reference.");
+      }
+    } catch {
+      setGoldenSaveStatus("error");
+      setGoldenSaveError("Network error — could not reach golden reference save API.");
+    }
+  }
+
   function handleUseAssembledAsDraft() {
     const assembled = assembleResult?.draft;
     // Prefer harmonized image when available
@@ -2104,6 +2178,28 @@ export default function PanelDraftGenerator({
               )}
             </div>
           </div>
+
+          {/* ── Golden References Available (Phase 18E) ─── */}
+          <details className="border border-pineapple-yellow/35 rounded-2xl overflow-hidden">
+            <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none bg-pineapple-yellow/6 hover:bg-pineapple-yellow/10 transition-colors list-none">
+              <span className="text-sm">⭐</span>
+              <span className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Golden References</span>
+              <span className="ml-auto text-xs text-tiki-brown/35">Admin-only generation memory</span>
+            </summary>
+            <div className="flex flex-col gap-2 px-4 py-3 text-xs text-tiki-brown/60 leading-relaxed">
+              <p>
+                Golden references are approved panel images saved from previous sessions. They are injected as text guidance into future generation — background layers, character layers, and full-scene drafts all receive matching golden refs automatically.
+              </p>
+              <ul className="flex flex-col gap-1 pl-3">
+                <li className="list-disc">Scene-composition, multi-character-interaction, and style-polish refs → full-scene and hybrid generation</li>
+                <li className="list-disc">Character-fidelity and pose-expression refs → per-character layer generation</li>
+                <li className="list-disc">Environment refs → background layer generation</li>
+              </ul>
+              <p className="text-tiki-brown/40 italic">
+                Official character reference images remain primary. Golden refs are secondary guidance only. Save approved panels using "Save as Golden Reference" in the Quick Whole-Scene Draft workflow after attaching to episode.
+              </p>
+            </div>
+          </details>
 
           {/* ── Step 1: Scene Assembly Plan ─── */}
           <div className="border border-ube-purple/15 rounded-2xl overflow-hidden">
@@ -2986,6 +3082,17 @@ export default function PanelDraftGenerator({
                     )}
                   </div>
 
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-tiki-brown/50 uppercase tracking-wide">Golden Refs</span>
+                    {result.goldenReferencesUsed && result.goldenReferenceCount ? (
+                      <span className="font-bold px-2 py-0.5 rounded-full border bg-pineapple-yellow/20 text-pineapple-yellow-dark border-pineapple-yellow/40">
+                        {result.goldenReferenceCount} used — {result.goldenReferenceRoles?.join(", ")}
+                      </span>
+                    ) : (
+                      <span className="text-tiki-brown/35 font-normal">None available yet — save approved panels as golden references.</span>
+                    )}
+                  </div>
+
                   {/* Hybrid pipeline status */}
                   {result.generationMode === "hybrid" && (
                     <div className="flex flex-col gap-1 rounded-xl px-3 py-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25">
@@ -3549,6 +3656,108 @@ export default function PanelDraftGenerator({
                 </div>
               )}
             </div>
+          )}
+
+          {/* ── Save as Golden Reference (Phase 18E) ── */}
+          {(approveAndSaveStatus === "success" || attachStatus === "success") && approveAndSaveUploadedAsset && (
+            <details className="group border border-pineapple-yellow/40 rounded-2xl overflow-hidden">
+              <summary className="flex items-center gap-2 px-4 py-3 cursor-pointer select-none bg-pineapple-yellow/8 hover:bg-pineapple-yellow/12 transition-colors list-none">
+                <span className="text-sm">⭐</span>
+                <span className="text-xs font-bold text-tiki-brown/65 uppercase tracking-wide">Save as Golden Reference</span>
+                <span className="ml-auto text-xs text-tiki-brown/35">Admin-only memory for future generations</span>
+              </summary>
+              <div className="flex flex-col gap-3 px-4 pt-3 pb-4">
+                <p className="text-xs text-tiki-brown/55 leading-relaxed">
+                  Save this approved panel as an example for future generation. Golden references are injected as text guidance into background, character layer, and full-scene generation — after official character references. Admin-only, never shown publicly.
+                </p>
+
+                {goldenSaveStatus === "saved" && goldenSaveResult?.goldenReference && (
+                  <div className="flex flex-col gap-1.5 bg-tropical-green/10 border border-tropical-green/30 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">✅</span>
+                      <span className="text-xs font-bold text-tropical-green">Saved as Golden Reference</span>
+                    </div>
+                    <p className="text-xs text-tiki-brown/60">{goldenSaveResult.goldenReference.title}</p>
+                    <p className="text-xs text-tiki-brown/45">Role: {goldenSaveResult.goldenReference.referenceRole}</p>
+                    {goldenSaveResult.totalCount !== undefined && (
+                      <p className="text-xs text-tiki-brown/35">{goldenSaveResult.totalCount} total golden references stored.</p>
+                    )}
+                    {goldenSaveResult.htmlUrl && (
+                      <a href={goldenSaveResult.htmlUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-ube-purple underline hover:opacity-75">
+                        View commit
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {goldenSaveStatus === "error" && (
+                  <div className="flex items-start gap-2 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                    <span className="text-sm flex-shrink-0">⚠️</span>
+                    <p className="text-xs text-warm-coral font-semibold leading-relaxed">{goldenSaveError}</p>
+                  </div>
+                )}
+
+                {goldenSaveStatus !== "saved" && (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-tiki-brown/50">Title <span className="font-normal text-tiki-brown/35">(optional)</span></label>
+                      <input
+                        type="text"
+                        value={goldenSaveTitle}
+                        onChange={(e) => setGoldenSaveTitle(e.target.value)}
+                        placeholder={`Scene ${sceneNumber} — ${goldenSaveRole}`}
+                        maxLength={120}
+                        className="text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2 placeholder:text-tiki-brown/25 focus:outline-none focus:border-pineapple-yellow/50"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-tiki-brown/50">Reference Role</label>
+                      <select
+                        value={goldenSaveRole}
+                        onChange={(e) => setGoldenSaveRole(e.target.value)}
+                        className="text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2 focus:outline-none focus:border-pineapple-yellow/50"
+                      >
+                        <option value="scene-composition">Scene Composition</option>
+                        <option value="character-fidelity">Character Fidelity</option>
+                        <option value="environment">Environment</option>
+                        <option value="pose-expression">Pose / Expression</option>
+                        <option value="multi-character-interaction">Multi-Character Interaction</option>
+                        <option value="style-polish">Style Polish</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-tiki-brown/50">Tags <span className="font-normal text-tiki-brown/35">(comma-separated, optional)</span></label>
+                      <input
+                        type="text"
+                        value={goldenSaveTags}
+                        onChange={(e) => setGoldenSaveTags(e.target.value)}
+                        placeholder="classroom, warm-lighting, full-cast"
+                        maxLength={200}
+                        className="text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2 placeholder:text-tiki-brown/25 focus:outline-none focus:border-pineapple-yellow/50"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-bold text-tiki-brown/50">Quality Notes <span className="font-normal text-tiki-brown/35">(optional)</span></label>
+                      <textarea
+                        value={goldenSaveDescription}
+                        onChange={(e) => setGoldenSaveDescription(e.target.value)}
+                        placeholder="What makes this a good example? (proportions, lighting, composition…)"
+                        rows={2}
+                        maxLength={400}
+                        className="text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-pineapple-yellow/50"
+                      />
+                    </div>
+                    <button
+                      onClick={handleSaveGoldenReference}
+                      disabled={goldenSaveStatus === "loading"}
+                      className="self-start px-4 py-2 rounded-xl bg-pineapple-yellow text-tiki-brown text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                    >
+                      {goldenSaveStatus === "loading" ? "Saving…" : "Save as Golden Reference"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </details>
           )}
 
           {/* ── Manual Controls (upload + attach separately) ── */}

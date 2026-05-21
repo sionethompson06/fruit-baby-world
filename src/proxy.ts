@@ -74,5 +74,7 @@ export const config = {
     "/api/products/save-approved-mockup",
     "/api/github/update-product-concept-visibility",
     "/api/github/update-product-mockup-visibility",
+    "/api/github/save-golden-reference",
+    "/api/golden-references",
   ],
 };

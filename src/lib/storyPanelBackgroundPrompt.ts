@@ -38,6 +38,7 @@ export function buildBackgroundOnlyPrompt(options: {
   settingLabel?: string;
   mood?: string;
   environmentReferenceSummary?: string;
+  goldenReferenceSummary?: string;
 }): string {
   const {
     backgroundPrompt,
@@ -46,6 +47,7 @@ export function buildBackgroundOnlyPrompt(options: {
     settingLabel,
     mood,
     environmentReferenceSummary,
+    goldenReferenceSummary,
   } = options;
 
   const parts: string[] = [];
@@ -69,20 +71,26 @@ export function buildBackgroundOnlyPrompt(options: {
     parts.push("");
   }
 
-  // 5. Optional background direction (admin-specified)
+  // 5. Golden References (approved prior examples — lower priority than official references)
+  if (goldenReferenceSummary?.trim()) {
+    parts.push(goldenReferenceSummary.trim());
+    parts.push("");
+  }
+
+  // 6. Optional background direction (admin-specified)
   if (backgroundDirection?.trim()) {
     parts.push(`BACKGROUND DIRECTION: "${backgroundDirection.trim()}"`);
     parts.push("");
   }
 
-  // 6. Optional admin scene direction (passed through for environment guidance only)
+  // 7. Optional admin scene direction (passed through for environment guidance only)
   if (adminSceneDirection?.trim()) {
     parts.push(`SCENE DIRECTION (environment context only): "${adminSceneDirection.trim()}"`);
     parts.push("Apply only to environment choices — ignore any character positioning implied here.");
     parts.push("");
   }
 
-  // 7. Style mandate
+  // 8. Style mandate
   const styleParts: string[] = [
     "Style: flat digital illustration, warm storybook color palette, kid-friendly and inviting.",
     "Background art only — this layer will have characters composited onto it later.",
@@ -97,7 +105,7 @@ export function buildBackgroundOnlyPrompt(options: {
   parts.push(styleParts.join(" "));
   parts.push("");
 
-  // 8. Explicit character prohibition (repeated at end for emphasis)
+  // 9. Explicit character prohibition (repeated at end for emphasis)
   parts.push("CRITICAL: This background must contain ZERO characters, figures, faces, eyes, or character-like shapes. Background environment only.");
 
   return parts.join("\n");

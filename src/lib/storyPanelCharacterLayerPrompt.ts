@@ -10,10 +10,11 @@ export type CharacterLayerPromptOptions = {
   settingDescription: string;
   mood: string;
   adminSceneDirection?: string;
+  goldenReferenceSummary?: string;
 };
 
 export function buildCharacterLayerPrompt(opts: CharacterLayerPromptOptions): string {
-  const { plan, settingLabel, settingDescription, mood, adminSceneDirection } = opts;
+  const { plan, settingLabel, settingDescription, mood, adminSceneDirection, goldenReferenceSummary } = opts;
 
   const directionLabel =
     plan.facingDirection === "toward-another-character"
@@ -78,7 +79,13 @@ export function buildCharacterLayerPrompt(opts: CharacterLayerPromptOptions): st
   );
   lines.push("");
 
-  // Section F: Clean Layer Output
+  // Section F: Golden References (approved prior examples — lower priority than official fidelity)
+  if (goldenReferenceSummary) {
+    lines.push(goldenReferenceSummary);
+    lines.push("");
+  }
+
+  // Section G: Clean Layer Output
   lines.push(`[CLEAN LAYER OUTPUT]`);
   lines.push(
     `White or transparent background — no environment. Full character body visible with padding.`

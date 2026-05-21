@@ -31,6 +31,12 @@ import type { StoryPanelCharacterLayerPlan } from "@/lib/storyPanelAssemblyTypes
 import type { StoryPanelCharacterLayerDraft } from "@/lib/storyPanelBackgroundTypes";
 import { validateSlug } from "@/lib/storyPanelImageGeneration";
 import type { Character } from "@/lib/content";
+import {
+  loadGoldenReferences,
+  selectGoldenReferencesForCharacter,
+  buildGoldenReferencePromptSection,
+  summarizeGoldenReferenceReplay,
+} from "@/lib/storyPanelGoldenReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +50,11 @@ type CharLayerResult =
       promptWasCompacted: boolean;
       referenceUrl: string | null;
       notes: string[];
+      goldenReferencesUsed: boolean;
+      goldenReferenceCount: number;
+      goldenReferenceTitles: string[];
+      goldenReferenceRoles: string[];
+      goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
     }
   | {
       ok: false;
@@ -213,6 +224,35 @@ export async function POST(request: Request): Promise<Response> {
     }
   }
 
+  // ── Load golden character references ─────────────────────────────────────────
+  let goldenRefPromptSection: string | undefined;
+  let goldenReferencesUsed = false;
+  let goldenReferenceCount = 0;
+  let goldenReferenceTitles: string[] = [];
+  let goldenReferenceRoles: string[] = [];
+  let goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+
+  try {
+    const allGoldenRefs = loadGoldenReferences();
+    const goldenCharResult = selectGoldenReferencesForCharacter({
+      all: allGoldenRefs,
+      characterSlug: plan.characterSlug,
+      emotion: plan.emotion,
+      action: plan.action,
+    });
+    const replaySummary = summarizeGoldenReferenceReplay(goldenCharResult);
+    goldenReferencesUsed = replaySummary.used;
+    goldenReferenceCount = replaySummary.count;
+    goldenReferenceTitles = replaySummary.titles;
+    goldenReferenceRoles = replaySummary.roles;
+    goldenReferenceMode = replaySummary.mode;
+    if (goldenCharResult.count > 0) {
+      goldenRefPromptSection = buildGoldenReferencePromptSection(goldenCharResult.references, "character");
+    }
+  } catch (goldenErr) {
+    console.warn("[generate-character-layer] Golden reference loading failed:", goldenErr instanceof Error ? goldenErr.message : goldenErr);
+  }
+
   // ── Build the character layer prompt ─────────────────────────────────────────
   const signals = extractSceneAssemblySignals(panelPrompt, [plan.characterSlug]);
 
@@ -222,6 +262,7 @@ export async function POST(request: Request): Promise<Response> {
     settingDescription: signals.settingDescription,
     mood: signals.mood,
     adminSceneDirection,
+    goldenReferenceSummary: goldenRefPromptSection,
   });
 
   // Compact to provider-safe length
@@ -385,6 +426,11 @@ export async function POST(request: Request): Promise<Response> {
         `Rendered in scene-aware isolation: ${plan.assemblyIntent}`,
         "Review before saving to episode.",
       ],
+      goldenReferencesUsed,
+      goldenReferenceCount,
+      goldenReferenceTitles,
+      goldenReferenceRoles,
+      goldenReferenceMode,
     } satisfies CharLayerResult,
     { status: 200 }
   );
