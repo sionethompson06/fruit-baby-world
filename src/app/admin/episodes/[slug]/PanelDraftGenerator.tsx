@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import type { FidelityThumbnail, FidelityChecklistItem } from "@/lib/storyPanelFidelityReview";
+import {
+  buildStoryPanelPipelineReadiness,
+  type PipelineStepStatus,
+  type CurrentCandidateSource,
+} from "@/lib/storyPanelPipelineReadiness";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -860,6 +865,35 @@ function AttachSuccessPanel({
   );
 }
 
+// ─── Pipeline readiness badge ─────────────────────────────────────────────────
+
+const STEP_BADGE_STYLES: Record<PipelineStepStatus, string> = {
+  ready: "bg-tropical-green/15 text-tropical-green border-tropical-green/30",
+  partial: "bg-pineapple-yellow/20 text-pineapple-yellow-dark border-pineapple-yellow/35",
+  missing: "bg-tiki-brown/8 text-tiki-brown/45 border-tiki-brown/15",
+  optional: "bg-tiki-brown/5 text-tiki-brown/30 border-tiki-brown/10",
+  warning: "bg-warm-coral/12 text-warm-coral/80 border-warm-coral/25",
+};
+
+const STEP_BADGE_LABELS: Record<PipelineStepStatus, string> = {
+  ready: "Ready",
+  partial: "Partial",
+  missing: "Missing",
+  optional: "Optional",
+  warning: "Warning",
+};
+
+function PipelineStepBadge({ status, detail }: { status: PipelineStepStatus; detail: string }) {
+  return (
+    <span
+      title={detail}
+      className={`text-xs font-semibold px-2 py-0.5 rounded-full border flex-shrink-0 ${STEP_BADGE_STYLES[status]}`}
+    >
+      {STEP_BADGE_LABELS[status]}
+    </span>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function PanelDraftGenerator({
@@ -946,6 +980,9 @@ export default function PanelDraftGenerator({
   const [harmonizeResult, setHarmonizeResult] = useState<HarmonizeApiResult | null>(null);
   const [harmonizeError, setHarmonizeError] = useState<string>("");
 
+  // Current panel candidate source (Phase 18D.14)
+  const [currentCandidateSource, setCurrentCandidateSource] = useState<CurrentCandidateSource>("none");
+
   // Workflow mode selector (Phase 18D.12A)
   const [workflowMode, setWorkflowMode] = useState<"whole-scene" | "layered">("whole-scene");
 
@@ -991,6 +1028,22 @@ export default function PanelDraftGenerator({
     result?.assemblyPlanBackgroundPrompt ||
     panelPrompt;
 
+  // Pipeline readiness (Phase 18D.14) — computed on every render, pure and cheap
+  const savedCharLayerCount = (activeCharacterLayerPlans ?? []).filter(
+    (p) => charLayerSaves[p.characterSlug]?.status === "saved"
+  ).length;
+  const pipelineReadiness = buildStoryPanelPipelineReadiness({
+    planStatus,
+    planCharacterCount: planSummary?.characterCount,
+    bgSaveStatus,
+    totalCharacterLayerPlans: activeCharacterLayerPlans?.length ?? 0,
+    savedCharacterLayerCount: savedCharLayerCount,
+    assembleStatus,
+    assembledCharLayerCount: assembleResult?.draft?.characterLayerIds.length ?? 0,
+    harmonizeStatus,
+    currentCandidateSource,
+  });
+
   function resetReviewState() {
     setCheckedItems(new Array(checklistItems.length).fill(false));
     setReviewNotes("");
@@ -1023,6 +1076,7 @@ export default function PanelDraftGenerator({
     setRefineInstruction("");
     setRefineStatus("idle");
     setRefineErrorMsg("");
+    setCurrentCandidateSource("none");
     resetReviewState();
   }
 
@@ -1074,6 +1128,7 @@ export default function PanelDraftGenerator({
       if (data.ok) {
         setGenStatus("done");
         setResult(data);
+        setCurrentCandidateSource("whole-scene");
         // Sync assembly plan state from whole-scene result so layered pipeline can use it
         if (data.assemblyPlanAvailable && data.assemblyPlanSummary) {
           setPlanSummary(data.assemblyPlanSummary);
@@ -1445,6 +1500,7 @@ export default function PanelDraftGenerator({
             : null
         );
         setRefineStatus("done");
+        setCurrentCandidateSource("refined");
         resetReviewState();
       } else {
         setRefineStatus("error");
@@ -1770,6 +1826,7 @@ export default function PanelDraftGenerator({
       image: { mimeType: activeMime, base64: activeBase64 },
     } as unknown as GenApiResult));
     setGenStatus("done");
+    setCurrentCandidateSource(harmonizedBase64 ? "harmonized" : "assembled");
     resetReviewState();
   }
 
@@ -2001,6 +2058,51 @@ export default function PanelDraftGenerator({
               Each step generates an admin-only layer. Background and character layers are never published.
               The final story panel is created only when you approve and save the assembled draft below.
             </p>
+          </div>
+
+          {/* ── Pipeline Readiness card ─── */}
+          <div className="bg-white/60 border border-tiki-brown/10 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-tiki-brown/3 border-b border-tiki-brown/8">
+              <span className="text-xs">📊</span>
+              <span className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Pipeline Readiness</span>
+              {currentCandidateSource !== "none" && (
+                <span className="ml-auto text-xs font-semibold px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple border border-ube-purple/20">
+                  Candidate: {pipelineReadiness.candidate.label}
+                </span>
+              )}
+            </div>
+            <div className="px-4 py-3 flex flex-col gap-2">
+              {(
+                [
+                  { icon: "🗺", label: "Scene Assembly Plan", info: pipelineReadiness.plan },
+                  { icon: "🌄", label: "Background Layer", info: pipelineReadiness.background },
+                  { icon: "🎭", label: "Character Layers", info: pipelineReadiness.characterLayers },
+                  { icon: "🖼", label: "Assembled Draft", info: pipelineReadiness.assemble },
+                  { icon: "✨", label: "Harmonized Draft", info: pipelineReadiness.harmonize },
+                ] as const
+              ).map(({ icon, label, info }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span className="text-xs w-4 flex-shrink-0">{icon}</span>
+                  <span className="text-xs text-tiki-brown/55 flex-grow">{label}</span>
+                  <PipelineStepBadge status={info.status} detail={info.detail} />
+                </div>
+              ))}
+
+              {pipelineReadiness.warnings.length > 0 && (
+                <div className="flex flex-col gap-0.5 mt-1 pt-2 border-t border-tiki-brown/8">
+                  {pipelineReadiness.warnings.map((w, i) => (
+                    <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                  ))}
+                </div>
+              )}
+
+              {pipelineReadiness.nextStep && (
+                <div className="flex items-start gap-2 mt-1 pt-2 border-t border-tiki-brown/8 bg-sky-blue/5 rounded-lg px-2.5 py-1.5">
+                  <span className="text-xs flex-shrink-0 text-tiki-brown/40">→</span>
+                  <p className="text-xs text-tiki-brown/55">{pipelineReadiness.nextStep}</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ── Step 1: Scene Assembly Plan ─── */}
@@ -2331,10 +2433,9 @@ export default function PanelDraftGenerator({
               <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
                 <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
                 <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                  Each layer uses only that character's own approved references. These layers are admin-only and never published. No compositing happens here — layers
-                are saved as admin-only assets for future assembly.
-              </p>
-            </div>
+                  Each layer uses only that character&apos;s own approved references. These layers are admin-only and never published. Save each layer — they are composited into the assembled panel in Step 4.
+                </p>
+              </div>
 
             {activeCharacterLayerPlans!.map((plan) => {
               const draftState = charLayerDrafts[plan.characterSlug];
@@ -2530,7 +2631,7 @@ export default function PanelDraftGenerator({
             <div className="flex items-start gap-2 bg-tiki-brown/5 border border-tiki-brown/10 rounded-xl px-3 py-2.5">
               <span className="text-xs flex-shrink-0 mt-0.5">○</span>
               <p className="text-xs text-tiki-brown/50 leading-relaxed">
-                Character layer plans will appear after you build the Scene Assembly Plan in Step 1.
+                Step 3 — Character Layers: Build the Scene Assembly Plan first (Step 1) to unlock per-character layer generation.
               </p>
             </div>
           )}
@@ -2559,22 +2660,22 @@ export default function PanelDraftGenerator({
                   <span>{bgSaveStatus === "saved" ? "✅" : "○"}</span>
                   <span>Background layer saved to scene</span>
                 </div>
-                {result?.assemblyPlanCharacterLayerPlans && result.assemblyPlanCharacterLayerPlans.length > 0 ? (
+                {activeCharacterLayerPlans && activeCharacterLayerPlans.length > 0 ? (
                   (() => {
-                    const plans = result.assemblyPlanCharacterLayerPlans!;
-                    const savedCount = plans.filter((p) => charLayerSaves[p.characterSlug]?.status === "saved").length;
-                    const allSaved = savedCount === plans.length;
+                    const plans = activeCharacterLayerPlans;
+                    const sc = plans.filter((p) => charLayerSaves[p.characterSlug]?.status === "saved").length;
+                    const allSaved = sc === plans.length;
                     return (
-                      <div className={`flex items-center gap-2 text-xs ${allSaved ? "text-tropical-green" : savedCount > 0 ? "text-pineapple-yellow-dark" : "text-tiki-brown/45"}`}>
-                        <span>{allSaved ? "✅" : savedCount > 0 ? "◑" : "○"}</span>
-                        <span>Character layers saved: {savedCount} of {plans.length}</span>
+                      <div className={`flex items-center gap-2 text-xs ${allSaved ? "text-tropical-green" : sc > 0 ? "text-pineapple-yellow-dark" : "text-tiki-brown/45"}`}>
+                        <span>{allSaved ? "✅" : sc > 0 ? "◑" : "○"}</span>
+                        <span>Character layers saved: {sc} of {plans.length}</span>
                       </div>
                     );
                   })()
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-tiki-brown/35">
                     <span>○</span>
-                    <span>No character layer plans — generate a panel draft first to build the plan</span>
+                    <span>No character layer plans — build the Scene Assembly Plan first (Step 1)</span>
                   </div>
                 )}
               </div>
@@ -2623,7 +2724,7 @@ export default function PanelDraftGenerator({
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
-                    Assembled temporary draft — not saved
+                    Assembled Draft — Temporary, Not Saved
                   </span>
                 </div>
 
@@ -2706,7 +2807,7 @@ export default function PanelDraftGenerator({
                     <div className="flex flex-col gap-3">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tropical-green/12 text-tropical-green uppercase tracking-wide border border-tropical-green/25">
-                          Harmonized temporary draft — not saved
+                          Harmonized Draft — Temporary, Not Saved
                         </span>
                         {harmonizeResult.promptWasCompacted && (
                           <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
@@ -2804,8 +2905,22 @@ export default function PanelDraftGenerator({
             {/* LEFT: Generated Draft Image */}
             <div className="flex flex-col gap-3">
               <p className="text-xs font-bold text-warm-coral uppercase tracking-wide">
-                Generated Temporary Draft — Not Saved
+                {currentCandidateSource === "harmonized"
+                  ? "Harmonized Draft — Temporary, Not Saved"
+                  : currentCandidateSource === "assembled"
+                  ? "Assembled Draft — Temporary, Not Saved"
+                  : currentCandidateSource === "refined"
+                  ? "Refined Draft — Temporary, Not Saved"
+                  : currentCandidateSource === "whole-scene"
+                  ? "Quick Whole-Scene Draft — Temporary, Not Saved"
+                  : "Generated Temporary Draft — Not Saved"}
               </p>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-tiki-brown/45">
+                <span>Source: <span className="font-semibold text-tiki-brown/60">{pipelineReadiness.candidate.label}</span></span>
+                <span>Saved: <span className="font-semibold text-warm-coral">No</span></span>
+                <span>Public: <span className="font-semibold text-warm-coral">No</span></span>
+                <span>Eligible: <span className="font-semibold text-tropical-green">Yes</span></span>
+              </div>
 
               {result.image?.base64 || result.image?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -3336,11 +3451,29 @@ export default function PanelDraftGenerator({
             <div className="flex flex-col gap-3 border-t border-tiki-brown/10 pt-4">
               <div className="flex items-center gap-2">
                 <span className="text-base">✨</span>
-                <h4 className="text-sm font-black text-tiki-brown">Approve & Save Panel to Episode</h4>
+                <h4 className="text-sm font-black text-tiki-brown">Approve & Save Current Candidate</h4>
               </div>
               <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                This will save the approved draft to media storage and attach it to this episode. It will not make it public yet.
+                This will save the current panel candidate to media storage and attach it to this episode. It will not make it public yet.
               </p>
+
+              {/* Current candidate info */}
+              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55 bg-white/50 border border-tiki-brown/8 rounded-xl px-3 py-2">
+                <span className="font-bold text-tiki-brown/45 uppercase tracking-wide w-full">Current Panel Candidate</span>
+                <span>Source: <span className="font-semibold text-tiki-brown/70">{pipelineReadiness.candidate.label}</span></span>
+                <span>Saved: <span className="font-semibold text-warm-coral">No</span></span>
+                <span>Public: <span className="font-semibold text-warm-coral">No</span></span>
+              </div>
+
+              {/* Warning: assembled draft with no character layers */}
+              {currentCandidateSource === "assembled" && (assembleResult?.draft?.characterLayerIds.length ?? 0) === 0 && (
+                <div className="flex items-start gap-2 bg-warm-coral/8 border border-warm-coral/20 rounded-xl px-3 py-2">
+                  <span className="text-xs flex-shrink-0 mt-0.5">⚠</span>
+                  <p className="text-xs text-warm-coral/80 leading-relaxed">
+                    This assembled draft contains no character layers — only the background will be saved. Generate and save character layers first if characters should appear in the panel.
+                  </p>
+                </div>
+              )}
 
               {approveAndSaveStatus !== "success" && attachStatus !== "success" && (
                 <label className="flex items-start gap-2.5 cursor-pointer">
