@@ -968,6 +968,28 @@ export default function PanelDraftGenerator({
   const [bgSaveResult, setBgSaveResult] = useState<BgSaveResult | null>(null);
   const [bgSaveError, setBgSaveError] = useState<string>("");
 
+  // Selectable official backgrounds state (Phase 18E.4)
+  const [selectableBgStatus, setSelectableBgStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [selectableBgError, setSelectableBgError] = useState<string>("");
+  const [selectableBg, setSelectableBg] = useState<Array<{
+    id: string;
+    characterSlug?: string;
+    characterName?: string;
+    title: string;
+    description?: string;
+    imageUrl: string;
+    pathname?: string;
+    mimeType?: string;
+    role: string;
+    tags: string[];
+    source: string;
+    priority?: string;
+  }>>([]);
+  const [selectedBgForSave, setSelectedBgForSave] = useState<typeof selectableBg[0] | null>(null);
+  const [selectedBgSaveStatus, setSelectedBgSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [selectedBgSaveResult, setSelectedBgSaveResult] = useState<BgSaveResult | null>(null);
+  const [selectedBgSaveError, setSelectedBgSaveError] = useState<string>("");
+
   // Per-character layer draft and save state
   const [charLayerDrafts, setCharLayerDrafts] = useState<Record<string, CharLayerDraftState>>({});
   const [charLayerSaves, setCharLayerSaves] = useState<Record<string, CharLayerSaveState>>({});
@@ -1552,6 +1574,96 @@ export default function PanelDraftGenerator({
     } catch {
       setBgDraftStatus("error");
       setBgDraftError("Network error — could not reach background generation API.");
+    }
+  }
+
+  async function handleLoadSelectableBackgrounds() {
+    setSelectableBgStatus("loading");
+    setSelectableBg([]);
+    setSelectedBgForSave(null);
+    setSelectableBgError("");
+    try {
+      const resp = await fetch("/api/story-panel/selectable-backgrounds", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          referenceCharacters,
+          settingLabel: planSummary?.settingLabel ?? result?.assemblyPlanSetting,
+        }),
+      });
+      const data = (await resp.json()) as {
+        ok: boolean;
+        status: string;
+        backgrounds?: Array<{
+          id: string;
+          characterSlug?: string;
+          characterName?: string;
+          title: string;
+          description?: string;
+          imageUrl: string;
+          pathname?: string;
+          mimeType?: string;
+          role: string;
+          tags: string[];
+          source: string;
+          priority?: string;
+        }>;
+        count?: number;
+        message?: string;
+        warnings?: string[];
+      };
+      if (data.ok && data.backgrounds) {
+        setSelectableBg(data.backgrounds);
+        if (data.backgrounds.length === 0) {
+          setSelectableBgStatus("error");
+          setSelectableBgError(
+            "No official environment/home backgrounds found for this scene's characters. Upload environment/home references in the character profile or use Generate Background Draft."
+          );
+        } else {
+          setSelectableBgStatus("idle");
+        }
+      } else {
+        setSelectableBgStatus("error");
+        setSelectableBgError(data.message ?? "Could not load selectable backgrounds.");
+      }
+    } catch {
+      setSelectableBgStatus("error");
+      setSelectableBgError("Network error — could not reach backgrounds API.");
+    }
+  }
+
+  async function handleSaveSelectedBackground(background: typeof selectableBg[0]) {
+    setSelectedBgForSave(background);
+    setSelectedBgSaveStatus("saving");
+    setSelectedBgSaveResult(null);
+    setSelectedBgSaveError("");
+    try {
+      const resp = await fetch("/api/media/save-selected-background-layer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          sceneNumber,
+          sceneId: sceneId || undefined,
+          selectedBackground: background,
+        }),
+      });
+      const data: BgSaveResult = await resp.json();
+      setSelectedBgSaveResult(data);
+      if (data.ok) {
+        setSelectedBgSaveStatus("saved");
+        setBgSaveStatus("saved");
+        setBgSaveResult(data);
+      } else {
+        setSelectedBgSaveStatus("error");
+        setSelectedBgSaveError(data.message ?? "Failed to save selected background.");
+      }
+    } catch {
+      setSelectedBgSaveStatus("error");
+      setSelectedBgSaveError("Network error — could not reach save API.");
     }
   }
 
@@ -2234,216 +2346,322 @@ export default function PanelDraftGenerator({
             </div>
             <div className="p-4 flex flex-col gap-4">
               <p className="text-xs text-tiki-brown/50 leading-relaxed">
-                Generate a background-only scene layer with no characters. This layer is never published — it is used only for layer assembly.
+                Select an official Environment / Home Reference asset or generate a new background layer. The selected background is never published — it is used only for layer assembly.
               </p>
 
-              {planStatus === "ready" && planSummary && (
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
-                  <span>Setting: <span className="font-semibold text-tiki-brown/70">{planSummary.settingLabel}</span></span>
-                  <span>Mood: <span className="font-semibold text-tiki-brown/70">{planSummary.mood}</span></span>
-                </div>
-              )}
-              {planStatus !== "ready" && (
-                <div className="flex items-start gap-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-3 py-2">
-                  <span className="text-xs flex-shrink-0 mt-0.5">⚠</span>
-                  <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                    Build the Scene Assembly Plan first for the best background prompt. Background will use the panel prompt as fallback.
-                  </p>
-                </div>
-              )}
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                Background Direction
-                <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
-              </label>
-              <textarea
-                value={bgDirection}
-                onChange={(e) => setBgDirection(e.target.value)}
-                placeholder="Example: Make the classroom warmer with a rug and window light, but leave open space in the center."
-                rows={2}
-                maxLength={600}
-                disabled={bgDraftStatus === "loading"}
-                className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-tiki-brown/30 disabled:opacity-50"
-              />
-            </div>
-
-            <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
-              <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
-              <p className="text-xs text-tiki-brown/60 leading-relaxed">
-                No characters will be generated. The background prompt explicitly forbids Fruit Baby characters, faces, arms, crowns, stems, and silhouettes.
-              </p>
-            </div>
-
-            <button
-              onClick={handleGenerateBackground}
-              disabled={bgDraftStatus === "loading"}
-              className="self-start px-4 py-2 rounded-xl bg-tiki-brown/80 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
-            >
-              {bgDraftStatus === "loading" ? "Generating background…" : "Generate Background Draft"}
-            </button>
-
-            {bgDraftStatus === "loading" && (
-              <p className="text-sm text-tiki-brown/45 italic animate-pulse">
-                Generating background-only scene layer…
-              </p>
-            )}
-
-            {bgDraftStatus === "error" && (
-              <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-                <span className="text-xs font-bold text-warm-coral">Background generation failed</span>
-                {bgDraftError && <p className="text-xs text-tiki-brown/60">{bgDraftError}</p>}
-              </div>
-            )}
-
-            {bgDraftStatus === "done" && bgDraft?.ok && bgDraft.draft && (
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
-                    Background-only temporary draft — not a story panel
-                  </span>
-                  {bgDraft.draft.promptWasCompacted && (
-                    <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
-                  )}
-                </div>
-                {(bgDraft.draft.imageBase64 || bgDraft.draft.imageUrl) && (
-                  <div className="flex flex-col gap-1.5">
-                    {bgDraft.draft.imageBase64 ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`data:${bgDraft.draft.mimeType};base64,${bgDraft.draft.imageBase64}`}
-                        alt="Background-only temporary draft"
-                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
-                      />
-                    ) : bgDraft.draft.imageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={bgDraft.draft.imageUrl}
-                        alt="Background-only temporary draft"
-                        className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
-                      />
-                    ) : null}
-                    <p className="text-xs text-tiki-brown/35 italic">
-                      Review the background. If characters appear, regenerate with stronger no-character direction.
+              {/* ── A. Select Official Background — Recommended ─── */}
+              <div className="flex flex-col gap-3 border-2 border-tropical-green/25 bg-tropical-green/5 rounded-2xl p-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-lg flex-shrink-0">⭐</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-black text-tiki-brown">A. Select Official Background — Recommended</p>
+                    <p className="text-xs text-tiki-brown/50 leading-relaxed mt-1">
+                      Use an approved Environment / Home Reference asset as the exact storyboard background. The app duplicates it into this episode as an admin-only background layer.
                     </p>
                   </div>
-                )}
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
-                  <span>Provider: <span className="font-semibold">{bgDraft.draft.provider === "openai" ? "OpenAI" : bgDraft.draft.provider}</span></span>
-                  {bgDraft.draft.modelId && (
-                    <span>Model: <span className="font-mono">{bgDraft.draft.modelId}</span></span>
-                  )}
-                  {bgDraft.draft.providerPromptLength !== undefined && (
-                    <span>Prompt: <span className="font-semibold">{bgDraft.draft.providerPromptLength}</span> chars</span>
-                  )}
-                  {bgDraft.draft.settingLabel && (
-                    <span>Setting: <span className="font-semibold">{bgDraft.draft.settingLabel}</span></span>
-                  )}
                 </div>
-                {bgDraft.environmentReferenceCount !== undefined && bgDraft.environmentReferenceCount > 0 ? (
-                  <div className="flex flex-col gap-0.5 bg-tropical-green/6 border border-tropical-green/18 rounded-lg px-2.5 py-1.5">
-                    <p className="text-xs font-semibold text-tropical-green/80">
-                      {bgDraft.environmentReferenceCount} env reference{bgDraft.environmentReferenceCount !== 1 ? "s" : ""} used
-                      {bgDraft.environmentReferenceMode === "text-only" && " (text guidance)"}
-                      {bgDraft.environmentReferenceMode === "image-reference" && " (image-conditioned)"}
-                    </p>
-                    {bgDraft.environmentReferenceTitles && bgDraft.environmentReferenceTitles.length > 0 && (
-                      <p className="text-xs text-tiki-brown/50 italic">
-                        {bgDraft.environmentReferenceTitles.join(" · ")}
-                      </p>
-                    )}
-                    {bgDraft.environmentReferenceUrlsUsed && bgDraft.environmentReferenceUrlsUsed.length > 0 && (
-                      <p className="text-xs text-tiki-brown/45">
-                        Selected environment reference passed to provider.
-                      </p>
-                    )}
+
+                {bgSaveStatus === "saved" && bgSaveResult?.ok && bgSaveResult.backgroundLayer && !selectedBgForSave ? (
+                  <div className="flex flex-col gap-2.5 bg-tropical-green/6 border border-tropical-green/20 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-tropical-green">Official background saved to this scene.</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/10">
+                        Admin-only
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1.5 text-xs text-tiki-brown/60">
+                      <span>Source: Selected Official Environment Reference</span>
+                      {bgSaveResult.backgroundLayer.createdAt && (
+                        <span>Saved: <span className="font-semibold">{bgSaveResult.backgroundLayer.createdAt.slice(0, 10)}</span></span>
+                      )}
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-tiki-brown/35 italic">
-                    No environment references found for scene characters.
-                  </p>
-                )}
-                {bgDraft.draft.warnings.length > 0 && (
-                  <div className="flex flex-col gap-0.5">
-                    {bgDraft.draft.warnings.map((w, i) => (
-                      <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
-                    ))}
+                  <div className="flex flex-col gap-2.5">
+                    {selectableBgStatus === "idle" && selectableBg.length === 0 && (
+                      <button
+                        onClick={handleLoadSelectableBackgrounds}
+                        disabled={false}
+                        className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                      >
+                        Load Official Backgrounds
+                      </button>
+                    )}
+
+                    {selectableBgStatus === "loading" && (
+                      <p className="text-sm text-tiki-brown/45 italic animate-pulse">Loading official backgrounds…</p>
+                    )}
+
+                    {selectableBgStatus === "error" && (
+                      <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                        <span className="text-xs font-bold text-warm-coral">Could not load backgrounds</span>
+                        {selectableBgError && <p className="text-xs text-tiki-brown/60">{selectableBgError}</p>}
+                      </div>
+                    )}
+
+                    {selectableBg.length > 0 && (
+                      <div className="flex flex-col gap-3">
+                        <p className="text-xs text-tiki-brown/50 font-semibold">Available backgrounds ({selectableBg.length}):</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {selectableBg.map((bg) => (
+                            <button
+                              key={bg.id}
+                              onClick={() => handleSaveSelectedBackground(bg)}
+                              disabled={selectedBgSaveStatus === "saving"}
+                              className={`flex flex-col gap-2 p-2.5 rounded-xl border-2 transition-all ${
+                                selectedBgForSave?.id === bg.id
+                                  ? "border-tropical-green/50 bg-tropical-green/8"
+                                  : "border-tiki-brown/10 hover:border-tropical-green/30 bg-white"
+                              }`}
+                            >
+                              {/* Thumbnail */}
+                              <div className="flex-1 min-h-24 overflow-hidden rounded-lg bg-tiki-brown/3 border border-tiki-brown/10">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={bg.imageUrl}
+                                  alt={bg.title}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                              {/* Labels */}
+                              <div className="flex flex-col gap-1">
+                                <p className="text-xs font-semibold text-tiki-brown/80 line-clamp-2">{bg.title}</p>
+                                {bg.characterName && (
+                                  <p className="text-xs text-tiki-brown/50">{bg.characterName}</p>
+                                )}
+                                {bg.priority === "primary" && (
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green font-semibold text-center">
+                                    Primary
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+
+                        {selectedBgForSave && selectedBgSaveStatus === "saving" && (
+                          <p className="text-sm text-tiki-brown/45 italic animate-pulse">Saving selected background…</p>
+                        )}
+
+                        {selectedBgSaveStatus === "error" && (
+                          <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                            <span className="text-xs font-bold text-warm-coral">Save failed</span>
+                            {selectedBgSaveError && <p className="text-xs text-tiki-brown/60">{selectedBgSaveError}</p>}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
-                {bgDraft.notes && bgDraft.notes.length > 0 && (
-                  <ul className="flex flex-col gap-0.5">
-                    {bgDraft.notes.map((n, i) => (
-                      <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
-                    ))}
-                  </ul>
-                )}
+              </div>
 
-                {/* ── Save Background Layer ── */}
-                <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-3">
-                  <div className="flex flex-col gap-0.5">
-                    <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Save Background Layer</p>
-                    <p className="text-xs text-tiki-brown/45 leading-relaxed">
-                      Save this background-only image as an admin-only scene layer for future character assembly.
-                      It will not appear publicly and will not replace the story panel.
+              {/* ── B. Generate Background Draft — Optional ─── */}
+              <div className="flex flex-col gap-3 border-2 border-tiki-brown/15 bg-tiki-brown/3 rounded-2xl p-4">
+                <div className="flex items-start gap-2">
+                  <span className="text-lg flex-shrink-0">⚙️</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-black text-tiki-brown">B. Generate Background Draft — Optional</p>
+                    <p className="text-xs text-tiki-brown/50 leading-relaxed mt-1">
+                      Generate a new background if no official background fits this scene. A generated background is optional and secondary to the official selection path.
                     </p>
                   </div>
+                </div>
 
-                  {bgSaveStatus !== "saved" && (
-                    <button
-                      onClick={handleSaveBackground}
-                      disabled={bgSaveStatus === "saving"}
-                      className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
-                    >
-                      {bgSaveStatus === "saving" ? "Saving…" : "Save Background Layer"}
-                    </button>
-                  )}
-
-                  {bgSaveStatus === "saving" && (
-                    <p className="text-sm text-tiki-brown/45 italic animate-pulse">Uploading and saving background layer…</p>
-                  )}
-
-                  {bgSaveStatus === "error" && (
-                    <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
-                      <span className="text-xs font-bold text-warm-coral">Save failed</span>
-                      {bgSaveError && <p className="text-xs text-tiki-brown/60">{bgSaveError}</p>}
+                {bgSaveStatus === "saved" && bgSaveResult?.ok && bgSaveResult.backgroundLayer && !selectedBgForSave ? (
+                  <div className="flex flex-col gap-2.5 bg-tropical-green/6 border border-tropical-green/20 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-tropical-green">Background layer saved to this scene.</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/10">
+                        Admin-only
+                      </span>
                     </div>
-                  )}
-
-                  {bgSaveStatus === "saved" && bgSaveResult?.ok && bgSaveResult.backgroundLayer && (
-                    <div className="flex flex-col gap-2.5 bg-tropical-green/6 border border-tropical-green/20 rounded-xl px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-tropical-green">Background layer saved to this scene.</span>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/50 uppercase tracking-wide border border-tiki-brown/10">
-                          Admin-only
-                        </span>
-                      </div>
-                      {bgSaveResult.backgroundLayer.imageUrl && (
-                        <a
-                          href={bgSaveResult.backgroundLayer.imageUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-ube-purple underline break-all hover:opacity-75"
-                        >
-                          {bgSaveResult.backgroundLayer.imageUrl}
-                        </a>
-                      )}
-                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
-                        {bgSaveResult.backgroundLayer.provider && (
-                          <span>Provider: <span className="font-semibold">{bgSaveResult.backgroundLayer.provider === "openai" ? "OpenAI" : bgSaveResult.backgroundLayer.provider}</span></span>
-                        )}
-                        {bgSaveResult.backgroundLayer.settingLabel && (
-                          <span>Setting: <span className="font-semibold">{bgSaveResult.backgroundLayer.settingLabel}</span></span>
-                        )}
+                    <div className="flex flex-col gap-1.5 text-xs text-tiki-brown/60">
+                      <span>Source: Generated Background Draft</span>
+                      {bgSaveResult.backgroundLayer.createdAt && (
                         <span>Saved: <span className="font-semibold">{bgSaveResult.backgroundLayer.createdAt.slice(0, 10)}</span></span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {planStatus === "ready" && planSummary && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/55">
+                        <span>Setting: <span className="font-semibold text-tiki-brown/70">{planSummary.settingLabel}</span></span>
+                        <span>Mood: <span className="font-semibold text-tiki-brown/70">{planSummary.mood}</span></span>
                       </div>
-                      <p className="text-xs text-tiki-brown/40 italic">
-                        Next step: Generate and save character layers in Step 3, then assemble in Step 4.
+                    )}
+                    {planStatus !== "ready" && (
+                      <div className="flex items-start gap-2 bg-pineapple-yellow/8 border border-pineapple-yellow/25 rounded-xl px-3 py-2">
+                        <span className="text-xs flex-shrink-0 mt-0.5">⚠</span>
+                        <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                          Build the Scene Assembly Plan first for the best background prompt. Background will use the panel prompt as fallback.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                        Background Direction
+                        <span className="ml-1.5 font-normal normal-case text-tiki-brown/35">(optional)</span>
+                      </label>
+                      <textarea
+                        value={bgDirection}
+                        onChange={(e) => setBgDirection(e.target.value)}
+                        placeholder="Example: Make the classroom warmer with a rug and window light, but leave open space in the center."
+                        rows={2}
+                        maxLength={600}
+                        disabled={bgDraftStatus === "loading"}
+                        className="w-full text-xs text-tiki-brown/80 bg-white border border-tiki-brown/15 rounded-xl px-3 py-2.5 leading-relaxed resize-y placeholder:text-tiki-brown/25 focus:outline-none focus:border-tiki-brown/30 disabled:opacity-50"
+                      />
+                    </div>
+
+                    <div className="flex items-start gap-2 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-3 py-2">
+                      <span className="text-xs flex-shrink-0 mt-0.5">ℹ</span>
+                      <p className="text-xs text-tiki-brown/60 leading-relaxed">
+                        No characters will be generated. The background prompt explicitly forbids Fruit Baby characters, faces, arms, crowns, stems, and silhouettes.
                       </p>
                     </div>
-                  )}
-                </div>
+
+                    <button
+                      onClick={handleGenerateBackground}
+                      disabled={bgDraftStatus === "loading"}
+                      className="self-start px-4 py-2 rounded-xl bg-tiki-brown/80 text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-tiki-brown transition-colors"
+                    >
+                      {bgDraftStatus === "loading" ? "Generating background…" : "Generate Background Draft"}
+                    </button>
+
+                    {bgDraftStatus === "loading" && (
+                      <p className="text-sm text-tiki-brown/45 italic animate-pulse">
+                        Generating background-only scene layer…
+                      </p>
+                    )}
+
+                    {bgDraftStatus === "error" && (
+                      <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                        <span className="text-xs font-bold text-warm-coral">Background generation failed</span>
+                        {bgDraftError && <p className="text-xs text-tiki-brown/60">{bgDraftError}</p>}
+                      </div>
+                    )}
+
+                    {bgDraftStatus === "done" && bgDraft?.ok && bgDraft.draft && (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 uppercase tracking-wide border border-tiki-brown/12">
+                            Background-only temporary draft — not a story panel
+                          </span>
+                          {bgDraft.draft.promptWasCompacted && (
+                            <span className="text-xs font-semibold text-pineapple-yellow-dark">Prompt compacted</span>
+                          )}
+                        </div>
+                        {(bgDraft.draft.imageBase64 || bgDraft.draft.imageUrl) && (
+                          <div className="flex flex-col gap-1.5">
+                            {bgDraft.draft.imageBase64 ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={`data:${bgDraft.draft.mimeType};base64,${bgDraft.draft.imageBase64}`}
+                                alt="Background-only temporary draft"
+                                className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                              />
+                            ) : bgDraft.draft.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={bgDraft.draft.imageUrl}
+                                alt="Background-only temporary draft"
+                                className="w-full max-w-sm rounded-xl border border-tiki-brown/10 shadow-sm"
+                              />
+                            ) : null}
+                            <p className="text-xs text-tiki-brown/35 italic">
+                              Review the background. If characters appear, regenerate with stronger no-character direction.
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-tiki-brown/50">
+                          <span>Provider: <span className="font-semibold">{bgDraft.draft.provider === "openai" ? "OpenAI" : bgDraft.draft.provider}</span></span>
+                          {bgDraft.draft.modelId && (
+                            <span>Model: <span className="font-mono">{bgDraft.draft.modelId}</span></span>
+                          )}
+                          {bgDraft.draft.providerPromptLength !== undefined && (
+                            <span>Prompt: <span className="font-semibold">{bgDraft.draft.providerPromptLength}</span> chars</span>
+                          )}
+                          {bgDraft.draft.settingLabel && (
+                            <span>Setting: <span className="font-semibold">{bgDraft.draft.settingLabel}</span></span>
+                          )}
+                        </div>
+                        {bgDraft.environmentReferenceCount !== undefined && bgDraft.environmentReferenceCount > 0 ? (
+                          <div className="flex flex-col gap-0.5 bg-tropical-green/6 border border-tropical-green/18 rounded-lg px-2.5 py-1.5">
+                            <p className="text-xs font-semibold text-tropical-green/80">
+                              {bgDraft.environmentReferenceCount} env reference{bgDraft.environmentReferenceCount !== 1 ? "s" : ""} used
+                              {bgDraft.environmentReferenceMode === "text-only" && " (text guidance)"}
+                              {bgDraft.environmentReferenceMode === "image-reference" && " (image-conditioned)"}
+                            </p>
+                            {bgDraft.environmentReferenceTitles && bgDraft.environmentReferenceTitles.length > 0 && (
+                              <p className="text-xs text-tiki-brown/50 italic">
+                                {bgDraft.environmentReferenceTitles.join(" · ")}
+                              </p>
+                            )}
+                            {bgDraft.environmentReferenceUrlsUsed && bgDraft.environmentReferenceUrlsUsed.length > 0 && (
+                              <p className="text-xs text-tiki-brown/45">
+                                Selected environment reference passed to provider.
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-tiki-brown/35 italic">
+                            No environment references found for scene characters.
+                          </p>
+                        )}
+                        {bgDraft.draft.warnings.length > 0 && (
+                          <div className="flex flex-col gap-0.5">
+                            {bgDraft.draft.warnings.map((w, i) => (
+                              <span key={i} className="text-xs text-pineapple-yellow-dark">⚠ {w}</span>
+                            ))}
+                          </div>
+                        )}
+                        {bgDraft.notes && bgDraft.notes.length > 0 && (
+                          <ul className="flex flex-col gap-0.5">
+                            {bgDraft.notes.map((n, i) => (
+                              <li key={i} className="text-xs text-tiki-brown/40 italic">{n}</li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {/* ── Save Background Layer ── */}
+                        <div className="border-t border-tiki-brown/10 pt-3 flex flex-col gap-3">
+                          <div className="flex flex-col gap-0.5">
+                            <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Save Background Layer</p>
+                            <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                              Save this background-only image as an admin-only scene layer for future character assembly.
+                              It will not appear publicly and will not replace the story panel.
+                            </p>
+                          </div>
+
+                          {bgSaveStatus !== "saved" && (
+                            <button
+                              onClick={handleSaveBackground}
+                              disabled={bgSaveStatus === "saving"}
+                              className="self-start px-4 py-2 rounded-xl bg-tropical-green text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+                            >
+                              {bgSaveStatus === "saving" ? "Saving…" : "Save Background Layer"}
+                            </button>
+                          )}
+
+                          {bgSaveStatus === "saving" && (
+                            <p className="text-sm text-tiki-brown/45 italic animate-pulse">Uploading and saving background layer…</p>
+                          )}
+
+                          {bgSaveStatus === "error" && (
+                            <div className="flex flex-col gap-1.5 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-3 py-2.5">
+                              <span className="text-xs font-bold text-warm-coral">Save failed</span>
+                              {bgSaveError && <p className="text-xs text-tiki-brown/60">{bgSaveError}</p>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
             </div>
           </div>
 

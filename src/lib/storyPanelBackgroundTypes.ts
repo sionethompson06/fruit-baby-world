@@ -21,6 +21,12 @@ export type EpisodeSceneBackgroundLayer = {
   environmentDescription?: string;
   assemblyPlanId?: string;
 
+  sourceType?: "generated-background" | "selected-official-environment-reference" | "golden-reference-background";
+  originalReferenceId?: string;
+  originalReferenceTitle?: string;
+  originalReferenceCharacterSlug?: string;
+  originalReferenceImageUrl?: string;
+
   createdAt: string;
   updatedAt?: string;
 };

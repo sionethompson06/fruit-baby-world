@@ -17,6 +17,21 @@ export type SceneEnvironmentRef = {
   assetType: string;
 };
 
+export type SelectableEnvironmentBackground = {
+  id: string;
+  characterSlug?: string;
+  characterName?: string;
+  title: string;
+  description?: string;
+  imageUrl: string;
+  pathname?: string;
+  mimeType?: string;
+  role: "environment" | "home" | "environment-home" | "setting" | "world" | "scene-style";
+  tags: string[];
+  source: "official-character-reference" | "golden-reference";
+  priority?: string;
+};
+
 export type EnvironmentReferenceSummary = {
   count: number;
   ids: string[];
@@ -145,4 +160,58 @@ export function buildEnvironmentReferencePromptSection(
   );
 
   return lines.join("\n");
+}
+
+// Returns all approved environment/home reference assets for the scene's characters.
+// Formatted as selectable backgrounds for the admin UI.
+// Excludes character-only, profile, and other non-environment references.
+export function getSelectableEnvironmentBackgroundsForScene(
+  sceneRefPkg: SceneReferencePackage
+): SelectableEnvironmentBackground[] {
+  const backgrounds: SelectableEnvironmentBackground[] = [];
+
+  for (const charPkg of sceneRefPkg.characterPackages) {
+    for (const asset of charPkg.environmentReferences) {
+      if (!asset.blobUrl) continue;
+
+      // Determine role from assetType
+      let role: SelectableEnvironmentBackground["role"] = "environment";
+      const assetTypeLower = (asset.assetType || "").toLowerCase();
+      if (assetTypeLower.includes("home")) {
+        role = "home";
+      } else if (assetTypeLower.includes("environment") && assetTypeLower.includes("home")) {
+        role = "environment-home";
+      } else if (assetTypeLower.includes("setting")) {
+        role = "setting";
+      } else if (assetTypeLower.includes("scene-style")) {
+        role = "scene-style";
+      } else if (assetTypeLower.includes("world")) {
+        role = "world";
+      }
+
+      backgrounds.push({
+        id: asset.id,
+        characterSlug: charPkg.characterSlug,
+        characterName: charPkg.characterName,
+        title: asset.title || asset.description || asset.assetType,
+        description: asset.description,
+        imageUrl: asset.blobUrl,
+        pathname: asset.blobUrl,
+        mimeType: asset.mimeType,
+        role,
+        tags: [asset.assetType || "environment"],
+        source: "official-character-reference",
+        priority: charPkg.characterSlug === sceneRefPkg.characterSlugs[0] ? "primary" : undefined,
+      });
+    }
+  }
+
+  // Sort: primary character first, then by title
+  backgrounds.sort((a, b) => {
+    if (a.priority === "primary" && b.priority !== "primary") return -1;
+    if (b.priority === "primary" && a.priority !== "primary") return 1;
+    return (a.title || "").localeCompare(b.title || "");
+  });
+
+  return backgrounds;
 }
