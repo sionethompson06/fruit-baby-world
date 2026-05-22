@@ -167,6 +167,22 @@
           "environmentDescription": "=== A. PANEL TASK ===\nCreate a single still storybook illustration panel for Scene 4 — \"A Surprising Return\".\nStyle: children's picture book, colorful, warm, soft, and rounded.\nCapture a single clear,",
           "createdAt": "2026-05-20T23:17:19.051Z",
           "updatedAt": "2026-05-20T23:17:19.051Z"
+        },
+        {
+          "id": "bg-layer-1779437883459",
+          "type": "background-layer",
+          "status": "saved",
+          "visibility": "admin-only",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/sample-episode/background-layers/scene-4/official-background-1779437882451.png",
+          "pathname": "episodes/sample-episode/background-layers/scene-4/official-background-1779437882451.png",
+          "mimeType": "image/png",
+          "createdAt": "2026-05-22T08:18:03.459Z",
+          "updatedAt": "2026-05-22T08:18:03.459Z",
+          "sourceType": "selected-official-environment-reference",
+          "originalReferenceId": "ref-1778968770429-slrd06",
+          "originalReferenceTitle": "Pineapple Grove 1",
+          "originalReferenceCharacterSlug": "pineapple-baby",
+          "originalReferenceImageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968769535-pineapple-grove.png"
         }
       ]
     }
@@ -278,5 +294,5 @@
       ]
     }
   },
-  "updatedAt": "2026-05-21T09:12:10.320Z"
+  "updatedAt": "2026-05-22T08:18:03.459Z"
 }
