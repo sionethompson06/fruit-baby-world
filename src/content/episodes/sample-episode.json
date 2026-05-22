@@ -183,6 +183,22 @@
           "originalReferenceTitle": "Pineapple Grove 1",
           "originalReferenceCharacterSlug": "pineapple-baby",
           "originalReferenceImageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968769535-pineapple-grove.png"
+        },
+        {
+          "id": "bg-layer-1779437886765",
+          "type": "background-layer",
+          "status": "saved",
+          "visibility": "admin-only",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/sample-episode/background-layers/scene-4/official-background-1779437885898.png",
+          "pathname": "episodes/sample-episode/background-layers/scene-4/official-background-1779437885898.png",
+          "mimeType": "image/png",
+          "createdAt": "2026-05-22T08:18:06.765Z",
+          "updatedAt": "2026-05-22T08:18:06.765Z",
+          "sourceType": "selected-official-environment-reference",
+          "originalReferenceId": "ref-1778968591537-ty5zy3",
+          "originalReferenceTitle": "Pineapple Grove",
+          "originalReferenceCharacterSlug": "pineapple-baby",
+          "originalReferenceImageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/reference-assets/characters/pineapple-baby/1778968590668-pineapple-grove-1.png"
         }
       ]
     }
@@ -294,5 +310,5 @@
       ]
     }
   },
-  "updatedAt": "2026-05-22T08:18:03.459Z"
+  "updatedAt": "2026-05-22T08:18:06.765Z"
 }
