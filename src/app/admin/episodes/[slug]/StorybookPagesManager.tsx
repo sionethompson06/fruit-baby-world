@@ -1,9 +1,25 @@
 "use client";
 
 import { useState, useRef } from "react";
+import Link from "next/link";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+type BulkUploadProgress = {
+  total: number;
+  uploaded: number;
+  failed: number;
+  current: number;
+  errors: Record<string, string>; // filename -> error message
+};
+
+type BulkUploadState =
+  | { phase: "idle" }
+  | { phase: "preview"; files: File[] }
+  | { phase: "uploading"; progress: BulkUploadProgress }
+  | { phase: "done"; added: number }
+  | { phase: "error"; message: string };
 
 type UploadState =
   | { phase: "idle" }
@@ -12,7 +28,285 @@ type UploadState =
   | { phase: "done"; page: StorybookPage }
   | { phase: "error"; message: string };
 
-// ─── Upload Form ──────────────────────────────────────────────────────────────
+// ─── Bulk Upload Form ─────────────────────────────────────────────────────────
+
+function BulkUploadForm({
+  episodeSlug,
+  existingPageCount,
+  onPagesSaved,
+}: {
+  episodeSlug: string;
+  existingPageCount: number;
+  onPagesSaved: (pages: StorybookPage[]) => void;
+}) {
+  const [state, setState] = useState<BulkUploadState>({ phase: "idle" });
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.currentTarget.files || []);
+    if (files.length === 0) return;
+    
+    const validFiles = files.filter((f) => {
+      const mime = f.type.toLowerCase();
+      return ["image/png", "image/jpeg", "image/webp"].includes(mime);
+    });
+
+    if (validFiles.length === 0) {
+      setState({ phase: "error", message: "No valid image files selected. Please use PNG, JPEG, or WebP." });
+      return;
+    }
+
+    if (validFiles.length !== files.length) {
+      setState({
+        phase: "error",
+        message: `${files.length - validFiles.length} file(s) were skipped (invalid format).`,
+      });
+      return;
+    }
+
+    setState({ phase: "preview", files: validFiles });
+  };
+
+  async function uploadBulk() {
+    const files = (state as any).files as File[];
+    if (!files || files.length === 0) return;
+
+    const progress: BulkUploadProgress = {
+      total: files.length,
+      uploaded: 0,
+      failed: 0,
+      current: 0,
+      errors: {},
+    };
+
+    setState({ phase: "uploading", progress });
+
+    const uploadedPages: StorybookPage[] = [];
+    let pageNumber = existingPageCount + 1;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      progress.current = i + 1;
+
+      try {
+        // Convert to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Upload to Vercel Blob
+        const uploadRes = await fetch("/api/media/upload-storybook-page", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            episodeSlug,
+            imageBase64: base64,
+            mimeType: file.type,
+            altText: `Page ${pageNumber}`,
+          }),
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadData.ok) {
+          progress.failed++;
+          progress.errors[file.name] = uploadData.message ?? "Upload failed";
+          setState({ phase: "uploading", progress: { ...progress } });
+          continue;
+        }
+
+        // Save metadata to GitHub
+        const saveRes = await fetch("/api/github/save-storybook-page", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            episodeSlug,
+            page: {
+              imageUrl: uploadData.asset.url,
+              pathname: uploadData.asset.pathname,
+              mimeType: uploadData.asset.mimeType,
+              altText: `Page ${pageNumber}`,
+              title: undefined,
+              caption: undefined,
+              readAloudText: undefined,
+              status: "draft",
+              visibility: "admin-only",
+            },
+          }),
+        });
+
+        const saveData = await saveRes.json();
+        if (!saveData.ok) {
+          progress.failed++;
+          progress.errors[file.name] = saveData.message ?? "Failed to save";
+          setState({ phase: "uploading", progress: { ...progress } });
+          continue;
+        }
+
+        uploadedPages.push(saveData.page);
+        progress.uploaded++;
+        pageNumber++;
+        setState({ phase: "uploading", progress: { ...progress } });
+      } catch (e) {
+        progress.failed++;
+        progress.errors[file.name] = e instanceof Error ? e.message : "Unknown error";
+        setState({ phase: "uploading", progress: { ...progress } });
+      }
+    }
+
+    if (uploadedPages.length > 0) {
+      setState({ phase: "done", added: uploadedPages.length });
+      onPagesSaved(uploadedPages);
+      // Reset file input
+      if (fileRef.current) fileRef.current.value = "";
+    } else {
+      setState({
+        phase: "error",
+        message: `Failed to upload all ${files.length} file(s). Please try again.`,
+      });
+    }
+  }
+
+  function cancelPreview() {
+    setState({ phase: "idle" });
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  if (state.phase === "preview") {
+    const files = (state as any).files as File[];
+    return (
+      <div className="bg-white rounded-2xl border border-ube-purple/20 p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📋</span>
+          <h3 className="text-sm font-bold text-tiki-brown">Review & Upload</h3>
+        </div>
+        <p className="text-xs text-tiki-brown/60">
+          {files.length} image{files.length !== 1 ? "s" : ""} ready to upload:
+        </p>
+        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+          {files.map((file, idx) => (
+            <div
+              key={`${file.name}-${idx}`}
+              className="text-xs bg-tiki-brown/3 rounded-lg px-3 py-2 flex items-center gap-2"
+            >
+              <span className="text-ube-purple font-bold flex-shrink-0">
+                {existingPageCount + idx + 1}
+              </span>
+              <span className="text-tiki-brown/70 flex-1 truncate">{file.name}</span>
+              <span className="text-tiki-brown/40 flex-shrink-0">
+                {(file.size / 1024).toFixed(0)} KB
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={uploadBulk}
+            className="flex-1 text-sm font-bold px-4 py-2.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors"
+          >
+            Upload {files.length} Page{files.length !== 1 ? "s" : ""}
+          </button>
+          <button
+            type="button"
+            onClick={cancelPreview}
+            className="flex-1 text-sm font-bold px-4 py-2.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/70 hover:bg-tiki-brown/12 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.phase === "uploading") {
+    const { progress } = state as any;
+    const percentComplete = Math.round((progress.current / progress.total) * 100);
+    return (
+      <div className="bg-white rounded-2xl border border-ube-purple/20 p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">⏳</span>
+          <h3 className="text-sm font-bold text-tiki-brown">Uploading Pages</h3>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between text-xs text-tiki-brown/60 font-semibold">
+            <span>
+              {progress.current} of {progress.total}
+            </span>
+            <span>{percentComplete}%</span>
+          </div>
+          <div className="w-full bg-tiki-brown/10 rounded-full h-2">
+            <div
+              className="bg-ube-purple rounded-full h-2 transition-all"
+              style={{ width: `${percentComplete}%` }}
+            />
+          </div>
+          <div className="text-xs text-tiki-brown/55 flex items-center gap-2">
+            <span>✓ {progress.uploaded}</span>
+            {progress.failed > 0 && <span>✕ {progress.failed}</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.phase === "done") {
+    return (
+      <div className="bg-tropical-green/10 border border-tropical-green/30 rounded-2xl p-5 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">✓</span>
+          <div>
+            <h3 className="text-sm font-bold text-tropical-green">
+              {(state as any).added} page{(state as any).added !== 1 ? "s" : ""} uploaded
+            </h3>
+            <p className="text-xs text-tropical-green/70">
+              Review, reorder, and update captions below. Mark as public when ready.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.phase === "error") {
+    return (
+      <div className="bg-warm-coral/10 border border-warm-coral/30 rounded-2xl p-5 flex flex-col gap-3">
+        <p className="text-sm text-warm-coral font-semibold">
+          {(state as any).message}
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <label className="flex flex-col gap-3 cursor-pointer">
+        <div className="flex items-center gap-3 bg-gradient-to-br from-ube-purple/10 to-tropical-green/10 rounded-2xl border-2 border-dashed border-ube-purple/30 p-6 hover:border-ube-purple/50 hover:from-ube-purple/15 hover:to-tropical-green/15 transition-all">
+          <span className="text-3xl">📸</span>
+          <div>
+            <p className="text-sm font-bold text-ube-purple">Select Images to Upload</p>
+            <p className="text-xs text-tiki-brown/60">PNG, JPEG, or WebP — up to 20 MB per image</p>
+          </div>
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          accept="image/png,image/jpeg,image/webp"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </label>
+      <p className="text-xs text-tiki-brown/45 text-center">
+        Selected images will become draft pages. You can reorder, edit captions, and publish them after upload.
+      </p>
+    </div>
+  );
+}
+
+// ─── Upload Single Form ───────────────────────────────────────────────────────
 
 function UploadForm({
   episodeSlug,
@@ -489,32 +783,87 @@ export default function StorybookPagesManager({
     });
   }
 
+  function handlePagesSaved(newPages: StorybookPage[]) {
+    setPages((prev) => [...prev, ...newPages]);
+  }
+
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-6">
-      {/* Header */}
+      {/* ── Header with Preview ── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-black text-tiki-brown flex items-center gap-2">
-            <span>📚</span> Storybook Pages
+            <span>📚</span> Storybook Images
           </h2>
           <p className="text-xs text-tiki-brown/55 leading-relaxed">
-            Upload final artwork images to build the public storybook reader.
-            Approved + public pages replace the legacy panels on the public story page.
+            Upload finished storybook artwork in page order. Approved public pages appear in the public storybook reader.
           </p>
         </div>
-        {publicPageCount > 0 && (
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-tropical-green/15 text-tropical-green flex-shrink-0">
-            {publicPageCount} public {publicPageCount === 1 ? "page" : "pages"} live
-          </span>
-        )}
+        <div className="flex flex-col gap-2 flex-shrink-0">
+          {publicPageCount > 0 && (
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-tropical-green/15 text-tropical-green text-center">
+              {publicPageCount} public {publicPageCount === 1 ? "page" : "pages"} live
+            </span>
+          )}
+          <Link
+            href={`/stories/${episodeSlug}`}
+            target="_blank"
+            className="text-xs font-bold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/15 transition-colors text-center"
+          >
+            Preview Storybook →
+          </Link>
+        </div>
       </div>
 
-      {/* Existing pages */}
+      {/* ── Quick Start Checklist ── */}
+      <div className="bg-gradient-to-br from-ube-purple/5 to-tropical-green/5 border border-ube-purple/15 rounded-2xl p-4 flex flex-col gap-3">
+        <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
+          📖 Publishing Checklist
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {[
+            { done: pages.length > 0, label: "Upload images" },
+            { done: pages.length > 1, label: "Put pages in order" },
+            { done: publicPageCount > 0, label: "Mark pages public" },
+            { done: publicPageCount > 0, label: "Preview & publish" },
+          ].map(({ done, label }) => (
+            <div key={label} className="flex items-center gap-2 text-xs text-tiki-brown/60">
+              <span className={done ? "text-tropical-green" : "text-tiki-brown/30"}>
+                {done ? "✓" : "○"}
+              </span>
+              <span className={done ? "text-tropical-green font-semibold" : ""}>
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Bulk Upload Form ── */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+          📤 Upload Images
+        </p>
+        <BulkUploadForm
+          episodeSlug={episodeSlug}
+          existingPageCount={pages.length}
+          onPagesSaved={handlePagesSaved}
+        />
+      </div>
+
+      {/* ── Current Pages ── */}
       {pages.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-            Current Pages ({pages.length})
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+              📋 Current Pages ({pages.length})
+            </p>
+            {pages.length > 1 && (
+              <p className="text-xs text-tiki-brown/40">
+                Drag or use arrows to reorder
+              </p>
+            )}
+          </div>
           <PageList
             episodeSlug={episodeSlug}
             initialPages={pages}
@@ -522,23 +871,22 @@ export default function StorybookPagesManager({
         </div>
       )}
 
-      {/* Upload new page */}
-      <div className="flex flex-col gap-3">
+      {/* ── Add Single Page ── */}
+      <div className="border-t border-tiki-brown/10 pt-4 flex flex-col gap-3">
         <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-          Add New Page
+          Add Single Page (Optional)
         </p>
         <UploadForm episodeSlug={episodeSlug} onPageSaved={handlePageSaved} />
       </div>
 
-      {/* Usage hint */}
+      {/* ── Help Text ── */}
       <div className="flex items-start gap-2.5 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-2xl px-4 py-3">
         <span className="text-sm flex-shrink-0">💡</span>
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-bold text-tiki-brown/65">How storybook pages work</p>
+          <p className="text-xs font-bold text-tiki-brown/65">How to publish a storybook</p>
           <p className="text-xs text-tiki-brown/50 leading-relaxed">
-            Upload each page image as a PNG or JPEG. Set status to <strong>Approved</strong> and
-            visibility to <strong>Public</strong> to show it in the public reader. Pages appear in
-            order by page number. Use the arrows to reorder, then click "Save Page Order to GitHub".
+            Upload multiple images at once. Set each page to <strong>Approved</strong> status and <strong>Public</strong> visibility.
+            Pages will appear in order by page number in the public storybook reader. Use arrows to reorder.
           </p>
         </div>
       </div>
