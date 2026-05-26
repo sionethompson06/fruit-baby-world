@@ -5,18 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 
 const primaryLinks = [
   { href: "/admin", label: "Dashboard", emoji: "🏠" },
-  { href: "/admin/characters", label: "Character Studio", emoji: "🍍" },
-  { href: "/admin/episodes", label: "Story Studio", emoji: "🎬" },
-  { href: "/admin/media", label: "Media Studio", emoji: "🎞️" },
-  { href: "/admin/media-health", label: "Media Health", emoji: "🩺" },
-  { href: "/admin/publishing", label: "Publishing", emoji: "📤" },
-  { href: "/admin/products", label: "Product Studio", emoji: "🛍️" },
+  { href: "/admin/episodes", label: "Stories", emoji: "📚" },
+  { href: "/admin/characters", label: "Characters", emoji: "🍍" },
+  { href: "/admin/media", label: "Media", emoji: "🎞️" },
+  { href: "/admin/publishing", label: "Publish", emoji: "📤" },
 ];
 
-const advancedLinks = [
+const legacyLinks = [
   { href: "/admin/storyboards", label: "Storyboards", emoji: "📝" },
   { href: "/admin/variations", label: "Variations", emoji: "🎨" },
   { href: "/admin/canon", label: "Canon", emoji: "🔒" },
+  { href: "/admin/media-health", label: "Media Health", emoji: "🩺" },
+  { href: "/admin/products", label: "Products", emoji: "🛍️" },
 ];
 
 export default function AdminNav() {
@@ -54,51 +54,29 @@ export default function AdminNav() {
             </Link>
           ))}
 
-          {/* Divider */}
-          <span className="text-ube-purple/20 font-light mx-1 select-none hidden sm:block">|</span>
-
-          {/* Advanced tools — muted */}
-          <span className="text-[10px] font-bold text-ube-purple/35 uppercase tracking-widest pl-1 hidden sm:block whitespace-nowrap">
-            Advanced:
-          </span>
-          {advancedLinks.map(({ href, label, emoji }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-                isActive(href)
-                  ? "bg-ube-purple/60 text-white shadow-sm"
-                  : "text-ube-purple/50 hover:bg-ube-purple/12 hover:text-ube-purple/80"
-              }`}
-            >
-              <span className="text-[10px]">{emoji}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-
           {/* Lock */}
           <button
             onClick={handleLock}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-warm-coral/70 hover:bg-warm-coral/10 hover:text-warm-coral ml-auto"
           >
             <span>🔒</span>
-            <span>Lock Studio</span>
+            <span className="hidden sm:inline">Lock</span>
           </button>
         </div>
 
-        {/* Mobile-only: advanced tools second row */}
-        <div className="flex flex-wrap items-center gap-1 pb-2 sm:hidden">
-          <span className="text-[10px] font-bold text-ube-purple/35 uppercase tracking-widest pr-1">
-            Advanced:
+        {/* Legacy tools — muted secondary row (desktop only) */}
+        <div className="hidden sm:flex flex-wrap items-center gap-1 pb-2">
+          <span className="text-[10px] font-bold text-ube-purple/30 uppercase tracking-widest px-1 select-none">
+            Developer / Legacy:
           </span>
-          {advancedLinks.map(({ href, label, emoji }) => (
+          {legacyLinks.map(({ href, label, emoji }) => (
             <Link
               key={href}
               href={href}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
                 isActive(href)
-                  ? "bg-ube-purple/60 text-white shadow-sm"
-                  : "text-ube-purple/45 hover:bg-ube-purple/12 hover:text-ube-purple/70"
+                  ? "bg-ube-purple/40 text-ube-purple shadow-sm"
+                  : "text-ube-purple/40 hover:bg-ube-purple/10 hover:text-ube-purple/60"
               }`}
             >
               <span className="text-[10px]">{emoji}</span>
