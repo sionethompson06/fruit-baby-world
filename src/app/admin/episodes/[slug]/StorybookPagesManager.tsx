@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
-import type { StorybookPage } from "@/lib/storybookPageTypes";
+import type { StorybookPage, StorybookPageRole, StorybookLayoutType } from "@/lib/storybookPageTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,7 +11,7 @@ type BulkUploadProgress = {
   uploaded: number;
   failed: number;
   current: number;
-  errors: Record<string, string>; // filename -> error message
+  errors: Record<string, string>;
 };
 
 type BulkUploadState =
@@ -28,15 +28,19 @@ type UploadState =
   | { phase: "done"; page: StorybookPage }
   | { phase: "error"; message: string };
 
-// ─── Bulk Upload Form ─────────────────────────────────────────────────────────
+// ─── Bulk Upload Form (Spreads or Single Pages) ───────────────────────────────
 
 function BulkUploadForm({
   episodeSlug,
   existingPageCount,
+  existingSpreadCount,
+  uploadMode,
   onPagesSaved,
 }: {
   episodeSlug: string;
   existingPageCount: number;
+  existingSpreadCount: number;
+  uploadMode: "spread" | "single";
   onPagesSaved: (pages: StorybookPage[]) => void;
 }) {
   const [state, setState] = useState<BulkUploadState>({ phase: "idle" });
@@ -45,7 +49,7 @@ function BulkUploadForm({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.currentTarget.files || []);
     if (files.length === 0) return;
-    
+
     const validFiles = files.filter((f) => {
       const mime = f.type.toLowerCase();
       return ["image/png", "image/jpeg", "image/webp"].includes(mime);
@@ -68,7 +72,7 @@ function BulkUploadForm({
   };
 
   async function uploadBulk() {
-    const files = (state as any).files as File[];
+    const files = (state as { phase: "preview"; files: File[] }).files;
     if (!files || files.length === 0) return;
 
     const progress: BulkUploadProgress = {
@@ -83,13 +87,13 @@ function BulkUploadForm({
 
     const uploadedPages: StorybookPage[] = [];
     let pageNumber = existingPageCount + 1;
+    let spreadNumber = existingSpreadCount + 1;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       progress.current = i + 1;
 
       try {
-        // Convert to base64
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
@@ -97,7 +101,6 @@ function BulkUploadForm({
           reader.readAsDataURL(file);
         });
 
-        // Upload to Vercel Blob
         const uploadRes = await fetch("/api/media/upload-storybook-page", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -105,7 +108,7 @@ function BulkUploadForm({
             episodeSlug,
             imageBase64: base64,
             mimeType: file.type,
-            altText: `Page ${pageNumber}`,
+            altText: uploadMode === "spread" ? `Spread ${spreadNumber}` : `Page ${pageNumber}`,
           }),
         });
 
@@ -117,24 +120,30 @@ function BulkUploadForm({
           continue;
         }
 
-        // Save metadata to GitHub
+        const pagePayload: Record<string, unknown> = {
+          imageUrl: uploadData.asset.url,
+          pathname: uploadData.asset.pathname,
+          mimeType: uploadData.asset.mimeType,
+          altText: uploadMode === "spread" ? `Spread ${spreadNumber}` : `Page ${pageNumber}`,
+          status: "draft",
+          visibility: "admin-only",
+        };
+
+        if (uploadMode === "spread") {
+          pagePayload.pageRole = "story-spread";
+          pagePayload.layoutType = "two-page-spread";
+          pagePayload.displayMode = "spread";
+          pagePayload.spreadNumber = spreadNumber;
+        } else {
+          pagePayload.pageRole = "story-page";
+          pagePayload.layoutType = "single-page";
+          pagePayload.displayMode = "single";
+        }
+
         const saveRes = await fetch("/api/github/save-storybook-page", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            episodeSlug,
-            page: {
-              imageUrl: uploadData.asset.url,
-              pathname: uploadData.asset.pathname,
-              mimeType: uploadData.asset.mimeType,
-              altText: `Page ${pageNumber}`,
-              title: undefined,
-              caption: undefined,
-              readAloudText: undefined,
-              status: "draft",
-              visibility: "admin-only",
-            },
-          }),
+          body: JSON.stringify({ episodeSlug, page: pagePayload }),
         });
 
         const saveData = await saveRes.json();
@@ -148,6 +157,7 @@ function BulkUploadForm({
         uploadedPages.push(saveData.page);
         progress.uploaded++;
         pageNumber++;
+        if (uploadMode === "spread") spreadNumber++;
         setState({ phase: "uploading", progress: { ...progress } });
       } catch (e) {
         progress.failed++;
@@ -159,7 +169,6 @@ function BulkUploadForm({
     if (uploadedPages.length > 0) {
       setState({ phase: "done", added: uploadedPages.length });
       onPagesSaved(uploadedPages);
-      // Reset file input
       if (fileRef.current) fileRef.current.value = "";
     } else {
       setState({
@@ -174,8 +183,11 @@ function BulkUploadForm({
     if (fileRef.current) fileRef.current.value = "";
   }
 
+  const noun = uploadMode === "spread" ? "spread" : "page";
+  const Noun = uploadMode === "spread" ? "Spread" : "Page";
+
   if (state.phase === "preview") {
-    const files = (state as any).files as File[];
+    const files = (state as { phase: "preview"; files: File[] }).files;
     return (
       <div className="bg-white rounded-2xl border border-ube-purple/20 p-5 flex flex-col gap-4">
         <div className="flex items-center gap-2">
@@ -183,7 +195,7 @@ function BulkUploadForm({
           <h3 className="text-sm font-bold text-tiki-brown">Review & Upload</h3>
         </div>
         <p className="text-xs text-tiki-brown/60">
-          {files.length} image{files.length !== 1 ? "s" : ""} ready to upload:
+          {files.length} image{files.length !== 1 ? "s" : ""} ready to upload as {uploadMode === "spread" ? "two-page spreads" : "single pages"}:
         </p>
         <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
           {files.map((file, idx) => (
@@ -192,7 +204,7 @@ function BulkUploadForm({
               className="text-xs bg-tiki-brown/3 rounded-lg px-3 py-2 flex items-center gap-2"
             >
               <span className="text-ube-purple font-bold flex-shrink-0">
-                {existingPageCount + idx + 1}
+                {uploadMode === "spread" ? `Spread ${existingSpreadCount + idx + 1}` : `Page ${existingPageCount + idx + 1}`}
               </span>
               <span className="text-tiki-brown/70 flex-1 truncate">{file.name}</span>
               <span className="text-tiki-brown/40 flex-shrink-0">
@@ -207,7 +219,7 @@ function BulkUploadForm({
             onClick={uploadBulk}
             className="flex-1 text-sm font-bold px-4 py-2.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors"
           >
-            Upload {files.length} Page{files.length !== 1 ? "s" : ""}
+            Upload {files.length} {Noun}{files.length !== 1 ? "s" : ""}
           </button>
           <button
             type="button"
@@ -222,19 +234,17 @@ function BulkUploadForm({
   }
 
   if (state.phase === "uploading") {
-    const { progress } = state as any;
+    const { progress } = state as { phase: "uploading"; progress: BulkUploadProgress };
     const percentComplete = Math.round((progress.current / progress.total) * 100);
     return (
       <div className="bg-white rounded-2xl border border-ube-purple/20 p-5 flex flex-col gap-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">⏳</span>
-          <h3 className="text-sm font-bold text-tiki-brown">Uploading Pages</h3>
+          <h3 className="text-sm font-bold text-tiki-brown">Uploading {Noun}s…</h3>
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between text-xs text-tiki-brown/60 font-semibold">
-            <span>
-              {progress.current} of {progress.total}
-            </span>
+            <span>{progress.current} of {progress.total}</span>
             <span>{percentComplete}%</span>
           </div>
           <div className="w-full bg-tiki-brown/10 rounded-full h-2">
@@ -253,16 +263,17 @@ function BulkUploadForm({
   }
 
   if (state.phase === "done") {
+    const { added } = state as { phase: "done"; added: number };
     return (
       <div className="bg-tropical-green/10 border border-tropical-green/30 rounded-2xl p-5 flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">✓</span>
           <div>
             <h3 className="text-sm font-bold text-tropical-green">
-              {(state as any).added} page{(state as any).added !== 1 ? "s" : ""} uploaded
+              {added} {noun}{added !== 1 ? "s" : ""} uploaded
             </h3>
             <p className="text-xs text-tropical-green/70">
-              Review, reorder, and update captions below. Mark as public when ready.
+              Review and approve pages below. Mark as public when ready.
             </p>
           </div>
         </div>
@@ -274,20 +285,28 @@ function BulkUploadForm({
     return (
       <div className="bg-warm-coral/10 border border-warm-coral/30 rounded-2xl p-5 flex flex-col gap-3">
         <p className="text-sm text-warm-coral font-semibold">
-          {(state as any).message}
+          {(state as { phase: "error"; message: string }).message}
         </p>
       </div>
     );
   }
 
+  const isSpreadMode = uploadMode === "spread";
+
   return (
     <div className="flex flex-col gap-3">
       <label className="flex flex-col gap-3 cursor-pointer">
-        <div className="flex items-center gap-3 bg-gradient-to-br from-ube-purple/10 to-tropical-green/10 rounded-2xl border-2 border-dashed border-ube-purple/30 p-6 hover:border-ube-purple/50 hover:from-ube-purple/15 hover:to-tropical-green/15 transition-all">
-          <span className="text-3xl">📸</span>
+        <div className={`flex items-center gap-3 rounded-2xl border-2 border-dashed p-6 transition-all ${
+          isSpreadMode
+            ? "bg-gradient-to-br from-ube-purple/10 to-tropical-green/10 border-ube-purple/30 hover:border-ube-purple/50 hover:from-ube-purple/15 hover:to-tropical-green/15"
+            : "bg-tiki-brown/3 border-tiki-brown/20 hover:border-tiki-brown/35"
+        }`}>
+          <span className={`text-3xl ${isSpreadMode ? "" : "text-2xl"}`}>{isSpreadMode ? "📖" : "📄"}</span>
           <div>
-            <p className="text-sm font-bold text-ube-purple">Select Images to Upload</p>
-            <p className="text-xs text-tiki-brown/60">PNG, JPEG, or WebP — up to 20 MB per image</p>
+            <p className={`text-sm font-bold ${isSpreadMode ? "text-ube-purple" : "text-tiki-brown/70"}`}>
+              {isSpreadMode ? "Select Spread Images" : "Select Single Page Images"}
+            </p>
+            <p className="text-xs text-tiki-brown/55">PNG, JPEG, or WebP — up to 20 MB per image</p>
           </div>
         </div>
         <input
@@ -299,14 +318,152 @@ function BulkUploadForm({
           className="hidden"
         />
       </label>
-      <p className="text-xs text-tiki-brown/45 text-center">
-        Selected images will become draft pages. You can reorder, edit captions, and publish them after upload.
+      <p className="text-xs text-tiki-brown/40 text-center">
+        {isSpreadMode
+          ? "Each image becomes a two-page spread. Upload them in reading order."
+          : "Each image becomes a single story page. Add front/back covers using slots above."}
       </p>
     </div>
   );
 }
 
-// ─── Upload Single Form ───────────────────────────────────────────────────────
+// ─── Slot Upload Form (Front Cover, Back Cover, End Page) ─────────────────────
+
+function SlotUploadForm({
+  episodeSlug,
+  pageRole,
+  layoutType,
+  label,
+  hint,
+  existingPage,
+  onPageSaved,
+}: {
+  episodeSlug: string;
+  pageRole: StorybookPageRole;
+  layoutType: StorybookLayoutType;
+  label: string;
+  hint: string;
+  existingPage?: StorybookPage;
+  onPageSaved: (page: StorybookPage) => void;
+}) {
+  const [state, setState] = useState<UploadState>({ phase: "idle" });
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.currentTarget.files?.[0];
+    if (!file) return;
+
+    const mime = file.type.toLowerCase();
+    if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) {
+      setState({ phase: "error", message: "Please use PNG, JPEG, or WebP." });
+      return;
+    }
+
+    setState({ phase: "uploading" });
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const uploadRes = await fetch("/api/media/upload-storybook-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ episodeSlug, imageBase64: base64, mimeType: file.type, altText: label }),
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadData.ok) {
+        setState({ phase: "error", message: uploadData.message ?? "Upload failed." });
+        return;
+      }
+
+      setState({ phase: "saving" });
+
+      const saveRes = await fetch("/api/github/save-storybook-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          episodeSlug,
+          page: {
+            ...(existingPage ? { id: existingPage.id } : {}),
+            imageUrl: uploadData.asset.url,
+            pathname: uploadData.asset.pathname,
+            mimeType: uploadData.asset.mimeType,
+            altText: label,
+            status: "draft",
+            visibility: "admin-only",
+            pageRole,
+            layoutType,
+            displayMode: layoutType === "two-page-spread" ? "spread" : "single",
+          },
+        }),
+      });
+
+      const saveData = await saveRes.json();
+      if (!saveData.ok) {
+        setState({ phase: "error", message: saveData.message ?? "Failed to save." });
+        return;
+      }
+
+      setState({ phase: "done", page: saveData.page });
+      onPageSaved(saveData.page);
+      if (fileRef.current) fileRef.current.value = "";
+    } catch {
+      setState({ phase: "error", message: "Network error." });
+    }
+  }
+
+  const busy = state.phase === "uploading" || state.phase === "saving";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold text-tiki-brown/70">{label}</p>
+          <p className="text-xs text-tiki-brown/40">{hint}</p>
+        </div>
+        {existingPage && (
+          <div className="flex-shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={existingPage.imageUrl}
+              alt={existingPage.altText}
+              className="w-12 h-9 object-cover rounded-lg border border-tiki-brown/10"
+            />
+          </div>
+        )}
+      </div>
+      <label className={`flex items-center gap-2 rounded-xl border border-dashed p-3 cursor-pointer transition-all ${
+        busy ? "opacity-50 pointer-events-none" : "hover:border-ube-purple/40 hover:bg-ube-purple/3"
+      } border-tiki-brown/20 bg-tiki-brown/2`}>
+        <span className="text-sm">{busy ? "⏳" : existingPage ? "🔄" : "+"}</span>
+        <span className="text-xs font-semibold text-tiki-brown/55">
+          {busy ? (state.phase === "uploading" ? "Uploading…" : "Saving…") : existingPage ? "Replace Image" : "Upload Image"}
+        </span>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={handleFileSelect}
+          disabled={busy}
+          className="hidden"
+        />
+      </label>
+      {state.phase === "error" && (
+        <p className="text-xs text-warm-coral">{(state as { phase: "error"; message: string }).message}</p>
+      )}
+      {state.phase === "done" && (
+        <p className="text-xs text-tropical-green font-semibold">Saved.</p>
+      )}
+    </div>
+  );
+}
+
+// ─── Single Page Upload Form ──────────────────────────────────────────────────
 
 function UploadForm({
   episodeSlug,
@@ -338,7 +495,6 @@ function UploadForm({
 
     setState({ phase: "uploading" });
 
-    // Read file as base64
     const reader = new FileReader();
     const base64Promise = new Promise<string>((resolve, reject) => {
       reader.onload = () => resolve(reader.result as string);
@@ -354,18 +510,12 @@ function UploadForm({
       return;
     }
 
-    // Upload to Vercel Blob
     let uploadedAsset: { url: string; pathname: string; mimeType: string; altText: string; uploadedAt: string };
     try {
       const uploadRes = await fetch("/api/media/upload-storybook-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          episodeSlug,
-          imageBase64,
-          mimeType: file.type,
-          altText: altText.trim(),
-        }),
+        body: JSON.stringify({ episodeSlug, imageBase64, mimeType: file.type, altText: altText.trim() }),
       });
       const uploadData = await uploadRes.json();
       if (!uploadData.ok) {
@@ -380,7 +530,6 @@ function UploadForm({
 
     setState({ phase: "saving" });
 
-    // Save page metadata to GitHub
     try {
       const saveRes = await fetch("/api/github/save-storybook-page", {
         method: "POST",
@@ -397,6 +546,9 @@ function UploadForm({
             readAloudText: readAloudText.trim() || undefined,
             status,
             visibility,
+            pageRole: "story-page",
+            layoutType: "single-page",
+            displayMode: "single",
           },
         }),
       });
@@ -407,7 +559,6 @@ function UploadForm({
       }
       setState({ phase: "done", page: saveData.page });
       onPageSaved(saveData.page);
-      // Reset form
       setAltText("");
       setCaption("");
       setTitle("");
@@ -454,28 +605,23 @@ function UploadForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
-            Page Title
-          </label>
+          <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Page Title</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Optional title for this page"
+            placeholder="Optional title"
             disabled={busy}
             className="text-sm border border-tiki-brown/15 rounded-xl px-3 py-2 bg-white text-tiki-brown placeholder:text-tiki-brown/35 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 disabled:opacity-50"
           />
         </div>
-
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
-            Caption
-          </label>
+          <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Caption</label>
           <input
             type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Short caption shown below the image"
+            placeholder="Short caption"
             disabled={busy}
             className="text-sm border border-tiki-brown/15 rounded-xl px-3 py-2 bg-white text-tiki-brown placeholder:text-tiki-brown/35 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 disabled:opacity-50"
           />
@@ -483,13 +629,11 @@ function UploadForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
-          Read-Aloud Text
-        </label>
+        <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Read-Aloud Text</label>
         <textarea
           value={readAloudText}
           onChange={(e) => setReadAloudText(e.target.value)}
-          placeholder="Text to read aloud for this page (optional)"
+          placeholder="Text to read aloud (optional)"
           rows={2}
           disabled={busy}
           className="text-sm border border-tiki-brown/15 rounded-xl px-3 py-2 bg-white text-tiki-brown placeholder:text-tiki-brown/35 focus:outline-none focus:ring-2 focus:ring-ube-purple/30 resize-none disabled:opacity-50"
@@ -509,7 +653,6 @@ function UploadForm({
             <option value="draft">Draft</option>
           </select>
         </div>
-
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Visibility</label>
           <select
@@ -527,7 +670,7 @@ function UploadForm({
       {state.phase === "error" && (
         <div className="flex items-start gap-2 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3">
           <span className="text-warm-coral text-sm font-bold flex-shrink-0">!</span>
-          <p className="text-sm text-warm-coral">{state.message}</p>
+          <p className="text-sm text-warm-coral">{(state as { phase: "error"; message: string }).message}</p>
         </div>
       )}
 
@@ -535,7 +678,7 @@ function UploadForm({
         <div className="flex items-center gap-2 bg-tropical-green/10 border border-tropical-green/25 rounded-xl px-4 py-3">
           <span className="text-tropical-green text-sm">✓</span>
           <p className="text-sm text-tropical-green font-semibold">
-            Page {state.page.pageNumber} saved successfully.
+            Page {(state as { phase: "done"; page: StorybookPage }).page.pageNumber} saved successfully.
           </p>
         </div>
       )}
@@ -552,6 +695,22 @@ function UploadForm({
 }
 
 // ─── Page Thumbnail ───────────────────────────────────────────────────────────
+
+const ROLE_LABELS: Record<string, string> = {
+  "front-cover":  "Front Cover",
+  "inside-cover": "Inside Cover",
+  "story-spread": "Spread",
+  "story-page":   "Page",
+  "end-page":     "End Page",
+  "back-cover":   "Back Cover",
+};
+
+const LAYOUT_COLORS: Record<string, string> = {
+  "two-page-spread": "bg-ube-purple/10 text-ube-purple",
+  "cover":           "bg-pineapple-yellow/20 text-tiki-brown/70",
+  "back-cover":      "bg-pineapple-yellow/20 text-tiki-brown/70",
+  "single-page":     "bg-tiki-brown/8 text-tiki-brown/50",
+};
 
 function PageThumbnail({
   page,
@@ -582,22 +741,30 @@ function PageThumbnail({
       ? "bg-sky-blue/15 text-sky-blue"
       : "bg-tiki-brown/8 text-tiki-brown/45";
 
+  const roleLabel = page.pageRole ? ROLE_LABELS[page.pageRole] : null;
+  const layoutColor = page.layoutType ? LAYOUT_COLORS[page.layoutType] ?? "bg-tiki-brown/8 text-tiki-brown/50" : null;
+
+  const isSpread = page.layoutType === "two-page-spread" || page.displayMode === "spread";
+
   return (
     <div className="flex gap-3 items-start bg-white border border-tiki-brown/10 rounded-2xl p-3 shadow-sm">
-      {/* Thumbnail */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={page.imageUrl}
         alt={page.altText}
-        className="w-20 h-16 object-cover rounded-xl flex-shrink-0 border border-tiki-brown/8"
+        className={`${isSpread ? "w-28" : "w-20"} h-16 object-cover rounded-xl flex-shrink-0 border border-tiki-brown/8`}
       />
 
-      {/* Info */}
       <div className="flex-1 min-w-0 flex flex-col gap-1.5">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple">
-            Page {page.pageNumber}
+            #{page.pageNumber}
           </span>
+          {roleLabel && layoutColor && (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${layoutColor}`}>
+              {roleLabel}{page.spreadNumber ? ` ${page.spreadNumber}` : ""}
+            </span>
+          )}
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor}`}>
             {page.status}
           </span>
@@ -614,7 +781,6 @@ function PageThumbnail({
         <p className="text-xs text-tiki-brown/40 truncate">{page.altText}</p>
       </div>
 
-      {/* Controls */}
       <div className="flex flex-col gap-1 flex-shrink-0">
         <button
           type="button"
@@ -638,7 +804,7 @@ function PageThumbnail({
           type="button"
           onClick={onRemove}
           disabled={isSaving}
-          title="Archive page"
+          title="Remove from list"
           className="text-xs px-2 py-1 rounded-lg bg-warm-coral/10 text-warm-coral/70 hover:bg-warm-coral/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           ✕
@@ -680,7 +846,6 @@ function PageList({
   }
 
   function removePage(idx: number) {
-    // Archive locally (filter out for display; GitHub keeps the full array intact)
     setPages(
       pages
         .filter((_, i) => i !== idx)
@@ -696,10 +861,7 @@ function PageList({
       const res = await fetch("/api/github/reorder-storybook-pages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          episodeSlug,
-          orderedIds: pages.map((p) => p.id),
-        }),
+        body: JSON.stringify({ episodeSlug, orderedIds: pages.map((p) => p.id) }),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -769,7 +931,12 @@ export default function StorybookPagesManager({
   initialPages: StorybookPage[];
 }) {
   const [pages, setPages] = useState<StorybookPage[]>(initialPages);
+
   const publicPageCount = pages.filter((p) => p.status === "approved" && p.visibility === "public").length;
+  const spreadCount = pages.filter((p) => p.pageRole === "story-spread").length;
+  const frontCover = pages.find((p) => p.pageRole === "front-cover");
+  const backCover = pages.find((p) => p.pageRole === "back-cover");
+  const endPage = pages.find((p) => p.pageRole === "end-page");
 
   function handlePageSaved(page: StorybookPage) {
     setPages((prev) => {
@@ -789,14 +956,15 @@ export default function StorybookPagesManager({
 
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-6">
-      {/* ── Header with Preview ── */}
+
+      {/* ── Header ── */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-black text-tiki-brown flex items-center gap-2">
             <span>📚</span> Storybook Images
           </h2>
           <p className="text-xs text-tiki-brown/55 leading-relaxed">
-            Upload finished storybook artwork in page order. Approved public pages appear in the public storybook reader.
+            Upload finished storybook artwork. Approved public pages appear in the public storybook reader.
           </p>
         </div>
         <div className="flex flex-col gap-2 flex-shrink-0">
@@ -815,40 +983,86 @@ export default function StorybookPagesManager({
         </div>
       </div>
 
-      {/* ── Quick Start Checklist ── */}
+      {/* ── Checklist ── */}
       <div className="bg-gradient-to-br from-ube-purple/5 to-tropical-green/5 border border-ube-purple/15 rounded-2xl p-4 flex flex-col gap-3">
         <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">
           📖 Publishing Checklist
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[
-            { done: pages.length > 0, label: "Upload images" },
-            { done: pages.length > 1, label: "Put pages in order" },
-            { done: publicPageCount > 0, label: "Mark pages public" },
+            { done: !!frontCover,       label: "Front cover uploaded" },
+            { done: spreadCount > 0,    label: "Story spreads uploaded" },
+            { done: publicPageCount > 0, label: "Pages marked public" },
             { done: publicPageCount > 0, label: "Preview & publish" },
           ].map(({ done, label }) => (
             <div key={label} className="flex items-center gap-2 text-xs text-tiki-brown/60">
               <span className={done ? "text-tropical-green" : "text-tiki-brown/30"}>
                 {done ? "✓" : "○"}
               </span>
-              <span className={done ? "text-tropical-green font-semibold" : ""}>
-                {label}
-              </span>
+              <span className={done ? "text-tropical-green font-semibold" : ""}>{label}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Bulk Upload Form ── */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-          📤 Upload Images
-        </p>
+      {/* ── Primary: Upload Storybook Spreads ── */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className="text-sm font-bold text-tiki-brown flex items-center gap-2">
+            <span>📖</span> Upload Storybook Spreads
+          </p>
+          <p className="text-xs text-tiki-brown/50 mt-0.5">
+            Primary story content — each image is a two-page spread. Upload in reading order.
+          </p>
+        </div>
         <BulkUploadForm
           episodeSlug={episodeSlug}
           existingPageCount={pages.length}
+          existingSpreadCount={spreadCount}
+          uploadMode="spread"
           onPagesSaved={handlePagesSaved}
         />
+      </div>
+
+      {/* ── Cover / Slot Uploads ── */}
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className="text-sm font-bold text-tiki-brown flex items-center gap-2">
+            <span>🖼️</span> Cover & End Pages
+          </p>
+          <p className="text-xs text-tiki-brown/50 mt-0.5">
+            Upload front cover, back cover, and end page separately.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-tiki-brown/3 rounded-2xl border border-tiki-brown/10 p-4">
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="front-cover"
+            layoutType="cover"
+            label="Front Cover"
+            hint="First page — displayed alone"
+            existingPage={frontCover}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="end-page"
+            layoutType="single-page"
+            label="End Page"
+            hint="Last story page before back cover"
+            existingPage={endPage}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="back-cover"
+            layoutType="back-cover"
+            label="Back Cover"
+            hint="Final page — displayed alone"
+            existingPage={backCover}
+            onPageSaved={handlePageSaved}
+          />
+        </div>
       </div>
 
       {/* ── Current Pages ── */}
@@ -859,34 +1073,48 @@ export default function StorybookPagesManager({
               📋 Current Pages ({pages.length})
             </p>
             {pages.length > 1 && (
-              <p className="text-xs text-tiki-brown/40">
-                Drag or use arrows to reorder
-              </p>
+              <p className="text-xs text-tiki-brown/40">Use arrows to reorder</p>
             )}
           </div>
-          <PageList
-            episodeSlug={episodeSlug}
-            initialPages={pages}
-          />
+          <PageList episodeSlug={episodeSlug} initialPages={pages} />
         </div>
       )}
 
-      {/* ── Add Single Page ── */}
+      {/* ── Optional: Single Page Upload ── */}
       <div className="border-t border-tiki-brown/10 pt-4 flex flex-col gap-3">
-        <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-          Add Single Page (Optional)
-        </p>
-        <UploadForm episodeSlug={episodeSlug} onPageSaved={handlePageSaved} />
+        <div>
+          <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+            Optional: Upload Single Story Pages
+          </p>
+          <p className="text-xs text-tiki-brown/40 mt-0.5">
+            For individual pages that are not two-page spreads.
+          </p>
+        </div>
+        <BulkUploadForm
+          episodeSlug={episodeSlug}
+          existingPageCount={pages.length}
+          existingSpreadCount={spreadCount}
+          uploadMode="single"
+          onPagesSaved={handlePagesSaved}
+        />
+        <details className="group">
+          <summary className="text-xs font-semibold text-tiki-brown/45 cursor-pointer hover:text-tiki-brown/60 list-none flex items-center gap-1">
+            <span className="group-open:rotate-90 inline-block transition-transform">▸</span>
+            Add single page with metadata
+          </summary>
+          <div className="mt-3 pl-3 border-l border-tiki-brown/10">
+            <UploadForm episodeSlug={episodeSlug} onPageSaved={handlePageSaved} />
+          </div>
+        </details>
       </div>
 
       {/* ── Help Text ── */}
       <div className="flex items-start gap-2.5 bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-2xl px-4 py-3">
         <span className="text-sm flex-shrink-0">💡</span>
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-bold text-tiki-brown/65">How to publish a storybook</p>
+          <p className="text-xs font-bold text-tiki-brown/65">Publishing workflow</p>
           <p className="text-xs text-tiki-brown/50 leading-relaxed">
-            Upload multiple images at once. Set each page to <strong>Approved</strong> status and <strong>Public</strong> visibility.
-            Pages will appear in order by page number in the public storybook reader. Use arrows to reorder.
+            Upload spreads in reading order, then add cover images. Set pages to <strong>Approved</strong> + <strong>Public</strong> to make them visible. Spreads display as open-book frames in the reader.
           </p>
         </div>
       </div>

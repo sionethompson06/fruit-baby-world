@@ -13,6 +13,9 @@ export type StorybookReaderPage = {
   imageUrl: string;
   altText?: string;
   characters?: string[];
+  layoutType?: "single-page" | "two-page-spread" | "cover" | "back-cover";
+  displayMode?: "single" | "spread";
+  spreadNumber?: number;
 };
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
@@ -58,6 +61,7 @@ function ThumbnailStrip({
     >
       {pages.map((p, i) => {
         const isActive = i === activeIndex;
+        const isSpread = p.displayMode === "spread" || p.layoutType === "two-page-spread";
         const label = `Page ${i + 1}${p.title ? `: ${p.title}` : ""}`;
         return (
           <button
@@ -82,7 +86,7 @@ function ThumbnailStrip({
               <img
                 src={p.imageUrl}
                 alt={label}
-                className="w-14 h-10 object-cover block"
+                className={`${isSpread ? "w-20" : "w-14"} h-10 object-cover block`}
                 loading="lazy"
               />
             </div>
@@ -135,6 +139,13 @@ function FocusModeReader({
   const thumbsRef = useRef<HTMLDivElement>(null);
   const displayText = page.caption || page.readAloudText || null;
   const altText = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
+  const isSpread = page.displayMode === "spread" || page.layoutType === "two-page-spread";
+  const spreadPages = pages.filter((p) => p.displayMode === "spread" || p.layoutType === "two-page-spread");
+  const spreadIndex = isSpread ? spreadPages.indexOf(page) : -1;
+  const spreadTotal = spreadPages.length;
+  const pageLabel = isSpread && spreadIndex >= 0
+    ? `Spread ${spreadIndex + 1} of ${spreadTotal}`
+    : `${index + 1} / ${total}`;
 
   useEffect(() => {
     if (thumbsRef.current) {
@@ -172,16 +183,23 @@ function FocusModeReader({
         onTouchStart={touchHandlers.onTouchStart}
         onTouchEnd={touchHandlers.onTouchEnd}
       >
-        <div className="relative w-full max-w-2xl max-h-full flex items-center justify-center">
+        <div className={`relative max-h-full flex items-center justify-center ${isSpread ? "w-full max-w-5xl" : "w-full max-w-2xl"}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={page.imageUrl}
             alt={altText}
             className="max-w-full max-h-[calc(100vh-280px)] w-auto h-auto rounded-3xl shadow-2xl border border-tiki-brown/8 block"
           />
+          {/* Center gutter overlay for spreads */}
+          {isSpread && (
+            <div
+              className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-tiki-brown/20 to-transparent pointer-events-none"
+              aria-hidden="true"
+            />
+          )}
           {/* Overlay progress badge */}
           <div className="absolute bottom-3 right-3 bg-black/40 text-white text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm tabular-nums select-none pointer-events-none">
-            {index + 1} / {total}
+            {pageLabel}
           </div>
         </div>
       </div>
@@ -294,6 +312,15 @@ export default function StorybookReader({
   const touchHandlers = { onTouchStart, onTouchEnd };
   const displayText = page.caption || page.readAloudText || null;
   const altText = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
+  const isSpread = page.displayMode === "spread" || page.layoutType === "two-page-spread";
+
+  // Compute spread number among spread pages only
+  const spreadPages = pages.filter((p) => p.displayMode === "spread" || p.layoutType === "two-page-spread");
+  const spreadIndex = isSpread ? spreadPages.indexOf(page) : -1;
+  const spreadTotal = spreadPages.length;
+  const pageLabel = isSpread && spreadIndex >= 0
+    ? `Spread ${spreadIndex + 1} of ${spreadTotal}`
+    : `Page ${index + 1} of ${total}`;
 
   if (total === 0) return null;
 
@@ -333,6 +360,14 @@ export default function StorybookReader({
           className="w-full block"
           style={{ minHeight: "180px" }}
         />
+
+        {/* Center gutter overlay for spreads */}
+        {isSpread && (
+          <div
+            className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-tiki-brown/15 to-transparent pointer-events-none"
+            aria-hidden="true"
+          />
+        )}
 
         {/* Overlay page badge */}
         <div
@@ -393,7 +428,7 @@ export default function StorybookReader({
             aria-live="polite"
             aria-atomic="true"
           >
-            Page {index + 1} of {total}
+            {pageLabel}
           </span>
           <div className="h-1.5 rounded-full bg-tiki-brown/10 overflow-hidden">
             <div

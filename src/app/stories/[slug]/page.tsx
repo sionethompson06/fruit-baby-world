@@ -684,6 +684,9 @@ export default async function StoryDetailPage({
     imageUrl: page.imageUrl,
     altText: page.altText || `${title} — Page ${page.pageNumber}`,
     characters: page.characters,
+    layoutType: page.layoutType,
+    displayMode: page.displayMode,
+    spreadNumber: page.spreadNumber,
   }));
 
   // Approved public story panels (fallback when no storybook pages)

@@ -152,6 +152,9 @@ export async function POST(request: Request): Promise<Response> {
     ? (existingPages.find((p) => isRecord(p) && p.id === pageId) as Record<string, unknown>)?.pageNumber ?? maxPageNumber + 1
     : (typeof pageData.pageNumber === "number" ? pageData.pageNumber : maxPageNumber + 1);
 
+  const PAGE_ROLES = ["front-cover", "inside-cover", "story-page", "story-spread", "end-page", "back-cover"];
+  const LAYOUT_TYPES = ["single-page", "two-page-spread", "cover", "back-cover"];
+
   const newPage: StorybookPage = {
     id: pageId,
     pageNumber: pageNumber as number,
@@ -171,6 +174,12 @@ export async function POST(request: Request): Promise<Response> {
     sourceType: "admin-uploaded",
     createdAt: typeof pageData.createdAt === "string" ? pageData.createdAt : now,
     updatedAt: now,
+    pageRole: PAGE_ROLES.includes(pageData.pageRole as string) ? pageData.pageRole as StorybookPage["pageRole"] : undefined,
+    layoutType: LAYOUT_TYPES.includes(pageData.layoutType as string) ? pageData.layoutType as StorybookPage["layoutType"] : undefined,
+    spreadNumber: typeof pageData.spreadNumber === "number" ? pageData.spreadNumber : undefined,
+    leftPageLabel: typeof pageData.leftPageLabel === "string" ? pageData.leftPageLabel : undefined,
+    rightPageLabel: typeof pageData.rightPageLabel === "string" ? pageData.rightPageLabel : undefined,
+    displayMode: pageData.displayMode === "spread" ? "spread" : pageData.displayMode === "single" ? "single" : undefined,
   };
 
   // Replace existing entry or append
