@@ -291,11 +291,21 @@ export default async function StorybookBuilderPage({
             id="audio"
             icon="🎙️"
             title="Audio Narration"
-            subtitle="Upload a finished narration file for readers to listen while reading."
+            subtitle="Upload a finished narration file so readers can listen while they enjoy the storybook."
             badge={
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
-                Optional
-              </span>
+              hasPublicAudio ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  Public
+                </span>
+              ) : initialNarration && initialNarration.status !== "archived" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/60 uppercase tracking-wide">
+                  Hidden
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
+                  Optional
+                </span>
+              )
             }
           />
           <StorybookAudioManager
@@ -339,14 +349,16 @@ export default async function StorybookBuilderPage({
             id="preview"
             icon="👁️"
             title="Preview"
-            subtitle="Preview the public storybook page before publishing."
+            subtitle="Check readiness and preview the public storybook page."
           />
-          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
+
+            {/* Preview button row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="text-sm font-black text-tiki-brown">Preview Storybook</h3>
                 <p className="text-xs text-tiki-brown/50 mt-0.5">
-                  Opens the public story page in a new tab. Only approved/public content is visible to readers.
+                  Opens the public story page in a new tab. Only approved &amp; public content is visible to readers.
                 </p>
                 <p className="text-xs font-mono text-tiki-brown/35 mt-1">
                   /stories/{normalised.slug}
@@ -362,6 +374,33 @@ export default async function StorybookBuilderPage({
                 Preview Storybook
               </a>
             </div>
+
+            {/* Contextual warnings */}
+            {storybookPages.length === 0 && (
+              <div className="flex items-start gap-2.5 bg-warm-coral/8 border border-warm-coral/20 rounded-2xl px-4 py-3">
+                <span className="text-base flex-shrink-0">⚠️</span>
+                <p className="text-xs text-warm-coral/80 leading-relaxed">
+                  No book images uploaded yet. Add pages in the Book Images section above to build your storybook.
+                </p>
+              </div>
+            )}
+            {storybookPages.length > 0 && publicPageCount === 0 && (
+              <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-4 py-3">
+                <span className="text-base flex-shrink-0">💡</span>
+                <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                  <span className="font-bold">Images are uploaded but not public yet.</span>{" "}
+                  Mark book images <span className="font-bold">Approved + Public</span> in the Book Images section to make them visible in the reader.
+                </p>
+              </div>
+            )}
+            {!isAlreadyPublished && (
+              <div className="flex items-start gap-2.5 bg-tiki-brown/4 border border-tiki-brown/10 rounded-2xl px-4 py-3">
+                <span className="text-base flex-shrink-0">ℹ️</span>
+                <p className="text-xs text-tiki-brown/55 leading-relaxed">
+                  This storybook is not published yet. The preview page may not load for public readers until you publish below.
+                </p>
+              </div>
+            )}
 
             {/* Readiness checklist */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -385,13 +424,19 @@ export default async function StorybookBuilderPage({
                   icon: "📖",
                 },
                 {
-                  label: storyPageCount > 0 ? `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}` : "Story Spreads / Pages",
+                  label: storyPageCount > 0 ? `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}` : "Story Spreads",
                   done: storyPageCount > 0,
                   optional: false,
                   icon: "🖼️",
                 },
                 {
-                  label: "Book Order Reviewed",
+                  label: publicPageCount > 0 ? `${publicPageCount} Image${publicPageCount !== 1 ? "s" : ""} Public` : "Images Public",
+                  done: publicPageCount > 0,
+                  optional: false,
+                  icon: "✅",
+                },
+                {
+                  label: "Book Order",
                   done: storybookPages.length > 1,
                   optional: false,
                   icon: "📋",
@@ -462,22 +507,49 @@ export default async function StorybookBuilderPage({
           />
         </div>
 
-        {/* ── Legacy editor link ── */}
-        <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-4">
-          <span className="text-base flex-shrink-0">🔧</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide mb-0.5">Legacy Editor</p>
-            <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              Advanced tools — scene breakdown, narration generation, video generation, review approval — are available in the legacy editor.
-            </p>
+        {/* ── Developer / Legacy (collapsed) ── */}
+        <details className="group rounded-2xl border border-tiki-brown/10 bg-tiki-brown/3 overflow-hidden">
+          <summary className="flex items-center gap-2.5 px-5 py-4 cursor-pointer list-none select-none hover:bg-tiki-brown/5 transition-colors">
+            <span className="text-base flex-shrink-0">🔧</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Developer / Legacy</p>
+              <p className="text-[11px] text-tiki-brown/40 mt-0.5">Legacy generation tools — collapsed by default</p>
+            </div>
+            <span className="text-xs font-bold text-tiki-brown/35 flex-shrink-0 group-open:hidden">▸ Show</span>
+            <span className="text-xs font-bold text-tiki-brown/35 flex-shrink-0 hidden group-open:inline">▾ Hide</span>
+          </summary>
+
+          <div className="border-t border-tiki-brown/8 px-5 py-5 flex flex-col gap-4">
+            {/* Legacy Audio Tools */}
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Legacy Audio Tools</p>
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Retained temporarily for legacy workflows. The preferred workflow is uploading a finished narration audio file in the Audio section above.
+              </p>
+            </div>
+
+            {/* Legacy Video Tools */}
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Legacy Video Tools</p>
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Retained temporarily for legacy workflows. The preferred workflow is uploading a finished cartoon/video file in the Video section above.
+              </p>
+            </div>
+
+            {/* Legacy editor link */}
+            <div className="flex items-center justify-between gap-4 pt-1">
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Scene breakdown, narration generation, video generation, and review approval are available in the full legacy editor.
+              </p>
+              <Link
+                href={`/admin/episodes/${normalised.slug}`}
+                className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors flex-shrink-0 whitespace-nowrap"
+              >
+                Open Legacy Editor →
+              </Link>
+            </div>
           </div>
-          <Link
-            href={`/admin/episodes/${normalised.slug}`}
-            className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors flex-shrink-0 whitespace-nowrap"
-          >
-            Open Legacy Editor →
-          </Link>
-        </div>
+        </details>
 
         {/* Back link footer */}
         <div className="pt-2">
