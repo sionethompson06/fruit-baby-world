@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug } from "@/lib/savedEpisodes";
-import { getStorybookPages } from "@/lib/storybookPages";
+import { getStorybookPages, getAdminPreviewStorybookPages } from "@/lib/storybookPages";
 import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
 import type { StorybookVideoAsset } from "@/lib/storybookVideoTypes";
+import { type StorybookReaderPage } from "@/components/StorybookReader";
+import AdminStorybookPreview from "@/components/admin/AdminStorybookPreview";
 import StorybookPagesManager from "@/app/admin/episodes/[slug]/StorybookPagesManager";
 import StorybookDetailsEditor from "@/app/admin/episodes/[slug]/StorybookDetailsEditor";
 import SimplePublishAction from "./SimplePublishAction";
@@ -139,6 +141,38 @@ export default async function StorybookBuilderPage({
     updatedAt: typeof rawVideo.updatedAt === "string" ? rawVideo.updatedAt : undefined,
   } : null;
   const hasPublicVideo = initialVideo?.visibility === "public" && initialVideo?.status !== "archived";
+
+  // Admin preview data — includes draft/hidden pages, audio, and video (never used on public routes)
+  const adminPreviewPagesRaw = getAdminPreviewStorybookPages(raw);
+  const adminPreviewTotalCount = adminPreviewPagesRaw.length;
+  const adminPreviewPublicCount = adminPreviewPagesRaw.filter(
+    (p) => p.status === "approved" && p.visibility === "public"
+  ).length;
+  const adminPreviewPages: StorybookReaderPage[] = adminPreviewPagesRaw.map((page) => ({
+    id: page.id,
+    pageNumber: page.pageNumber,
+    title: page.title,
+    caption: page.caption,
+    readAloudText: page.readAloudText,
+    imageUrl: page.imageUrl,
+    altText: page.altText,
+    characters: page.characters,
+    layoutType: page.layoutType,
+    displayMode: page.displayMode,
+    spreadNumber: page.spreadNumber,
+    pageRole: page.pageRole,
+  }));
+  const adminPreviewNarration = initialNarration && initialNarration.status !== "archived" ? {
+    audioUrl: initialNarration.audioUrl,
+    title: initialNarration.title,
+    mimeType: initialNarration.mimeType,
+  } : undefined;
+  const adminPreviewVideo = initialVideo && initialVideo.status !== "archived" ? {
+    videoUrl: initialVideo.videoUrl,
+    title: initialVideo.title,
+    description: initialVideo.description,
+    mimeType: initialVideo.mimeType,
+  } : undefined;
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -349,80 +383,38 @@ export default async function StorybookBuilderPage({
             id="preview"
             icon="👁️"
             title="Preview"
-            subtitle="Check readiness and preview the public storybook page."
+            subtitle="Preview the storybook draft or open the public page."
           />
-          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
 
-            {/* Preview button row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-black text-tiki-brown">Preview Storybook</h3>
-                <p className="text-xs text-tiki-brown/50 mt-0.5">
-                  Opens the public story page in a new tab. Only approved &amp; public content is visible to readers.
-                </p>
-                <p className="text-xs font-mono text-tiki-brown/35 mt-1">
-                  /stories/{normalised.slug}
-                </p>
-              </div>
-              <a
-                href={`/stories/${normalised.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors"
-              >
-                <span>👁️</span>
-                Preview Storybook
-              </a>
-            </div>
+          {/* Admin draft preview + public preview buttons */}
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6">
+            <AdminStorybookPreview
+              slug={normalised.slug}
+              episodeTitle={normalised.title}
+              adminPreviewPages={adminPreviewPages}
+              narrationAudio={adminPreviewNarration}
+              video={adminPreviewVideo}
+              totalPageCount={adminPreviewTotalCount}
+              publicPageCount={adminPreviewPublicCount}
+            />
+          </div>
 
-            {/* Contextual warnings */}
-            {storybookPages.length === 0 && (
-              <div className="flex items-start gap-2.5 bg-warm-coral/8 border border-warm-coral/20 rounded-2xl px-4 py-3">
-                <span className="text-base flex-shrink-0">⚠️</span>
-                <p className="text-xs text-warm-coral/80 leading-relaxed">
-                  No book images uploaded yet. Add pages in the Book Images section above to build your storybook.
-                </p>
-              </div>
-            )}
-            {storybookPages.length > 0 && publicPageCount === 0 && (
-              <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-4 py-3">
-                <span className="text-base flex-shrink-0">💡</span>
-                <p className="text-xs text-tiki-brown/65 leading-relaxed">
-                  <span className="font-bold">Images are uploaded but not public yet.</span>{" "}
-                  Mark book images <span className="font-bold">Approved + Public</span> in the Book Images section to make them visible in the reader.
-                </p>
-              </div>
-            )}
+          {/* Publish readiness checklist */}
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest">Publish Readiness</p>
             {!isAlreadyPublished && (
               <div className="flex items-start gap-2.5 bg-tiki-brown/4 border border-tiki-brown/10 rounded-2xl px-4 py-3">
                 <span className="text-base flex-shrink-0">ℹ️</span>
                 <p className="text-xs text-tiki-brown/55 leading-relaxed">
-                  This storybook is not published yet. The preview page may not load for public readers until you publish below.
+                  This storybook is not published yet. The public page will not be visible to readers until you publish below.
                 </p>
               </div>
             )}
-
-            {/* Readiness checklist */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
-                {
-                  label: "Title",
-                  done: Boolean(normalised.title),
-                  optional: false,
-                  icon: "📝",
-                },
-                {
-                  label: "About",
-                  done: Boolean(normalised.shortDescription),
-                  optional: false,
-                  icon: "📄",
-                },
-                {
-                  label: "Front Cover",
-                  done: hasFrontCover,
-                  optional: false,
-                  icon: "📖",
-                },
+                { label: "Title", done: Boolean(normalised.title), optional: false, icon: "📝" },
+                { label: "About", done: Boolean(normalised.shortDescription), optional: false, icon: "📄" },
+                { label: "Front Cover", done: hasFrontCover, optional: false, icon: "📖" },
                 {
                   label: storyPageCount > 0 ? `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}` : "Story Spreads",
                   done: storyPageCount > 0,
@@ -435,18 +427,8 @@ export default async function StorybookBuilderPage({
                   optional: false,
                   icon: "✅",
                 },
-                {
-                  label: "Book Order",
-                  done: storybookPages.length > 1,
-                  optional: false,
-                  icon: "📋",
-                },
-                {
-                  label: "Back Cover",
-                  done: hasBackCover,
-                  optional: true,
-                  icon: "📚",
-                },
+                { label: "Book Order", done: storybookPages.length > 1, optional: false, icon: "📋" },
+                { label: "Back Cover", done: hasBackCover, optional: true, icon: "📚" },
                 {
                   label: hasPublicAudio ? "Audio Public" : initialNarration && initialNarration.status !== "archived" ? "Audio (Hidden)" : "Audio",
                   done: hasPublicAudio,

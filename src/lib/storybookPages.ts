@@ -130,3 +130,14 @@ export function getPublicStorybookBookPages(raw: Record<string, unknown>): Story
 export function shouldUseStorybookPagesForPublicReader(raw: Record<string, unknown>): boolean {
   return getPublicStorybookPages(raw).length > 0;
 }
+
+// Returns all non-archived pages for admin draft preview — includes draft and admin-only pages.
+// Never use this helper in public-facing routes.
+export function getAdminPreviewStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
+  if (!Array.isArray(raw.storybookPages)) return [];
+  const parsed = raw.storybookPages
+    .map(parseStorybookPage)
+    .filter((p): p is StorybookPage => p !== null)
+    .filter((p) => p.status !== "archived");
+  return sortStorybookPagesForBook(parsed);
+}
