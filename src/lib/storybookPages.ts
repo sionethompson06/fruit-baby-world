@@ -3,6 +3,9 @@
 
 import type { StorybookPage, StorybookPageRole, StorybookLayoutType } from "@/lib/storybookPageTypes";
 
+type BookSection = "cover" | "front-matter" | "story" | "end-matter" | "back-cover";
+const BOOK_SECTIONS: BookSection[] = ["cover", "front-matter", "story", "end-matter", "back-cover"];
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
@@ -64,6 +67,8 @@ function parseStorybookPage(v: unknown): StorybookPage | null {
     leftPageLabel: typeof v.leftPageLabel === "string" ? v.leftPageLabel : undefined,
     rightPageLabel: typeof v.rightPageLabel === "string" ? v.rightPageLabel : undefined,
     displayMode: v.displayMode === "spread" ? "spread" : v.displayMode === "single" ? "single" : undefined,
+    displayLabel: typeof v.displayLabel === "string" ? v.displayLabel : undefined,
+    bookSection: BOOK_SECTIONS.includes(v.bookSection as BookSection) ? (v.bookSection as BookSection) : undefined,
   } satisfies StorybookPage;
 }
 
@@ -71,26 +76,40 @@ function roleOf(p: StorybookPage): StorybookPageRole {
   return p.pageRole ?? "story-page";
 }
 
+export function sortStorybookPagesForBook(pages: StorybookPage[]): StorybookPage[] {
+  return [...pages].sort((a, b) => {
+    const roleA = ROLE_ORDER[roleOf(a)];
+    const roleB = ROLE_ORDER[roleOf(b)];
+    if (roleA !== roleB) return roleA - roleB;
+    // Within the same role bucket, sort by spreadNumber then pageNumber
+    const spreadA = a.spreadNumber ?? a.pageNumber;
+    const spreadB = b.spreadNumber ?? b.pageNumber;
+    return spreadA - spreadB;
+  });
+}
+
 export function getStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
   if (!Array.isArray(raw.storybookPages)) return [];
-  return raw.storybookPages
+  const parsed = raw.storybookPages
     .map(parseStorybookPage)
-    .filter((p): p is StorybookPage => p !== null)
-    .sort((a, b) => {
-      const roleA = ROLE_ORDER[roleOf(a)];
-      const roleB = ROLE_ORDER[roleOf(b)];
-      if (roleA !== roleB) return roleA - roleB;
-      // Within the same role bucket, sort spreads by spreadNumber then pageNumber
-      const spreadA = a.spreadNumber ?? a.pageNumber;
-      const spreadB = b.spreadNumber ?? b.pageNumber;
-      return spreadA - spreadB;
-    });
+    .filter((p): p is StorybookPage => p !== null);
+  return sortStorybookPagesForBook(parsed);
 }
 
 export function getPublicStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
   return getStorybookPages(raw).filter(
     (p) => p.status === "approved" && p.visibility === "public"
   );
+}
+
+export function getPublicStorybookBookPages(raw: Record<string, unknown>): StorybookPage[] {
+  const parsed = Array.isArray(raw.storybookPages)
+    ? raw.storybookPages
+        .map(parseStorybookPage)
+        .filter((p): p is StorybookPage => p !== null)
+        .filter((p) => p.status === "approved" && p.visibility === "public")
+    : [];
+  return sortStorybookPagesForBook(parsed);
 }
 
 export function shouldUseStorybookPagesForPublicReader(raw: Record<string, unknown>): boolean {

@@ -935,6 +935,7 @@ export default function StorybookPagesManager({
   const publicPageCount = pages.filter((p) => p.status === "approved" && p.visibility === "public").length;
   const spreadCount = pages.filter((p) => p.pageRole === "story-spread").length;
   const frontCover = pages.find((p) => p.pageRole === "front-cover");
+  const insideCover = pages.find((p) => p.pageRole === "inside-cover");
   const backCover = pages.find((p) => p.pageRole === "back-cover");
   const endPage = pages.find((p) => p.pageRole === "end-page");
 
@@ -1034,7 +1035,7 @@ export default function StorybookPagesManager({
             Upload front cover, back cover, and end page separately.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-tiki-brown/3 rounded-2xl border border-tiki-brown/10 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-tiki-brown/3 rounded-2xl border border-tiki-brown/10 p-4">
           <SlotUploadForm
             episodeSlug={episodeSlug}
             pageRole="front-cover"
@@ -1042,6 +1043,15 @@ export default function StorybookPagesManager({
             label="Front Cover"
             hint="First page — displayed alone"
             existingPage={frontCover}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="inside-cover"
+            layoutType="single-page"
+            label="Inside Cover"
+            hint="Inside front cover — optional"
+            existingPage={insideCover}
             onPageSaved={handlePageSaved}
           />
           <SlotUploadForm

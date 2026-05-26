@@ -91,6 +91,11 @@ export default async function StorybookBuilderPage({
   const publicPageCount = storybookPages.filter(
     (p) => p.status === "approved" && p.visibility === "public"
   ).length;
+  const hasFrontCover = storybookPages.some((p) => p.pageRole === "front-cover");
+  const hasBackCover = storybookPages.some((p) => p.pageRole === "back-cover");
+  const storyPageCount = storybookPages.filter(
+    (p) => p.pageRole === "story-spread" || p.pageRole === "story-page"
+  ).length;
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -351,10 +356,22 @@ export default async function StorybookBuilderPage({
                   icon: "📄",
                 },
                 {
-                  label: `${storybookPages.length} Image${storybookPages.length !== 1 ? "s" : ""}`,
-                  done: storybookPages.length > 0,
+                  label: "Front Cover",
+                  done: hasFrontCover,
+                  optional: false,
+                  icon: "📖",
+                },
+                {
+                  label: `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}`,
+                  done: storyPageCount > 0,
                   optional: false,
                   icon: "🖼️",
+                },
+                {
+                  label: "Back Cover",
+                  done: hasBackCover,
+                  optional: true,
+                  icon: "📚",
                 },
                 {
                   label: "Audio",

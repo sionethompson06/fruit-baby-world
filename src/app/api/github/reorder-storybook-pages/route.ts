@@ -126,12 +126,18 @@ export async function POST(request: Request): Promise<Response> {
     if (isRecord(p) && typeof p.id === "string") pageMap.set(p.id, p);
   }
 
-  // Reorder according to orderedIds, reassigning pageNumber
+  // Reorder according to orderedIds, reassigning pageNumber and spreadNumber for spreads
   const reordered: Record<string, unknown>[] = [];
+  let spreadCounter = 0;
   orderedIds.forEach((id, idx) => {
     const page = pageMap.get(id);
     if (!page || !isRecord(page)) return;
-    reordered.push({ ...page, pageNumber: idx + 1 });
+    if (page.pageRole === "story-spread") {
+      spreadCounter++;
+      reordered.push({ ...page, pageNumber: idx + 1, spreadNumber: spreadCounter });
+    } else {
+      reordered.push({ ...page, pageNumber: idx + 1 });
+    }
   });
 
   // Append any pages not in orderedIds at the end (preserving them)

@@ -42,6 +42,9 @@ export type StorybookPage = {
   leftPageLabel?: string;
   rightPageLabel?: string;
   displayMode?: "single" | "spread";
+  // Book structure
+  displayLabel?: string;
+  bookSection?: "cover" | "front-matter" | "story" | "end-matter" | "back-cover";
 };
 
 export type StorybookPageInput = {
@@ -63,4 +66,7 @@ export type StorybookPageInput = {
   leftPageLabel?: string;
   rightPageLabel?: string;
   displayMode?: "single" | "spread";
+  // Book structure
+  displayLabel?: string;
+  bookSection?: "cover" | "front-matter" | "story" | "end-matter" | "back-cover";
 };

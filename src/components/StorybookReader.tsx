@@ -16,6 +16,7 @@ export type StorybookReaderPage = {
   layoutType?: "single-page" | "two-page-spread" | "cover" | "back-cover";
   displayMode?: "single" | "spread";
   spreadNumber?: number;
+  pageRole?: "front-cover" | "inside-cover" | "story-page" | "story-spread" | "end-page" | "back-cover";
 };
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
@@ -118,6 +119,8 @@ function FocusModeReader({
   onNext,
   onSelect,
   onExit,
+  onReadAgain,
+  backHref,
   touchHandlers,
 }: {
   page: StorybookReaderPage;
@@ -131,6 +134,8 @@ function FocusModeReader({
   onNext: () => void;
   onSelect: (i: number) => void;
   onExit: () => void;
+  onReadAgain: () => void;
+  backHref: string;
   touchHandlers: {
     onTouchStart: (e: React.TouchEvent) => void;
     onTouchEnd: (e: React.TouchEvent) => void;
@@ -201,6 +206,18 @@ function FocusModeReader({
           <div className="absolute bottom-3 right-3 bg-black/40 text-white text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm tabular-nums select-none pointer-events-none">
             {pageLabel}
           </div>
+          {/* Start Reading overlay on front cover */}
+          {page.pageRole === "front-cover" && index === 0 && total > 1 && (
+            <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
+              <button
+                type="button"
+                onClick={onNext}
+                className="pointer-events-auto flex items-center gap-2 text-sm font-black px-6 py-3 rounded-2xl bg-ube-purple text-white shadow-xl hover:bg-ube-purple/90 transition-all active:scale-95"
+              >
+                Start Reading →
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -249,6 +266,25 @@ function FocusModeReader({
         <div className="max-w-xl mx-auto w-full">
           <ThumbnailStrip pages={pages} activeIndex={index} onSelect={onSelect} stripRef={thumbsRef} />
         </div>
+
+        {/* End-of-book actions */}
+        {isLast && (
+          <div className="flex items-center justify-center gap-3 max-w-xl mx-auto w-full">
+            <button
+              type="button"
+              onClick={onReadAgain}
+              className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-white border border-tiki-brown/15 text-tiki-brown/70 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+            >
+              Read Again
+            </button>
+            <a
+              href={backHref}
+              className="flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-xl bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/18 transition-colors"
+            >
+              ← Back to Stories
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -259,9 +295,11 @@ function FocusModeReader({
 export default function StorybookReader({
   pages,
   episodeTitle,
+  backHref = "/stories",
 }: {
   pages: StorybookReaderPage[];
   episodeTitle: string;
+  backHref?: string;
 }) {
   const [index, setIndex] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
@@ -339,6 +377,8 @@ export default function StorybookReader({
         onNext={() => setIndex((i) => Math.min(total - 1, i + 1))}
         onSelect={setIndex}
         onExit={() => setFocusMode(false)}
+        onReadAgain={() => { setIndex(0); }}
+        backHref={backHref}
         touchHandlers={touchHandlers}
       />
     );
@@ -349,7 +389,11 @@ export default function StorybookReader({
 
       {/* ── Main image frame ─────────────────────────────────────────────── */}
       <div
-        className="relative rounded-3xl overflow-hidden bg-white shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-tiki-brown/8 select-none"
+        className={`relative rounded-3xl overflow-hidden bg-white select-none ${
+          page.pageRole === "front-cover" || page.pageRole === "back-cover"
+            ? "shadow-[0_8px_32px_rgba(0,0,0,0.14)] border-2 border-tiki-brown/12"
+            : "shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-tiki-brown/8"
+        }`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -377,7 +421,20 @@ export default function StorybookReader({
           {index + 1} / {total}
         </div>
 
-        {/* Swipe hints on mobile — show briefly then fade */}
+        {/* Start Reading overlay on front cover */}
+        {page.pageRole === "front-cover" && index === 0 && total > 1 && (
+          <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none">
+            <button
+              type="button"
+              onClick={() => setIndex(1)}
+              className="pointer-events-auto flex items-center gap-2 text-sm font-black px-6 py-3 rounded-2xl bg-ube-purple text-white shadow-xl hover:bg-ube-purple/90 transition-all active:scale-95"
+            >
+              Start Reading →
+            </button>
+          </div>
+        )}
+
+        {/* Swipe hints on mobile */}
         {!isFirst && (
           <div className="absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none pl-2 sm:hidden" aria-hidden>
             <div className="text-white/50 text-xl font-black">‹</div>
@@ -459,6 +516,25 @@ export default function StorybookReader({
         onSelect={setIndex}
         stripRef={thumbsRef}
       />
+
+      {/* ── End-of-book actions ──────────────────────────────────────────── */}
+      {isLast && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIndex(0)}
+            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-2xl bg-white border border-tiki-brown/15 text-tiki-brown/70 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+          >
+            Read Again
+          </button>
+          <a
+            href={backHref}
+            className="flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-2xl bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/18 transition-colors"
+          >
+            ← Back to Stories
+          </a>
+        </div>
+      )}
 
       {/* ── Focus mode / keyboard hint ───────────────────────────────────── */}
       <div className="flex items-center justify-between px-1">
