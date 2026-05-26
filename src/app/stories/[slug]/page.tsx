@@ -5,7 +5,7 @@ import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes"
 import { getAllCharacters, type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
-import StorybookReader, { type StorybookReaderPage } from "@/components/StorybookReader";
+import StorybookReader, { type StorybookReaderPage, type StorybookNarrationAudioProp } from "@/components/StorybookReader";
 import {
   getActiveEpisodeScenes,
   getApprovedPublicStoryPanels,
@@ -732,6 +732,21 @@ export default async function StoryDetailPage({
     };
   })();
 
+  // Public storybook narration — only shown when visibility is "public" and not archived
+  const narrationAudio: StorybookNarrationAudioProp | null = (() => {
+    const sn = raw.storybookNarration;
+    if (typeof sn !== "object" || sn === null || Array.isArray(sn)) return null;
+    const n = sn as Record<string, unknown>;
+    if (typeof n.audioUrl !== "string" || !n.audioUrl.startsWith("https://")) return null;
+    if (n.visibility !== "public") return null;
+    if (n.status === "archived") return null;
+    return {
+      audioUrl: n.audioUrl,
+      title: typeof n.title === "string" ? n.title : undefined,
+      mimeType: typeof n.mimeType === "string" ? n.mimeType : undefined,
+    };
+  })();
+
   // Public-ready full final video — only shown when visibility === "public-ready"
   const publicFinalVideo = getPublicReadyFinalVideo(raw);
 
@@ -1028,14 +1043,21 @@ export default async function StoryDetailPage({
                   Read through the story one beautiful page at a time.
                 </p>
               </div>
-              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full">
-                {storybookReaderPages.length}{" "}
-                {storybookReaderPages.length === 1 ? "page" : "pages"}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {narrationAudio && (
+                  <span className="flex-shrink-0 text-xs font-bold text-ube-purple bg-ube-purple/10 px-3 py-1.5 rounded-full flex items-center gap-1">
+                    <span aria-hidden>🎧</span> Audio Available
+                  </span>
+                )}
+                <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full">
+                  {storybookReaderPages.length}{" "}
+                  {storybookReaderPages.length === 1 ? "page" : "pages"}
+                </span>
+              </div>
             </div>
 
             {/* Premium reader */}
-            <StorybookReader pages={storybookReaderPages} episodeTitle={title} backHref="/stories" />
+            <StorybookReader pages={storybookReaderPages} episodeTitle={title} backHref="/stories" narrationAudio={narrationAudio ?? undefined} />
 
             {/* Talk about it */}
             {lesson && (

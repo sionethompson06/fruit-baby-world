@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -18,6 +18,68 @@ export type StorybookReaderPage = {
   spreadNumber?: number;
   pageRole?: "front-cover" | "title-page" | "publication-page" | "acknowledgement-page" | "introduction-page" | "inside-cover" | "story-page" | "story-spread" | "end-page" | "back-cover";
 };
+
+export type StorybookNarrationAudioProp = {
+  audioUrl: string;
+  title?: string;
+  mimeType?: string;
+};
+
+// ─── Narration Player Bar ─────────────────────────────────────────────────────
+
+function formatTime(secs: number): string {
+  if (!isFinite(secs) || secs < 0) return "0:00";
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function NarrationPlayerBar({
+  playing,
+  duration,
+  currentTime,
+  onToggle,
+  onSeek,
+}: {
+  playing: boolean;
+  duration: number;
+  currentTime: number;
+  onToggle: () => void;
+  onSeek: (t: number) => void;
+}) {
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+  return (
+    <div className="flex items-center gap-3 bg-ube-purple/8 border border-ube-purple/15 rounded-2xl px-4 py-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={playing ? "Pause narration" : "Play narration"}
+        className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors active:scale-95"
+      >
+        {playing ? "⏸" : "▶"}
+      </button>
+      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+        <span className="text-xs font-bold text-ube-purple leading-none">Listen While Reading</span>
+        <div
+          className="h-1.5 rounded-full bg-ube-purple/15 overflow-hidden cursor-pointer"
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = (e.clientX - rect.left) / rect.width;
+            onSeek(ratio * duration);
+          }}
+        >
+          <div
+            className="h-full rounded-full bg-ube-purple/60 transition-all duration-150 ease-out"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+      <span className="flex-shrink-0 text-xs tabular-nums text-ube-purple/60 font-semibold">
+        {formatTime(currentTime)}{duration > 0 ? ` / ${formatTime(duration)}` : ""}
+      </span>
+    </div>
+  );
+}
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 
@@ -122,6 +184,11 @@ function FocusModeReader({
   onReadAgain,
   backHref,
   touchHandlers,
+  audioPlaying,
+  audioDuration,
+  audioCurrentTime,
+  onAudioToggle,
+  onAudioSeek,
 }: {
   page: StorybookReaderPage;
   index: number;
@@ -140,6 +207,11 @@ function FocusModeReader({
     onTouchStart: (e: React.TouchEvent) => void;
     onTouchEnd: (e: React.TouchEvent) => void;
   };
+  audioPlaying?: boolean;
+  audioDuration?: number;
+  audioCurrentTime?: number;
+  onAudioToggle?: () => void;
+  onAudioSeek?: (t: number) => void;
 }) {
   const thumbsRef = useRef<HTMLDivElement>(null);
   const displayText = page.caption || page.readAloudText || null;
@@ -267,6 +339,19 @@ function FocusModeReader({
           <ThumbnailStrip pages={pages} activeIndex={index} onSelect={onSelect} stripRef={thumbsRef} />
         </div>
 
+        {/* Narration audio player */}
+        {onAudioToggle && (
+          <div className="max-w-xl mx-auto w-full">
+            <NarrationPlayerBar
+              playing={audioPlaying ?? false}
+              duration={audioDuration ?? 0}
+              currentTime={audioCurrentTime ?? 0}
+              onToggle={onAudioToggle}
+              onSeek={onAudioSeek ?? (() => {})}
+            />
+          </div>
+        )}
+
         {/* End-of-book actions */}
         {isLast && (
           <div className="flex items-center justify-center gap-3 max-w-xl mx-auto w-full">
@@ -296,15 +381,36 @@ export default function StorybookReader({
   pages,
   episodeTitle,
   backHref = "/stories",
+  narrationAudio,
 }: {
   pages: StorybookReaderPage[];
   episodeTitle: string;
   backHref?: string;
+  narrationAudio?: StorybookNarrationAudioProp;
 }) {
   const [index, setIndex] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const thumbsRef = useRef<HTMLDivElement>(null);
+
+  // Audio state — lives here so <audio> stays mounted across page turns & mode switches
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+
+  const toggleAudio = useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (audioPlaying) { el.pause(); } else { el.play().catch(() => {}); }
+  }, [audioPlaying]);
+
+  const seekAudio = useCallback((t: number) => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.currentTime = t;
+    setAudioCurrentTime(t);
+  }, []);
 
   const total = pages.length;
   const page = pages[index];
@@ -362,29 +468,55 @@ export default function StorybookReader({
 
   if (total === 0) return null;
 
-  // Focus mode — full-screen overlay reader
-  if (focusMode) {
-    return (
-      <FocusModeReader
-        page={page}
-        index={index}
-        total={total}
-        pages={pages}
-        episodeTitle={episodeTitle}
-        isFirst={isFirst}
-        isLast={isLast}
-        onPrev={() => setIndex((i) => Math.max(0, i - 1))}
-        onNext={() => setIndex((i) => Math.min(total - 1, i + 1))}
-        onSelect={setIndex}
-        onExit={() => setFocusMode(false)}
-        onReadAgain={() => { setIndex(0); }}
-        backHref={backHref}
-        touchHandlers={touchHandlers}
-      />
-    );
-  }
+  const audioProps = narrationAudio ? {
+    audioPlaying,
+    audioDuration,
+    audioCurrentTime,
+    onAudioToggle: toggleAudio,
+    onAudioSeek: seekAudio,
+  } : {};
 
   return (
+    <div>
+      {/* Persistent audio element — stays mounted across page turns and mode switches */}
+      {narrationAudio && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <audio
+          ref={audioRef}
+          src={narrationAudio.audioUrl}
+          preload="metadata"
+          onPlay={() => setAudioPlaying(true)}
+          onPause={() => setAudioPlaying(false)}
+          onEnded={() => setAudioPlaying(false)}
+          onTimeUpdate={() => setAudioCurrentTime(audioRef.current?.currentTime ?? 0)}
+          onLoadedMetadata={() => setAudioDuration(audioRef.current?.duration ?? 0)}
+          className="hidden"
+        />
+      )}
+
+      {/* Focus mode overlay */}
+      {focusMode && (
+        <FocusModeReader
+          page={page}
+          index={index}
+          total={total}
+          pages={pages}
+          episodeTitle={episodeTitle}
+          isFirst={isFirst}
+          isLast={isLast}
+          onPrev={() => setIndex((i) => Math.max(0, i - 1))}
+          onNext={() => setIndex((i) => Math.min(total - 1, i + 1))}
+          onSelect={setIndex}
+          onExit={() => setFocusMode(false)}
+          onReadAgain={() => { setIndex(0); }}
+          backHref={backHref}
+          touchHandlers={touchHandlers}
+          {...audioProps}
+        />
+      )}
+
+      {/* Inline reader */}
+      {!focusMode && (
     <div className="flex flex-col gap-5">
 
       {/* ── Main image frame ─────────────────────────────────────────────── */}
@@ -536,6 +668,17 @@ export default function StorybookReader({
         </div>
       )}
 
+      {/* ── Narration player bar (inline mode) ──────────────────────────── */}
+      {narrationAudio && (
+        <NarrationPlayerBar
+          playing={audioPlaying}
+          duration={audioDuration}
+          currentTime={audioCurrentTime}
+          onToggle={toggleAudio}
+          onSeek={seekAudio}
+        />
+      )}
+
       {/* ── Focus mode / keyboard hint ───────────────────────────────────── */}
       <div className="flex items-center justify-between px-1">
         <button
@@ -554,6 +697,8 @@ export default function StorybookReader({
         </span>
       </div>
 
+    </div>
+      )}
     </div>
   );
 }

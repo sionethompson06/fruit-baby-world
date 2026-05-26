@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug } from "@/lib/savedEpisodes";
 import { getStorybookPages } from "@/lib/storybookPages";
+import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
 import StorybookPagesManager from "@/app/admin/episodes/[slug]/StorybookPagesManager";
 import StorybookDetailsEditor from "@/app/admin/episodes/[slug]/StorybookDetailsEditor";
 import SimplePublishAction from "./SimplePublishAction";
+import StorybookAudioManager from "./StorybookAudioManager";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -96,6 +98,24 @@ export default async function StorybookBuilderPage({
   const storyPageCount = storybookPages.filter(
     (p) => p.pageRole === "story-spread" || p.pageRole === "story-page"
   ).length;
+
+  // Load existing storybook narration audio
+  const rawNarration = isRec(raw.storybookNarration) ? raw.storybookNarration : null;
+  const initialNarration: StorybookNarrationAudio | null = rawNarration && typeof rawNarration.audioUrl === "string" ? {
+    id: typeof rawNarration.id === "string" ? rawNarration.id : `storybook-audio-${Date.now()}`,
+    title: typeof rawNarration.title === "string" ? rawNarration.title : undefined,
+    audioUrl: rawNarration.audioUrl,
+    pathname: typeof rawNarration.pathname === "string" ? rawNarration.pathname : undefined,
+    mimeType: typeof rawNarration.mimeType === "string" ? rawNarration.mimeType : "audio/mpeg",
+    sizeBytes: typeof rawNarration.sizeBytes === "number" ? rawNarration.sizeBytes : undefined,
+    durationSeconds: typeof rawNarration.durationSeconds === "number" ? rawNarration.durationSeconds : undefined,
+    sourceType: rawNarration.sourceType === "legacy-generated" ? "legacy-generated" : "admin-uploaded",
+    status: rawNarration.status === "approved" || rawNarration.status === "archived" ? rawNarration.status : "draft",
+    visibility: rawNarration.visibility === "public" ? "public" : "hidden",
+    createdAt: typeof rawNarration.createdAt === "string" ? rawNarration.createdAt : new Date().toISOString(),
+    updatedAt: typeof rawNarration.updatedAt === "string" ? rawNarration.updatedAt : undefined,
+  } : null;
+  const hasPublicAudio = initialNarration?.visibility === "public" && initialNarration?.status !== "archived";
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -248,32 +268,17 @@ export default async function StorybookBuilderPage({
             id="audio"
             icon="🎙️"
             title="Audio Narration"
-            subtitle="Attach read-aloud narration for this storybook."
+            subtitle="Upload a finished narration file for readers to listen while reading."
             badge={
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
-                Coming Soon
+                Optional
               </span>
             }
           />
-          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎧</span>
-              <div>
-                <h3 className="text-sm font-black text-tiki-brown">Add Audio Narration</h3>
-                <p className="text-xs text-tiki-brown/50">Attach a read-aloud audio file for this story</p>
-              </div>
-            </div>
-            <p className="text-sm text-tiki-brown/55 leading-relaxed">
-              Audio upload support is coming soon. For narration tools now, use the{" "}
-              <Link
-                href={`/admin/episodes/${normalised.slug}#audio`}
-                className="font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
-              >
-                legacy editor
-              </Link>
-              .
-            </p>
-          </div>
+          <StorybookAudioManager
+            episodeSlug={normalised.slug}
+            initialNarration={initialNarration}
+          />
         </div>
 
         {/* ── Video ── */}
@@ -380,8 +385,8 @@ export default async function StorybookBuilderPage({
                   icon: "📚",
                 },
                 {
-                  label: "Audio",
-                  done: false,
+                  label: hasPublicAudio ? "Audio Public" : initialNarration && initialNarration.status !== "archived" ? "Audio (Hidden)" : "Audio",
+                  done: hasPublicAudio,
                   optional: true,
                   icon: "🎧",
                 },
