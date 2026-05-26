@@ -74,6 +74,8 @@ import FinalVideoRenderReadinessSection from "./FinalVideoRenderReadinessSection
 import FinalVideoProductionSection from "./FinalVideoProductionSection";
 import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
 import { isFinalVideoAsset } from "@/lib/finalVideoAssetTypes";
+import StorybookPagesManager from "./StorybookPagesManager";
+import { getStorybookPages } from "@/lib/storybookPages";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -713,6 +715,9 @@ export default async function EpisodeDetailPage({
   const totalVideoClips = attachedVideoClipScenes.reduce((sum, s) => sum + s.videoClips.length, 0);
   const hasAudio = existingAudioNarration !== null;
 
+  // Storybook pages (Phase 19A)
+  const storybookPages = getStorybookPages(raw);
+
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
@@ -790,7 +795,8 @@ export default async function EpisodeDetailPage({
         <nav aria-label="Production sections" className="flex flex-wrap gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-4 py-3 shadow-sm">
           {[
             { href: "#story", label: "Story" },
-            { href: "#picture-panels", label: "Picture Panels" },
+            { href: "#storybook-pages", label: "Storybook Pages" },
+            { href: "#picture-panels", label: "Legacy Panels" },
             { href: "#audio-story", label: "Audio Story" },
             { href: "#animated-clips", label: "Animated Clips" },
             { href: "#final-video", label: "Final Video" },
@@ -990,10 +996,40 @@ export default async function EpisodeDetailPage({
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* C. PICTURE STORY PANELS                                           */}
+        {/* C1. STORYBOOK PAGES (Phase 19A — upload-first)                    */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="picture-panels" className="flex flex-col gap-4 scroll-mt-4">
+        <div id="storybook-pages" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
+            icon="📚"
+            title="Storybook Pages"
+            subtitle="Upload final artwork images to build the public storybook reader. Approved public pages replace legacy panels."
+            badge={
+              storybookPages.filter((p) => p.status === "approved" && p.visibility === "public").length > 0 ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  {storybookPages.filter((p) => p.status === "approved" && p.visibility === "public").length} public
+                </span>
+              ) : storybookPages.length > 0 ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/60 uppercase tracking-wide">
+                  {storybookPages.length} draft
+                </span>
+              ) : undefined
+            }
+          />
+          <StorybookPagesManager episodeSlug={normalised.slug} initialPages={storybookPages} />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* C2. PICTURE STORY PANELS (Legacy AI generation tools)             */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <details>
+          <summary className="cursor-pointer list-none">
+            <div id="picture-panels" className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors scroll-mt-4">
+              <span className="text-sm font-bold text-tiki-brown flex-1">Legacy Image Generation Tools</span>
+              <span className="text-xs text-tiki-brown/40 details-closed:block details-open:hidden">▼ Show</span>
+            </div>
+          </summary>
+          <div className="mt-2 flex flex-col gap-4">
+        <SectionGroupHeader
             icon="🖼️"
             title="Picture Panels"
             subtitle="Create, review, arrange, and publish story artwork for each scene."
@@ -1013,7 +1049,8 @@ export default async function EpisodeDetailPage({
           <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
           <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
           <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
-        </div>
+          </div>
+        </details>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* D. AUDIO STORY                                                    */}

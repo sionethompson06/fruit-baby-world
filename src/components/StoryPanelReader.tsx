@@ -98,7 +98,7 @@ export default function StoryPanelReader({ panels }: { panels: ReaderPanel[] }) 
           aria-live="polite"
           aria-atomic="true"
         >
-          Panel {index + 1} of {total}
+          Page {index + 1} of {total}
         </span>
 
         <button

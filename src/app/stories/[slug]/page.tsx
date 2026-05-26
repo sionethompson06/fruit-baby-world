@@ -11,6 +11,10 @@ import {
   type ApprovedPanel,
 } from "@/lib/episodeScenes";
 import {
+  getPublicStorybookPages,
+  shouldUseStorybookPagesForPublicReader,
+} from "@/lib/storybookPages";
+import {
   getPublicReadyVideoClipsForEpisode,
   type PublicVideoClip,
 } from "@/lib/publicVideoClips";
@@ -665,29 +669,45 @@ export default async function StoryDetailPage({
 
   const merchTieIns = strArr(raw.merchTieIns);
 
-  // Approved public story panels (archived scenes excluded by shared helper)
-  const approvedPanels = getApprovedPublicStoryPanels(raw);
+  // Storybook pages take priority over legacy story panels when available
+  const useStorybookPages = shouldUseStorybookPagesForPublicReader(raw);
+  const publicStorybookPages = useStorybookPages ? getPublicStorybookPages(raw) : [];
+
+  // Approved public story panels (fallback when no storybook pages)
+  const approvedPanels: ApprovedPanel[] = useStorybookPages ? [] : getApprovedPublicStoryPanels(raw);
   const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 
-  // Build flat reader panel data for the client component
-  const readerPanels: ReaderPanel[] = approvedPanels.map((panel) => {
-    const scene = sceneByNumber[panel.sceneNumber];
-    const rawCharIds = scene
-      ? strArr(scene.characters ?? panel.referenceCharacters)
-      : panel.referenceCharacters;
-    const characterNames = rawCharIds.map((id) => {
-      const c = charMap[id];
-      return c ? c.shortName : formatCharName(id);
-    });
-    return {
-      sceneNumber: panel.sceneNumber,
-      panelTitle: str(scene?.title) || panel.panelTitle,
-      caption: panel.caption,
-      sceneSummary: str(scene?.summary),
-      characterNames,
-      asset: { url: panel.asset.url, alt: panel.asset.alt },
-    };
-  });
+  // Build flat reader panel data — prefer storybookPages over legacy panels
+  const readerPanels: ReaderPanel[] = useStorybookPages
+    ? publicStorybookPages.map((page) => ({
+        sceneNumber: page.sceneNumber ?? 0,
+        panelTitle: page.title ?? "",
+        caption: page.caption ?? "",
+        sceneSummary: page.readAloudText ?? "",
+        characterNames: (page.characters ?? []).map((id) => {
+          const c = charMap[id];
+          return c ? c.shortName : formatCharName(id);
+        }),
+        asset: { url: page.imageUrl, alt: page.altText },
+      }))
+    : approvedPanels.map((panel) => {
+        const scene = sceneByNumber[panel.sceneNumber];
+        const rawCharIds = scene
+          ? strArr(scene.characters ?? panel.referenceCharacters)
+          : panel.referenceCharacters;
+        const characterNames = rawCharIds.map((id) => {
+          const c = charMap[id];
+          return c ? c.shortName : formatCharName(id);
+        });
+        return {
+          sceneNumber: panel.sceneNumber,
+          panelTitle: str(scene?.title) || panel.panelTitle,
+          caption: panel.caption,
+          sceneSummary: str(scene?.summary),
+          characterNames,
+          asset: { url: panel.asset.url, alt: panel.asset.alt },
+        };
+      });
 
   // Public-ready narration audio — only shown when approved and public-ready
   const publicAudio: PublicAudio | null = (() => {
@@ -835,10 +855,12 @@ export default async function StoryDetailPage({
           </div>
 
           {/* Story Panels — available or coming soon */}
-          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${approvedPanels.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
-            <span className="text-2xl">🖼️</span>
-            <p className="text-xs font-black text-tiki-brown leading-snug">Story Panels</p>
-            {approvedPanels.length > 0 ? (
+          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${readerPanels.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
+            <span className="text-2xl">📖</span>
+            <p className="text-xs font-black text-tiki-brown leading-snug">
+              {useStorybookPages ? "Storybook" : "Story Panels"}
+            </p>
+            {readerPanels.length > 0 ? (
               <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
                 Available
               </span>
@@ -982,7 +1004,7 @@ export default async function StoryDetailPage({
             STORY PANELS — approved or coming soon
         ══════════════════════════════════════════ */}
 
-        {approvedPanels.length > 0 ? (
+        {readerPanels.length > 0 ? (
           <div
             id="story-panels"
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
@@ -991,15 +1013,20 @@ export default async function StoryDetailPage({
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex flex-col gap-1">
                 <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span>🖼️</span> Picture Story Reader
+                  <span>📖</span>{" "}
+                  {useStorybookPages ? "Storybook Reader" : "Picture Story Reader"}
                 </h2>
                 <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Move through the story one illustrated moment at a time.
+                  {useStorybookPages
+                    ? "Read through the story page by page."
+                    : "Move through the story one illustrated moment at a time."}
                 </p>
               </div>
               <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
-                {approvedPanels.length}{" "}
-                {approvedPanels.length === 1 ? "illustrated panel" : "illustrated panels"}
+                {readerPanels.length}{" "}
+                {readerPanels.length === 1
+                  ? useStorybookPages ? "page" : "illustrated panel"
+                  : useStorybookPages ? "pages" : "illustrated panels"}
               </span>
             </div>
 
@@ -1022,7 +1049,7 @@ export default async function StoryDetailPage({
             )}
 
             <p className="text-xs text-tiki-brown/40 leading-relaxed">
-              All story panels are reviewed before appearing here.
+              All story pages are reviewed before appearing here.
             </p>
           </div>
         ) : (
