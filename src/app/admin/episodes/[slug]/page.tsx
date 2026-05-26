@@ -729,7 +729,7 @@ export default async function EpisodeDetailPage({
             href="/admin/episodes"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors mb-6"
           >
-            ← Back to Story Studio
+            ← Back to Stories
           </Link>
 
           {/* Badges */}
@@ -799,7 +799,6 @@ export default async function EpisodeDetailPage({
             { href: "#audio", label: "Audio" },
             { href: "#video", label: "Video" },
             { href: "#publish-readiness", label: "Publish" },
-            { href: "#advanced-tools", label: "Advanced" },
           ].map(({ href, label }) => (
             <a
               key={href}
@@ -1017,13 +1016,13 @@ export default async function EpisodeDetailPage({
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* C. AUDIO                                                          */}
+        {/* C. AUDIO NARRATION                                                */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="audio" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
             icon="🎙️"
-            title="Audio"
-            subtitle="Upload and manage audio narration for this episode."
+            title="Audio Narration"
+            subtitle="Attach read-aloud narration for this story."
             badge={
               hasAudio ? (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
@@ -1035,8 +1034,22 @@ export default async function EpisodeDetailPage({
                 </span>
               )
             }
-            nextAction={!hasAudio ? "Upload audio narration" : undefined}
           />
+          {!hasAudio && (
+            <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎧</span>
+                <div>
+                  <h3 className="text-sm font-black text-tiki-brown">Add Audio Narration</h3>
+                  <p className="text-xs text-tiki-brown/50">Attach a read-aloud audio file for this story</p>
+                </div>
+              </div>
+              <p className="text-sm text-tiki-brown/55 leading-relaxed">
+                Audio upload support is coming next. For now, use the narration tools in
+                Developer / Legacy Tools below if needed.
+              </p>
+            </div>
+          )}
           <AudioNarrationDraftSection
             episodeSlug={slug}
             initialScript={initialNarrationScript}
@@ -1046,29 +1059,16 @@ export default async function EpisodeDetailPage({
             hasTiki={tikiFlagged}
             existingAudioNarration={existingAudioNarration}
           />
-          <details className="group">
-            <summary className="cursor-pointer list-none">
-              <div className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors">
-                <span className="text-sm font-bold text-tiki-brown flex-1">AI Narration Tools</span>
-                <span className="text-xs text-tiki-brown/40 group-open:hidden">▼ Show</span>
-                <span className="text-xs text-tiki-brown/40 hidden group-open:inline">▲ Hide</span>
-              </div>
-            </summary>
-            <div className="mt-2 flex flex-col gap-4">
-              <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-              <AudioNarrationSetupSection providerStatus={narrationProviderStatus} readiness={narrationReadiness} />
-            </div>
-          </details>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* D. VIDEO                                                          */}
+        {/* D. CARTOON VIDEO                                                  */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         <div id="video" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
             icon="🎬"
-            title="Video"
-            subtitle="Upload and manage video content for this episode."
+            title="Cartoon Video"
+            subtitle="Upload or attach a finished cartoon video for this story."
             badge={
               totalVideoClips > 0 ? (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
@@ -1088,12 +1088,12 @@ export default async function EpisodeDetailPage({
               <span className="text-2xl">🎬</span>
               <div>
                 <h3 className="text-sm font-black text-tiki-brown">Upload Cartoon Video</h3>
-                <p className="text-xs text-tiki-brown/50">Attach a finished video file for this episode</p>
+                <p className="text-xs text-tiki-brown/50">Attach a finished cartoon or video for this story</p>
               </div>
             </div>
             <p className="text-sm text-tiki-brown/55 leading-relaxed">
-              Direct video upload coming soon. Use the Final Video section below to attach a completed
-              video, or attach individual scene clips from the AI Video tools.
+              Video upload support is coming next. Existing final video tools are available in
+              Developer / Legacy Tools below.
             </p>
           </div>
 
@@ -1108,27 +1108,6 @@ export default async function EpisodeDetailPage({
             episodeSlug={normalised.slug}
             initialFinalVideo={initialFinalVideo}
           />
-
-          <details className="group">
-            <summary className="cursor-pointer list-none">
-              <div className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors">
-                <span className="text-sm font-bold text-tiki-brown flex-1">AI Video Generation Tools</span>
-                <span className="text-xs text-tiki-brown/40 group-open:hidden">▼ Show</span>
-                <span className="text-xs text-tiki-brown/40 hidden group-open:inline">▲ Hide</span>
-              </div>
-            </summary>
-            <div className="mt-2 flex flex-col gap-4">
-              <VideoGenerationSetupSection providerStatus={videoProviderStatus} readiness={videoReadiness} />
-              <VideoClipDraftSection
-                episodeSlug={normalised.slug}
-                providerConfigured={videoProviderStatus.configured}
-                providerLabel={videoProviderStatus.providerLabel}
-                sceneOptions={sceneVideoOptions}
-                videoReadiness={videoReadiness}
-                sceneReviewData={sceneReviewData}
-              />
-            </div>
-          </details>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
@@ -1172,110 +1151,120 @@ export default async function EpisodeDetailPage({
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* F. LEGACY TOOLS (collapsed)                                       */}
+        {/* G. DEVELOPER / LEGACY TOOLS (consolidated, collapsed)             */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <details>
-          <summary className="cursor-pointer list-none">
-            <div id="legacy-tools" className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors scroll-mt-4">
-              <span className="text-sm font-bold text-tiki-brown flex-1">Legacy Image Generation Tools</span>
-              <span className="text-xs text-tiki-brown/40">▼ Show</span>
-            </div>
-          </summary>
-          <div className="mt-2 flex flex-col gap-4">
-            <SectionGroupHeader
-              icon="🖼️"
-              title="Picture Panels"
-              subtitle="Legacy AI tools for generating and reviewing story panel artwork."
-              badge={
-                panelCoverage.scenesMissingPanel > 0 ? (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
-                    Needs {panelCoverage.scenesMissingPanel} panel{panelCoverage.scenesMissingPanel !== 1 ? "s" : ""}
-                  </span>
-                ) : panelCoverage.totalActiveScenes > 0 ? (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
-                    All panels done ✓
-                  </span>
-                ) : undefined
-              }
-            />
-            <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-            <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
-            <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
-          </div>
-        </details>
-
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* G. ADVANCED TOOLS                                                 */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        <details id="advanced-tools" className="group scroll-mt-4">
+        <details id="legacy-tools" className="group scroll-mt-4">
           <summary className="cursor-pointer list-none">
             <div className="flex items-center justify-between bg-white border border-tiki-brown/10 rounded-2xl px-5 py-4 shadow-sm hover:border-tiki-brown/20 transition-colors">
               <div className="flex items-center gap-2">
                 <span className="text-base">🔧</span>
                 <div>
-                  <p className="text-sm font-bold text-tiki-brown">Advanced Tools</p>
-                  <p className="text-xs text-tiki-brown/50">Developer/debug views and detailed manifests — grouped here to keep the main workflow simple.</p>
+                  <p className="text-sm font-bold text-tiki-brown">Developer / Legacy Tools</p>
+                  <p className="text-xs text-tiki-brown/50">Retained temporarily for debugging and legacy workflows.</p>
                 </div>
               </div>
               <span className="text-tiki-brown/40 text-xs group-open:rotate-180 transition-transform flex-shrink-0 ml-3">▼</span>
             </div>
           </summary>
-          <div className="mt-3 flex flex-col gap-4">
-            {/* Scene ID stability (diagnostic) */}
-            <SceneIdStabilitySection
-              episodeSlug={normalised.slug}
-              totalScenes={sceneIdStats.totalScenes}
-              scenesWithId={sceneIdStats.scenesWithId}
-              totalPanels={sceneIdStats.totalPanels}
-              panelsWithId={sceneIdStats.panelsWithId}
-              totalClips={sceneIdStats.totalClips}
-              clipsWithId={sceneIdStats.clipsWithId}
-            />
-            {/* Draft prompt & planning text */}
-            {imagePrompts.length > 0 && (
-              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
-                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Image Prompt Drafts</p>
-                {imagePrompts.map((prompt, i) => (
-                  <div key={i} className="bg-sky-blue/10 rounded-xl p-4">
-                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {animPrompts.length > 0 && (
-              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
-                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Animation Prompt Drafts</p>
-                {animPrompts.map((prompt, i) => (
-                  <div key={i} className="bg-tropical-green/8 rounded-xl p-4">
-                    <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-            {fidelityChecklist.length > 0 && (
-              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
-                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Character Fidelity Checklist</p>
-                <StringList items={fidelityChecklist} />
-              </div>
-            )}
-            {merchTieIns.length > 0 && (
-              <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
-                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Merch Tie-Ins</p>
-                <StringList items={merchTieIns} />
-              </div>
-            )}
-            <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} episodeRefSummary={episodeRefPackages} />
-            <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
-            <ReferencePackagePreviewSection summary={episodeRefPackages} />
-            <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-            <AnimationRouteTestPanel
-              episodeSlug={normalised.slug}
-              tikiFlagged={tikiFlagged}
-              scenes={sceneOptions}
-              featuredCharacters={normalised.featuredCharacters}
-            />
-            <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
-            <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+          <div className="mt-3 flex flex-col gap-5">
+
+            {/* Helper note */}
+            <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-4 py-3">
+              <span className="text-base flex-shrink-0">ℹ️</span>
+              <p className="text-xs text-tiki-brown/55 leading-relaxed">
+                These tools are retained temporarily for debugging or legacy workflows.
+                The preferred workflow is upload-first story publishing via the sections above.
+              </p>
+            </div>
+
+            {/* Legacy Narration Generation Tools */}
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest px-1">Legacy Narration Generation Tools</p>
+              <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+              <AudioNarrationSetupSection providerStatus={narrationProviderStatus} readiness={narrationReadiness} />
+            </div>
+
+            {/* Legacy Video Generation Tools */}
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest px-1">Legacy Video Generation Tools</p>
+              <VideoGenerationSetupSection providerStatus={videoProviderStatus} readiness={videoReadiness} />
+              <VideoClipDraftSection
+                episodeSlug={normalised.slug}
+                providerConfigured={videoProviderStatus.configured}
+                providerLabel={videoProviderStatus.providerLabel}
+                sceneOptions={sceneVideoOptions}
+                videoReadiness={videoReadiness}
+                sceneReviewData={sceneReviewData}
+              />
+            </div>
+
+            {/* Legacy Image Generation Tools */}
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest px-1">Legacy Image Generation Tools</p>
+              <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+              <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
+              <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
+            </div>
+
+            {/* Debug / planning data */}
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest px-1">Debug &amp; Planning Data</p>
+              <SceneIdStabilitySection
+                episodeSlug={normalised.slug}
+                totalScenes={sceneIdStats.totalScenes}
+                scenesWithId={sceneIdStats.scenesWithId}
+                totalPanels={sceneIdStats.totalPanels}
+                panelsWithId={sceneIdStats.panelsWithId}
+                totalClips={sceneIdStats.totalClips}
+                clipsWithId={sceneIdStats.clipsWithId}
+              />
+              {imagePrompts.length > 0 && (
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                  <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Image Prompt Drafts</p>
+                  {imagePrompts.map((prompt, i) => (
+                    <div key={i} className="bg-sky-blue/10 rounded-xl p-4">
+                      <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {animPrompts.length > 0 && (
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                  <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Animation Prompt Drafts</p>
+                  {animPrompts.map((prompt, i) => (
+                    <div key={i} className="bg-tropical-green/8 rounded-xl p-4">
+                      <p className="text-sm text-tiki-brown/70 leading-relaxed">{prompt}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {fidelityChecklist.length > 0 && (
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                  <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Character Fidelity Checklist</p>
+                  <StringList items={fidelityChecklist} />
+                </div>
+              )}
+              {merchTieIns.length > 0 && (
+                <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 flex flex-col gap-3">
+                  <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Merch Tie-Ins</p>
+                  <StringList items={merchTieIns} />
+                </div>
+              )}
+              <MediaProductionOverview scenes={activeScenes} isPublicReady={isAlreadyPublished} episodeRefSummary={episodeRefPackages} />
+              <MediaPlanningSection plan={mediaPlan} tikiFlagged={tikiFlagged} />
+              <ReferencePackagePreviewSection summary={episodeRefPackages} />
+              <AnimationPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+              <AnimationRouteTestPanel
+                episodeSlug={normalised.slug}
+                tikiFlagged={tikiFlagged}
+                scenes={sceneOptions}
+                featuredCharacters={normalised.featuredCharacters}
+              />
+              <StoryPanelAssetManifest scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+              <AnimationClipManifestPreview scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} />
+            </div>
+
+            {/* Developer JSON Preview */}
             <details className="group/json">
               <summary className="cursor-pointer list-none">
                 <div className="flex items-center justify-between bg-white border border-tiki-brown/10 rounded-2xl px-5 py-4 shadow-sm hover:border-tiki-brown/20 transition-colors">
@@ -1292,6 +1281,7 @@ export default async function EpisodeDetailPage({
                 </pre>
               </div>
             </details>
+
           </div>
         </details>
 
@@ -1301,7 +1291,7 @@ export default async function EpisodeDetailPage({
             href="/admin/episodes"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
           >
-            ← Back to Story Studio
+            ← Back to Stories
           </Link>
         </div>
 
