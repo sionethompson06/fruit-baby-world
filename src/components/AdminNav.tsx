@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const primaryLinks = [
@@ -23,8 +22,6 @@ const legacyLinks = [
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const [devExpanded, setDevExpanded] = useState(false);
-
   async function handleLock() {
     await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
@@ -34,9 +31,6 @@ export default function AdminNav() {
     if (href === "/admin") return pathname === "/admin";
     return pathname === href || pathname.startsWith(href + "/");
   }
-
-  const isOnDevPage = developerLinks.some((l) => isActive(l.href));
-  const showDev = devExpanded || isOnDevPage;
 
   return (
     <nav className="bg-ube-purple/10 border-b border-ube-purple/20">

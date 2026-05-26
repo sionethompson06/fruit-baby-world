@@ -117,7 +117,7 @@ export default function ProductMockupReviewSection({ draft, character, concepts 
         <div className="flex flex-col gap-1.5 text-xs text-tiki-brown/65">
           <p><span className="font-semibold text-tiki-brown/80">Product:</span> {savedMockup.productTitle}</p>
           <p><span className="font-semibold text-tiki-brown/80">Character:</span> {character.displayName}</p>
-          <p><span className="font-semibold text-tiki-brown/80">Category:</span> {PRODUCT_CATEGORY_LABELS[savedMockup.category]}</p>
+          <p><span className="font-semibold text-tiki-brown/80">Category:</span> {savedMockup.category != null ? ((PRODUCT_CATEGORY_LABELS as Record<string, string>)[savedMockup.category] ?? savedMockup.category) : ""}</p>
           <p><span className="font-semibold text-tiki-brown/80">Visibility:</span> Admin Only</p>
           <p><span className="font-semibold text-tiki-brown/80">Saved:</span> {new Date(savedMockup.createdAt).toLocaleString()}</p>
         </div>
