@@ -761,9 +761,9 @@ export default async function EpisodeDetailPage({
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            <strong className="text-tiki-brown font-bold">Production workspace.</strong>{" "}
-            Create panels, audio, animated clips, and final video for this episode. Use the Publish
-            section to mark it public-ready when all media is approved.
+            <strong className="text-tiki-brown font-bold">Publishing workspace.</strong>{" "}
+            Upload storybook pages, audio narration, and video for this episode. Use the Publish
+            section to make it live when all content is ready.
           </p>
         </div>
 
@@ -796,10 +796,8 @@ export default async function EpisodeDetailPage({
           {[
             { href: "#story", label: "Story" },
             { href: "#storybook-pages", label: "Storybook Pages" },
-            { href: "#picture-panels", label: "Legacy Panels" },
-            { href: "#audio-story", label: "Audio Story" },
-            { href: "#animated-clips", label: "Animated Clips" },
-            { href: "#final-video", label: "Final Video" },
+            { href: "#audio", label: "Audio" },
+            { href: "#video", label: "Video" },
             { href: "#publish-readiness", label: "Publish" },
             { href: "#advanced-tools", label: "Advanced" },
           ].map(({ href, label }) => (
@@ -1019,47 +1017,13 @@ export default async function EpisodeDetailPage({
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* C2. PICTURE STORY PANELS (Legacy AI generation tools)             */}
+        {/* C. AUDIO                                                          */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <details>
-          <summary className="cursor-pointer list-none">
-            <div id="picture-panels" className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors scroll-mt-4">
-              <span className="text-sm font-bold text-tiki-brown flex-1">Legacy Image Generation Tools</span>
-              <span className="text-xs text-tiki-brown/40 details-closed:block details-open:hidden">▼ Show</span>
-            </div>
-          </summary>
-          <div className="mt-2 flex flex-col gap-4">
-        <SectionGroupHeader
-            icon="🖼️"
-            title="Picture Panels"
-            subtitle="Create, review, arrange, and publish story artwork for each scene."
-            badge={
-              panelCoverage.scenesMissingPanel > 0 ? (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
-                  Needs {panelCoverage.scenesMissingPanel} panel{panelCoverage.scenesMissingPanel !== 1 ? "s" : ""}
-                </span>
-              ) : panelCoverage.totalActiveScenes > 0 ? (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
-                  All panels done ✓
-                </span>
-              ) : undefined
-            }
-            nextAction={panelCoverage.scenesMissingPanel > 0 ? "Generate missing panel drafts" : undefined}
-          />
-          <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-          <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
-          <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
-          </div>
-        </details>
-
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* D. AUDIO STORY                                                    */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="audio-story" className="flex flex-col gap-4 scroll-mt-4">
+        <div id="audio" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
             icon="🎙️"
-            title="Audio Story"
-            subtitle="Generate and review read-aloud narration for this episode."
+            title="Audio"
+            subtitle="Upload and manage audio narration for this episode."
             badge={
               hasAudio ? (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
@@ -1071,10 +1035,8 @@ export default async function EpisodeDetailPage({
                 </span>
               )
             }
-            nextAction={!hasAudio ? "Generate a narration draft" : undefined}
+            nextAction={!hasAudio ? "Upload audio narration" : undefined}
           />
-          <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
-          <AudioNarrationSetupSection providerStatus={narrationProviderStatus} readiness={narrationReadiness} />
           <AudioNarrationDraftSection
             episodeSlug={slug}
             initialScript={initialNarrationScript}
@@ -1084,16 +1046,29 @@ export default async function EpisodeDetailPage({
             hasTiki={tikiFlagged}
             existingAudioNarration={existingAudioNarration}
           />
+          <details className="group">
+            <summary className="cursor-pointer list-none">
+              <div className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors">
+                <span className="text-sm font-bold text-tiki-brown flex-1">AI Narration Tools</span>
+                <span className="text-xs text-tiki-brown/40 group-open:hidden">▼ Show</span>
+                <span className="text-xs text-tiki-brown/40 hidden group-open:inline">▲ Hide</span>
+              </div>
+            </summary>
+            <div className="mt-2 flex flex-col gap-4">
+              <ReadAloudPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+              <AudioNarrationSetupSection providerStatus={narrationProviderStatus} readiness={narrationReadiness} />
+            </div>
+          </details>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* E. ANIMATED CLIPS                                                 */}
+        {/* D. VIDEO                                                          */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="animated-clips" className="flex flex-col gap-4 scroll-mt-4">
+        <div id="video" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
-            icon="🎞️"
-            title="Animated Clips"
-            subtitle="Create short animated scene clips for this episode."
+            icon="🎬"
+            title="Video"
+            subtitle="Upload and manage video content for this episode."
             badge={
               totalVideoClips > 0 ? (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
@@ -1106,57 +1081,54 @@ export default async function EpisodeDetailPage({
               )
             }
           />
-          <VideoGenerationSetupSection providerStatus={videoProviderStatus} readiness={videoReadiness} />
-          <VideoClipDraftSection
-            episodeSlug={normalised.slug}
-            providerConfigured={videoProviderStatus.configured}
-            providerLabel={videoProviderStatus.providerLabel}
-            sceneOptions={sceneVideoOptions}
-            videoReadiness={videoReadiness}
-            sceneReviewData={sceneReviewData}
-          />
-          <AttachedVideoClipsSection episodeSlug={normalised.slug} scenes={attachedVideoClipScenes} />
-        </div>
 
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* F. FINAL VIDEO ASSEMBLY PLAN                                      */}
-        {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="final-video" className="flex flex-col gap-4 scroll-mt-4">
-          <SectionGroupHeader
-            icon="🎬"
-            title="Final Video"
-            subtitle="Assemble panels, audio, and clips into a complete story video."
-            badge={
-              finalVideoPkg.status === "ready" ? (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
-                  Ready
-                </span>
-              ) : finalVideoPkg.status === "blocked" ? (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
-                  Blocked
-                </span>
-              ) : (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/25 text-tiki-brown/70 uppercase tracking-wide">
-                  Needs Work
-                </span>
-              )
-            }
-            nextAction={finalVideoPkg.status !== "ready" ? "Complete panels and audio first" : undefined}
-          />
+          {/* Video upload placeholder */}
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🎬</span>
+              <div>
+                <h3 className="text-sm font-black text-tiki-brown">Upload Cartoon Video</h3>
+                <p className="text-xs text-tiki-brown/50">Attach a finished video file for this episode</p>
+              </div>
+            </div>
+            <p className="text-sm text-tiki-brown/55 leading-relaxed">
+              Direct video upload coming soon. Use the Final Video section below to attach a completed
+              video, or attach individual scene clips from the AI Video tools.
+            </p>
+          </div>
+
+          <AttachedVideoClipsSection episodeSlug={normalised.slug} scenes={attachedVideoClipScenes} />
+
+          {/* Final video assembly */}
           <FinalVideoAssemblyPreviewSection pkg={finalVideoPkg} />
-          <div id="final-video-preview">
-            <FinalStoryVideoPreviewSection pkg={finalVideoPkg} />
-          </div>
-          <div id="final-video-render-readiness">
-            <FinalVideoRenderReadinessSection pkg={finalVideoPkg} />
-          </div>
-          <div id="final-video-production">
-            <FinalVideoProductionSection
-              pkg={finalVideoPkg}
-              episodeSlug={normalised.slug}
-              initialFinalVideo={initialFinalVideo}
-            />
-          </div>
+          <FinalStoryVideoPreviewSection pkg={finalVideoPkg} />
+          <FinalVideoRenderReadinessSection pkg={finalVideoPkg} />
+          <FinalVideoProductionSection
+            pkg={finalVideoPkg}
+            episodeSlug={normalised.slug}
+            initialFinalVideo={initialFinalVideo}
+          />
+
+          <details className="group">
+            <summary className="cursor-pointer list-none">
+              <div className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors">
+                <span className="text-sm font-bold text-tiki-brown flex-1">AI Video Generation Tools</span>
+                <span className="text-xs text-tiki-brown/40 group-open:hidden">▼ Show</span>
+                <span className="text-xs text-tiki-brown/40 hidden group-open:inline">▲ Hide</span>
+              </div>
+            </summary>
+            <div className="mt-2 flex flex-col gap-4">
+              <VideoGenerationSetupSection providerStatus={videoProviderStatus} readiness={videoReadiness} />
+              <VideoClipDraftSection
+                episodeSlug={normalised.slug}
+                providerConfigured={videoProviderStatus.configured}
+                providerLabel={videoProviderStatus.providerLabel}
+                sceneOptions={sceneVideoOptions}
+                videoReadiness={videoReadiness}
+                sceneReviewData={sceneReviewData}
+              />
+            </div>
+          </details>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
@@ -1198,6 +1170,39 @@ export default async function EpisodeDetailPage({
             </Link>
           </div>
         </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* F. LEGACY TOOLS (collapsed)                                       */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <details>
+          <summary className="cursor-pointer list-none">
+            <div id="legacy-tools" className="flex items-center gap-2 bg-white rounded-2xl border border-tiki-brown/10 px-5 py-3 shadow-sm hover:border-tiki-brown/20 transition-colors scroll-mt-4">
+              <span className="text-sm font-bold text-tiki-brown flex-1">Legacy Image Generation Tools</span>
+              <span className="text-xs text-tiki-brown/40">▼ Show</span>
+            </div>
+          </summary>
+          <div className="mt-2 flex flex-col gap-4">
+            <SectionGroupHeader
+              icon="🖼️"
+              title="Picture Panels"
+              subtitle="Legacy AI tools for generating and reviewing story panel artwork."
+              badge={
+                panelCoverage.scenesMissingPanel > 0 ? (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
+                    Needs {panelCoverage.scenesMissingPanel} panel{panelCoverage.scenesMissingPanel !== 1 ? "s" : ""}
+                  </span>
+                ) : panelCoverage.totalActiveScenes > 0 ? (
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                    All panels done ✓
+                  </span>
+                ) : undefined
+              }
+            />
+            <StoryPanelPromptBuilder scenes={activeScenes} raw={raw} tikiFlagged={tikiFlagged} episodeSlug={normalised.slug} charBySlug={charBySlug} characterPackages={characterPackages} sceneRefPackages={episodeRefPackages.scenePackages} />
+            <BatchMissingPanelDraftsSection episodeSlug={normalised.slug} coverage={panelCoverage} missingScenes={missingPanelSceneInfos} />
+            <SavedStoryPanelAssetLibrary raw={raw} scenes={scenes} episodeSlug={normalised.slug} />
+          </div>
+        </details>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* G. ADVANCED TOOLS                                                 */}

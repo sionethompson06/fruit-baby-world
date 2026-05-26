@@ -24,7 +24,7 @@ const primaryStudios = [
     emoji: "🎬",
     title: "Story Studio",
     description:
-      "Create episodes, scenes, picture panels, audio stories, animated clips, and final videos.",
+      "Build episodes, upload storybook pages, add audio narration, and publish finished stories.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/episodes",
@@ -102,14 +102,12 @@ const advancedTools = [
 // ─── Recommended production workflow ─────────────────────────────────────────
 
 const workflowSteps = [
-  { step: 1, label: "Build Character Profiles",   emoji: "🍍", note: "Character Studio" },
-  { step: 2, label: "Create Episode Scenes",       emoji: "✍️", note: "Story Studio" },
-  { step: 3, label: "Generate Picture Panels",     emoji: "🖼️", note: "Story Studio" },
-  { step: 4, label: "Generate Audio Story",        emoji: "🎧", note: "Story Studio" },
-  { step: 5, label: "Generate Animated Clips",     emoji: "🎞️", note: "Story Studio" },
-  { step: 6, label: "Review Health & Readiness",   emoji: "🩺", note: "Media Health" },
-  { step: 7, label: "Make Media Public Ready",     emoji: "✅", note: "Story Studio" },
-  { step: 8, label: "Publish Story",               emoji: "🚀", note: "Publishing" },
+  { step: 1, label: "Build Character Profiles",  emoji: "🍍", note: "Character Studio" },
+  { step: 2, label: "Create / Edit Story",        emoji: "✍️", note: "Story Studio" },
+  { step: 3, label: "Upload Storybook Pages",     emoji: "📚", note: "Story Studio" },
+  { step: 4, label: "Add Audio Narration",        emoji: "🎧", note: "Story Studio" },
+  { step: 5, label: "Upload Cartoon Video",       emoji: "🎬", note: "Story Studio" },
+  { step: 6, label: "Preview & Publish",          emoji: "🚀", note: "Publishing" },
 ];
 
 // ─── Today's production guidance ─────────────────────────────────────────────
@@ -123,7 +121,7 @@ const todayGuidance = [
   },
   {
     icon: "🎬",
-    text: "Open Story Studio to create panels, audio, and video for an episode.",
+    text: "Open Story Studio to upload storybook pages, audio narration, and video for an episode.",
     href: "/admin/episodes",
     label: "Story Studio",
   },
