@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { NormalizedCharacterProfile } from "@/lib/characterProfileNormalizer";
+import type { Character } from "@/lib/content";
 import CharacterImage from "./CharacterImage";
 
 const emojiMap: Record<string, string> = {
@@ -15,15 +15,15 @@ function getTraitName(trait: string): string {
   return trait.split(" — ")[0].trim();
 }
 
-export default function CharacterCard({ character }: { character: NormalizedCharacterProfile }) {
+export default function CharacterCard({ character }: { character: Character }) {
   const emoji = emojiMap[character.slug] ?? "✨";
   const isVillain = character.type === "villain";
-  const isNew = !character.isOriginalCanonical && !isVillain;
-  const headerColor = character.colorPalette[0]?.hex ?? "#FFD84D";
-  const colorChips = character.colorPalette.filter((c) => c.hex).slice(0, 6);
+  const isNew = character.approvalMode === "draft" && !isVillain;
+  const palette = character.visualIdentity.palette ?? [];
+  const headerColor = palette[0]?.hex ?? character.visualIdentity.primaryColors[0] ?? "#FFD84D";
+  const colorChips = palette.filter((c) => c.hex).slice(0, 6);
 
-  // Filter garbled traits — garbled data from table imports contains tab characters
-  const cleanTraits = character.personalityTraits
+  const cleanTraits = (character.personality ?? [])
     .filter((t) => !t.includes("\t"))
     .slice(0, 3);
 
@@ -58,8 +58,8 @@ export default function CharacterCard({ character }: { character: NormalizedChar
           </div>
 
           <CharacterImage
-            src={character.characterCardImageUrl}
-            alt={character.imageAlt}
+            src={character.image.main}
+            alt={character.image.alt}
             emoji={emoji}
             bgColor={headerColor}
             className="w-full aspect-square"

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicCharacterProfiles } from "@/lib/characterRegistry";
-import { getOfficialProfileSheetUrl } from "@/lib/characterProfileAssets";
 
 export const metadata: Metadata = {
   title: "Fruit Baby World",
@@ -130,7 +129,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
             {featuredCharacters.map((char) => {
               const accent = CHARACTER_ACCENT[char.slug] ?? DEFAULT_ACCENT;
-              const profileUrl = getOfficialProfileSheetUrl(char);
+              const profileUrl = char.image?.profileSheet ?? char.image?.main ?? "";
               const personalityList: unknown = char.personality;
               const firstTrait =
                 Array.isArray(personalityList) && personalityList.length > 0

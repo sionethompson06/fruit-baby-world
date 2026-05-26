@@ -1,497 +1,96 @@
-import fs from "fs";
-import path from "path";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
-import { getCharacterApprovalMode, characterHasPrimaryReference } from "@/lib/characterReadiness";
-import {
-  checkCharacterAssets,
-  buildReadinessSummary,
-} from "@/lib/characterAssets";
-import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
-import CharacterReferenceUploadForm, {
-  type CharacterOption,
-} from "./CharacterReferenceUploadForm";
 import CreateCharacterDraftForm from "./CreateCharacterDraftForm";
-import CharacterWorkspaceCard from "./CharacterWorkspaceCard";
-import CharacterGlobalReviewSection from "./CharacterGlobalReviewSection";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Character Studio | Admin",
+  title: "Characters | Admin",
 };
-
-// ─── Global fidelity rules ────────────────────────────────────────────────────
-
-const GLOBAL_FIDELITY_RULES = [
-  "Official character profile images are the visual source of truth.",
-  "Canonical character JSON is the data source of truth.",
-  "Future generated images and videos must be reference-anchored.",
-  "Characters must not be redesigned.",
-  "Body shape, silhouette, proportions, facial style, colors, accessories, and fruit identity must be preserved.",
-  "Generated media must remain kid-friendly.",
-  "Public users should not freely generate or remix official characters.",
-  "Human review is required before generated media is published.",
-];
-
-// ─── Reference asset loader ───────────────────────────────────────────────────
-
-function loadUploadedReferenceAssets(): UploadedReferenceAsset[] {
-  const filePath = path.join(
-    process.cwd(),
-    "src/content/reference-assets/character-reference-assets.json"
-  );
-  try {
-    const raw = fs.readFileSync(filePath, "utf8");
-    const parsed = JSON.parse(raw) as { assets?: unknown[] };
-    if (!Array.isArray(parsed.assets)) return [];
-    return parsed.assets.filter(
-      (a): a is UploadedReferenceAsset =>
-        typeof a === "object" && a !== null && "id" in a && "characterSlug" in a
-    );
-  } catch {
-    return [];
-  }
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const OFFICIAL_CHARACTER_SLUGS = new Set([
-  "pineapple-baby",
-  "ube-baby",
-  "mango-baby",
-  "kiwi-baby",
-  "coconut-baby",
-  "tiki",
-]);
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AdminCharactersPage() {
   const characters = loadAllCharactersFromDisk();
-  const assetSummaries = characters.map(checkCharacterAssets);
-  const readiness = buildReadinessSummary(assetSummaries);
-  const uploadedAssets = loadUploadedReferenceAssets();
 
-  const officialCharacters = characters.filter((c) => {
-    const mode = getCharacterApprovalMode(c);
-    return mode !== "draft" && mode !== "archived";
-  });
-  const draftCharacters = characters.filter(
-    (c) => getCharacterApprovalMode(c) === "draft"
+  const published = characters.filter(
+    (c) => c.approvalMode === "public" || (c.status === "active" && c.publicUseAllowed !== false)
   );
-
-  const characterOptions: CharacterOption[] = characters.map((c) => ({
-    slug: c.slug,
-    name: c.name,
-    isDraft:
-      c.status === "draft" ||
-      c.approvalMode === "draft" ||
-      (!c.approvalMode && c.status !== "active" && c.publicUseAllowed !== true),
-  }));
-
-  const approvedRefCounts: Record<string, number> = {};
-  const builtInRefValid: Record<string, boolean> = {};
-  for (let i = 0; i < characters.length; i++) {
-    const c = characters[i];
-    approvedRefCounts[c.slug] = uploadedAssets.filter(
-      (a) =>
-        a.characterSlug === c.slug &&
-        a.reviewStatus === "approved-for-generation" &&
-        a.approvedForGeneration === true &&
-        a.generationUseAllowed === true
-    ).length;
-    builtInRefValid[c.slug] = assetSummaries[i].hasAnyValidReference;
-  }
-
-  const assetSummaryBySlug = Object.fromEntries(
-    characters.map((c, i) => [c.slug, assetSummaries[i]])
+  const drafts = characters.filter(
+    (c) => c.approvalMode === "draft" || c.status === "draft"
   );
-
-  function assetsBySlug(slug: string): UploadedReferenceAsset[] {
-    return uploadedAssets.filter((a) => a.characterSlug === slug);
-  }
-
-  // ─── Command Center stats ───────────────────────────────────────────────────
-
-  const noPrimaryRefCount = characters.filter(
-    (c) => !characterHasPrimaryReference(c)
-  ).length;
-  const generationReadyCount = Object.values(assetSummaryBySlug).filter(
-    (s) => s.readyForReferenceAnchoredGeneration
-  ).length;
-  const pendingAssets = uploadedAssets.filter(
-    (a) => a.reviewStatus === "needs-review"
-  );
-  const pendingReviewCount = pendingAssets.length;
-  const characterNames = Object.fromEntries(characters.map((c) => [c.slug, c.name]));
 
   return (
-    <div className="flex flex-col bg-bg-cream min-h-screen">
-
-      <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-widest">
-              Admin Only
-            </span>
-          </div>
-          <div className="text-4xl mb-3">🍍</div>
-          <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
-            Character Studio
-          </h1>
-          <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Manage official characters, references, profiles, and character integrity.
-          </p>
+    <main className="min-h-screen bg-gradient-to-b from-pineapple-yellow/10 to-white">
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-20 flex flex-col gap-8">
+        <div className="flex items-center gap-2 text-sm text-tiki-brown/50">
+          <Link href="/admin" className="hover:text-tiki-brown transition-colors">Admin</Link>
+          <span>/</span>
+          <span className="text-tiki-brown font-semibold">Characters</span>
         </div>
-      </section>
 
-      <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
-
-        <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
-          <span className="text-xl flex-shrink-0">📋</span>
-          <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            <strong className="text-tiki-brown font-bold">Admin only.</strong>{" "}
-            Upload reference assets and manage character status below. Character editing is handled
-            via JSON files.
+        <div>
+          <h1 className="text-2xl font-black text-tiki-brown mb-1">🍍 Characters</h1>
+          <p className="text-sm text-tiki-brown/60">
+            {characters.length} total — {published.length} published, {drafts.length} drafts
           </p>
         </div>
 
-        {/* ── A. Command Center ── */}
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">📊</span>
-            <h2 className="text-base font-black text-tiki-brown">Command Center</h2>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {(
-              [
-                ["Total Characters", String(characters.length), undefined],
-                ["Official", String(officialCharacters.length), undefined],
-                ["Draft / Private", String(draftCharacters.length), undefined],
-                [
-                  "No Primary Ref",
-                  String(noPrimaryRefCount),
-                  noPrimaryRefCount === 0 ? true : false,
-                ],
-                [
-                  "Pending Review",
-                  String(pendingReviewCount),
-                  pendingReviewCount === 0 ? true : false,
-                ],
-                [
-                  "Generation Ready",
-                  String(generationReadyCount),
-                  generationReadyCount > 0 ? true : undefined,
-                ],
-              ] as [string, string, boolean | undefined][]
-            ).map(([label, value, positive]) => (
-              <div
-                key={label}
-                className={`flex flex-col items-center gap-0.5 rounded-2xl px-4 py-3 text-center border ${
-                  positive === true
-                    ? "bg-tropical-green/8 border-tropical-green/20"
-                    : positive === false
-                    ? "bg-warm-coral/8 border-warm-coral/20"
-                    : "bg-tiki-brown/4 border-tiki-brown/8"
-                }`}
-              >
-                <span
-                  className={`text-xl font-black ${
-                    positive === true
-                      ? "text-tropical-green"
-                      : positive === false
-                      ? "text-warm-coral/80"
-                      : "text-tiki-brown"
-                  }`}
-                >
-                  {value}
-                </span>
-                <span className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide leading-tight">
-                  {label}
-                </span>
+        {/* Published characters */}
+        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+          <h2 className="text-base font-black text-tiki-brown mb-4">Published Characters</h2>
+          <div className="flex flex-col gap-3">
+            {published.map((c) => (
+              <div key={c.slug} className="flex items-center justify-between py-2 border-b border-tiki-brown/8 last:border-0">
+                <div>
+                  <p className="text-sm font-bold text-tiki-brown">{c.shortName ?? c.name}</p>
+                  <p className="text-xs text-tiki-brown/45 font-mono">{c.slug}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/characters/${c.slug}`}
+                    target="_blank"
+                    className="text-xs font-semibold text-ube-purple hover:text-ube-purple/80"
+                  >
+                    View →
+                  </Link>
+                </div>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* ── B. Upload reference file ── */}
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">⬆️</span>
-            <h2 className="text-base font-black text-tiki-brown">
-              Upload Character Reference File
-            </h2>
-            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
-              Admin Only
-            </span>
-          </div>
-          <p className="text-sm text-tiki-brown/60 leading-relaxed">
-            Upload PNG, JPEG, or WebP reference guide images to Vercel Blob. Uploaded assets default
-            to <strong className="font-semibold">approvedForGeneration: false</strong> and require
-            review before use.
-          </p>
-          <CharacterReferenceUploadForm characters={characterOptions} />
-        </div>
-
-        {/* ── C. Create new character draft ── */}
-        <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">✨</span>
-            <h2 className="text-base font-black text-tiki-brown">Create New Character Draft</h2>
-            <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-wide">
-              Admin Only
-            </span>
-          </div>
-          <p className="text-sm text-tiki-brown/60 leading-relaxed">
-            Create a new character profile draft. New characters are{" "}
-            <strong className="font-semibold">private by default</strong> and are not approved for
-            stories or generation until reference assets are uploaded and reviewed. A Vercel redeploy
-            is required for the character to appear in admin lists.
-          </p>
-          <CreateCharacterDraftForm />
-        </div>
-
-        {/* ── D. Official character workspace cards ── */}
-        {officialCharacters.length > 0 && (
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🌟</span>
-              <h2 className="text-sm font-black text-tiki-brown/70 uppercase tracking-wide">
-                Official Characters ({officialCharacters.length})
-              </h2>
-            </div>
-            {officialCharacters.map((c) => (
-              <CharacterWorkspaceCard
-                key={c.id}
-                character={c}
-                uploadedAssets={assetsBySlug(c.slug)}
-                approvedRefCount={approvedRefCounts[c.slug] ?? 0}
-                builtInRefValid={builtInRefValid[c.slug] ?? false}
-                isOfficialCharacter={OFFICIAL_CHARACTER_SLUGS.has(c.slug)}
-                assetSummary={assetSummaryBySlug[c.slug]}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ── E. Draft character workspace cards ── */}
-        {draftCharacters.length > 0 && (
-          <div className="flex flex-col gap-6">
-            <div className="flex items-center gap-3">
-              <span className="text-base">📝</span>
-              <h2 className="text-sm font-black text-tiki-brown/70 uppercase tracking-wide">
-                Draft Characters ({draftCharacters.length})
-              </h2>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/80 uppercase tracking-wide">
-                Private
-              </span>
-            </div>
-            <div className="flex items-start gap-3 bg-tiki-brown/4 border border-tiki-brown/10 rounded-xl px-4 py-3">
-              <span className="text-sm flex-shrink-0">🔒</span>
-              <p className="text-xs text-tiki-brown/55 leading-relaxed">
-                Draft characters are private and not approved for stories or generation.
-              </p>
-            </div>
-            {draftCharacters.map((c) => (
-              <CharacterWorkspaceCard
-                key={c.id}
-                character={c}
-                uploadedAssets={assetsBySlug(c.slug)}
-                approvedRefCount={approvedRefCounts[c.slug] ?? 0}
-                builtInRefValid={builtInRefValid[c.slug] ?? false}
-                isOfficialCharacter={false}
-                assetSummary={assetSummaryBySlug[c.slug]}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* ── F. Reference Review Queue ── */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-base">🔎</span>
-            <h2 className="text-sm font-black text-tiki-brown/70 uppercase tracking-wide">
-              Reference Review Queue
-            </h2>
-            {pendingReviewCount > 0 && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/65 uppercase tracking-wide">
-                {pendingReviewCount} pending
-              </span>
+            {published.length === 0 && (
+              <p className="text-sm text-tiki-brown/50">No published characters yet.</p>
             )}
           </div>
-          <CharacterGlobalReviewSection
-            initialPendingAssets={pendingAssets}
-            characterNames={characterNames}
-          />
-        </div>
+        </section>
 
-        {/* ── G. Advanced / Integrity Diagnostics ── */}
-        <details className="group bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden">
-          <summary className="flex items-center gap-2 px-6 py-4 cursor-pointer select-none list-none hover:bg-tiki-brown/3 transition-colors">
-            <span className="text-base">🔬</span>
-            <span className="text-base font-black text-tiki-brown flex-1">
-              Advanced / Integrity Diagnostics
-            </span>
-            <span className="text-xs text-tiki-brown/35 group-open:hidden">▼ Show</span>
-            <span className="text-xs text-tiki-brown/35 hidden group-open:inline">▲ Hide</span>
-          </summary>
-
-          <div className="px-6 pb-6 flex flex-col gap-6 border-t border-tiki-brown/8">
-
-            {/* Stat counters */}
-            <div className="pt-4 flex flex-wrap gap-3">
-              {(
-                [
-                  ["Characters", String(characters.length)],
-                  [
-                    "Fruit Babies",
-                    String(characters.filter((c) => c.type === "fruit-baby").length),
-                  ],
-                  [
-                    "Rival Characters",
-                    String(characters.filter((c) => c.type === "villain").length),
-                  ],
-                  ["Profile Sheets", String(readiness.profileSheetsAvailable)],
-                ] as [string, string][]
-              ).map(([label, value]) => (
-                <div
-                  key={label}
-                  className="flex flex-col items-center gap-0.5 bg-tiki-brown/4 border border-tiki-brown/8 rounded-2xl px-5 py-3 min-w-[7rem] text-center"
-                >
-                  <span className="text-xl font-black text-tiki-brown">{value}</span>
-                  <span className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide leading-tight">
-                    {label}
+        {/* Draft characters */}
+        {drafts.length > 0 && (
+          <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+            <h2 className="text-base font-black text-tiki-brown mb-4">Draft Characters</h2>
+            <div className="flex flex-col gap-3">
+              {drafts.map((c) => (
+                <div key={c.slug} className="flex items-center justify-between py-2 border-b border-tiki-brown/8 last:border-0">
+                  <div>
+                    <p className="text-sm font-bold text-tiki-brown">{c.shortName ?? c.name}</p>
+                    <p className="text-xs text-tiki-brown/45 font-mono">{c.slug}</p>
+                  </div>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-tiki-brown/8 text-tiki-brown/50">
+                    Draft
                   </span>
                 </div>
               ))}
             </div>
+          </section>
+        )}
 
-            {/* Reference Asset Integrity Summary */}
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                Reference Asset Integrity
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {(
-                  [
-                    ["Total Characters", String(readiness.totalCharacters), undefined],
-                    [
-                      "Reference-Ready",
-                      String(readiness.readyCount),
-                      readiness.readyCount === readiness.totalCharacters,
-                    ],
-                    [
-                      "Missing Valid Refs",
-                      String(readiness.notReadyCount),
-                      readiness.notReadyCount === 0 ? true : false,
-                    ],
-                    [
-                      "Invalid Asset Refs",
-                      String(readiness.invalidAssetCount),
-                      readiness.invalidAssetCount === 0 ? true : false,
-                    ],
-                    [
-                      "Profile Sheets",
-                      String(readiness.profileSheetsAvailable),
-                      readiness.profileSheetsAvailable === readiness.totalCharacters,
-                    ],
-                  ] as [string, string, boolean | undefined][]
-                ).map(([label, value, positive]) => (
-                  <div
-                    key={label}
-                    className={`flex flex-col items-center gap-0.5 rounded-2xl px-4 py-3 text-center border ${
-                      positive === true
-                        ? "bg-tropical-green/8 border-tropical-green/20"
-                        : positive === false
-                        ? "bg-warm-coral/8 border-warm-coral/20"
-                        : "bg-tiki-brown/4 border-tiki-brown/8"
-                    }`}
-                  >
-                    <span
-                      className={`text-xl font-black ${
-                        positive === true
-                          ? "text-tropical-green"
-                          : positive === false
-                          ? "text-warm-coral/80"
-                          : "text-tiki-brown"
-                      }`}
-                    >
-                      {value}
-                    </span>
-                    <span className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide leading-tight">
-                      {label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {readiness.invalidAssetCount > 0 && (
-                <div className="flex items-start gap-3 bg-warm-coral/10 border border-warm-coral/30 rounded-xl px-4 py-3">
-                  <span className="text-base flex-shrink-0">⚠️</span>
-                  <p className="text-sm text-tiki-brown/70 leading-relaxed">
-                    <strong className="font-bold">
-                      {readiness.invalidAssetCount} invalid asset reference
-                      {readiness.invalidAssetCount !== 1 ? "s" : ""} found.
-                    </strong>{" "}
-                    Invalid files exist on disk but fail image validation.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Global fidelity rules */}
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-                Global Character Fidelity Rules
-              </p>
-              <ul className="space-y-2">
-                {GLOBAL_FIDELITY_RULES.map((rule) => (
-                  <li
-                    key={rule}
-                    className="flex items-start gap-2.5 text-sm text-tiki-brown/70 leading-relaxed"
-                  >
-                    <span className="flex-shrink-0 text-ube-purple/60 mt-0.5">•</span>
-                    {rule}
-                  </li>
-                ))}
-              </ul>
-              <div className="flex items-start gap-3 bg-warm-coral/8 border border-warm-coral/20 rounded-xl px-4 py-3">
-                <span className="text-base flex-shrink-0">⚡</span>
-                <p className="text-sm text-tiki-brown/70 leading-relaxed">
-                  <strong className="font-bold">Tiki Trouble:</strong> Must remain mischievous,
-                  funny, dramatic, and kid-friendly in all generated media.
-                </p>
-              </div>
-            </div>
-
-            {/* Reference-anchored generation note */}
-            <div className="flex items-start gap-3 bg-sky-blue/8 border border-sky-blue/20 rounded-xl px-4 py-4">
-              <span className="text-base flex-shrink-0">💡</span>
-              <div className="flex flex-col gap-1.5">
-                <p className="text-xs font-bold text-tiki-brown/65 uppercase tracking-wide">
-                  About Reference-Anchored Generation
-                </p>
-                <p className="text-sm text-tiki-brown/70 leading-relaxed">
-                  Future reference-anchored image generation should use valid official profile
-                  sheets, isolated main images, and character sheets as visual source references.
-                  Character variations live in{" "}
-                  <Link
-                    href="/admin/variations"
-                    className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors"
-                  >
-                    /admin/variations
-                  </Link>
-                  .
-                </p>
-              </div>
-            </div>
-
-          </div>
-        </details>
-
-      </section>
-    </div>
+        {/* Create character */}
+        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+          <h2 className="text-base font-black text-tiki-brown mb-2">➕ Create Character Draft</h2>
+          <p className="text-xs text-tiki-brown/50 mb-5">
+            Creates a new character JSON file. Character images are managed via the character JSON file.
+          </p>
+          <CreateCharacterDraftForm />
+        </section>
+      </div>
+    </main>
   );
 }

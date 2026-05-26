@@ -691,7 +691,7 @@ export default function ProductConceptManagerSection({
                                   {mockup.productTitle}
                                 </span>
                                 <span className="text-[10px] text-tiki-brown/30">
-                                  {new Date(mockup.approvedAt).toLocaleDateString()}
+                                  {mockup.approvedAt ? new Date(mockup.approvedAt).toLocaleDateString() : ""}
                                 </span>
                               </div>
                               <div className="flex gap-1.5 flex-wrap">
