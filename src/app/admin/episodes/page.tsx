@@ -3,7 +3,7 @@ import Link from "next/link";
 import { loadEpisodeDrafts, type SavedEpisodeDraft, type EpisodeLoadDiag } from "@/lib/savedEpisodes";
 
 export const metadata: Metadata = {
-  title: "Stories | Admin",
+  title: "Storybooks | Admin",
 };
 
 // Force dynamic server rendering on every request. Prevents stale static
@@ -173,7 +173,7 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
           href={`/admin/episodes/${draft.slug}`}
           className="inline-flex items-center gap-1.5 text-sm font-bold bg-ube-purple text-white px-4 py-2 rounded-full hover:bg-ube-purple/85 transition-colors shadow-sm"
         >
-          Open Story →
+          Edit Storybook →
         </Link>
       </div>
     </article>
@@ -201,23 +201,47 @@ export default async function EpisodesPage() {
           </div>
           <div className="text-4xl mb-3">📖</div>
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
-            Stories
+            Storybooks
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Upload storybook images, audio narration, and video for each story.
+            Create, edit, preview, and publish uploaded storybooks.
           </p>
+          <div className="mt-6">
+            <Link
+              href="/admin/storybooks/new"
+              className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors"
+            >
+              <span>+</span>
+              Create New Storybook
+            </Link>
+          </div>
         </div>
       </section>
 
       <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
+
+        {/* Legacy notice */}
+        <div className="flex items-start gap-3 bg-tiki-brown/5 border border-tiki-brown/15 rounded-2xl px-5 py-4">
+          <span className="text-xl flex-shrink-0">🔧</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-tiki-brown mb-0.5">Legacy Route</p>
+            <p className="text-sm text-tiki-brown/60 leading-relaxed">
+              The primary storybook workflow has moved to{" "}
+              <Link href="/admin/storybooks" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
+                Storybooks ↗
+              </Link>
+              . This page remains for backwards compatibility.
+            </p>
+          </div>
+        </div>
 
         {/* Admin notice */}
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
             <strong className="text-tiki-brown font-bold">Admin only.</strong>{" "}
-            Stories remain private until marked public-ready. Open any story to upload storybook images,
-            audio narration, and video, then publish when ready.
+            Storybooks remain private until marked public-ready. Open any storybook to upload images,
+            attach audio/video, and publish when ready.
           </p>
         </div>
 
@@ -225,7 +249,8 @@ export default async function EpisodesPage() {
         <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-3">
           <span className="text-sm flex-shrink-0">🍍</span>
           <p className="text-xs text-tiki-brown/55 leading-relaxed">
-            Manage character profiles and reference galleries in{" "}
+            Character integrity comes from official profiles, approved references, and canon rules
+            managed in{" "}
             <Link href="/admin/characters" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
               Characters
             </Link>
@@ -279,9 +304,16 @@ export default async function EpisodesPage() {
             <div>
               <p className="text-base font-black text-tiki-brown mb-1">No saved episodes yet</p>
               <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-sm mx-auto">
-                Episode JSON files will appear here once they have been created and saved.
+                No storybooks yet. Create your first one to get started.
               </p>
             </div>
+            <Link
+              href="/admin/storybooks/new"
+              className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors mt-2"
+            >
+              <span>+</span>
+              Create New Storybook
+            </Link>
             <DiagPanel diag={diag} />
           </div>
         )}

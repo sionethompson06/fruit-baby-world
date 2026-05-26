@@ -1,11 +1,28 @@
 // Helpers for reading storybookPages[] from episode JSON.
 // Server-only (reads from raw episode objects).
 
-import type { StorybookPage } from "@/lib/storybookPageTypes";
+import type { StorybookPage, StorybookPageRole, StorybookLayoutType } from "@/lib/storybookPageTypes";
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
+
+const PAGE_ROLES: StorybookPageRole[] = [
+  "front-cover", "inside-cover", "story-page", "story-spread", "end-page", "back-cover",
+];
+const LAYOUT_TYPES: StorybookLayoutType[] = [
+  "single-page", "two-page-spread", "cover", "back-cover",
+];
+
+// Role sort order: front-cover < inside-cover < story-spread/story-page < end-page < back-cover
+const ROLE_ORDER: Record<StorybookPageRole, number> = {
+  "front-cover":   0,
+  "inside-cover":  1,
+  "story-spread":  2,
+  "story-page":    2,
+  "end-page":      3,
+  "back-cover":    4,
+};
 
 function parseStorybookPage(v: unknown): StorybookPage | null {
   if (!isRecord(v)) return null;
@@ -16,6 +33,12 @@ function parseStorybookPage(v: unknown): StorybookPage | null {
   const altText = typeof v.altText === "string" ? v.altText : "";
   const status = v.status === "approved" || v.status === "archived" ? v.status : "draft";
   const visibility = v.visibility === "public" ? "public" : "admin-only";
+  const pageRole = PAGE_ROLES.includes(v.pageRole as StorybookPageRole)
+    ? (v.pageRole as StorybookPageRole)
+    : undefined;
+  const layoutType = LAYOUT_TYPES.includes(v.layoutType as StorybookLayoutType)
+    ? (v.layoutType as StorybookLayoutType)
+    : undefined;
   return {
     id: v.id,
     pageNumber,
@@ -35,7 +58,17 @@ function parseStorybookPage(v: unknown): StorybookPage | null {
     sourceType: "admin-uploaded",
     createdAt: typeof v.createdAt === "string" ? v.createdAt : new Date().toISOString(),
     updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : new Date().toISOString(),
+    pageRole,
+    layoutType,
+    spreadNumber: typeof v.spreadNumber === "number" ? v.spreadNumber : undefined,
+    leftPageLabel: typeof v.leftPageLabel === "string" ? v.leftPageLabel : undefined,
+    rightPageLabel: typeof v.rightPageLabel === "string" ? v.rightPageLabel : undefined,
+    displayMode: v.displayMode === "spread" ? "spread" : v.displayMode === "single" ? "single" : undefined,
   } satisfies StorybookPage;
+}
+
+function roleOf(p: StorybookPage): StorybookPageRole {
+  return p.pageRole ?? "story-page";
 }
 
 export function getStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
@@ -43,7 +76,15 @@ export function getStorybookPages(raw: Record<string, unknown>): StorybookPage[]
   return raw.storybookPages
     .map(parseStorybookPage)
     .filter((p): p is StorybookPage => p !== null)
-    .sort((a, b) => a.pageNumber - b.pageNumber);
+    .sort((a, b) => {
+      const roleA = ROLE_ORDER[roleOf(a)];
+      const roleB = ROLE_ORDER[roleOf(b)];
+      if (roleA !== roleB) return roleA - roleB;
+      // Within the same role bucket, sort spreads by spreadNumber then pageNumber
+      const spreadA = a.spreadNumber ?? a.pageNumber;
+      const spreadB = b.spreadNumber ?? b.pageNumber;
+      return spreadA - spreadB;
+    });
 }
 
 export function getPublicStorybookPages(raw: Record<string, unknown>): StorybookPage[] {

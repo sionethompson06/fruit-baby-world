@@ -5,19 +5,19 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const primaryLinks = [
-  { href: "/admin",           label: "Dashboard",  emoji: "🏠" },
-  { href: "/admin/episodes",  label: "Stories",    emoji: "📖" },
-  { href: "/admin/characters",label: "Characters", emoji: "🍍" },
-  { href: "/admin/media",     label: "Media",      emoji: "🎞️" },
-  { href: "/admin/publishing",label: "Publish",    emoji: "🚀" },
+  { href: "/admin", label: "Dashboard", emoji: "🏠" },
+  { href: "/admin/storybooks", label: "Storybooks", emoji: "📚" },
+  { href: "/admin/characters", label: "Characters", emoji: "🍍" },
+  { href: "/admin/media", label: "Media", emoji: "🎞️" },
+  { href: "/admin/publishing", label: "Publish", emoji: "📤" },
 ];
 
-const developerLinks = [
+const legacyLinks = [
+  { href: "/admin/storyboards", label: "Storyboards", emoji: "📝" },
+  { href: "/admin/variations", label: "Variations", emoji: "🎨" },
+  { href: "/admin/canon", label: "Canon", emoji: "🔒" },
   { href: "/admin/media-health", label: "Media Health", emoji: "🩺" },
-  { href: "/admin/products",     label: "Products",     emoji: "🛍️" },
-  { href: "/admin/storyboards",  label: "Storyboards",  emoji: "📝" },
-  { href: "/admin/variations",   label: "Variations",   emoji: "🎨" },
-  { href: "/admin/canon",        label: "Canon",        emoji: "🔒" },
+  { href: "/admin/products", label: "Products", emoji: "🛍️" },
 ];
 
 export default function AdminNav() {
@@ -59,22 +59,6 @@ export default function AdminNav() {
             </Link>
           ))}
 
-          {/* Developer / Legacy toggle */}
-          <button
-            type="button"
-            onClick={() => setDevExpanded((v) => !v)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-              isOnDevPage
-                ? "bg-tiki-brown/15 text-tiki-brown/70"
-                : "text-tiki-brown/35 hover:text-tiki-brown/55 hover:bg-tiki-brown/8"
-            }`}
-            title="Developer / Legacy tools"
-          >
-            <span>🔧</span>
-            <span>Dev</span>
-            <span className="text-[9px] ml-0.5">{showDev ? "▲" : "▼"}</span>
-          </button>
-
           {/* Lock */}
           <button
             type="button"
@@ -87,28 +71,26 @@ export default function AdminNav() {
           </button>
         </div>
 
-        {/* Developer / Legacy expanded row */}
-        {showDev && (
-          <div className="flex flex-wrap items-center gap-1 pb-2 border-t border-ube-purple/10 pt-1.5">
-            <span className="text-[10px] font-bold text-tiki-brown/30 uppercase tracking-widest pl-1 pr-1 whitespace-nowrap">
-              Developer / Legacy:
-            </span>
-            {developerLinks.map(({ href, label, emoji }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-                  isActive(href)
-                    ? "bg-tiki-brown/20 text-tiki-brown/80"
-                    : "text-tiki-brown/45 hover:bg-tiki-brown/10 hover:text-tiki-brown/70"
-                }`}
-              >
-                <span className="text-[10px]">{emoji}</span>
-                <span>{label}</span>
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Legacy tools — muted secondary row (desktop only) */}
+        <div className="hidden sm:flex flex-wrap items-center gap-1 pb-2">
+          <span className="text-[10px] font-bold text-ube-purple/30 uppercase tracking-widest px-1 select-none">
+            Developer / Legacy:
+          </span>
+          {legacyLinks.map(({ href, label, emoji }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+                isActive(href)
+                  ? "bg-ube-purple/40 text-ube-purple shadow-sm"
+                  : "text-ube-purple/40 hover:bg-ube-purple/10 hover:text-ube-purple/60"
+              }`}
+            >
+              <span className="text-[10px]">{emoji}</span>
+              <span>{label}</span>
+            </Link>
+          ))}
+        </div>
 
       </div>
     </nav>
