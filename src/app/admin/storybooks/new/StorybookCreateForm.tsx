@@ -79,7 +79,7 @@ export default function StorybookCreateForm({
             Create New Storybook
           </h1>
           <p className="text-tiki-brown/65 text-base leading-relaxed">
-            Start a new storybook by adding a title and about text. You can upload cover and spread images after creation.
+            Start with a title and short description. Then upload your book images.
           </p>
         </div>
       </section>

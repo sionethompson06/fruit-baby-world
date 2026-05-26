@@ -121,6 +121,9 @@ export default async function StorybookBuilderPage({
             {normalised.title}
           </h1>
           <p className="text-xs font-mono text-tiki-brown/40 mt-1">{normalised.slug}</p>
+          <p className="text-sm text-tiki-brown/55 mt-2">
+            Add details, upload book images, attach optional audio/video, preview, and publish.
+          </p>
         </div>
       </section>
 
@@ -317,6 +320,9 @@ export default async function StorybookBuilderPage({
                 <p className="text-xs text-tiki-brown/50 mt-0.5">
                   Opens the public story page in a new tab. Only approved/public content is visible to readers.
                 </p>
+                <p className="text-xs font-mono text-tiki-brown/35 mt-1">
+                  /stories/{normalised.slug}
+                </p>
               </div>
               <a
                 href={`/stories/${normalised.slug}`}
@@ -325,24 +331,30 @@ export default async function StorybookBuilderPage({
                 className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors"
               >
                 <span>👁️</span>
-                Preview
+                Preview Storybook
               </a>
             </div>
 
-            {/* Quick status grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {/* Readiness checklist */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
                 {
-                  label: "Front Cover",
-                  done: storybookPages.some((p) => p.pageRole === "front-cover"),
+                  label: "Title",
+                  done: Boolean(normalised.title),
                   optional: false,
-                  icon: "🖼️",
+                  icon: "📝",
                 },
                 {
-                  label: `${storybookPages.filter((p) => p.pageRole === "story-spread" || p.layoutType === "two-page-spread").length} Spreads`,
-                  done: storybookPages.some((p) => p.pageRole === "story-spread"),
+                  label: "About",
+                  done: Boolean(normalised.shortDescription),
                   optional: false,
-                  icon: "📖",
+                  icon: "📄",
+                },
+                {
+                  label: `${storybookPages.length} Image${storybookPages.length !== 1 ? "s" : ""}`,
+                  done: storybookPages.length > 0,
+                  optional: false,
+                  icon: "🖼️",
                 },
                 {
                   label: "Audio",

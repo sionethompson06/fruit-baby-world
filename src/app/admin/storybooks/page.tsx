@@ -31,7 +31,7 @@ export default async function StorybooksPage() {
     const result = loadEpisodeBySlug(draft.slug);
     if (!result) return { draft, coverImageUrl: null as string | null, pageCount: 0 };
     const pages = getStorybookPages(result.raw);
-    const cover = pages.find((p) => p.pageRole === "front-cover");
+    const cover = pages.find((p) => p.pageRole === "front-cover") ?? pages[0];
     return {
       draft,
       coverImageUrl: cover?.imageUrl ?? null,
@@ -55,7 +55,7 @@ export default async function StorybooksPage() {
             Storybooks
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Create, upload images, add audio/video, and publish Fruit Baby storybooks.
+            Create, edit, preview, and publish uploaded storybooks.
           </p>
           <div className="mt-6">
             <Link

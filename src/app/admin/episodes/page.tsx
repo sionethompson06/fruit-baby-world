@@ -208,7 +208,7 @@ export default async function EpisodesPage() {
           </p>
           <div className="mt-6">
             <Link
-              href="/admin/episodes/new"
+              href="/admin/storybooks/new"
               className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors"
             >
               <span>+</span>
@@ -308,7 +308,7 @@ export default async function EpisodesPage() {
               </p>
             </div>
             <Link
-              href="/admin/episodes/new"
+              href="/admin/storybooks/new"
               className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors mt-2"
             >
               <span>+</span>
