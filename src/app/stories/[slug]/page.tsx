@@ -5,6 +5,7 @@ import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes"
 import { getAllCharacters, type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
+import StorybookReader, { type StorybookReaderPage } from "@/components/StorybookReader";
 import {
   getActiveEpisodeScenes,
   getApprovedPublicStoryPanels,
@@ -673,41 +674,44 @@ export default async function StoryDetailPage({
   const useStorybookPages = shouldUseStorybookPagesForPublicReader(raw);
   const publicStorybookPages = useStorybookPages ? getPublicStorybookPages(raw) : [];
 
+  // Premium StorybookReader pages (Phase 19B)
+  const storybookReaderPages: StorybookReaderPage[] = publicStorybookPages.map((page) => ({
+    id: page.id,
+    pageNumber: page.pageNumber,
+    title: page.title,
+    caption: page.caption,
+    readAloudText: page.readAloudText,
+    imageUrl: page.imageUrl,
+    altText: page.altText || `${title} — Page ${page.pageNumber}`,
+    characters: page.characters,
+  }));
+
   // Approved public story panels (fallback when no storybook pages)
   const approvedPanels: ApprovedPanel[] = useStorybookPages ? [] : getApprovedPublicStoryPanels(raw);
   const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
 
-  // Build flat reader panel data — prefer storybookPages over legacy panels
-  const readerPanels: ReaderPanel[] = useStorybookPages
-    ? publicStorybookPages.map((page) => ({
-        sceneNumber: page.sceneNumber ?? 0,
-        panelTitle: page.title ?? "",
-        caption: page.caption ?? "",
-        sceneSummary: page.readAloudText ?? "",
-        characterNames: (page.characters ?? []).map((id) => {
-          const c = charMap[id];
-          return c ? c.shortName : formatCharName(id);
-        }),
-        asset: { url: page.imageUrl, alt: page.altText },
-      }))
-    : approvedPanels.map((panel) => {
-        const scene = sceneByNumber[panel.sceneNumber];
-        const rawCharIds = scene
-          ? strArr(scene.characters ?? panel.referenceCharacters)
-          : panel.referenceCharacters;
-        const characterNames = rawCharIds.map((id) => {
-          const c = charMap[id];
-          return c ? c.shortName : formatCharName(id);
-        });
-        return {
-          sceneNumber: panel.sceneNumber,
-          panelTitle: str(scene?.title) || panel.panelTitle,
-          caption: panel.caption,
-          sceneSummary: str(scene?.summary),
-          characterNames,
-          asset: { url: panel.asset.url, alt: panel.asset.alt },
-        };
-      });
+  // Legacy reader panels — only built when no storybookPages present
+  const readerPanels: ReaderPanel[] = approvedPanels.map((panel) => {
+    const scene = sceneByNumber[panel.sceneNumber];
+    const rawCharIds = scene
+      ? strArr(scene.characters ?? panel.referenceCharacters)
+      : panel.referenceCharacters;
+    const characterNames = rawCharIds.map((id) => {
+      const c = charMap[id];
+      return c ? c.shortName : formatCharName(id);
+    });
+    return {
+      sceneNumber: panel.sceneNumber,
+      panelTitle: str(scene?.title) || panel.panelTitle,
+      caption: panel.caption,
+      sceneSummary: str(scene?.summary),
+      characterNames,
+      asset: { url: panel.asset.url, alt: panel.asset.alt },
+    };
+  });
+
+  // Whether any reader content is available
+  const hasReaderContent = storybookReaderPages.length > 0 || readerPanels.length > 0;
 
   // Public-ready narration audio — only shown when approved and public-ready
   const publicAudio: PublicAudio | null = (() => {
@@ -854,13 +858,13 @@ export default async function StoryDetailPage({
             </span>
           </div>
 
-          {/* Story Panels — available or coming soon */}
-          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${readerPanels.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
+          {/* Storybook / Story Panels — available or coming soon */}
+          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${hasReaderContent ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
             <span className="text-2xl">📖</span>
             <p className="text-xs font-black text-tiki-brown leading-snug">
               {useStorybookPages ? "Storybook" : "Story Panels"}
             </p>
-            {readerPanels.length > 0 ? (
+            {hasReaderContent ? (
               <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
                 Available
               </span>
@@ -1001,58 +1005,88 @@ export default async function StoryDetailPage({
         )}
 
         {/* ══════════════════════════════════════════
-            STORY PANELS — approved or coming soon
+            STORYBOOK READER — storybookPages preferred, panels fallback
         ══════════════════════════════════════════ */}
 
-        {readerPanels.length > 0 ? (
+        {storybookReaderPages.length > 0 ? (
+          /* ── Premium Storybook Reader (Phase 19B) ── */
           <div
             id="story-panels"
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-8 flex flex-col gap-6"
           >
             {/* Section header */}
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span>📖</span>{" "}
-                  {useStorybookPages ? "Storybook Reader" : "Picture Story Reader"}
+                <h2 className="text-xl font-black text-tiki-brown flex items-center gap-2">
+                  <span aria-hidden>📖</span> Storybook Reader
                 </h2>
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  {useStorybookPages
-                    ? "Read through the story page by page."
-                    : "Move through the story one illustrated moment at a time."}
+                <p className="text-sm text-tiki-brown/55 leading-relaxed">
+                  Read through the story one beautiful page at a time.
                 </p>
               </div>
-              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
-                {readerPanels.length}{" "}
-                {readerPanels.length === 1
-                  ? useStorybookPages ? "page" : "illustrated panel"
-                  : useStorybookPages ? "pages" : "illustrated panels"}
+              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full">
+                {storybookReaderPages.length}{" "}
+                {storybookReaderPages.length === 1 ? "page" : "pages"}
               </span>
             </div>
 
-            {/* Interactive reader */}
-            <StoryPanelReader panels={readerPanels} />
+            {/* Premium reader */}
+            <StorybookReader pages={storybookReaderPages} episodeTitle={title} />
 
             {/* Talk about it */}
             {lesson && (
               <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
-                <span className="text-xl flex-shrink-0">💬</span>
+                <span className="text-xl flex-shrink-0" aria-hidden>💬</span>
                 <div>
                   <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
                     Talk About It
                   </p>
-                  <p className="text-sm text-tiki-brown/80 leading-relaxed">
-                    {lesson}
+                  <p className="text-sm text-tiki-brown/80 leading-relaxed">{lesson}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : readerPanels.length > 0 ? (
+          /* ── Legacy Panel Reader (fallback) ── */
+          <div
+            id="story-panels"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-8 flex flex-col gap-6"
+          >
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
+                  <span aria-hidden>🖼️</span> Picture Story Reader
+                </h2>
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                  Move through the story one illustrated moment at a time.
+                </p>
+              </div>
+              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
+                {readerPanels.length}{" "}
+                {readerPanels.length === 1 ? "illustrated panel" : "illustrated panels"}
+              </span>
+            </div>
+
+            <StoryPanelReader panels={readerPanels} />
+
+            {lesson && (
+              <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
+                <span className="text-xl flex-shrink-0" aria-hidden>💬</span>
+                <div>
+                  <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
+                    Talk About It
                   </p>
+                  <p className="text-sm text-tiki-brown/80 leading-relaxed">{lesson}</p>
                 </div>
               </div>
             )}
 
             <p className="text-xs text-tiki-brown/40 leading-relaxed">
-              All story pages are reviewed before appearing here.
+              All story panels are reviewed before appearing here.
             </p>
           </div>
         ) : (
+          /* ── Empty state ── */
           <div
             id="story-panels"
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
@@ -1060,20 +1094,16 @@ export default async function StoryDetailPage({
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span>🖼️</span> Illustrated Story Panels
+                  <span aria-hidden>📖</span> Storybook Coming Soon
                 </h2>
                 <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Read the story through approved illustrated moments.
+                  Beautiful illustrated pages are on the way for this story.
                 </p>
               </div>
               <span className="flex-shrink-0 text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-3 py-1 rounded-full">
                 Coming Soon
               </span>
             </div>
-
-            <p className="text-sm text-tiki-brown/65 leading-relaxed">
-              Illustrated story panels will appear here once artwork has been reviewed and approved.
-            </p>
 
             {scenes.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1084,14 +1114,10 @@ export default async function StoryDetailPage({
             ) : (
               <div className="flex items-center justify-center h-28 rounded-2xl bg-tiki-brown/4 border border-tiki-brown/8">
                 <p className="text-xs text-tiki-brown/35 font-semibold">
-                  No scenes available yet
+                  Storybook pages are coming soon.
                 </p>
               </div>
             )}
-
-            <p className="text-xs text-tiki-brown/45 leading-relaxed">
-              Some stories may later include still-image panels once official artwork is approved.
-            </p>
           </div>
         )}
 
