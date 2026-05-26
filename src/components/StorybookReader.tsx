@@ -220,8 +220,9 @@ function FocusModeReader({
   const spreadPages = pages.filter((p) => p.displayMode === "spread" || p.layoutType === "two-page-spread");
   const spreadIndex = isSpread ? spreadPages.indexOf(page) : -1;
   const spreadTotal = spreadPages.length;
-  const pageLabel = isSpread && spreadIndex >= 0
-    ? `Spread ${spreadIndex + 1} of ${spreadTotal}`
+  const pageLabel = page.pageRole === "front-cover" ? "Cover"
+    : page.pageRole === "back-cover" ? "Back Cover"
+    : isSpread && spreadIndex >= 0 ? `Spread ${spreadIndex + 1} of ${spreadTotal}`
     : `${index + 1} / ${total}`;
 
   useEffect(() => {
@@ -462,8 +463,9 @@ export default function StorybookReader({
   const spreadPages = pages.filter((p) => p.displayMode === "spread" || p.layoutType === "two-page-spread");
   const spreadIndex = isSpread ? spreadPages.indexOf(page) : -1;
   const spreadTotal = spreadPages.length;
-  const pageLabel = isSpread && spreadIndex >= 0
-    ? `Spread ${spreadIndex + 1} of ${spreadTotal}`
+  const pageLabel = page.pageRole === "front-cover" ? "Cover"
+    : page.pageRole === "back-cover" ? "Back Cover"
+    : isSpread && spreadIndex >= 0 ? `Spread ${spreadIndex + 1} of ${spreadTotal}`
     : `Page ${index + 1} of ${total}`;
 
   if (total === 0) return null;

@@ -54,6 +54,9 @@ type EpisodeMediaInfo = {
   hasAudio: boolean;
   hasVideoClips: boolean;
   hasFinalVideo: boolean;
+  hasStorybookPages: boolean;
+  hasStorybookAudio: boolean;
+  hasStorybookVideo: boolean;
 };
 
 function buildEpisodeMediaMap(): Record<string, EpisodeMediaInfo> {
@@ -78,20 +81,42 @@ function buildEpisodeMediaMap(): Record<string, EpisodeMediaInfo> {
           ? raw.slug
           : filename.replace(/\.json$/, "");
 
+      // Storybook front cover (preferred thumbnail)
+      const storybookPages = Array.isArray(raw.storybookPages) ? raw.storybookPages as Record<string, unknown>[] : [];
+      const storybookFrontCover = storybookPages.find(
+        (p) => p.pageRole === "front-cover" && p.status === "approved" && p.visibility === "public" && typeof p.imageUrl === "string"
+      );
+      const storybookFrontCoverUrl = storybookFrontCover ? String(storybookFrontCover.imageUrl) : undefined;
+
       // Cover image as thumbnail, or first scene image
       const coverImage = typeof raw.coverImage === "string" ? raw.coverImage : undefined;
       const scenes = Array.isArray(raw.sceneBreakdown) && raw.sceneBreakdown.length > 0
         ? raw.sceneBreakdown as Record<string, unknown>[]
         : Array.isArray(raw.scenes) ? raw.scenes as Record<string, unknown>[] : [];
       const firstSceneImageUrl = scenes.find((s) => typeof s.imageUrl === "string" && s.imageUrl)?.imageUrl as string | undefined;
-      const thumbnailUrl = coverImage ?? firstSceneImageUrl;
+      const thumbnailUrl = storybookFrontCoverUrl ?? coverImage ?? firstSceneImageUrl;
       const thumbnailAlt = typeof raw.title === "string" ? raw.title : undefined;
 
       const hasAudio = typeof raw.audioUrl === "string" && raw.audioUrl.startsWith("https://");
       const hasVideoClips = false;
       const hasFinalVideo = typeof raw.videoUrl === "string" && raw.videoUrl.startsWith("https://");
 
-      map[slug] = { thumbnailUrl, thumbnailAlt, hasAudio, hasVideoClips, hasFinalVideo };
+      // Storybook-specific media
+      const hasStorybookPages = storybookPages.some(
+        (p) => p.status === "approved" && p.visibility === "public"
+      );
+      const sn = raw.storybookNarration;
+      const hasStorybookAudio = typeof sn === "object" && sn !== null && !Array.isArray(sn)
+        && typeof (sn as Record<string, unknown>).audioUrl === "string"
+        && (sn as Record<string, unknown>).visibility === "public"
+        && (sn as Record<string, unknown>).status !== "archived";
+      const sv = raw.storybookVideo;
+      const hasStorybookVideo = typeof sv === "object" && sv !== null && !Array.isArray(sv)
+        && typeof (sv as Record<string, unknown>).videoUrl === "string"
+        && (sv as Record<string, unknown>).visibility === "public"
+        && (sv as Record<string, unknown>).status !== "archived";
+
+      map[slug] = { thumbnailUrl, thumbnailAlt, hasAudio, hasVideoClips, hasFinalVideo, hasStorybookPages, hasStorybookAudio, hasStorybookVideo };
     } catch {
       // skip unparseable files
     }
@@ -205,6 +230,9 @@ export default function StoriesPage() {
                     hasAudio: media?.hasAudio ?? false,
                     hasVideoClips: media?.hasVideoClips ?? false,
                     hasFinalVideo: media?.hasFinalVideo ?? false,
+                    hasStorybookPages: media?.hasStorybookPages ?? false,
+                    hasStorybookAudio: media?.hasStorybookAudio ?? false,
+                    hasStorybookVideo: media?.hasStorybookVideo ?? false,
                   }}
                 />
               );
