@@ -234,7 +234,7 @@ export default function FinalStoryVideoPreviewSection({ pkg }: Props) {
         ) : (
           <p className="text-xs text-tiki-brown/55 leading-relaxed">
             No public-ready narration audio. The final video will have no audio track.{" "}
-            <a href="#audio-story" className="text-ube-purple font-semibold hover:underline">
+            <a href="#audio" className="text-ube-purple font-semibold hover:underline">
               Add audio narration →
             </a>
           </p>
@@ -265,8 +265,8 @@ export default function FinalStoryVideoPreviewSection({ pkg }: Props) {
                 {textOnlyScenes.length} scene{textOnlyScenes.length !== 1 ? "s" : ""} have no public-ready visual (text-only fallback).
               </p>
               <div className="flex gap-2 flex-shrink-0">
-                <a href="#picture-panels" className="text-xs text-ube-purple font-semibold hover:underline">Panels →</a>
-                <a href="#animated-clips" className="text-xs text-ube-purple font-semibold hover:underline">Clips →</a>
+                <a href="#legacy-tools" className="text-xs text-ube-purple font-semibold hover:underline">Panels →</a>
+                <a href="#video" className="text-xs text-ube-purple font-semibold hover:underline">Clips →</a>
               </div>
             </div>
           )}
@@ -277,7 +277,7 @@ export default function FinalStoryVideoPreviewSection({ pkg }: Props) {
               <p className="text-xs text-tiki-brown/65 leading-snug flex-1">
                 No public-ready narration — video will have no audio track.
               </p>
-              <a href="#audio-story" className="text-xs text-ube-purple font-semibold hover:underline flex-shrink-0">
+              <a href="#audio" className="text-xs text-ube-purple font-semibold hover:underline flex-shrink-0">
                 Add Audio →
               </a>
             </div>

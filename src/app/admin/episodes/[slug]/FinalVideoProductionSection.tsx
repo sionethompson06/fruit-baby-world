@@ -70,9 +70,9 @@ export default function FinalVideoProductionSection({ pkg, episodeSlug, raw }: P
         <span className="text-base flex-shrink-0">✓</span>
         <p className="text-xs text-tiki-brown/65 leading-relaxed">
           The final video will use media that has already been reviewed in the{" "}
-          <a href="#picture-panels" className="text-ube-purple font-semibold hover:underline">Picture Panels</a>,{" "}
-          <a href="#audio-story" className="text-ube-purple font-semibold hover:underline">Audio Story</a>, and{" "}
-          <a href="#animated-clips" className="text-ube-purple font-semibold hover:underline">Animated Clips</a>{" "}
+          <a href="#legacy-tools" className="text-ube-purple font-semibold hover:underline">Picture Panels</a>,{" "}
+          <a href="#audio" className="text-ube-purple font-semibold hover:underline">Audio</a>, and{" "}
+          <a href="#video" className="text-ube-purple font-semibold hover:underline">Video</a>{" "}
           sections. This avoids another approval loop.
         </p>
       </div>

@@ -200,14 +200,14 @@ export default function FinalVideoRenderReadinessSection({ pkg }: Props) {
       {readiness.status !== "ready" && (
         <div className="flex flex-wrap gap-2">
           <p className="text-xs text-tiki-brown/40 w-full">Jump to:</p>
-          <a href="#picture-panels" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
+          <a href="#legacy-tools" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
             Picture Panels
           </a>
-          <a href="#audio-story" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
-            Audio Story
+          <a href="#audio" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
+            Audio
           </a>
-          <a href="#animated-clips" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
-            Animated Clips
+          <a href="#video" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
+            Video
           </a>
           <a href="#publish-readiness" className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/5 border border-tiki-brown/10 text-ube-purple hover:bg-tiki-brown/10 transition-colors">
             Publish Readiness
