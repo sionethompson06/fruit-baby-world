@@ -33,40 +33,8 @@
       "displayMode": "single"
     },
     {
-      "id": "storybook-page-1779828135507",
-      "pageNumber": 2,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828134425.png",
-      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828134425.png",
-      "mimeType": "image/png",
-      "altText": "End Page",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-26T20:42:15.507Z",
-      "updatedAt": "2026-05-26T20:42:15.507Z",
-      "pageRole": "end-page",
-      "layoutType": "single-page",
-      "displayMode": "single"
-    },
-    {
-      "id": "storybook-page-1779828144620",
-      "pageNumber": 3,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828143562.png",
-      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828143562.png",
-      "mimeType": "image/png",
-      "altText": "Back Cover",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-26T20:42:24.620Z",
-      "updatedAt": "2026-05-26T20:42:24.620Z",
-      "pageRole": "back-cover",
-      "layoutType": "back-cover",
-      "displayMode": "single"
-    },
-    {
       "id": "storybook-page-1779828181652",
-      "pageNumber": 4,
+      "pageNumber": 2,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828180386.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828180386.png",
       "mimeType": "image/png",
@@ -83,7 +51,7 @@
     },
     {
       "id": "storybook-page-1779828278769",
-      "pageNumber": 5,
+      "pageNumber": 3,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828277402.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828277402.png",
       "mimeType": "image/png",
@@ -100,7 +68,7 @@
     },
     {
       "id": "storybook-page-1779828282850",
-      "pageNumber": 6,
+      "pageNumber": 4,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828280969.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828280969.png",
       "mimeType": "image/png",
@@ -117,7 +85,7 @@
     },
     {
       "id": "storybook-page-1779828286563",
-      "pageNumber": 7,
+      "pageNumber": 5,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828285160.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828285160.png",
       "mimeType": "image/png",
@@ -134,7 +102,7 @@
     },
     {
       "id": "storybook-page-1779828290036",
-      "pageNumber": 8,
+      "pageNumber": 6,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828288928.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828288928.png",
       "mimeType": "image/png",
@@ -151,7 +119,7 @@
     },
     {
       "id": "storybook-page-1779828294492",
-      "pageNumber": 9,
+      "pageNumber": 7,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828293097.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828293097.png",
       "mimeType": "image/png",
@@ -168,7 +136,7 @@
     },
     {
       "id": "storybook-page-1779828297658",
-      "pageNumber": 10,
+      "pageNumber": 8,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828296477.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828296477.png",
       "mimeType": "image/png",
@@ -185,7 +153,7 @@
     },
     {
       "id": "storybook-page-1779828301146",
-      "pageNumber": 11,
+      "pageNumber": 9,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828299498.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828299498.png",
       "mimeType": "image/png",
@@ -202,7 +170,7 @@
     },
     {
       "id": "storybook-page-1779828304290",
-      "pageNumber": 12,
+      "pageNumber": 10,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828303166.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828303166.png",
       "mimeType": "image/png",
@@ -219,7 +187,7 @@
     },
     {
       "id": "storybook-page-1779828307541",
-      "pageNumber": 13,
+      "pageNumber": 11,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828306508.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828306508.png",
       "mimeType": "image/png",
@@ -236,7 +204,7 @@
     },
     {
       "id": "storybook-page-1779828310821",
-      "pageNumber": 14,
+      "pageNumber": 12,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828309755.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828309755.png",
       "mimeType": "image/png",
@@ -252,42 +220,8 @@
       "displayMode": "spread"
     },
     {
-      "id": "storybook-page-1779828313982",
-      "pageNumber": 15,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828312996.png",
-      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828312996.png",
-      "mimeType": "image/png",
-      "altText": "Spread 11",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-26T20:45:13.982Z",
-      "updatedAt": "2026-05-26T20:45:13.982Z",
-      "pageRole": "story-spread",
-      "layoutType": "two-page-spread",
-      "spreadNumber": 11,
-      "displayMode": "spread"
-    },
-    {
-      "id": "storybook-page-1779828317265",
-      "pageNumber": 16,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828316261.png",
-      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828316261.png",
-      "mimeType": "image/png",
-      "altText": "Spread 12",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-26T20:45:17.265Z",
-      "updatedAt": "2026-05-26T20:45:17.265Z",
-      "pageRole": "story-spread",
-      "layoutType": "two-page-spread",
-      "spreadNumber": 12,
-      "displayMode": "spread"
-    },
-    {
       "id": "storybook-page-1779828320400",
-      "pageNumber": 17,
+      "pageNumber": 13,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828319358.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828319358.png",
       "mimeType": "image/png",
@@ -304,7 +238,7 @@
     },
     {
       "id": "storybook-page-1779828323485",
-      "pageNumber": 18,
+      "pageNumber": 14,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828322446.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828322446.png",
       "mimeType": "image/png",
@@ -321,7 +255,7 @@
     },
     {
       "id": "storybook-page-1779828327863",
-      "pageNumber": 19,
+      "pageNumber": 15,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828326711.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828326711.png",
       "mimeType": "image/png",
@@ -337,8 +271,25 @@
       "displayMode": "spread"
     },
     {
+      "id": "storybook-page-1779828313982",
+      "pageNumber": 16,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828312996.png",
+      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828312996.png",
+      "mimeType": "image/png",
+      "altText": "Spread 11",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-26T20:45:13.982Z",
+      "updatedAt": "2026-05-26T20:45:13.982Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 11,
+      "displayMode": "spread"
+    },
+    {
       "id": "storybook-page-1779828331097",
-      "pageNumber": 20,
+      "pageNumber": 17,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828329988.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828329988.png",
       "mimeType": "image/png",
@@ -354,8 +305,25 @@
       "displayMode": "spread"
     },
     {
+      "id": "storybook-page-1779828317265",
+      "pageNumber": 18,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828316261.png",
+      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828316261.png",
+      "mimeType": "image/png",
+      "altText": "Spread 12",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-26T20:45:17.265Z",
+      "updatedAt": "2026-05-26T20:45:17.265Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 12,
+      "displayMode": "spread"
+    },
+    {
       "id": "storybook-page-1779828334867",
-      "pageNumber": 21,
+      "pageNumber": 19,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828333673.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828333673.png",
       "mimeType": "image/png",
@@ -372,7 +340,7 @@
     },
     {
       "id": "storybook-page-1779828339172",
-      "pageNumber": 22,
+      "pageNumber": 20,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828337056.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828337056.png",
       "mimeType": "image/png",
@@ -389,7 +357,7 @@
     },
     {
       "id": "storybook-page-1779828343099",
-      "pageNumber": 23,
+      "pageNumber": 21,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828341864.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828341864.png",
       "mimeType": "image/png",
@@ -406,7 +374,7 @@
     },
     {
       "id": "storybook-page-1779828363973",
-      "pageNumber": 24,
+      "pageNumber": 22,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828362761.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828362761.png",
       "mimeType": "image/png",
@@ -421,8 +389,24 @@
       "displayMode": "single"
     },
     {
+      "id": "storybook-page-1779828135507",
+      "pageNumber": 23,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828134425.png",
+      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828134425.png",
+      "mimeType": "image/png",
+      "altText": "End Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-26T20:42:15.507Z",
+      "updatedAt": "2026-05-26T20:42:15.507Z",
+      "pageRole": "end-page",
+      "layoutType": "single-page",
+      "displayMode": "single"
+    },
+    {
       "id": "storybook-page-1779828367143",
-      "pageNumber": 25,
+      "pageNumber": 24,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828366032.png",
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828366032.png",
       "mimeType": "image/png",
@@ -435,6 +419,22 @@
       "pageRole": "story-page",
       "layoutType": "single-page",
       "displayMode": "single"
+    },
+    {
+      "id": "storybook-page-1779828144620",
+      "pageNumber": 25,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828143562.png",
+      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828143562.png",
+      "mimeType": "image/png",
+      "altText": "Back Cover",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-26T20:42:24.620Z",
+      "updatedAt": "2026-05-26T20:42:24.620Z",
+      "pageRole": "back-cover",
+      "layoutType": "back-cover",
+      "displayMode": "single"
     }
   ],
   "review": {
@@ -446,5 +446,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-26T09:45:26.706Z",
-  "updatedAt": "2026-05-26T20:46:07.143Z"
+  "updatedAt": "2026-05-26T21:26:58.903Z"
 }
