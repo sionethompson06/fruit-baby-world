@@ -3,7 +3,7 @@ import Link from "next/link";
 import { loadEpisodeDrafts, type SavedEpisodeDraft, type EpisodeLoadDiag } from "@/lib/savedEpisodes";
 
 export const metadata: Metadata = {
-  title: "Story Studio | Admin",
+  title: "Stories | Admin",
 };
 
 // Force dynamic server rendering on every request. Prevents stale static
@@ -173,7 +173,7 @@ function EpisodeCard({ draft }: { draft: SavedEpisodeDraft }) {
           href={`/admin/episodes/${draft.slug}`}
           className="inline-flex items-center gap-1.5 text-sm font-bold bg-ube-purple text-white px-4 py-2 rounded-full hover:bg-ube-purple/85 transition-colors shadow-sm"
         >
-          Open Production Studio →
+          Open Story →
         </Link>
       </div>
     </article>
@@ -199,22 +199,13 @@ export default async function EpisodesPage() {
               Draft Library
             </span>
           </div>
-          <div className="text-4xl mb-3">🎬</div>
+          <div className="text-4xl mb-3">📖</div>
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
-            Story Studio
+            Stories
           </h1>
           <p className="text-tiki-brown/70 text-base leading-relaxed max-w-xl">
-            Create episodes, scenes, picture panels, audio stories, animated clips, and final videos.
+            Upload storybook images, audio narration, and video for each story.
           </p>
-          <div className="mt-6">
-            <Link
-              href="/admin/storyboards"
-              className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors"
-            >
-              <span>+</span>
-              Create New Storyboard
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -225,19 +216,18 @@ export default async function EpisodesPage() {
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
             <strong className="text-tiki-brown font-bold">Admin only.</strong>{" "}
-            Episodes remain private until explicitly marked public-ready. Open any episode to access
-            its full production workspace — panels, audio, animated clips, final video, and publish controls.
+            Stories remain private until marked public-ready. Open any story to upload storybook images,
+            audio narration, and video, then publish when ready.
           </p>
         </div>
 
-        {/* Character integrity note */}
+        {/* Character note */}
         <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-3">
           <span className="text-sm flex-shrink-0">🍍</span>
           <p className="text-xs text-tiki-brown/55 leading-relaxed">
-            Character integrity comes from official profiles, approved references, and generation rules
-            managed in{" "}
+            Manage character profiles and reference galleries in{" "}
             <Link href="/admin/characters" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
-              Character Studio
+              Characters
             </Link>
             .
           </p>
@@ -289,17 +279,9 @@ export default async function EpisodesPage() {
             <div>
               <p className="text-base font-black text-tiki-brown mb-1">No saved episodes yet</p>
               <p className="text-sm text-tiki-brown/60 leading-relaxed max-w-sm mx-auto">
-                Saved episode drafts will appear here after you generate,
-                review, approve, and save them from the Storyboard Builder.
+                Episode JSON files will appear here once they have been created and saved.
               </p>
             </div>
-            <Link
-              href="/admin/storyboards"
-              className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold text-sm px-5 py-2.5 rounded-full shadow hover:bg-ube-purple/90 transition-colors mt-2"
-            >
-              <span>+</span>
-              Create New Storyboard
-            </Link>
             <DiagPanel diag={diag} />
           </div>
         )}

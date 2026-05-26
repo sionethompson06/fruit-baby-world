@@ -4,77 +4,70 @@ import { getAllEpisodes, getAllProducts } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 
 export const metadata: Metadata = {
-  title: "Production Studio | Fruit Baby World Admin",
-  description: "Private admin workspace for Fruit Baby World story creation.",
+  title: "Dashboard | Fruit Baby World Admin",
+  description: "Private admin workspace for Fruit Baby World story publishing.",
 };
 
-// ─── Primary production studios ───────────────────────────────────────────────
+// ─── Primary studios ──────────────────────────────────────────────────────────
 
 const primaryStudios = [
   {
-    emoji: "🍍",
-    title: "Character Studio",
-    description:
-      "Manage official characters, references, profiles, and character integrity.",
-    status: "Active",
-    statusColor: "bg-tropical-green/20 text-tropical-green",
-    href: "/admin/characters",
-  },
-  {
-    emoji: "🎬",
-    title: "Story Studio",
-    description:
-      "Create episodes, scenes, picture panels, audio stories, animated clips, and final videos.",
+    emoji: "📖",
+    title: "Stories",
+    description: "Upload storybook pages, audio, and video for each story.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/episodes",
   },
   {
+    emoji: "🍍",
+    title: "Characters",
+    description: "Manage character profiles and reference galleries.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/characters",
+  },
+  {
     emoji: "🎞️",
-    title: "Media Studio",
-    description:
-      "Browse all production media in one place — panels, audio, clips, videos, and mockups.",
+    title: "Media",
+    description: "View uploaded storybook, audio, and video assets.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/media",
   },
   {
+    emoji: "🚀",
+    title: "Publish",
+    description: "Review stories and make them public.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/publishing",
+  },
+];
+
+// ─── Developer / Legacy tools ─────────────────────────────────────────────────
+
+const developerTools = [
+  {
     emoji: "🩺",
     title: "Media Health",
-    description:
-      "Find missing media, hidden assets, readiness issues, and public display problems.",
+    description: "Find missing media, hidden assets, and readiness issues.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/media-health",
   },
   {
-    emoji: "📤",
-    title: "Publishing",
-    description:
-      "Review public readiness and publishing status.",
-    status: "Active",
-    statusColor: "bg-tropical-green/20 text-tropical-green",
-    href: "/admin/publishing",
-  },
-  {
     emoji: "🛍️",
     title: "Product Studio",
-    description:
-      "Plan products, generate mockups, and prepare collector previews.",
+    description: "Plan products, generate mockups, and prepare collector previews.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/products",
   },
-];
-
-// ─── Advanced / system tools ──────────────────────────────────────────────────
-
-const advancedTools = [
   {
     emoji: "📝",
     title: "Storyboard Builder",
-    description:
-      "Lay out episode concepts, scenes, characters, settings, and lessons before building in Story Studio.",
+    description: "Lay out episode concepts and scenes before building in Stories.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/storyboards",
@@ -82,8 +75,7 @@ const advancedTools = [
   {
     emoji: "🎨",
     title: "Variation Tools",
-    description:
-      "Generate reference-anchored poses and artwork using official character references. All output requires human approval before use.",
+    description: "Generate reference-anchored poses and artwork using official references.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/variations",
@@ -91,65 +83,10 @@ const advancedTools = [
   {
     emoji: "🔒",
     title: "Canon Center",
-    description:
-      "Review character canon rules, must-preserve features, AI generation guidelines, and official brand integrity standards.",
+    description: "Review character canon rules and official brand integrity standards.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/canon",
-  },
-];
-
-// ─── Recommended production workflow ─────────────────────────────────────────
-
-const workflowSteps = [
-  { step: 1, label: "Build Character Profiles",   emoji: "🍍", note: "Character Studio" },
-  { step: 2, label: "Create Episode Scenes",       emoji: "✍️", note: "Story Studio" },
-  { step: 3, label: "Generate Picture Panels",     emoji: "🖼️", note: "Story Studio" },
-  { step: 4, label: "Generate Audio Story",        emoji: "🎧", note: "Story Studio" },
-  { step: 5, label: "Generate Animated Clips",     emoji: "🎞️", note: "Story Studio" },
-  { step: 6, label: "Review Health & Readiness",   emoji: "🩺", note: "Media Health" },
-  { step: 7, label: "Make Media Public Ready",     emoji: "✅", note: "Story Studio" },
-  { step: 8, label: "Publish Story",               emoji: "🚀", note: "Publishing" },
-];
-
-// ─── Today's production guidance ─────────────────────────────────────────────
-
-const todayGuidance = [
-  {
-    icon: "🍍",
-    text: "Start with Character Studio if a character is missing references or profile details.",
-    href: "/admin/characters",
-    label: "Character Studio",
-  },
-  {
-    icon: "🎬",
-    text: "Open Story Studio to create panels, audio, and video for an episode.",
-    href: "/admin/episodes",
-    label: "Story Studio",
-  },
-  {
-    icon: "🎞️",
-    text: "Open Media Studio to browse all production media in one central place.",
-    href: "/admin/media",
-    label: "Media Studio",
-  },
-  {
-    icon: "🩺",
-    text: "Open Media Health before publishing to catch missing or broken media.",
-    href: "/admin/media-health",
-    label: "Media Health",
-  },
-  {
-    icon: "📤",
-    text: "Use Publishing when a story is approved and ready for public release.",
-    href: "/admin/publishing",
-    label: "Publishing",
-  },
-  {
-    icon: "🛍️",
-    text: "Open Product Studio to plan mockups and manage the /shop collector preview.",
-    href: "/admin/products",
-    label: "Product Studio",
   },
 ];
 
@@ -250,10 +187,10 @@ export default function AdminPage() {
 
           <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown mb-4 leading-tight">
             Fruit Baby{" "}
-            <span className="text-ube-purple">Production Studio</span>
+            <span className="text-ube-purple">Story Publishing</span>
           </h1>
           <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-2xl">
-            Create, review, and publish character-safe Fruit Baby stories, media, and products.
+            Upload storybook pages, audio, and video. Publish finished stories for readers.
           </p>
         </div>
       </section>
@@ -285,18 +222,18 @@ export default function AdminPage() {
         <div className="border-t border-dashed border-tiki-brown/15" />
       </div>
 
-      {/* ── Primary Production Studios ── */}
+      {/* ── Primary Studios ── */}
       <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
         <div className="mb-7">
           <h2 className="text-2xl font-black text-tiki-brown mb-1">
-            🎬 Production Studios
+            📖 Publishing Tools
           </h2>
           <p className="text-sm text-tiki-brown/60">
-            The core tools for building and publishing Fruit Baby stories.
+            Everything you need to upload and publish Fruit Baby stories.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-5">
           {primaryStudios.map((s) => (
             <StudioCard key={s.title} {...s} size="large" />
           ))}
@@ -307,96 +244,22 @@ export default function AdminPage() {
         <div className="border-t border-dashed border-tiki-brown/15" />
       </div>
 
-      {/* ── Today's Production Flow ── */}
-      <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
-        <div className="mb-6">
-          <h2 className="text-2xl font-black text-tiki-brown mb-1">
-            ⚡ Today's Production Flow
-          </h2>
-          <p className="text-sm text-tiki-brown/60">
-            Quick guidance on where to start.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {todayGuidance.map(({ icon, text, href, label }) => (
-            <div
-              key={label}
-              className="bg-white rounded-2xl border border-tiki-brown/10 shadow-sm px-5 py-4 flex items-center gap-4"
-            >
-              <span className="text-2xl flex-shrink-0">{icon}</span>
-              <p className="text-sm text-tiki-brown/70 leading-relaxed flex-1">{text}</p>
-              <Link
-                href={href}
-                className="text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/18 transition-colors whitespace-nowrap flex-shrink-0"
-              >
-                {label} →
-              </Link>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
-        <div className="border-t border-dashed border-tiki-brown/15" />
-      </div>
-
-      {/* ── Recommended Workflow ── */}
-      <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
-        <div className="mb-7">
-          <h2 className="text-2xl font-black text-tiki-brown mb-1">
-            🔄 Recommended Workflow
-          </h2>
-          <p className="text-sm text-tiki-brown/60">
-            Full production sequence from character setup to published story.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-          {workflowSteps.map((s, i) => (
-            <div key={s.step} className="flex items-center gap-3">
-              <div className="bg-white rounded-2xl border border-tiki-brown/10 shadow-sm px-4 py-3 flex items-center gap-3 flex-shrink-0">
-                <span className="flex-shrink-0 w-7 h-7 rounded-full bg-ube-purple/15 text-ube-purple text-xs font-black flex items-center justify-center">
-                  {s.step}
-                </span>
-                <span className="text-base">{s.emoji}</span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-tiki-brown whitespace-nowrap leading-tight">
-                    {s.label}
-                  </span>
-                  <span className="text-xs text-tiki-brown/40 whitespace-nowrap leading-tight">
-                    {s.note}
-                  </span>
-                </div>
-              </div>
-              {i < workflowSteps.length - 1 && (
-                <span className="text-tiki-brown/30 font-bold text-lg hidden sm:block">→</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">
-        <div className="border-t border-dashed border-tiki-brown/15" />
-      </div>
-
-      {/* ── Advanced Tools ── */}
-      <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-10">
-        <div className="mb-7">
-          <h2 className="text-2xl font-black text-tiki-brown mb-1">
-            🧩 Advanced Tools
-          </h2>
-          <p className="text-sm text-tiki-brown/60">
-            Planning, canon management, and developer tools.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {advancedTools.map((t) => (
-            <StudioCard key={t.title} {...t} />
-          ))}
-        </div>
+      {/* ── Developer / Legacy Tools (collapsed) ── */}
+      <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6">
+        <details className="group">
+          <summary className="cursor-pointer list-none flex items-center gap-2 select-none">
+            <span className="text-xs font-bold text-tiki-brown/35 uppercase tracking-widest hover:text-tiki-brown/55 transition-colors">
+              🔧 Developer / Legacy Tools
+            </span>
+            <span className="text-[10px] text-tiki-brown/30 group-open:hidden">▼</span>
+            <span className="text-[10px] text-tiki-brown/30 hidden group-open:inline">▲</span>
+          </summary>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {developerTools.map((t) => (
+              <StudioCard key={t.title} {...t} />
+            ))}
+          </div>
+        </details>
       </section>
 
       <div className="max-w-4xl mx-auto w-full px-4 sm:px-6">

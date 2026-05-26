@@ -8,6 +8,8 @@ import EditSceneSection, { type SceneForEdit } from "./EditSceneSection";
 import ArchiveSceneSection, { type SceneForArchive } from "./ArchiveSceneSection";
 import PublicStatusCard from "./PublicStatusCard";
 import EpisodeUploadClient, { type SceneUploadState } from "./EpisodeUploadClient";
+import StorybookPagesManager from "./StorybookPagesManager";
+import { getStorybookPages } from "@/lib/storybookPages";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -75,6 +77,7 @@ export default async function AdminEpisodePage({
 
   const activeScenes = getActiveScenes(raw);
   const archivedScenes = getRawScenes(raw).filter((s) => str(s.status) === "archived");
+  const storybookPages = getStorybookPages(raw);
 
   const scenesForUpload: SceneUploadState[] = activeScenes.map((s, i) => ({
     sceneNumber: typeof s.sceneNumber === "number" ? s.sceneNumber : i + 1,
@@ -114,11 +117,12 @@ export default async function AdminEpisodePage({
   return (
     <main className="min-h-screen bg-gradient-to-b from-ube-purple/6 to-white">
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-20 flex flex-col gap-8">
+
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-tiki-brown/50">
           <Link href="/admin" className="hover:text-tiki-brown transition-colors">Admin</Link>
           <span>/</span>
-          <Link href="/admin/episodes" className="hover:text-tiki-brown transition-colors">Episodes</Link>
+          <Link href="/admin/episodes" className="hover:text-tiki-brown transition-colors">Stories</Link>
           <span>/</span>
           <span className="text-tiki-brown font-semibold">{title}</span>
         </div>
@@ -162,79 +166,158 @@ export default async function AdminEpisodePage({
               ))}
             </div>
           )}
+        </div>
 
-          {isPublicReady && (
-            <Link
-              href={`/stories/${slug}`}
-              target="_blank"
-              className="text-sm font-semibold text-ube-purple hover:text-ube-purple/80 transition-colors"
+        {/* Section navigation */}
+        <nav aria-label="Story sections" className="flex flex-wrap gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-4 py-3 shadow-sm">
+          {[
+            { href: "#story", label: "Story" },
+            { href: "#storybook-pages", label: "Images" },
+            { href: "#audio", label: "Audio" },
+            { href: "#video", label: "Video" },
+            { href: "#preview", label: "Preview" },
+            { href: "#publish", label: "Publish" },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/5 text-tiki-brown/60 hover:bg-ube-purple/10 hover:text-ube-purple transition-colors uppercase tracking-wide"
             >
-              View public page →
-            </Link>
+              {label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Story section */}
+        <div id="story" className="flex flex-col gap-5 scroll-mt-4">
+          <h2 className="text-sm font-black text-tiki-brown/60 uppercase tracking-widest">
+            📖 Story
+          </h2>
+
+          {/* Scene management */}
+          <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+            <h3 className="text-base font-black text-tiki-brown mb-5">✏️ Edit Scenes</h3>
+            {scenesForEdit.length === 0 && (
+              <p className="text-sm text-tiki-brown/50 mb-4">No scenes yet.</p>
+            )}
+            <EditSceneSection
+              episodeSlug={slug}
+              scenes={scenesForEdit}
+              savedPanelSceneNumbers={[]}
+              characterOptions={allChars.map((c) => ({
+                slug: c.slug,
+                label: c.shortName ?? c.slug,
+                approvalMode: c.approvalMode,
+              }))}
+            />
+          </section>
+
+          <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+            <h3 className="text-base font-black text-tiki-brown mb-5">➕ Add Scene</h3>
+            <AddSceneSection
+              episodeSlug={slug}
+              currentSceneCount={activeScenes.length}
+              characterOptions={allChars.map((c) => ({
+                slug: c.slug,
+                label: c.shortName ?? c.slug,
+                approvalMode: c.approvalMode,
+              }))}
+            />
+          </section>
+
+          {scenesForArchive.length > 0 && (
+            <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+              <h3 className="text-base font-black text-tiki-brown mb-5">🗄 Archive Scene</h3>
+              <ArchiveSceneSection episodeSlug={slug} scenes={scenesForArchive} savedPanelSceneNumbers={[]} />
+            </section>
+          )}
+
+          {archivedScenes.length > 0 && (
+            <div className="text-xs text-tiki-brown/40 text-center">
+              {archivedScenes.length} archived scene{archivedScenes.length !== 1 ? "s" : ""} hidden
+            </div>
           )}
         </div>
 
-        {/* Public status */}
-        <PublicStatusCard
-          normalised={normalised}
-          reviewObj={typeof raw.review === "object" && raw.review !== null ? raw.review as Record<string, unknown> : null}
-          publishingObj={typeof raw.publishing === "object" && raw.publishing !== null ? raw.publishing as Record<string, unknown> : null}
-        />
+        {/* Storybook Images section */}
+        <div id="storybook-pages" className="flex flex-col gap-4 scroll-mt-4">
+          <h2 className="text-sm font-black text-tiki-brown/60 uppercase tracking-widest">
+            📚 Storybook Images
+          </h2>
+          <StorybookPagesManager episodeSlug={slug} initialPages={storybookPages} />
+        </div>
 
-        {/* Upload media */}
-        <EpisodeUploadClient
-          episodeSlug={slug}
-          initialScenes={scenesForUpload}
-          initialCoverImage={coverImage}
-          initialAudioUrl={audioUrl}
-          initialVideoUrl={videoUrl}
-        />
-
-        {/* Scene management */}
-        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
-          <h2 className="text-base font-black text-tiki-brown mb-5">✏️ Edit Scenes</h2>
-          {scenesForEdit.length === 0 && (
-            <p className="text-sm text-tiki-brown/50 mb-4">No scenes yet.</p>
-          )}
-          <EditSceneSection
+        {/* Audio section */}
+        <div id="audio" className="flex flex-col gap-4 scroll-mt-4">
+          <h2 className="text-sm font-black text-tiki-brown/60 uppercase tracking-widest">
+            🎙️ Audio Narration
+          </h2>
+          <EpisodeUploadClient
             episodeSlug={slug}
-            scenes={scenesForEdit}
-            savedPanelSceneNumbers={[]}
-            characterOptions={allChars.map((c) => ({
-              slug: c.slug,
-              label: c.shortName ?? c.slug,
-              approvalMode: c.approvalMode,
-            }))}
+            initialScenes={[]}
+            initialCoverImage={coverImage}
+            initialAudioUrl={audioUrl}
+            initialVideoUrl={videoUrl}
+            sectionsToShow="audio"
           />
-        </section>
+        </div>
 
-        {/* Add scene */}
-        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
-          <h2 className="text-base font-black text-tiki-brown mb-5">➕ Add Scene</h2>
-          <AddSceneSection
+        {/* Video section */}
+        <div id="video" className="flex flex-col gap-4 scroll-mt-4">
+          <h2 className="text-sm font-black text-tiki-brown/60 uppercase tracking-widest">
+            🎬 Cartoon Video
+          </h2>
+          <EpisodeUploadClient
             episodeSlug={slug}
-            currentSceneCount={activeScenes.length}
-            characterOptions={allChars.map((c) => ({
-              slug: c.slug,
-              label: c.shortName ?? c.slug,
-              approvalMode: c.approvalMode,
-            }))}
+            initialScenes={scenesForUpload}
+            initialCoverImage={coverImage}
+            initialAudioUrl={audioUrl}
+            initialVideoUrl={videoUrl}
+            sectionsToShow="video-and-scenes"
           />
-        </section>
+        </div>
 
-        {/* Archive */}
-        {scenesForArchive.length > 0 && (
-          <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
-            <h2 className="text-base font-black text-tiki-brown mb-5">🗄 Archive Scene</h2>
-            <ArchiveSceneSection episodeSlug={slug} scenes={scenesForArchive} savedPanelSceneNumbers={[]} />
-          </section>
-        )}
-
-        {archivedScenes.length > 0 && (
-          <div className="text-xs text-tiki-brown/40 text-center">
-            {archivedScenes.length} archived scene{archivedScenes.length !== 1 ? "s" : ""} hidden from display
+        {/* Preview section */}
+        <div id="preview" className="flex flex-col gap-4 scroll-mt-4">
+          <h2 className="text-sm font-black text-tiki-brown/60 uppercase tracking-widest">
+            👁️ Preview
+          </h2>
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🌐</span>
+              <div>
+                <h3 className="text-sm font-black text-tiki-brown">Public Story Page</h3>
+                <p className="text-xs text-tiki-brown/50">
+                  {isPublicReady
+                    ? "This story is live and visible to readers."
+                    : "This story is not yet public. Preview how it will look."}
+                </p>
+              </div>
+            </div>
+            <a
+              href={`/stories/${slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-bold bg-ube-purple text-white px-4 py-2 rounded-full hover:bg-ube-purple/85 transition-colors shadow-sm w-fit"
+            >
+              <span>🔗</span>
+              Open story page
+            </a>
           </div>
-        )}
+        </div>
+
+        {/* Publish section */}
+        <div id="publish" className="flex flex-col gap-4 scroll-mt-4">
+          <h2 className="text-sm font-black text-tiki-brown/60 uppercase tracking-widest">
+            🚀 Publish
+          </h2>
+          <PublicStatusCard
+            normalised={normalised}
+            reviewObj={typeof raw.review === "object" && raw.review !== null ? raw.review as Record<string, unknown> : null}
+            publishingObj={typeof raw.publishing === "object" && raw.publishing !== null ? raw.publishing as Record<string, unknown> : null}
+          />
+        </div>
+
       </div>
     </main>
   );

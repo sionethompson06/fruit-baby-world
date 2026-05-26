@@ -149,12 +149,14 @@ export default function EpisodeUploadClient({
   initialCoverImage,
   initialAudioUrl,
   initialVideoUrl,
+  sectionsToShow = "all",
 }: {
   episodeSlug: string;
   initialScenes: SceneUploadState[];
   initialCoverImage?: string;
   initialAudioUrl?: string;
   initialVideoUrl?: string;
+  sectionsToShow?: "all" | "audio" | "video-and-scenes";
 }) {
   const [scenes, setScenes] = useState(initialScenes);
   const [coverImage, setCoverImage] = useState(initialCoverImage);
@@ -168,91 +170,99 @@ export default function EpisodeUploadClient({
   };
 
   return (
-    <div className="flex flex-col gap-10">
-      {/* Cover Image */}
-      <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
-        <h2 className="text-base font-black text-tiki-brown mb-5">🖼 Cover Image</h2>
-        <UploadField
-          label="Episode cover"
-          accept="image/jpeg,image/png,image/webp"
-          folder={`episodes/${episodeSlug}/cover`}
-          episodeSlug={episodeSlug}
-          target={{ kind: "cover-image" }}
-          currentUrl={coverImage}
-          onSuccess={setCoverImage}
-        />
-      </section>
+    <div className="flex flex-col gap-6">
+      {/* Cover Image — shown in "all" mode only */}
+      {sectionsToShow === "all" && (
+        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+          <h2 className="text-base font-black text-tiki-brown mb-5">🖼 Cover Image</h2>
+          <UploadField
+            label="Episode cover"
+            accept="image/jpeg,image/png,image/webp"
+            folder={`episodes/${episodeSlug}/cover`}
+            episodeSlug={episodeSlug}
+            target={{ kind: "cover-image" }}
+            currentUrl={coverImage}
+            onSuccess={setCoverImage}
+          />
+        </section>
+      )}
 
       {/* Audio */}
-      <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
-        <h2 className="text-base font-black text-tiki-brown mb-1">🎧 Audio Narration</h2>
-        <p className="text-xs text-tiki-brown/50 mb-5">MP3 or M4A file. Will play as users read the story.</p>
-        <UploadField
-          label="Narration audio"
-          accept="audio/mpeg,audio/mp4,audio/x-m4a"
-          folder={`episodes/${episodeSlug}/audio`}
-          episodeSlug={episodeSlug}
-          target={{ kind: "audio" }}
-          currentUrl={audioUrl}
-          onSuccess={setAudioUrl}
-        />
-        {audioUrl && (
-          <audio controls src={audioUrl} className="mt-4 w-full rounded-xl" />
-        )}
-      </section>
+      {(sectionsToShow === "all" || sectionsToShow === "audio") && (
+        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+          <h2 className="text-base font-black text-tiki-brown mb-1">🎧 Audio Narration</h2>
+          <p className="text-xs text-tiki-brown/50 mb-5">MP3 or M4A file. Will play as users read the story.</p>
+          <UploadField
+            label="Narration audio"
+            accept="audio/mpeg,audio/mp4,audio/x-m4a"
+            folder={`episodes/${episodeSlug}/audio`}
+            episodeSlug={episodeSlug}
+            target={{ kind: "audio" }}
+            currentUrl={audioUrl}
+            onSuccess={setAudioUrl}
+          />
+          {audioUrl && (
+            <audio controls src={audioUrl} className="mt-4 w-full rounded-xl" />
+          )}
+        </section>
+      )}
 
       {/* Video */}
-      <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
-        <h2 className="text-base font-black text-tiki-brown mb-1">🎬 Episode Video</h2>
-        <p className="text-xs text-tiki-brown/50 mb-5">MP4 file. Users can choose to watch instead of reading.</p>
-        <UploadField
-          label="Episode video"
-          accept="video/mp4,video/quicktime"
-          folder={`episodes/${episodeSlug}/video`}
-          episodeSlug={episodeSlug}
-          target={{ kind: "video" }}
-          currentUrl={videoUrl}
-          onSuccess={setVideoUrl}
-        />
-        {videoUrl && (
-          <video controls src={videoUrl} className="mt-4 w-full rounded-xl" />
-        )}
-      </section>
+      {(sectionsToShow === "all" || sectionsToShow === "video-and-scenes") && (
+        <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8">
+          <h2 className="text-base font-black text-tiki-brown mb-1">🎬 Episode Video</h2>
+          <p className="text-xs text-tiki-brown/50 mb-5">MP4 file. Users can choose to watch instead of reading.</p>
+          <UploadField
+            label="Episode video"
+            accept="video/mp4,video/quicktime"
+            folder={`episodes/${episodeSlug}/video`}
+            episodeSlug={episodeSlug}
+            target={{ kind: "video" }}
+            currentUrl={videoUrl}
+            onSuccess={setVideoUrl}
+          />
+          {videoUrl && (
+            <video controls src={videoUrl} className="mt-4 w-full rounded-xl" />
+          )}
+        </section>
+      )}
 
       {/* Scene images */}
-      <section className="flex flex-col gap-5">
-        <h2 className="text-base font-black text-tiki-brown">🎨 Scene Images</h2>
-        {scenes.length === 0 && (
-          <p className="text-sm text-tiki-brown/50">No scenes yet. Add scenes below.</p>
-        )}
-        {scenes.map((scene) => (
-          <div
-            key={scene.sceneNumber}
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-6"
-          >
-            <div className="flex items-start gap-3 mb-4">
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ube-purple/12 text-ube-purple flex-shrink-0">
-                Scene {scene.sceneNumber}
-              </span>
-              {scene.title && (
-                <span className="text-sm font-bold text-tiki-brown">{scene.title}</span>
+      {(sectionsToShow === "all" || sectionsToShow === "video-and-scenes") && (
+        <section className="flex flex-col gap-5">
+          <h2 className="text-base font-black text-tiki-brown">🎨 Scene Images</h2>
+          {scenes.length === 0 && (
+            <p className="text-sm text-tiki-brown/50">No scenes yet. Add scenes below.</p>
+          )}
+          {scenes.map((scene) => (
+            <div
+              key={scene.sceneNumber}
+              className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-6"
+            >
+              <div className="flex items-start gap-3 mb-4">
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ube-purple/12 text-ube-purple flex-shrink-0">
+                  Scene {scene.sceneNumber}
+                </span>
+                {scene.title && (
+                  <span className="text-sm font-bold text-tiki-brown">{scene.title}</span>
+                )}
+              </div>
+              {scene.text && (
+                <p className="text-xs text-tiki-brown/60 mb-4 leading-relaxed line-clamp-3">{scene.text}</p>
               )}
+              <UploadField
+                label="Scene illustration"
+                accept="image/jpeg,image/png,image/webp"
+                folder={`episodes/${episodeSlug}/scenes`}
+                episodeSlug={episodeSlug}
+                target={{ kind: "scene-image", sceneNumber: scene.sceneNumber }}
+                currentUrl={scene.imageUrl}
+                onSuccess={(url) => updateSceneImage(scene.sceneNumber, url)}
+              />
             </div>
-            {scene.text && (
-              <p className="text-xs text-tiki-brown/60 mb-4 leading-relaxed line-clamp-3">{scene.text}</p>
-            )}
-            <UploadField
-              label="Scene illustration"
-              accept="image/jpeg,image/png,image/webp"
-              folder={`episodes/${episodeSlug}/scenes`}
-              episodeSlug={episodeSlug}
-              target={{ kind: "scene-image", sceneNumber: scene.sceneNumber }}
-              currentUrl={scene.imageUrl}
-              onSuccess={(url) => updateSceneImage(scene.sceneNumber, url)}
-            />
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
+      )}
     </div>
   );
 }

@@ -1,27 +1,29 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 const primaryLinks = [
-  { href: "/admin", label: "Dashboard", emoji: "🏠" },
-  { href: "/admin/characters", label: "Character Studio", emoji: "🍍" },
-  { href: "/admin/episodes", label: "Story Studio", emoji: "🎬" },
-  { href: "/admin/media", label: "Media Studio", emoji: "🎞️" },
-  { href: "/admin/media-health", label: "Media Health", emoji: "🩺" },
-  { href: "/admin/publishing", label: "Publishing", emoji: "📤" },
-  { href: "/admin/products", label: "Product Studio", emoji: "🛍️" },
+  { href: "/admin",           label: "Dashboard",  emoji: "🏠" },
+  { href: "/admin/episodes",  label: "Stories",    emoji: "📖" },
+  { href: "/admin/characters",label: "Characters", emoji: "🍍" },
+  { href: "/admin/media",     label: "Media",      emoji: "🎞️" },
+  { href: "/admin/publishing",label: "Publish",    emoji: "🚀" },
 ];
 
-const advancedLinks = [
-  { href: "/admin/storyboards", label: "Storyboards", emoji: "📝" },
-  { href: "/admin/variations", label: "Variations", emoji: "🎨" },
-  { href: "/admin/canon", label: "Canon", emoji: "🔒" },
+const developerLinks = [
+  { href: "/admin/media-health", label: "Media Health", emoji: "🩺" },
+  { href: "/admin/products",     label: "Products",     emoji: "🛍️" },
+  { href: "/admin/storyboards",  label: "Storyboards",  emoji: "📝" },
+  { href: "/admin/variations",   label: "Variations",   emoji: "🎨" },
+  { href: "/admin/canon",        label: "Canon",        emoji: "🔒" },
 ];
 
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [devExpanded, setDevExpanded] = useState(false);
 
   async function handleLock() {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -33,11 +35,14 @@ export default function AdminNav() {
     return pathname === href || pathname.startsWith(href + "/");
   }
 
+  const isOnDevPage = developerLinks.some((l) => isActive(l.href));
+  const showDev = devExpanded || isOnDevPage;
+
   return (
     <nav className="bg-ube-purple/10 border-b border-ube-purple/20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-        {/* Primary nav row */}
+        {/* Primary row */}
         <div className="flex flex-wrap items-center gap-1 py-2">
           {primaryLinks.map(({ href, label, emoji }) => (
             <Link
@@ -54,58 +59,56 @@ export default function AdminNav() {
             </Link>
           ))}
 
-          {/* Divider */}
-          <span className="text-ube-purple/20 font-light mx-1 select-none hidden sm:block">|</span>
-
-          {/* Advanced tools — muted */}
-          <span className="text-[10px] font-bold text-ube-purple/35 uppercase tracking-widest pl-1 hidden sm:block whitespace-nowrap">
-            Advanced:
-          </span>
-          {advancedLinks.map(({ href, label, emoji }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-                isActive(href)
-                  ? "bg-ube-purple/60 text-white shadow-sm"
-                  : "text-ube-purple/50 hover:bg-ube-purple/12 hover:text-ube-purple/80"
-              }`}
-            >
-              <span className="text-[10px]">{emoji}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
+          {/* Developer / Legacy toggle */}
+          <button
+            type="button"
+            onClick={() => setDevExpanded((v) => !v)}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+              isOnDevPage
+                ? "bg-tiki-brown/15 text-tiki-brown/70"
+                : "text-tiki-brown/35 hover:text-tiki-brown/55 hover:bg-tiki-brown/8"
+            }`}
+            title="Developer / Legacy tools"
+          >
+            <span>🔧</span>
+            <span>Dev</span>
+            <span className="text-[9px] ml-0.5">{showDev ? "▲" : "▼"}</span>
+          </button>
 
           {/* Lock */}
           <button
+            type="button"
             onClick={handleLock}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-warm-coral/70 hover:bg-warm-coral/10 hover:text-warm-coral ml-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-warm-coral/60 hover:bg-warm-coral/10 hover:text-warm-coral ml-auto"
+            title="Lock admin"
           >
             <span>🔒</span>
-            <span>Lock Studio</span>
+            <span className="hidden sm:inline">Lock</span>
           </button>
         </div>
 
-        {/* Mobile-only: advanced tools second row */}
-        <div className="flex flex-wrap items-center gap-1 pb-2 sm:hidden">
-          <span className="text-[10px] font-bold text-ube-purple/35 uppercase tracking-widest pr-1">
-            Advanced:
-          </span>
-          {advancedLinks.map(({ href, label, emoji }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
-                isActive(href)
-                  ? "bg-ube-purple/60 text-white shadow-sm"
-                  : "text-ube-purple/45 hover:bg-ube-purple/12 hover:text-ube-purple/70"
-              }`}
-            >
-              <span className="text-[10px]">{emoji}</span>
-              <span>{label}</span>
-            </Link>
-          ))}
-        </div>
+        {/* Developer / Legacy expanded row */}
+        {showDev && (
+          <div className="flex flex-wrap items-center gap-1 pb-2 border-t border-ube-purple/10 pt-1.5">
+            <span className="text-[10px] font-bold text-tiki-brown/30 uppercase tracking-widest pl-1 pr-1 whitespace-nowrap">
+              Developer / Legacy:
+            </span>
+            {developerLinks.map(({ href, label, emoji }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
+                  isActive(href)
+                    ? "bg-tiki-brown/20 text-tiki-brown/80"
+                    : "text-tiki-brown/45 hover:bg-tiki-brown/10 hover:text-tiki-brown/70"
+                }`}
+              >
+                <span className="text-[10px]">{emoji}</span>
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
+        )}
 
       </div>
     </nav>
