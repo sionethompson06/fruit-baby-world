@@ -15,6 +15,12 @@ import {
   compactHarmonizationPromptIfNeeded,
 } from "@/lib/storyPanelHarmonizationPrompt";
 import {
+  loadGoldenReferences,
+  selectGoldenReferencesForHarmonization,
+  buildGoldenReferencePromptSection,
+  buildGoldenReferenceReplayDiagnostics,
+} from "@/lib/storyPanelGoldenReferences";
+import {
   getFalRefineModelId,
   getFalApiKey,
   isProductionProviderConfigured,
@@ -35,6 +41,19 @@ type HarmonizeResult =
       modelId: string;
       harmonizationPromptLength: number;
       promptWasCompacted: boolean;
+      goldenReferencesUsed: boolean;
+      goldenReferenceCount: number;
+      goldenReferenceTitles: string[];
+      goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
+      goldenReferenceReplayEnabled: boolean;
+      goldenReferenceDiagnostics: {
+        enabled: boolean;
+        consideredCount: number;
+        selectedCount: number;
+        skippedReason?: string;
+        selected: Array<{ id: string; title: string; role: string; matchReason: string }>;
+        warnings: string[];
+      };
       notes: string[];
     }
   | {
@@ -174,10 +193,50 @@ export async function POST(request: Request): Promise<Response> {
       ? characterSlugs.length
       : undefined;
 
+  // ── Golden Reference toggle ────────────────────────────────────────────────
+  const useGoldenReferences: boolean =
+    body.useGoldenReferences === false ? false : true;
+
+  // ── Load golden harmonization references ──────────────────────────────────
+  let goldenHarmonizeSection: string | undefined;
+  let goldenReferencesUsed = false;
+  let goldenReferenceCount = 0;
+  let goldenReferenceTitles: string[] = [];
+  let goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+  let goldenReferenceDiagnostics: ReturnType<typeof buildGoldenReferenceReplayDiagnostics> = {
+    enabled: useGoldenReferences,
+    consideredCount: 0,
+    selectedCount: 0,
+    skippedReason: useGoldenReferences ? undefined : "disabled by admin",
+    selected: [],
+    warnings: [],
+  };
+
+  try {
+    const allGoldenRefs = loadGoldenReferences();
+    const goldenResult = selectGoldenReferencesForHarmonization({
+      all: allGoldenRefs,
+      characterSlugs,
+      useGoldenReferences,
+    });
+    goldenReferencesUsed = goldenResult.count > 0;
+    goldenReferenceCount = goldenResult.count;
+    goldenReferenceTitles = goldenResult.titles;
+    goldenReferenceMode = goldenResult.mode;
+    goldenReferenceDiagnostics = buildGoldenReferenceReplayDiagnostics(goldenResult, useGoldenReferences);
+    if (goldenResult.count > 0) {
+      goldenHarmonizeSection = buildGoldenReferencePromptSection(goldenResult.references, "harmonize");
+    }
+  } catch (goldenErr) {
+    console.warn("[harmonize] Golden reference loading failed:", goldenErr instanceof Error ? goldenErr.message : goldenErr);
+  }
+
   // ── Build harmonization prompt ─────────────────────────────────────────────
   const basePrompt = buildHarmonizationPrompt({ sceneCharacterCount, settingLabel, mood });
   const preservationRules = buildHarmonizationPreservationRules({ characterSlugs });
-  const fullPrompt = [basePrompt, "", preservationRules].join("\n");
+  const promptParts = [basePrompt, "", preservationRules];
+  if (goldenHarmonizeSection) promptParts.push("", goldenHarmonizeSection);
+  const fullPrompt = promptParts.join("\n");
   const compaction = compactHarmonizationPromptIfNeeded(fullPrompt);
   const harmonizationPrompt = compaction.prompt;
 
@@ -354,6 +413,12 @@ export async function POST(request: Request): Promise<Response> {
         modelId,
         harmonizationPromptLength: harmonizationPrompt.length,
         promptWasCompacted: compaction.wasCompacted,
+        goldenReferencesUsed,
+        goldenReferenceCount,
+        goldenReferenceTitles,
+        goldenReferenceMode,
+        goldenReferenceReplayEnabled: useGoldenReferences,
+        goldenReferenceDiagnostics,
         notes: [
           "This is a temporary harmonized draft — not saved or published.",
           "Use Approve & Save Panel to commit this image to the episode.",
@@ -465,6 +530,12 @@ export async function POST(request: Request): Promise<Response> {
         modelId: draftModelId,
         harmonizationPromptLength: harmonizationPrompt.length,
         promptWasCompacted: compaction.wasCompacted,
+        goldenReferencesUsed,
+        goldenReferenceCount,
+        goldenReferenceTitles,
+        goldenReferenceMode,
+        goldenReferenceReplayEnabled: useGoldenReferences,
+        goldenReferenceDiagnostics,
         notes: [
           "This is a temporary harmonized draft — not saved or published.",
           "Use Approve & Save Panel to commit this image to the episode.",

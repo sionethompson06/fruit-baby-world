@@ -36,6 +36,7 @@ import {
   selectGoldenReferencesForEnvironment,
   buildGoldenReferencePromptSection,
   summarizeGoldenReferenceReplay,
+  buildGoldenReferenceReplayDiagnostics,
 } from "@/lib/storyPanelGoldenReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -59,6 +60,16 @@ type BackgroundResult =
       goldenReferenceTitles: string[];
       goldenReferenceRoles: string[];
       goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
+      goldenReferenceReplayEnabled: boolean;
+      goldenReferencesConsidered: number;
+      goldenReferenceDiagnostics: {
+        enabled: boolean;
+        consideredCount: number;
+        selectedCount: number;
+        skippedReason?: string;
+        selected: Array<{ id: string; title: string; role: string; matchReason: string }>;
+        warnings: string[];
+      };
     }
   | {
       ok: false;
@@ -194,6 +205,10 @@ export async function POST(request: Request): Promise<Response> {
     backgroundDirection = stripped || undefined;
   }
 
+  // ── Golden Reference toggle ────────────────────────────────────────────────
+  const useGoldenReferences: boolean =
+    body.useGoldenReferences === false ? false : true;
+
   // ── Provider selection ─────────────────────────────────────────────────────
   // Default: OpenAI for background generation (stronger scene/environment fidelity).
   // Fal.ai not yet supported for background-only (requires text-to-image model config).
@@ -264,6 +279,14 @@ export async function POST(request: Request): Promise<Response> {
   let goldenReferenceTitles: string[] = [];
   let goldenReferenceRoles: string[] = [];
   let goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+  let goldenReferenceDiagnostics: ReturnType<typeof buildGoldenReferenceReplayDiagnostics> = {
+    enabled: useGoldenReferences,
+    consideredCount: 0,
+    selectedCount: 0,
+    skippedReason: useGoldenReferences ? undefined : "disabled by admin",
+    selected: [],
+    warnings: [],
+  };
 
   try {
     const allGoldenRefs = loadGoldenReferences();
@@ -271,6 +294,7 @@ export async function POST(request: Request): Promise<Response> {
       all: allGoldenRefs,
       characterSlugs: referenceCharacters,
       settingLabel,
+      useGoldenReferences,
     });
     const replaySummary = summarizeGoldenReferenceReplay(goldenEnvResult);
     goldenReferencesUsed = replaySummary.used;
@@ -278,6 +302,7 @@ export async function POST(request: Request): Promise<Response> {
     goldenReferenceTitles = replaySummary.titles;
     goldenReferenceRoles = replaySummary.roles;
     goldenReferenceMode = replaySummary.mode;
+    goldenReferenceDiagnostics = buildGoldenReferenceReplayDiagnostics(goldenEnvResult, useGoldenReferences);
     if (goldenEnvResult.count > 0) {
       goldenRefPromptSection = buildGoldenReferencePromptSection(goldenEnvResult.references, "environment");
     }
@@ -430,6 +455,9 @@ export async function POST(request: Request): Promise<Response> {
       goldenReferenceTitles,
       goldenReferenceRoles,
       goldenReferenceMode,
+      goldenReferenceReplayEnabled: useGoldenReferences,
+      goldenReferencesConsidered: goldenReferenceDiagnostics.consideredCount,
+      goldenReferenceDiagnostics,
     } satisfies BackgroundResult,
     { status: 200 }
   );

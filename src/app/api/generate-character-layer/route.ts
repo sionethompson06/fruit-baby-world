@@ -36,6 +36,7 @@ import {
   selectGoldenReferencesForCharacter,
   buildGoldenReferencePromptSection,
   summarizeGoldenReferenceReplay,
+  buildGoldenReferenceReplayDiagnostics,
 } from "@/lib/storyPanelGoldenReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -55,6 +56,16 @@ type CharLayerResult =
       goldenReferenceTitles: string[];
       goldenReferenceRoles: string[];
       goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
+      goldenReferenceReplayEnabled: boolean;
+      goldenReferencesConsidered: number;
+      goldenReferenceDiagnostics: {
+        enabled: boolean;
+        consideredCount: number;
+        selectedCount: number;
+        skippedReason?: string;
+        selected: Array<{ id: string; title: string; role: string; matchReason: string }>;
+        warnings: string[];
+      };
     }
   | {
       ok: false;
@@ -165,6 +176,10 @@ export async function POST(request: Request): Promise<Response> {
       ? body.adminSceneDirection.trim().replace(/<[^>]*>/g, "").slice(0, 1200)
       : undefined;
 
+  // ── Golden Reference toggle ────────────────────────────────────────────────
+  const useGoldenReferences: boolean =
+    body.useGoldenReferences === false ? false : true;
+
   // ── Check production provider config ─────────────────────────────────────────
   if (!isProductionProviderConfigured()) {
     const setupError = getProductionSetupError();
@@ -231,6 +246,14 @@ export async function POST(request: Request): Promise<Response> {
   let goldenReferenceTitles: string[] = [];
   let goldenReferenceRoles: string[] = [];
   let goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+  let goldenReferenceDiagnostics: ReturnType<typeof buildGoldenReferenceReplayDiagnostics> = {
+    enabled: useGoldenReferences,
+    consideredCount: 0,
+    selectedCount: 0,
+    skippedReason: useGoldenReferences ? undefined : "disabled by admin",
+    selected: [],
+    warnings: [],
+  };
 
   try {
     const allGoldenRefs = loadGoldenReferences();
@@ -239,6 +262,7 @@ export async function POST(request: Request): Promise<Response> {
       characterSlug: plan.characterSlug,
       emotion: plan.emotion,
       action: plan.action,
+      useGoldenReferences,
     });
     const replaySummary = summarizeGoldenReferenceReplay(goldenCharResult);
     goldenReferencesUsed = replaySummary.used;
@@ -246,6 +270,7 @@ export async function POST(request: Request): Promise<Response> {
     goldenReferenceTitles = replaySummary.titles;
     goldenReferenceRoles = replaySummary.roles;
     goldenReferenceMode = replaySummary.mode;
+    goldenReferenceDiagnostics = buildGoldenReferenceReplayDiagnostics(goldenCharResult, useGoldenReferences);
     if (goldenCharResult.count > 0) {
       goldenRefPromptSection = buildGoldenReferencePromptSection(goldenCharResult.references, "character");
     }
@@ -431,6 +456,9 @@ export async function POST(request: Request): Promise<Response> {
       goldenReferenceTitles,
       goldenReferenceRoles,
       goldenReferenceMode,
+      goldenReferenceReplayEnabled: useGoldenReferences,
+      goldenReferencesConsidered: goldenReferenceDiagnostics.consideredCount,
+      goldenReferenceDiagnostics,
     } satisfies CharLayerResult,
     { status: 200 }
   );

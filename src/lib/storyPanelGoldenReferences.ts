@@ -1,5 +1,6 @@
 // Golden Reference Memory for Fruit Baby World story panels (Phase 18E).
 // Admin-only — stores approved generation outputs as trusted references for future use.
+// Phase 18E.1 adds replay guardrails, settings, tighter selection, and diagnostics.
 // Server-safe — uses fs. Do NOT import in client components.
 
 import fs from "fs";
@@ -58,9 +59,12 @@ export type StoryPanelGoldenReference = {
 export type GoldenReferenceSelectionResult = {
   references: StoryPanelGoldenReference[];
   count: number;
+  consideredCount: number;
   titles: string[];
   roles: GoldenReferenceRole[];
   mode: "none" | "prompt-guided";
+  skippedReason?: string;
+  matchReasons: string[];
 };
 
 export type GoldenReferenceReplaySummary = {
@@ -69,6 +73,41 @@ export type GoldenReferenceReplaySummary = {
   titles: string[];
   roles: string[];
   mode: "none" | "prompt-guided" | "image-conditioned";
+};
+
+// ─── Replay settings ──────────────────────────────────────────────────────────
+
+export type GoldenReferenceReplaySettings = {
+  enabled: boolean;
+  maxSceneReferences: number;
+  maxCharacterReferences: number;
+  maxEnvironmentReferences: number;
+  maxHarmonizationReferences: number;
+  requireCharacterOverlap: boolean;
+  requireRoleMatch: boolean;
+  officialReferencesRemainPrimary: true;
+};
+
+export const DEFAULT_REPLAY_SETTINGS: GoldenReferenceReplaySettings = {
+  enabled: true,
+  maxSceneReferences: 2,
+  maxCharacterReferences: 1,
+  maxEnvironmentReferences: 1,
+  maxHarmonizationReferences: 1,
+  requireCharacterOverlap: true,
+  requireRoleMatch: true,
+  officialReferencesRemainPrimary: true,
+};
+
+// ─── Diagnostics type ─────────────────────────────────────────────────────────
+
+export type GoldenReferenceReplayDiagnostics = {
+  enabled: boolean;
+  consideredCount: number;
+  selectedCount: number;
+  skippedReason?: string;
+  selected: Array<{ id: string; title: string; role: string; matchReason: string }>;
+  warnings: string[];
 };
 
 // ─── Storage path ─────────────────────────────────────────────────────────────
@@ -95,11 +134,6 @@ export function loadGoldenReferences(): StoryPanelGoldenReference[] {
 
 // ─── Selection helpers ────────────────────────────────────────────────────────
 
-const MAX_SCENE_REFS = 3;
-const MAX_BACKGROUND_REFS = 2;
-const MAX_CHAR_REFS = 2;
-const MAX_HARMONIZE_REFS = 2;
-
 function scoreRef(
   ref: StoryPanelGoldenReference,
   opts: { characterSlugs?: string[]; tags?: string[] }
@@ -107,12 +141,37 @@ function scoreRef(
   let score = new Date(ref.createdAt).getTime() / 1e13; // recency
 
   if (opts.characterSlugs) {
-    score += ref.characterSlugs.filter((s) => opts.characterSlugs!.includes(s)).length * 10;
+    const overlap = ref.characterSlugs.filter((s) => opts.characterSlugs!.includes(s)).length;
+    // Prefer exact cast match
+    const isExactCast =
+      overlap === opts.characterSlugs.length && overlap === ref.characterSlugs.length;
+    score += overlap * 10;
+    if (isExactCast) score += 20;
   }
   if (opts.tags) {
     score += ref.tags.filter((t) => opts.tags!.includes(t)).length * 5;
   }
   return score;
+}
+
+function buildMatchReason(
+  ref: StoryPanelGoldenReference,
+  opts: { characterSlugs?: string[]; settingLabel?: string }
+): string {
+  const parts: string[] = [];
+  if (opts.characterSlugs) {
+    const overlap = ref.characterSlugs.filter((s) => opts.characterSlugs!.includes(s));
+    if (overlap.length === opts.characterSlugs.length && overlap.length === ref.characterSlugs.length) {
+      parts.push("exact cast match");
+    } else if (overlap.length > 0) {
+      parts.push(`${overlap.length} shared character(s)`);
+    }
+  }
+  if (opts.settingLabel && ref.tags.some((t) => opts.settingLabel!.toLowerCase().includes(t))) {
+    parts.push("setting match");
+  }
+  parts.push(`role: ${ref.referenceRole}`);
+  return parts.join(", ");
 }
 
 export function selectGoldenReferencesForScene(opts: {
@@ -121,29 +180,50 @@ export function selectGoldenReferencesForScene(opts: {
   settingLabel?: string;
   tags?: string[];
   limit?: number;
+  useGoldenReferences?: boolean;
 }): GoldenReferenceSelectionResult {
-  const { all, characterSlugs, settingLabel, tags = [], limit = MAX_SCENE_REFS } = opts;
+  const {
+    all,
+    characterSlugs,
+    settingLabel,
+    tags = [],
+    limit = DEFAULT_REPLAY_SETTINGS.maxSceneReferences,
+    useGoldenReferences = true,
+  } = opts;
+
+  if (!useGoldenReferences) {
+    return buildEmptyResult(all.length, "disabled by admin");
+  }
 
   const settingTokens = settingLabel
     ? settingLabel.toLowerCase().split(/[\s,/]+/).filter(Boolean)
     : [];
-
   const allTags = [...tags, ...settingTokens];
-  const eligible = all
-    .filter(
-      (r) =>
-        r.referenceRole === "scene-composition" ||
-        r.referenceRole === "multi-character-interaction" ||
-        r.referenceRole === "style-polish"
-    )
-    .filter((r) => r.characterSlugs.some((s) => characterSlugs.includes(s)));
+
+  // Eligible: scene-composition, multi-character-interaction, style-polish
+  // Require character overlap except for style-polish (which applies globally)
+  const eligible = all.filter((r) => {
+    if (
+      r.referenceRole !== "scene-composition" &&
+      r.referenceRole !== "multi-character-interaction" &&
+      r.referenceRole !== "style-polish"
+    ) return false;
+    // style-polish doesn't require character overlap
+    if (r.referenceRole === "style-polish") return true;
+    // scene-composition and multi-character-interaction require at least one character overlap
+    return r.characterSlugs.some((s) => characterSlugs.includes(s));
+  });
 
   const sorted = [...eligible].sort(
     (a, b) =>
       scoreRef(b, { characterSlugs, tags: allTags }) -
       scoreRef(a, { characterSlugs, tags: allTags })
   );
-  return buildSelectionResult(sorted.slice(0, limit));
+  const selected = sorted.slice(0, limit);
+  const matchReasons = selected.map((r) =>
+    buildMatchReason(r, { characterSlugs, settingLabel })
+  );
+  return buildSelectionResult(selected, eligible.length, matchReasons);
 }
 
 export function selectGoldenReferencesForCharacter(opts: {
@@ -152,25 +232,43 @@ export function selectGoldenReferencesForCharacter(opts: {
   emotion?: string;
   action?: string;
   limit?: number;
+  useGoldenReferences?: boolean;
 }): GoldenReferenceSelectionResult {
-  const { all, characterSlug, emotion, action, limit = MAX_CHAR_REFS } = opts;
+  const {
+    all,
+    characterSlug,
+    emotion,
+    action,
+    limit = DEFAULT_REPLAY_SETTINGS.maxCharacterReferences,
+    useGoldenReferences = true,
+  } = opts;
+
+  if (!useGoldenReferences) {
+    return buildEmptyResult(all.length, "disabled by admin");
+  }
 
   const tags = [
     ...(emotion ? emotion.toLowerCase().split(/\s+/) : []),
     ...(action ? action.toLowerCase().split(/\s+/) : []),
   ];
 
+  // Strict: must be character-fidelity or pose-expression AND match this specific character
   const eligible = all.filter(
     (r) =>
       (r.referenceRole === "character-fidelity" || r.referenceRole === "pose-expression") &&
-      (r.characterSlugs.includes(characterSlug) || r.primaryCharacterSlug === characterSlug)
+      (r.primaryCharacterSlug === characterSlug || r.characterSlugs.includes(characterSlug))
   );
+
   const sorted = [...eligible].sort(
     (a, b) =>
       scoreRef(b, { characterSlugs: [characterSlug], tags }) -
       scoreRef(a, { characterSlugs: [characterSlug], tags })
   );
-  return buildSelectionResult(sorted.slice(0, limit));
+  const selected = sorted.slice(0, limit);
+  const matchReasons = selected.map((r) =>
+    buildMatchReason(r, { characterSlugs: [characterSlug] })
+  );
+  return buildSelectionResult(selected, eligible.length, matchReasons);
 }
 
 export function selectGoldenReferencesForEnvironment(opts: {
@@ -178,54 +276,120 @@ export function selectGoldenReferencesForEnvironment(opts: {
   characterSlugs: string[];
   settingLabel?: string;
   limit?: number;
+  useGoldenReferences?: boolean;
 }): GoldenReferenceSelectionResult {
-  const { all, characterSlugs, settingLabel, limit = MAX_BACKGROUND_REFS } = opts;
+  const {
+    all,
+    characterSlugs,
+    settingLabel,
+    limit = DEFAULT_REPLAY_SETTINGS.maxEnvironmentReferences,
+    useGoldenReferences = true,
+  } = opts;
+
+  if (!useGoldenReferences) {
+    return buildEmptyResult(all.length, "disabled by admin");
+  }
 
   const settingTokens = settingLabel
     ? settingLabel.toLowerCase().split(/[\s,/]+/).filter(Boolean)
     : [];
 
+  // Environment only — never use character-fidelity or pose-expression refs here
   const eligible = all.filter((r) => r.referenceRole === "environment");
+
   const sorted = [...eligible].sort(
     (a, b) =>
       scoreRef(b, { characterSlugs, tags: settingTokens }) -
       scoreRef(a, { characterSlugs, tags: settingTokens })
   );
-  return buildSelectionResult(sorted.slice(0, limit));
+  const selected = sorted.slice(0, limit);
+  const matchReasons = selected.map((r) =>
+    buildMatchReason(r, { characterSlugs, settingLabel })
+  );
+  return buildSelectionResult(selected, eligible.length, matchReasons);
 }
 
 export function selectGoldenReferencesForHarmonization(opts: {
   all: StoryPanelGoldenReference[];
   characterSlugs: string[];
   limit?: number;
+  useGoldenReferences?: boolean;
 }): GoldenReferenceSelectionResult {
-  const { all, characterSlugs, limit = MAX_HARMONIZE_REFS } = opts;
+  const {
+    all,
+    characterSlugs,
+    limit = DEFAULT_REPLAY_SETTINGS.maxHarmonizationReferences,
+    useGoldenReferences = true,
+  } = opts;
 
-  const eligible = all
-    .filter(
-      (r) => r.referenceRole === "style-polish" || r.referenceRole === "scene-composition"
-    )
-    .filter((r) => r.characterSlugs.some((s) => characterSlugs.includes(s)));
+  if (!useGoldenReferences) {
+    return buildEmptyResult(all.length, "disabled by admin");
+  }
+
+  // Harmonization: style-polish or scene-composition only
+  // Prefer refs that match most/all scene characters; skip single-char refs unless they cover all
+  const eligible = all.filter((r) => {
+    if (r.referenceRole !== "style-polish" && r.referenceRole !== "scene-composition") return false;
+    const overlap = r.characterSlugs.filter((s) => characterSlugs.includes(s)).length;
+    // For multi-character scenes, require at least half the scene characters to be covered
+    if (characterSlugs.length >= 2) {
+      return overlap >= Math.ceil(characterSlugs.length / 2);
+    }
+    return overlap > 0;
+  });
 
   const sorted = [...eligible].sort(
     (a, b) => scoreRef(b, { characterSlugs }) - scoreRef(a, { characterSlugs })
   );
-  return buildSelectionResult(sorted.slice(0, limit));
+  const selected = sorted.slice(0, limit);
+  const matchReasons = selected.map((r) =>
+    buildMatchReason(r, { characterSlugs })
+  );
+  return buildSelectionResult(selected, eligible.length, matchReasons);
 }
 
 function buildSelectionResult(
-  selected: StoryPanelGoldenReference[]
+  selected: StoryPanelGoldenReference[],
+  consideredCount: number,
+  matchReasons: string[]
 ): GoldenReferenceSelectionResult {
   return {
     references: selected,
     count: selected.length,
+    consideredCount,
     titles: selected.map((r) => r.title),
     roles: selected.map((r) => r.referenceRole),
     mode: selected.length > 0 ? "prompt-guided" : "none",
+    matchReasons,
+  };
+}
+
+function buildEmptyResult(
+  totalCount: number,
+  skippedReason: string
+): GoldenReferenceSelectionResult {
+  return {
+    references: [],
+    count: 0,
+    consideredCount: totalCount,
+    titles: [],
+    roles: [],
+    mode: "none",
+    skippedReason,
+    matchReasons: [],
   };
 }
 
 // ─── Prompt section builder ────────────────────────────────────────────────────
+// Cap: 800 chars max. Always includes official reference priority disclaimer.
+
+const GOLDEN_REF_PROMPT_CAP = 800;
+
+const OFFICIAL_PRIORITY_DISCLAIMER =
+  "Golden References are supporting examples only. " +
+  "Official character profile images, official main references, official environment/home references, " +
+  "and required feature locks remain the source of truth. " +
+  "If a Golden Reference conflicts with official references, ignore the Golden Reference and follow the official references.";
 
 export function buildGoldenReferencePromptSection(
   references: StoryPanelGoldenReference[],
@@ -234,7 +398,7 @@ export function buildGoldenReferencePromptSection(
   if (references.length === 0) return undefined;
 
   const headers: Record<typeof context, string> = {
-    scene: "=== GOLDEN REFERENCES — Approved Scene Compositions ===",
+    scene: "=== GOLDEN REFERENCES — Approved Scene Examples ===",
     character: "=== GOLDEN REFERENCES — Approved Character Examples ===",
     environment: "=== GOLDEN REFERENCES — Approved Environment Examples ===",
     harmonize: "=== GOLDEN REFERENCES — Approved Style Examples ===",
@@ -242,25 +406,61 @@ export function buildGoldenReferencePromptSection(
 
   const lines: string[] = [
     headers[context],
-    "These are admin-approved examples of successful prior outputs. Replay their " +
-      "quality, style, and character integrity.",
-    "If any golden reference conflicts with official character profile/reference images, " +
-      "always follow the official character references instead.",
+    OFFICIAL_PRIORITY_DISCLAIMER,
     "",
   ];
 
   for (const ref of references) {
-    lines.push(`• ${ref.title} [${ref.referenceRole}]`);
-    if (ref.description) lines.push(`  ${ref.description}`);
-    if (ref.qualityNotes) lines.push(`  Quality: ${ref.qualityNotes}`);
-    if (ref.tags.length > 0) lines.push(`  Tags: ${ref.tags.join(", ")}`);
+    // Compact per-reference: title + role + short description only, no qualityNotes
+    const descPart = ref.description ? ` — ${ref.description.slice(0, 80)}` : "";
+    const tagPart = ref.tags.length > 0 ? ` [${ref.tags.slice(0, 3).join(", ")}]` : "";
+    lines.push(`• ${ref.title} [${ref.referenceRole}]${descPart}${tagPart}`);
   }
 
-  lines.push(
-    "",
-    "Official character reference sheets and profiles remain the primary source of truth."
-  );
-  return lines.join("\n");
+  const raw = lines.join("\n");
+  return raw.length > GOLDEN_REF_PROMPT_CAP ? raw.slice(0, GOLDEN_REF_PROMPT_CAP) : raw;
+}
+
+// ─── Diagnostics builder ──────────────────────────────────────────────────────
+
+export function buildGoldenReferenceReplayDiagnostics(
+  result: GoldenReferenceSelectionResult,
+  enabled: boolean
+): GoldenReferenceReplayDiagnostics {
+  const warnings: string[] = [];
+
+  if (!enabled) {
+    return {
+      enabled: false,
+      consideredCount: result.consideredCount,
+      selectedCount: 0,
+      skippedReason: result.skippedReason ?? "disabled by admin",
+      selected: [],
+      warnings: [],
+    };
+  }
+
+  if (result.count === 0 && result.consideredCount === 0) {
+    warnings.push("No Golden References have been saved yet.");
+  } else if (result.count === 0 && result.consideredCount > 0) {
+    warnings.push(
+      `${result.consideredCount} Golden Reference(s) exist but none matched this scene/character/role.`
+    );
+  }
+
+  return {
+    enabled: true,
+    consideredCount: result.consideredCount,
+    selectedCount: result.count,
+    skippedReason: result.skippedReason,
+    selected: result.references.map((r, i) => ({
+      id: r.id,
+      title: r.title,
+      role: r.referenceRole,
+      matchReason: result.matchReasons[i] ?? "matched",
+    })),
+    warnings,
+  };
 }
 
 // ─── Replay summary for API response ─────────────────────────────────────────

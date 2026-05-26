@@ -76,6 +76,7 @@ import {
   selectGoldenReferencesForScene,
   buildGoldenReferencePromptSection,
   summarizeGoldenReferenceReplay,
+  buildGoldenReferenceReplayDiagnostics,
 } from "@/lib/storyPanelGoldenReferences";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -178,6 +179,16 @@ type GenerateResult =
       goldenReferenceTitles: string[];
       goldenReferenceRoles: string[];
       goldenReferenceMode: "none" | "prompt-guided" | "image-conditioned";
+      goldenReferenceReplayEnabled: boolean;
+      goldenReferencesConsidered: number;
+      goldenReferenceDiagnostics: {
+        enabled: boolean;
+        consideredCount: number;
+        selectedCount: number;
+        skippedReason?: string;
+        selected: Array<{ id: string; title: string; role: string; matchReason: string }>;
+        warnings: string[];
+      };
       warnings: string[];
       notes: string[];
     }
@@ -659,6 +670,10 @@ export async function POST(request: Request): Promise<Response> {
     adminSceneDirection = stripped || undefined;
   }
 
+  // ── Golden Reference toggle ────────────────────────────────────────────────────
+  const useGoldenReferences: boolean =
+    body.useGoldenReferences === false ? false : true;
+
   // ── Load canonical character data ─────────────────────────────────────────────
   const { refs, missing } = loadCharacterRefs(referenceCharacters);
   if (missing.length > 0) {
@@ -717,12 +732,21 @@ export async function POST(request: Request): Promise<Response> {
   let goldenRefTitles: string[] = [];
   let goldenRefRoles: string[] = [];
   let goldenRefMode: "none" | "prompt-guided" | "image-conditioned" = "none";
+  let goldenRefDiagnostics: ReturnType<typeof buildGoldenReferenceReplayDiagnostics> = {
+    enabled: useGoldenReferences,
+    consideredCount: 0,
+    selectedCount: 0,
+    skippedReason: useGoldenReferences ? undefined : "disabled by admin",
+    selected: [],
+    warnings: [],
+  };
 
   try {
     const allGoldenRefs = loadGoldenReferences();
     const goldenSceneResult = selectGoldenReferencesForScene({
       all: allGoldenRefs,
       characterSlugs: referenceCharacters,
+      useGoldenReferences,
     });
     const replaySummary = summarizeGoldenReferenceReplay(goldenSceneResult);
     goldenRefsUsed = replaySummary.used;
@@ -730,6 +754,7 @@ export async function POST(request: Request): Promise<Response> {
     goldenRefTitles = replaySummary.titles;
     goldenRefRoles = replaySummary.roles;
     goldenRefMode = replaySummary.mode;
+    goldenRefDiagnostics = buildGoldenReferenceReplayDiagnostics(goldenSceneResult, useGoldenReferences);
     if (goldenSceneResult.count > 0) {
       goldenRefPromptSection = buildGoldenReferencePromptSection(goldenSceneResult.references, "scene");
       generationPrompt = generationPrompt + "\n\n" + goldenRefPromptSection;
@@ -884,6 +909,9 @@ export async function POST(request: Request): Promise<Response> {
           goldenReferenceTitles: goldenRefTitles,
           goldenReferenceRoles: goldenRefRoles,
           goldenReferenceMode: goldenRefMode,
+          goldenReferenceReplayEnabled: useGoldenReferences,
+          goldenReferencesConsidered: goldenRefDiagnostics.consideredCount,
+          goldenReferenceDiagnostics: goldenRefDiagnostics,
           warnings: refWarnings,
           notes: [
             "This story panel draft has not been saved.",
@@ -1279,6 +1307,9 @@ export async function POST(request: Request): Promise<Response> {
         goldenReferenceTitles: goldenRefTitles,
         goldenReferenceRoles: goldenRefRoles,
         goldenReferenceMode: goldenRefMode,
+        goldenReferenceReplayEnabled: useGoldenReferences,
+        goldenReferencesConsidered: goldenRefDiagnostics.consideredCount,
+        goldenReferenceDiagnostics: goldenRefDiagnostics,
         warnings: refWarnings,
         notes: [
           "This story panel draft has not been saved.",
@@ -1584,6 +1615,9 @@ export async function POST(request: Request): Promise<Response> {
       goldenReferenceTitles: goldenRefTitles,
       goldenReferenceRoles: goldenRefRoles,
       goldenReferenceMode: goldenRefMode,
+      goldenReferenceReplayEnabled: useGoldenReferences,
+      goldenReferencesConsidered: goldenRefDiagnostics.consideredCount,
+      goldenReferenceDiagnostics: goldenRefDiagnostics,
       warnings: refWarnings,
       notes: [
         "This story panel draft has not been saved.",
