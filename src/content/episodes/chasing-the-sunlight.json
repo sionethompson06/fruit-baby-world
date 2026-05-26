@@ -1,0 +1,29 @@
+{
+  "title": "Chasing the sunlight",
+  "slug": "chasing-the-sunlight",
+  "shortDescription": "the island sunshine disappeared and Pineapple Baby and friends search out on an adventure to find it.",
+  "featuredCharacters": [
+    "Coconut Baby",
+    "Dragon Fruit Baby",
+    "Kiwi Baby",
+    "Mango Baby",
+    "Pineapple Baby",
+    "Strawberry Baby",
+    "Tiki Trouble",
+    "Ube Baby"
+  ],
+  "status": "draft",
+  "productionStatus": "storybook-draft",
+  "sourceType": "admin-created-storybook",
+  "storybookPages": [],
+  "review": {
+    "status": "draft",
+    "approvedForSave": false
+  },
+  "publishing": {
+    "publicStatus": "not-published",
+    "readyForPublicSite": false
+  },
+  "createdAt": "2026-05-26T09:45:26.706Z",
+  "updatedAt": "2026-05-26T09:45:26.706Z"
+}
