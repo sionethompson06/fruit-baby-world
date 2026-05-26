@@ -5,7 +5,8 @@ import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes"
 import { getAllCharacters, type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
-import StorybookReader, { type StorybookReaderPage, type StorybookNarrationAudioProp } from "@/components/StorybookReader";
+import { type StorybookReaderPage, type StorybookNarrationAudioProp } from "@/components/StorybookReader";
+import StoryExperienceSwitcher from "@/components/StoryExperienceSwitcher";
 import {
   getActiveEpisodeScenes,
   getApprovedPublicStoryPanels,
@@ -747,6 +748,26 @@ export default async function StoryDetailPage({
     };
   })();
 
+  // Public storybook video/cartoon — shown when visibility is "public" and not archived
+  const publicVideo: { videoUrl: string; title?: string; description?: string; posterImageUrl?: string; mimeType?: string } | null = (() => {
+    const sv = raw.storybookVideo;
+    if (typeof sv !== "object" || sv === null || Array.isArray(sv)) return null;
+    const v = sv as Record<string, unknown>;
+    if (typeof v.videoUrl !== "string" || !v.videoUrl.startsWith("https://")) return null;
+    if (v.visibility !== "public") return null;
+    if (v.status === "archived") return null;
+    return {
+      videoUrl: v.videoUrl,
+      title: typeof v.title === "string" ? v.title : undefined,
+      description: typeof v.description === "string" ? v.description : undefined,
+      posterImageUrl: typeof v.posterImageUrl === "string" ? v.posterImageUrl : undefined,
+      mimeType: typeof v.mimeType === "string" ? v.mimeType : undefined,
+    };
+  })();
+
+  // Front cover image URL — used as fallback poster for video player
+  const frontCoverUrl = publicStorybookPages.find((p) => p.pageRole === "front-cover")?.imageUrl;
+
   // Public-ready full final video — only shown when visibility === "public-ready"
   const publicFinalVideo = getPublicReadyFinalVideo(raw);
 
@@ -844,6 +865,14 @@ export default async function StoryDetailPage({
               🎧 Listen
             </a>
           )}
+          {publicVideo && (
+            <a
+              href="#story-panels"
+              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tropical-green/10 border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/20 transition-colors"
+            >
+              🎬 Watch Cartoon
+            </a>
+          )}
           <a
             href="#story-panels"
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
@@ -906,10 +935,12 @@ export default async function StoryDetailPage({
           </div>
 
           {/* Watch — available or coming soon */}
-          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${publicClips.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
+          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${(publicVideo || publicClips.length > 0) ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
             <span className="text-2xl">🎬</span>
-            <p className="text-xs font-black text-tiki-brown leading-snug">Watch Short</p>
-            {publicClips.length > 0 ? (
+            <p className="text-xs font-black text-tiki-brown leading-snug">
+              {publicVideo ? "Watch Cartoon" : "Watch Short"}
+            </p>
+            {(publicVideo || publicClips.length > 0) ? (
               <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
                 Available
               </span>
@@ -1028,7 +1059,7 @@ export default async function StoryDetailPage({
         ══════════════════════════════════════════ */}
 
         {storybookReaderPages.length > 0 ? (
-          /* ── Premium Storybook Reader (Phase 19B) ── */
+          /* ── Premium Storybook Reader / Watch Cartoon (Phase 19B + 20D) ── */
           <div
             id="story-panels"
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-8 flex flex-col gap-6"
@@ -1040,10 +1071,15 @@ export default async function StoryDetailPage({
                   <span aria-hidden>📖</span> Storybook Reader
                 </h2>
                 <p className="text-sm text-tiki-brown/55 leading-relaxed">
-                  Read through the story one beautiful page at a time.
+                  Read through the story one beautiful page at a time{publicVideo ? ", or watch the cartoon." : "."}
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
+                {publicVideo && (
+                  <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full flex items-center gap-1">
+                    <span aria-hidden>🎬</span> Video Available
+                  </span>
+                )}
                 {narrationAudio && (
                   <span className="flex-shrink-0 text-xs font-bold text-ube-purple bg-ube-purple/10 px-3 py-1.5 rounded-full flex items-center gap-1">
                     <span aria-hidden>🎧</span> Audio Available
@@ -1056,8 +1092,15 @@ export default async function StoryDetailPage({
               </div>
             </div>
 
-            {/* Premium reader */}
-            <StorybookReader pages={storybookReaderPages} episodeTitle={title} backHref="/stories" narrationAudio={narrationAudio ?? undefined} />
+            {/* Read / Watch switcher (video available) or plain reader */}
+            <StoryExperienceSwitcher
+              pages={storybookReaderPages}
+              episodeTitle={title}
+              backHref="/stories"
+              narrationAudio={narrationAudio ?? undefined}
+              video={publicVideo ?? undefined}
+              fallbackPosterUrl={frontCoverUrl}
+            />
 
             {/* Talk about it */}
             {lesson && (
