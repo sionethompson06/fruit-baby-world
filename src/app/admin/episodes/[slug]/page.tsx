@@ -75,6 +75,7 @@ import FinalVideoProductionSection from "./FinalVideoProductionSection";
 import { buildFinalVideoAssemblyPackage } from "@/lib/finalVideoAssembly";
 import { isFinalVideoAsset } from "@/lib/finalVideoAssetTypes";
 import StorybookPagesManager from "./StorybookPagesManager";
+import StorybookDetailsEditor from "./StorybookDetailsEditor";
 import { getStorybookPages } from "@/lib/storybookPages";
 
 export const dynamic = "force-dynamic";
@@ -90,7 +91,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const result = loadEpisodeBySlug(slug);
   const title = result ? String(result.raw.title ?? slug) : slug;
-  return { title: `${title.trim()} | Episode Studio` };
+  return { title: `${title.trim()} | Storybook Builder` };
 }
 
 // ─── Safe field helpers ─────────────────────────────────────────────────────────────────────
@@ -729,29 +730,29 @@ export default async function EpisodeDetailPage({
             href="/admin/episodes"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors mb-6"
           >
-            ← Back to Stories
+            ← Back to Storybooks
           </Link>
 
-          {/* Badges */}
+          {/* Builder label + badges */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <Pill className="bg-ube-purple/15 text-ube-purple">Admin Only</Pill>
-            <Pill className="bg-tiki-brown/8 text-tiki-brown/60">Read Only</Pill>
-            <ReviewBadge status={normalised.reviewStatus} />
-            {normalised.productionStatus && (
-              <Pill>Production: {normalised.productionStatus}</Pill>
-            )}
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-widest">
+              Storybook Builder
+            </span>
+            <Pill className="bg-tiki-brown/6 text-tiki-brown/45">
+              {normalised.publicStatus === "published" ? "Published" : normalised.publicStatus}
+            </Pill>
             {normalised.approvedForSave && (
               <Pill className="bg-tropical-green/20 text-tropical-green">Save Approved</Pill>
             )}
-            <Pill className="bg-tiki-brown/6 text-tiki-brown/45">
-              Public: {normalised.publicStatus}
-            </Pill>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-1 leading-tight">
             {normalised.title}
           </h1>
-          <p className="text-xs font-mono text-tiki-brown/40 mb-1">{normalised.slug}</p>
+          <p className="text-xs font-mono text-tiki-brown/40 mb-0.5">{normalised.slug}</p>
+          <p className="text-sm text-tiki-brown/55 mt-2">
+            Add book details, upload images, attach optional audio/video, preview, and publish.
+          </p>
         </div>
       </section>
 
@@ -761,9 +762,9 @@ export default async function EpisodeDetailPage({
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📋</span>
           <p className="text-sm text-tiki-brown/65 leading-relaxed">
-            <strong className="text-tiki-brown font-bold">Publishing workspace.</strong>{" "}
-            Upload storybook pages, audio narration, and video for this episode. Use the Publish
-            section to make it live when all content is ready.
+            <strong className="text-tiki-brown font-bold">Storybook Builder.</strong>{" "}
+            Upload book images, attach optional audio/video narration, and publish when ready.
+            Use the Details section to update the title and description.
           </p>
         </div>
 
@@ -792,12 +793,13 @@ export default async function EpisodeDetailPage({
         />
 
         {/* ── Section Navigation ── */}
-        <nav aria-label="Production sections" className="flex flex-wrap gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-4 py-3 shadow-sm">
+        <nav aria-label="Storybook sections" className="flex flex-wrap gap-2 bg-white border border-tiki-brown/10 rounded-2xl px-4 py-3 shadow-sm">
           {[
-            { href: "#story", label: "Story" },
-            { href: "#storybook-pages", label: "Storybook Pages" },
+            { href: "#details", label: "Details" },
+            { href: "#book-images", label: "Book Images" },
             { href: "#audio", label: "Audio" },
             { href: "#video", label: "Video" },
+            { href: "#preview", label: "Preview" },
             { href: "#publish-readiness", label: "Publish" },
           ].map(({ href, label }) => (
             <a
@@ -813,11 +815,18 @@ export default async function EpisodeDetailPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* B. STORY OVERVIEW & SCENES                                        */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="story" className="flex flex-col gap-4 scroll-mt-4">
+        <div id="details" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
-            icon="📖"
-            title="Story"
-            subtitle="Episode details, scenes, and production structure."
+            icon="✏️"
+            title="Details"
+            subtitle="Storybook title, description, and content structure."
+          />
+
+          {/* Editable storybook details */}
+          <StorybookDetailsEditor
+            episodeSlug={normalised.slug}
+            initialTitle={normalised.title}
+            initialAbout={normalised.shortDescription}
           />
 
           {/* Episode Overview */}
@@ -995,11 +1004,11 @@ export default async function EpisodeDetailPage({
         {/* ══════════════════════════════════════════════════════════════════ */}
         {/* C1. STORYBOOK PAGES (Phase 19A — upload-first)                    */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        <div id="storybook-pages" className="flex flex-col gap-4 scroll-mt-4">
+        <div id="book-images" className="flex flex-col gap-4 scroll-mt-4">
           <SectionGroupHeader
             icon="📚"
-            title="Storybook Pages"
-            subtitle="Upload final artwork images to build the public storybook reader. Approved public pages replace legacy panels."
+            title="Book Images"
+            subtitle="Upload the finished artwork for your storybook: front cover, two-page spreads, story pages, end page, and back cover."
             badge={
               storybookPages.filter((p) => p.status === "approved" && p.visibility === "public").length > 0 ? (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
@@ -1108,6 +1117,85 @@ export default async function EpisodeDetailPage({
             episodeSlug={normalised.slug}
             initialFinalVideo={initialFinalVideo}
           />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* F. PREVIEW                                                        */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        <div id="preview" className="flex flex-col gap-4 scroll-mt-4">
+          <SectionGroupHeader
+            icon="👁️"
+            title="Preview"
+            subtitle="Preview the public storybook before publishing."
+          />
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-black text-tiki-brown">Preview Storybook</h3>
+                <p className="text-xs text-tiki-brown/50">
+                  Opens the public story page in a new tab. Only published/approved content is visible to readers.
+                </p>
+              </div>
+              <a
+                href={`/stories/${normalised.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors"
+              >
+                <span>👁️</span>
+                Preview Storybook
+              </a>
+            </div>
+
+            {/* Quick status */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                {
+                  label: "Front Cover",
+                  done: storybookPages.some((p) => p.pageRole === "front-cover"),
+                  icon: "🖼️",
+                },
+                {
+                  label: `${storybookPages.filter((p) => p.pageRole === "story-spread" || (!p.pageRole && p.layoutType === "two-page-spread")).length} Spreads`,
+                  done: storybookPages.some((p) => p.pageRole === "story-spread"),
+                  icon: "📖",
+                },
+                {
+                  label: "Audio",
+                  done: existingAudioNarration !== null,
+                  optional: true,
+                  icon: "🎧",
+                },
+                {
+                  label: "Video",
+                  done: totalVideoClips > 0,
+                  optional: true,
+                  icon: "🎬",
+                },
+              ].map(({ label, done, optional, icon }) => (
+                <div
+                  key={label}
+                  className={`flex items-center gap-2 rounded-2xl border px-3 py-2.5 ${
+                    done
+                      ? "border-tropical-green/30 bg-tropical-green/8"
+                      : optional
+                      ? "border-tiki-brown/10 bg-tiki-brown/3"
+                      : "border-warm-coral/25 bg-warm-coral/5"
+                  }`}
+                >
+                  <span className="text-base">{icon}</span>
+                  <div className="flex flex-col">
+                    <span className={`text-xs font-bold leading-tight ${done ? "text-tropical-green" : optional ? "text-tiki-brown/45" : "text-warm-coral/70"}`}>
+                      {done ? "✓" : optional ? "○" : "✕"} {label}
+                    </span>
+                    {optional && !done && (
+                      <span className="text-[10px] text-tiki-brown/35">Optional</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════ */}
@@ -1291,7 +1379,7 @@ export default async function EpisodeDetailPage({
             href="/admin/episodes"
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
           >
-            ← Back to Stories
+            ← Back to Storybooks
           </Link>
         </div>
 

@@ -243,6 +243,28 @@ export default function AdminPage() {
         </div>
       </section>
 
+      {/* ── Create New Storybook CTA ── */}
+      <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-2 pb-6">
+        <div className="bg-gradient-to-br from-ube-purple to-ube-purple/80 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center gap-5 shadow-lg">
+          <div className="flex-1 flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl">📖</span>
+              <h2 className="text-xl font-black text-white leading-tight">Create New Storybook</h2>
+            </div>
+            <p className="text-white/75 text-sm leading-relaxed">
+              Start a new storybook by adding a title, about text, and uploading cover and spread images.
+            </p>
+          </div>
+          <Link
+            href="/admin/episodes/new"
+            className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-6 py-3 rounded-2xl bg-white text-ube-purple hover:bg-white/90 transition-colors shadow-sm"
+          >
+            <span>+</span>
+            Create Storybook
+          </Link>
+        </div>
+      </section>
+
       {/* ── Content Snapshot ── */}
       <section className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
         <h2 className="text-lg font-black text-tiki-brown mb-4">
