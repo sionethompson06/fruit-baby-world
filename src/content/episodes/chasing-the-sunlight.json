@@ -284,6 +284,23 @@
       "layoutType": "two-page-spread",
       "spreadNumber": 12,
       "displayMode": "spread"
+    },
+    {
+      "id": "storybook-page-1779828320400",
+      "pageNumber": 17,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-pages/page-1779828319358.png",
+      "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828319358.png",
+      "mimeType": "image/png",
+      "altText": "Spread 13",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-26T20:45:20.400Z",
+      "updatedAt": "2026-05-26T20:45:20.400Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 13,
+      "displayMode": "spread"
     }
   ],
   "review": {
@@ -295,5 +312,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-26T09:45:26.706Z",
-  "updatedAt": "2026-05-26T20:45:17.265Z"
+  "updatedAt": "2026-05-26T20:45:20.400Z"
 }
