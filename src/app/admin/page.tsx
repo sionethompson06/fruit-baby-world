@@ -18,7 +18,7 @@ const primaryCards = [
       "Upload storybook pages, add audio narration, upload video, preview, and publish.",
     status: "Active",
     statusColor: "bg-tropical-green/20 text-tropical-green",
-    href: "/admin/episodes",
+    href: "/admin/storybooks",
   },
   {
     emoji: "🍍",
@@ -65,7 +65,7 @@ const quickStart = [
   {
     icon: "📚",
     text: "Go to Stories to create and upload storybook pages, add audio and video, then publish.",
-    href: "/admin/episodes",
+    href: "/admin/storybooks",
     label: "Stories",
   },
   {
@@ -256,7 +256,7 @@ export default function AdminPage() {
             </p>
           </div>
           <Link
-            href="/admin/episodes/new"
+            href="/admin/storybooks/new"
             className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-6 py-3 rounded-2xl bg-white text-ube-purple hover:bg-white/90 transition-colors shadow-sm"
           >
             <span>+</span>

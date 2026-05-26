@@ -220,6 +220,21 @@ export default async function EpisodesPage() {
 
       <section className="max-w-3xl mx-auto w-full px-4 sm:px-6 pb-16 flex flex-col gap-6">
 
+        {/* Legacy notice */}
+        <div className="flex items-start gap-3 bg-tiki-brown/5 border border-tiki-brown/15 rounded-2xl px-5 py-4">
+          <span className="text-xl flex-shrink-0">🔧</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-tiki-brown mb-0.5">Legacy Route</p>
+            <p className="text-sm text-tiki-brown/60 leading-relaxed">
+              The primary storybook workflow has moved to{" "}
+              <Link href="/admin/storybooks" className="font-bold text-ube-purple hover:text-ube-purple/70 transition-colors">
+                Storybooks ↗
+              </Link>
+              . This page remains for backwards compatibility.
+            </p>
+          </div>
+        </div>
+
         {/* Admin notice */}
         <div className="flex items-start gap-3 bg-white border border-pineapple-yellow/40 rounded-2xl px-5 py-4 shadow-sm">
           <span className="text-xl flex-shrink-0">📋</span>
