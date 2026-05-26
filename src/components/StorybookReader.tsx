@@ -16,7 +16,7 @@ export type StorybookReaderPage = {
   layoutType?: "single-page" | "two-page-spread" | "cover" | "back-cover";
   displayMode?: "single" | "spread";
   spreadNumber?: number;
-  pageRole?: "front-cover" | "inside-cover" | "story-page" | "story-spread" | "end-page" | "back-cover";
+  pageRole?: "front-cover" | "title-page" | "publication-page" | "acknowledgement-page" | "introduction-page" | "inside-cover" | "story-page" | "story-spread" | "end-page" | "back-cover";
 };
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────

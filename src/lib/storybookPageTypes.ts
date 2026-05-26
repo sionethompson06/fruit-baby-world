@@ -6,6 +6,10 @@ export type StorybookPageVisibility = "admin-only" | "public";
 
 export type StorybookPageRole =
   | "front-cover"
+  | "title-page"
+  | "publication-page"
+  | "acknowledgement-page"
+  | "introduction-page"
   | "inside-cover"
   | "story-page"
   | "story-spread"

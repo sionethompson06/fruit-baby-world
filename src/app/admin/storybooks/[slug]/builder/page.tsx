@@ -362,10 +362,16 @@ export default async function StorybookBuilderPage({
                   icon: "📖",
                 },
                 {
-                  label: `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}`,
+                  label: storyPageCount > 0 ? `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}` : "Story Spreads / Pages",
                   done: storyPageCount > 0,
                   optional: false,
                   icon: "🖼️",
+                },
+                {
+                  label: "Book Order Reviewed",
+                  done: storybookPages.length > 1,
+                  optional: false,
+                  icon: "📋",
                 },
                 {
                   label: "Back Cover",

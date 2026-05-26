@@ -152,7 +152,10 @@ export async function POST(request: Request): Promise<Response> {
     ? (existingPages.find((p) => isRecord(p) && p.id === pageId) as Record<string, unknown>)?.pageNumber ?? maxPageNumber + 1
     : (typeof pageData.pageNumber === "number" ? pageData.pageNumber : maxPageNumber + 1);
 
-  const PAGE_ROLES = ["front-cover", "inside-cover", "story-page", "story-spread", "end-page", "back-cover"];
+  const PAGE_ROLES = [
+    "front-cover", "title-page", "publication-page", "acknowledgement-page",
+    "introduction-page", "inside-cover", "story-page", "story-spread", "end-page", "back-cover",
+  ];
   const LAYOUT_TYPES = ["single-page", "two-page-spread", "cover", "back-cover"];
 
   const newPage: StorybookPage = {
