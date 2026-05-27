@@ -12,6 +12,15 @@ export const metadata: Metadata = {
 
 const primaryCards = [
   {
+    emoji: "🌟",
+    title: "Homepage Showcase",
+    description:
+      "Upload hero art, character showcase images, Tiki Trouble, and world location visuals.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/homepage",
+  },
+  {
     emoji: "📚",
     title: "Stories",
     description:

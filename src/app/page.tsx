@@ -7,7 +7,11 @@ import {
   getHomepageEnvironmentAssets,
   getFeaturedPublicStorybooks,
 } from "@/lib/publicHomepageAssets";
-import { loadHomepageShowcase, resolveShowcaseImage } from "@/lib/homepageShowcase";
+import {
+  getHomepageShowcaseConfig,
+  resolveShowcaseImage,
+  getEnabledSupportingCast,
+} from "@/lib/homepageShowcase";
 
 export const metadata: Metadata = {
   title: "Fruit Baby World — Pineapple Baby &amp; Friends",
@@ -32,7 +36,7 @@ const DEFAULT_FRIEND_PALETTE = {
 };
 
 export default function HomePage() {
-  const showcase = loadHomepageShowcase();
+  const showcase = getHomepageShowcaseConfig();
   const pb = getPineappleBabyHeroAsset();
   const friends = getSupportingFruitFriendAssets();
   const tiki = getTikiTroubleAsset();
@@ -41,25 +45,26 @@ export default function HomePage() {
 
   // Resolve PB hero image: showcase 3D → showcase 2D → character action art
   const pbHeroImage = resolveShowcaseImage(
-    showcase.hero.pineappleBaby3dImage,
-    showcase.hero.pineappleBaby2dImage,
+    showcase.hero.pineappleBaby3dImageUrl,
+    showcase.hero.pineappleBaby2dImageUrl,
     pb?.imageUrl ?? ""
   );
 
-  // Resolve villain image: showcase 3D → showcase 2D → character action art
+  // Resolve Tiki image: showcase 3D → showcase 2D → character action art
   const tikiImage = resolveShowcaseImage(
-    showcase.featuredVillain.image3d,
-    showcase.featuredVillain.image2d,
+    showcase.tikiTrouble.image3dUrl,
+    showcase.tikiTrouble.image2dUrl,
     tiki?.imageUrl ?? ""
   );
 
   // Map showcase cast items → resolved images (3D > 2D > character action art)
   const castImageMap: Record<string, string> = {};
-  for (const item of showcase.supportingCast.items) {
+  for (const item of getEnabledSupportingCast(showcase)) {
     const charAsset = friends.find((f) => f.slug === item.characterSlug);
-    castImageMap[item.characterSlug] = resolveShowcaseImage(
-      item.image3d,
-      item.image2d,
+    const slug = item.characterSlug ?? item.id;
+    castImageMap[slug] = resolveShowcaseImage(
+      item.image3dUrl,
+      item.image2dUrl,
       charAsset?.imageUrl ?? ""
     );
   }
@@ -112,11 +117,11 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg sm:text-xl font-bold text-tiki-brown/80 leading-snug max-w-lg">
-              {showcase.hero.subtitle || "Big heart. Bright adventures. Sweet stories."}
+              {showcase.hero.subheadline || "Big heart. Bright adventures. Sweet stories."}
             </p>
 
             <p className="text-base text-tiki-brown/62 leading-relaxed max-w-md">
-              {showcase.hero.description ||
+              {showcase.hero.supportingCopy ||
                 "Read colorful storybooks, listen along with narration, and watch playful Fruit Baby cartoons."}
             </p>
 
@@ -154,10 +159,10 @@ export default function HomePage() {
             {/* CTA buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-1 w-full sm:w-auto">
               <Link
-                href={showcase.hero.ctaPrimaryHref || "/stories"}
+                href={showcase.hero.primaryCtaHref || "/stories"}
                 className="inline-flex items-center justify-center gap-2 bg-ube-purple text-white font-black px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.04] hover:bg-ube-purple/90 transition-all text-base"
               >
-                📖 {showcase.hero.ctaPrimaryLabel || "Read Storybooks"}
+                📖 {showcase.hero.primaryCtaLabel || "Read Storybooks"}
               </Link>
               <Link
                 href={pb ? "/characters/pineapple-baby" : "/characters"}
@@ -280,7 +285,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           B. SUPPORTING CAST — art-forward character showcase
       ══════════════════════════════════════════════════════════════════════ */}
-      {showcase.supportingCast.enabled && friends.length > 0 && (
+      {friends.length > 0 && (
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-20">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-tropical-green/10 text-tropical-green text-xs font-black px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest border border-tropical-green/20">
@@ -497,7 +502,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           E. TIKI TROUBLE — villain feature block
       ══════════════════════════════════════════════════════════════════════ */}
-      {showcase.featuredVillain.enabled && tiki && (
+      {showcase.tikiTrouble.enabled && tiki && (
         <section className="relative overflow-hidden bg-gradient-to-br from-warm-coral/18 via-warm-coral/8 to-bg-cream border-y border-warm-coral/20 py-16 px-4">
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
             <span className="absolute top-5 right-6 text-5xl opacity-[0.09] rotate-[18deg]">💥</span>
@@ -525,11 +530,11 @@ export default function HomePage() {
                   ⚡ The Mischief-Maker
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">
-                  {showcase.featuredVillain.headline || "Watch out for Tiki Trouble!"}
+                  {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
                 </h2>
               </div>
               <p className="text-base text-tiki-brown/68 leading-relaxed max-w-lg">
-                {showcase.featuredVillain.description ||
+                {showcase.tikiTrouble.description ||
                   "Tiki Trouble brings mischief, surprises, and silly problems for Pineapple Baby and friends to solve."}
               </p>
               {tiki.catchphrase && (

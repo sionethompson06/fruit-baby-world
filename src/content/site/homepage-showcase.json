@@ -1,37 +1,55 @@
 {
   "hero": {
-    "title": "Welcome to Pineapple Baby World",
-    "subtitle": "Big heart. Bright adventures. Sweet stories.",
-    "description": "Read colorful storybooks, listen along with narration, and watch playful Fruit Baby cartoons.",
-    "pineappleBaby2dImage": "",
-    "pineappleBaby3dImage": "",
-    "backgroundImage": "",
-    "ctaPrimaryLabel": "Read Storybooks",
-    "ctaPrimaryHref": "/stories",
-    "ctaSecondaryLabel": "Meet the Characters",
-    "ctaSecondaryHref": "/characters"
+    "headline": "Welcome to Pineapple Baby World",
+    "subheadline": "Big heart. Bright adventures. Sweet stories.",
+    "supportingCopy": "Read colorful storybooks, listen along with narration, and watch playful Fruit Baby cartoons.",
+    "pineappleBaby2dImageUrl": "",
+    "pineappleBaby3dImageUrl": "",
+    "backgroundImageUrl": "",
+    "primaryCtaLabel": "Read Storybooks",
+    "primaryCtaHref": "/stories",
+    "secondaryCtaLabel": "Meet the Characters",
+    "secondaryCtaHref": "/characters"
   },
   "supportingCast": {
-    "enabled": true,
     "title": "Meet Pineapple Baby and Friends",
     "description": "Every adventure is sweeter with friends.",
     "items": [
-      { "characterSlug": "pineapple-baby", "displayName": "Pineapple Baby", "image2d": "", "image3d": "", "role": "hero" },
-      { "characterSlug": "ube-baby",       "displayName": "Ube Baby",       "image2d": "", "image3d": "", "role": "friend" },
-      { "characterSlug": "mango-baby",     "displayName": "Mango Baby",     "image2d": "", "image3d": "", "role": "friend" },
-      { "characterSlug": "kiwi-baby",      "displayName": "Kiwi Baby",      "image2d": "", "image3d": "", "role": "friend" },
-      { "characterSlug": "coconut-baby",   "displayName": "Coconut Baby",   "image2d": "", "image3d": "", "role": "friend" },
-      { "characterSlug": "strawberry-baby","displayName": "Strawberry Baby","image2d": "", "image3d": "", "role": "friend" },
-      { "characterSlug": "dragonfruit-baby","displayName": "Dragon Fruit Baby","image2d": "","image3d": "","role": "friend" }
+      { "id": "pineapple-baby", "characterSlug": "pineapple-baby", "displayName": "Pineapple Baby", "role": "hero",           "image2dUrl": "", "image3dUrl": "", "caption": "The bright-hearted hero",     "href": "/characters/pineapple-baby", "sortOrder": 0, "enabled": true },
+      { "id": "ube-baby",       "characterSlug": "ube-baby",       "displayName": "Ube Baby",       "role": "supporting-cast", "image2dUrl": "", "image3dUrl": "", "caption": "Dreamy and imaginative",   "href": "/characters/ube-baby",       "sortOrder": 1, "enabled": true },
+      { "id": "mango-baby",     "characterSlug": "mango-baby",     "displayName": "Mango Baby",     "role": "supporting-cast", "image2dUrl": "", "image3dUrl": "", "caption": "Playful and energetic",    "href": "/characters/mango-baby",     "sortOrder": 2, "enabled": true },
+      { "id": "kiwi-baby",      "characterSlug": "kiwi-baby",      "displayName": "Kiwi Baby",      "role": "supporting-cast", "image2dUrl": "", "image3dUrl": "", "caption": "Fresh and cheerful",       "href": "/characters/kiwi-baby",      "sortOrder": 3, "enabled": true },
+      { "id": "coconut-baby",   "characterSlug": "coconut-baby",   "displayName": "Coconut Baby",   "role": "supporting-cast", "image2dUrl": "", "image3dUrl": "", "caption": "Calm and welcoming",       "href": "/characters/coconut-baby",   "sortOrder": 4, "enabled": true },
+      { "id": "strawberry-baby","characterSlug": "strawberry-baby","displayName": "Strawberry Baby","role": "supporting-cast", "image2dUrl": "", "image3dUrl": "", "caption": "Loving and sweet",         "href": "/characters/strawberry-baby","sortOrder": 5, "enabled": true },
+      { "id": "dragonfruit-baby","characterSlug": "dragonfruit-baby","displayName": "Dragon Fruit Baby","role": "supporting-cast","image2dUrl": "","image3dUrl": "","caption": "Creative and encouraging","href": "/characters/dragonfruit-baby","sortOrder": 6, "enabled": true }
     ]
   },
-  "featuredVillain": {
+  "tikiTrouble": {
     "enabled": true,
-    "characterSlug": "tiki",
     "displayName": "Tiki Trouble",
-    "image2d": "",
-    "image3d": "",
     "headline": "Watch out for Tiki Trouble!",
-    "description": "Tiki Trouble brings mischief, surprises, and silly problems for Pineapple Baby and friends to solve."
-  }
+    "description": "Tiki Trouble brings mischief, surprises, and silly problems for Pineapple Baby and friends to solve.",
+    "image2dUrl": "",
+    "image3dUrl": "",
+    "href": "/characters/tiki"
+  },
+  "worlds": {
+    "title": "Explore Pineapple Baby's World",
+    "description": "Every story grows from a colorful world of homes, gardens, and magical little places.",
+    "items": [
+      { "id": "pineapple-patch",   "title": "Pineapple Patch",          "description": "Sunny, warm, and full of life — Pineapple Baby's golden home.",                        "imageUrl": "", "sortOrder": 0, "enabled": true },
+      { "id": "starlight-garden",  "title": "Starlight Garden",         "description": "A dreamy garden of starlight, soft purple blooms, and tiny wishes.",                    "imageUrl": "", "sortOrder": 1, "enabled": true },
+      { "id": "tropical-grove",    "title": "Tropical Grove",           "description": "Bright, busy, and buzzing with laughter and tropical treats.",                          "imageUrl": "", "sortOrder": 2, "enabled": true },
+      { "id": "canopy-cove",       "title": "Canopy Cove",              "description": "Rolling canopy coves where tiny wonders hide in every leaf.",                           "imageUrl": "", "sortOrder": 3, "enabled": true },
+      { "id": "coconut-cove",      "title": "Coconut Cove",             "description": "Calm, cozy, and always welcoming — a place to breathe and belong.",                     "imageUrl": "", "sortOrder": 4, "enabled": true },
+      { "id": "heartberry-hallow", "title": "Heartberry Hallow",        "description": "A sweet little hollow full of love, healing, and heart-shaped surprises.",               "imageUrl": "", "sortOrder": 5, "enabled": false },
+      { "id": "trouble-island",    "title": "Trouble Island",           "description": "Tiki Trouble's sneaky volcanic lair — dramatic and unpredictable!",                     "imageUrl": "", "sortOrder": 6, "enabled": true }
+    ]
+  },
+  "featuredStorybooks": {
+    "enabled": true,
+    "title": "Featured Pineapple Baby Storybooks",
+    "maxItems": 3
+  },
+  "updatedAt": ""
 }

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 
 const primaryLinks = [
   { href: "/admin", label: "Dashboard", emoji: "🏠" },
+  { href: "/admin/homepage", label: "Homepage", emoji: "🌟" },
   { href: "/admin/storybooks", label: "Storybooks", emoji: "📚" },
   { href: "/admin/characters", label: "Characters", emoji: "🍍" },
   { href: "/admin/media", label: "Media", emoji: "🎞️" },
