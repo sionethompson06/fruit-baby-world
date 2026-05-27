@@ -78,6 +78,7 @@ export const config = {
     "/api/github/save-storybook-page",
     "/api/github/reorder-storybook-pages",
     "/api/media/upload-homepage-showcase-image",
+    "/api/media/upload-homepage-3d-model",
     "/api/github/save-homepage-showcase",
   ],
 };

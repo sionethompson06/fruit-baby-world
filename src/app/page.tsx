@@ -12,6 +12,7 @@ import {
   resolveShowcaseImage,
   getEnabledSupportingCast,
 } from "@/lib/homepageShowcase";
+import PineappleBabyHeroModelLoader from "@/components/PineappleBabyHeroModelLoader";
 
 export const metadata: Metadata = {
   title: "Fruit Baby World — Pineapple Baby &amp; Friends",
@@ -190,9 +191,21 @@ export default function HomePage() {
             />
 
             {/* PB art stage — tall, rounded, character-forward */}
-            <div className="relative z-10 animate-float-gentle">
+            <div className={`relative z-10 ${showcase.hero.enableInteractiveHeroModel ? "" : "animate-float-gentle"}`}>
               <div className="w-52 sm:w-64 lg:w-72 h-64 sm:h-80 lg:h-96 rounded-[2rem] overflow-hidden bg-gradient-to-b from-pineapple-yellow/25 via-pineapple-yellow/12 to-pineapple-yellow/5 border-2 border-pineapple-yellow/40 shadow-2xl">
-                {pbHeroImage ? (
+                {showcase.hero.enableInteractiveHeroModel &&
+                showcase.hero.pineappleBabyModelUrl?.startsWith("https://") &&
+                (showcase.hero.pineappleBabyModelType === "glb" ||
+                  showcase.hero.pineappleBabyModelType === "gltf") ? (
+                  <PineappleBabyHeroModelLoader
+                    modelUrl={showcase.hero.pineappleBabyModelUrl}
+                    modelType={showcase.hero.pineappleBabyModelType}
+                    posterUrl={showcase.hero.pineappleBabyModelPosterUrl}
+                    fallbackImageUrl={pbHeroImage || undefined}
+                    autoRotate={showcase.hero.heroModelAutoRotate !== false}
+                    interactionHint={showcase.hero.heroModelInteractionHint}
+                  />
+                ) : pbHeroImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={pbHeroImage}

@@ -156,6 +156,33 @@ export function normalizeHomepageShowcaseConfig(
       typeof rawHero.secondaryCtaHref === "string"
         ? rawHero.secondaryCtaHref
         : DEFAULT_HERO.secondaryCtaHref,
+    pineappleBabyModelUrl:
+      typeof rawHero.pineappleBabyModelUrl === "string"
+        ? rawHero.pineappleBabyModelUrl
+        : undefined,
+    pineappleBabyModelPathname:
+      typeof rawHero.pineappleBabyModelPathname === "string"
+        ? rawHero.pineappleBabyModelPathname
+        : undefined,
+    pineappleBabyModelPosterUrl:
+      typeof rawHero.pineappleBabyModelPosterUrl === "string"
+        ? rawHero.pineappleBabyModelPosterUrl
+        : undefined,
+    pineappleBabyModelPosterPathname:
+      typeof rawHero.pineappleBabyModelPosterPathname === "string"
+        ? rawHero.pineappleBabyModelPosterPathname
+        : undefined,
+    pineappleBabyModelType:
+      rawHero.pineappleBabyModelType === "glb" ||
+      rawHero.pineappleBabyModelType === "gltf"
+        ? rawHero.pineappleBabyModelType
+        : "none",
+    enableInteractiveHeroModel: rawHero.enableInteractiveHeroModel === true,
+    heroModelAutoRotate: rawHero.heroModelAutoRotate !== false,
+    heroModelInteractionHint:
+      typeof rawHero.heroModelInteractionHint === "string"
+        ? rawHero.heroModelInteractionHint
+        : "Drag to spin Pineapple Baby",
   };
 
   const rawCast = isRecord(r.supportingCast) ? r.supportingCast : {};

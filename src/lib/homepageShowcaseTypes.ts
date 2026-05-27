@@ -12,6 +12,15 @@ export type HomepageHeroShowcase = {
   primaryCtaHref: string;
   secondaryCtaLabel: string;
   secondaryCtaHref: string;
+  // Interactive 3D model
+  pineappleBabyModelUrl?: string;
+  pineappleBabyModelPathname?: string;
+  pineappleBabyModelPosterUrl?: string;
+  pineappleBabyModelPosterPathname?: string;
+  pineappleBabyModelType?: "glb" | "gltf" | "none";
+  enableInteractiveHeroModel?: boolean;
+  heroModelAutoRotate?: boolean;
+  heroModelInteractionHint?: string;
 };
 
 export type HomepageCharacterShowcaseItem = {

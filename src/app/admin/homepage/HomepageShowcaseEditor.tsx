@@ -213,6 +213,48 @@ function HeroTab({
   const set = <K extends keyof typeof hero>(k: K, v: (typeof hero)[K]) =>
     onChange({ ...hero, [k]: v });
 
+  const [modelUploadStatus, setModelUploadStatus] = useState<UploadStatus>("idle");
+  const [modelUploadError, setModelUploadError] = useState("");
+  const modelInputRef = useRef<HTMLInputElement>(null);
+
+  const handleModelFile = useCallback(
+    async (file: File) => {
+      setModelUploadStatus("uploading");
+      setModelUploadError("");
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/media/upload-homepage-3d-model", {
+          method: "POST",
+          body: formData,
+        });
+        const data = (await res.json()) as {
+          ok: boolean;
+          modelUrl?: string;
+          pathname?: string;
+          modelType?: "glb" | "gltf";
+          message?: string;
+        };
+        if (!data.ok || !data.modelUrl) {
+          setModelUploadError(data.message ?? "Upload failed.");
+          setModelUploadStatus("error");
+          return;
+        }
+        onChange({
+          ...hero,
+          pineappleBabyModelUrl: data.modelUrl,
+          pineappleBabyModelPathname: data.pathname ?? "",
+          pineappleBabyModelType: data.modelType ?? "glb",
+        });
+        setModelUploadStatus("done");
+      } catch {
+        setModelUploadError("Unexpected error during upload.");
+        setModelUploadStatus("error");
+      }
+    },
+    [hero, onChange]
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="bg-white rounded-2xl border border-tiki-brown/10 p-5 flex flex-col gap-4">
@@ -227,10 +269,113 @@ function HeroTab({
         />
       </div>
 
+      {/* ── Interactive 3D Hero Model ── */}
+      <div className="bg-white rounded-2xl border-2 border-ube-purple/20 p-5 flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-black text-tiki-brown text-sm uppercase tracking-wide">
+              Interactive 3D Pineapple Baby Model
+            </h3>
+            <p className="text-xs text-tiki-brown/50 mt-1 leading-relaxed max-w-md">
+              Upload a website-ready approved Pineapple Baby .glb or .gltf model. If enabled, this model appears as
+              the interactive homepage hero. If no model is configured, the homepage uses the approved 3D/2D image fallback.
+            </p>
+          </div>
+          <ToggleField
+            label="Enable"
+            value={hero.enableInteractiveHeroModel ?? false}
+            onChange={(v) => set("enableInteractiveHeroModel", v)}
+          />
+        </div>
+
+        {/* Model upload */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-bold text-tiki-brown/70 uppercase tracking-wide">
+            GLB / GLTF Model File
+          </label>
+          {hero.pineappleBabyModelUrl?.startsWith("https://") ? (
+            <div className="flex items-center gap-3 bg-ube-purple/5 rounded-xl px-4 py-3 border border-ube-purple/15">
+              <span className="text-2xl" aria-hidden="true">🎡</span>
+              <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                <span className="text-xs font-bold text-tiki-brown/70">
+                  Model uploaded — {hero.pineappleBabyModelType?.toUpperCase() ?? "GLB"}
+                </span>
+                <span className="text-[10px] text-tiki-brown/40 font-mono break-all line-clamp-1">
+                  {hero.pineappleBabyModelUrl}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => modelInputRef.current?.click()}
+                className="text-xs font-bold px-3 py-1.5 rounded-lg bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/18 transition-colors flex-shrink-0"
+              >
+                Replace
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => modelInputRef.current?.click()}
+              className="flex items-center gap-2 text-xs font-bold px-4 py-3 rounded-xl border-2 border-dashed border-ube-purple/25 text-tiki-brown/50 hover:border-ube-purple/50 hover:text-ube-purple hover:bg-ube-purple/4 transition-all"
+            >
+              <span>📁</span>
+              <span>Choose Pineapple Baby .glb or .gltf model</span>
+            </button>
+          )}
+          <input
+            ref={modelInputRef}
+            type="file"
+            accept=".glb,.gltf"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleModelFile(file);
+              e.target.value = "";
+            }}
+          />
+          {modelUploadStatus === "uploading" && (
+            <span className="text-xs text-ube-purple font-semibold animate-pulse">Uploading model…</span>
+          )}
+          {modelUploadStatus === "done" && (
+            <span className="text-xs text-tropical-green font-semibold">Model uploaded successfully.</span>
+          )}
+          {modelUploadStatus === "error" && (
+            <span className="text-xs text-warm-coral font-semibold">{modelUploadError}</span>
+          )}
+        </div>
+
+        {/* Poster/fallback image */}
+        <ImageUploadField
+          label="Poster / Fallback Image (shown while model loads)"
+          value={hero.pineappleBabyModelPosterUrl ?? ""}
+          onUploaded={(url) => set("pineappleBabyModelPosterUrl", url)}
+          assetRole="hero-3d"
+          itemId="model-poster"
+        />
+
+        {/* Auto-rotate + interaction hint */}
+        <div className="grid grid-cols-2 gap-4 items-start">
+          <div className="flex flex-col gap-2">
+            <ToggleField
+              label="Auto-rotate"
+              value={hero.heroModelAutoRotate !== false}
+              onChange={(v) => set("heroModelAutoRotate", v)}
+            />
+          </div>
+          <TextField
+            label="Interaction hint text"
+            value={hero.heroModelInteractionHint ?? "Drag to spin Pineapple Baby"}
+            onChange={(v) => set("heroModelInteractionHint", v)}
+            placeholder="Drag to spin Pineapple Baby"
+          />
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-tiki-brown/10 p-5 flex flex-col gap-4">
         <h3 className="font-black text-tiki-brown text-sm uppercase tracking-wide">Hero Images</h3>
         <p className="text-xs text-tiki-brown/50 leading-relaxed">
           3D promo image takes priority over 2D. If both are empty, the character&apos;s action art is used as fallback.
+          These are also used as the fallback when no interactive model is configured.
         </p>
         <ImageUploadField
           label="Pineapple Baby 2D Image"
