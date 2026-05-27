@@ -1,184 +1,336 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPublicCharacterProfiles } from "@/lib/characterRegistry";
+import {
+  getPineappleBabyHeroAsset,
+  getSupportingFruitFriendAssets,
+  getTikiTroubleAsset,
+  getFeaturedPublicStorybooks,
+} from "@/lib/publicHomepageAssets";
 
 export const metadata: Metadata = {
-  title: "Fruit Baby World",
+  title: "Fruit Baby World — Pineapple Baby &amp; Friends",
   description:
-    "Meet the Fruit Baby characters and explore colorful picture, audio, animated, and video stories for kids and families.",
+    "Meet Pineapple Baby and friends! Colorful storybooks, audio adventures, and cartoon videos with heart-warming lessons for kids and families.",
 };
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Per-character accent colors for the character grid cards
-const CHARACTER_ACCENT: Record<string, { card: string; badge: string; link: string }> = {
-  "pineapple-baby": {
-    card: "bg-pineapple-yellow/18 border-pineapple-yellow/40 hover:border-pineapple-yellow/60",
-    badge: "bg-pineapple-yellow/30 text-tiki-brown",
-    link: "text-tiki-brown/70",
-  },
-  "ube-baby": {
-    card: "bg-ube-purple/10 border-ube-purple/25 hover:border-ube-purple/45",
-    badge: "bg-ube-purple/15 text-ube-purple",
-    link: "text-ube-purple",
-  },
-  "mango-baby": {
-    card: "bg-warm-coral/10 border-warm-coral/25 hover:border-warm-coral/45",
-    badge: "bg-warm-coral/15 text-warm-coral/90",
-    link: "text-warm-coral/80",
-  },
-  "kiwi-baby": {
-    card: "bg-tropical-green/10 border-tropical-green/25 hover:border-tropical-green/45",
-    badge: "bg-tropical-green/15 text-tropical-green",
-    link: "text-tropical-green",
-  },
-  "coconut-baby": {
-    card: "bg-tiki-brown/6 border-tiki-brown/18 hover:border-tiki-brown/35",
-    badge: "bg-tiki-brown/12 text-tiki-brown/75",
-    link: "text-tiki-brown/60",
-  },
-  tiki: {
-    card: "bg-warm-coral/12 border-warm-coral/30 hover:border-warm-coral/50",
-    badge: "bg-warm-coral/20 text-warm-coral/90",
-    link: "text-warm-coral/80",
-  },
+// Per-character accent colors used in friend chips and cards
+const FRIEND_ACCENT: Record<string, { card: string; name: string }> = {
+  "ube-baby":          { card: "bg-ube-purple/10 border-ube-purple/25",       name: "text-ube-purple" },
+  "mango-baby":        { card: "bg-warm-coral/10 border-warm-coral/25",       name: "text-warm-coral/90" },
+  "kiwi-baby":         { card: "bg-tropical-green/10 border-tropical-green/25", name: "text-tropical-green" },
+  "coconut-baby":      { card: "bg-tiki-brown/6 border-tiki-brown/18",        name: "text-tiki-brown/70" },
+  "strawberry-baby":   { card: "bg-blush-pink/20 border-blush-pink/35",       name: "text-warm-coral/80" },
+  "dragonfruit-baby":  { card: "bg-deep-purple/8 border-deep-purple/20",      name: "text-deep-purple/80" },
 };
-
-const DEFAULT_ACCENT = {
-  card: "bg-tiki-brown/6 border-tiki-brown/18 hover:border-tiki-brown/30",
-  badge: "bg-tiki-brown/10 text-tiki-brown/60",
-  link: "text-tiki-brown/60",
-};
+const DEFAULT_FRIEND_ACCENT = { card: "bg-tiki-brown/6 border-tiki-brown/18", name: "text-tiki-brown/70" };
 
 export default function HomePage() {
-  const publicCharacters = getPublicCharacterProfiles();
-  const fruitBabies = publicCharacters.filter((c) => c.type === "fruit-baby");
-  const rivals = publicCharacters.filter((c) => c.type === "villain");
-  const featuredCharacters = [...fruitBabies, ...rivals].slice(0, 6);
+  const pb = getPineappleBabyHeroAsset();
+  const friends = getSupportingFruitFriendAssets();
+  const tiki = getTikiTroubleAsset();
+  const storybooks = getFeaturedPublicStorybooks();
 
   return (
     <div className="flex flex-col bg-bg-cream">
 
-      {/* ── A. HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-pineapple-yellow/40 via-pineapple-yellow/10 to-bg-cream py-24 px-4 text-center">
-        {/* Decorative floating fruit emojis */}
+      {/* ── A. HERO: PINEAPPLE BABY ─────────────────────────────────────────── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-pineapple-yellow/40 via-pineapple-yellow/15 to-bg-cream py-16 sm:py-24 px-4">
+        {/* Decorative floating fruits */}
         <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
-          <span className="absolute top-8 left-6 text-6xl opacity-[0.13] rotate-[-14deg]">🍍</span>
-          <span className="absolute top-12 right-8 text-5xl opacity-[0.13] rotate-[10deg]">🥭</span>
-          <span className="absolute bottom-10 left-14 text-5xl opacity-[0.12] rotate-[8deg]">🥝</span>
-          <span className="absolute bottom-14 right-16 text-6xl opacity-[0.10] rotate-[-8deg]">🫐</span>
+          <span className="absolute top-8 left-6 text-6xl opacity-[0.12] rotate-[-14deg]">🍍</span>
+          <span className="absolute top-12 right-8 text-5xl opacity-[0.12] rotate-[10deg]">🥭</span>
+          <span className="absolute bottom-10 left-14 text-5xl opacity-[0.10] rotate-[8deg]">🥝</span>
+          <span className="absolute bottom-14 right-16 text-5xl opacity-[0.09] rotate-[-8deg]">🫐</span>
           <span className="absolute top-1/2 left-3 text-4xl opacity-[0.07]">🥥</span>
           <span className="absolute top-1/3 right-3 text-3xl opacity-[0.07]">⭐</span>
         </div>
 
-        <div className="relative max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-white/75 text-tiki-brown text-sm font-bold px-4 py-1.5 rounded-full mb-6 border border-pineapple-yellow/50 shadow-sm">
-            ✨ Welcome to Fruit Baby World™
+        <div className="relative max-w-5xl mx-auto flex flex-col-reverse sm:flex-row items-center gap-10 sm:gap-14">
+          {/* Left: text content */}
+          <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-5 flex-1">
+            <div className="inline-flex items-center gap-2 bg-white/75 text-tiki-brown text-xs font-bold px-4 py-1.5 rounded-full border border-pineapple-yellow/50 shadow-sm uppercase tracking-wide">
+              ✨ Welcome to Fruit Baby World™
+            </div>
+
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-tiki-brown leading-none">
+              Welcome to{" "}
+              <span className="text-ube-purple">Pineapple Baby</span>{" "}
+              World
+            </h1>
+
+            {pb?.tagline && (
+              <div className="inline-flex items-center gap-2 bg-pineapple-yellow/30 text-tiki-brown text-sm font-bold px-4 py-2 rounded-full border border-pineapple-yellow/50">
+                🍍 &ldquo;{pb.tagline}&rdquo;
+              </div>
+            )}
+
+            <p className="text-base sm:text-lg text-tiki-brown/70 leading-relaxed max-w-lg">
+              {pb?.shortDescription ||
+                "Sweet little characters, big feelings, and colorful storybook adventures for kids and families."}
+            </p>
+
+            {/* Friend chips */}
+            {friends.length > 0 && (
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                {friends.slice(0, 5).map((f) => (
+                  <Link
+                    key={f.slug}
+                    href={`/characters/${f.slug}`}
+                    className="inline-flex items-center gap-1.5 bg-white/80 border border-tiki-brown/12 text-tiki-brown text-xs font-bold px-3 py-1.5 rounded-full shadow-sm hover:shadow transition-all hover:scale-[1.04]"
+                  >
+                    {f.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={f.imageUrl}
+                        alt={f.shortName}
+                        className="w-5 h-5 rounded-full object-cover object-top border border-tiki-brown/10 flex-shrink-0"
+                      />
+                    )}
+                    {f.shortName}
+                  </Link>
+                ))}
+                <Link
+                  href="/characters"
+                  className="inline-flex items-center gap-1 bg-pineapple-yellow/20 border border-pineapple-yellow/40 text-tiki-brown text-xs font-bold px-3 py-1.5 rounded-full hover:bg-pineapple-yellow/35 transition-colors"
+                >
+                  + More →
+                </Link>
+              </div>
+            )}
+
+            {/* CTA buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 mt-1">
+              <Link
+                href="/stories"
+                className="inline-flex items-center justify-center gap-2 bg-ube-purple text-white font-bold px-7 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all text-sm"
+              >
+                📖 Read Storybooks
+              </Link>
+              <Link
+                href="/characters"
+                className="inline-flex items-center justify-center gap-2 bg-pineapple-yellow text-tiki-brown font-bold px-7 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all text-sm"
+              >
+                🍍 Meet the Characters
+              </Link>
+              <Link
+                href="/shop"
+                className="inline-flex items-center justify-center gap-2 bg-white text-tiki-brown font-bold px-5 py-3.5 rounded-full border border-tiki-brown/15 shadow-sm hover:shadow-md transition-all text-sm"
+              >
+                🛍️ Collectibles
+              </Link>
+            </div>
           </div>
 
-          <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-tiki-brown leading-none mb-5">
-            Fruit Baby{" "}
-            <span className="text-ube-purple">World</span>
-          </h1>
-
-          <p className="text-lg sm:text-xl text-tiki-brown/75 max-w-2xl mx-auto leading-relaxed mb-10">
-            Sweet little characters, big feelings, and colorful story adventures
-            for kids, families, teachers, and collectors.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
-            <Link
-              href="/characters"
-              className="inline-flex items-center justify-center gap-2 bg-pineapple-yellow text-tiki-brown font-bold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all text-base"
-            >
-              🍍 Meet the Characters
-            </Link>
-            <Link
-              href="/stories"
-              className="inline-flex items-center justify-center gap-2 bg-ube-purple text-white font-bold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all text-base"
-            >
-              🎬 Explore Stories
-            </Link>
-            <Link
-              href="/shop"
-              className="inline-flex items-center justify-center gap-2 bg-white text-tiki-brown font-bold px-6 py-3.5 rounded-full border border-tiki-brown/15 shadow-sm hover:shadow-md hover:scale-105 transition-all text-sm"
-            >
-              🛍️ Preview Collectibles
-            </Link>
+          {/* Right: Pineapple Baby portrait */}
+          <div className="relative flex-shrink-0 flex items-center justify-center">
+            <div className="relative w-52 h-52 sm:w-72 sm:h-72 rounded-full overflow-hidden bg-pineapple-yellow/30 border-4 border-pineapple-yellow/60 shadow-2xl">
+              {pb?.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={pb.imageUrl}
+                  alt="Pineapple Baby — the star of Fruit Baby World"
+                  className="w-full h-full object-cover object-top"
+                />
+              ) : (
+                <span className="text-8xl flex items-center justify-center w-full h-full select-none" aria-hidden="true">🍍</span>
+              )}
+            </div>
+            {/* Tiki Trouble callout bubble */}
+            {tiki && (
+              <Link
+                href={`/characters/${tiki.slug}`}
+                className="absolute -bottom-3 -right-3 sm:-bottom-4 sm:-right-4 flex items-center gap-1.5 bg-warm-coral/90 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg border border-warm-coral hover:scale-105 transition-transform"
+              >
+                {tiki.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={tiki.imageUrl}
+                    alt={tiki.shortName}
+                    className="w-5 h-5 rounded-full object-cover object-top border border-white/40 flex-shrink-0"
+                  />
+                )}
+                <span>⚡ {tiki.shortName}</span>
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
-      {/* ── B. CHARACTER UNIVERSE ────────────────────────────────────────────── */}
-      {featuredCharacters.length > 0 && (
-        <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-20">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-ube-purple/8 text-ube-purple text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
-              Official Characters
+      {/* ── B. FEATURED STORYBOOKS ──────────────────────────────────────────── */}
+      {storybooks.length > 0 && (
+        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-16">
+          <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-ube-purple/8 text-ube-purple text-xs font-bold px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest">
+                Available Now
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">
+                Featured Storybooks
+              </h2>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3">
-              Meet the Fruit Babies
-            </h2>
-            <p className="text-tiki-brown/65 text-base max-w-xl mx-auto leading-relaxed">
-              Each character has a unique personality, story role, and visual identity —
-              hand-crafted and trademark-consistent.
-            </p>
+            <Link
+              href="/stories"
+              className="flex-shrink-0 text-sm font-bold text-ube-purple hover:text-ube-purple/75 transition-colors"
+            >
+              See All Stories →
+            </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
-            {featuredCharacters.map((char) => {
-              const accent = CHARACTER_ACCENT[char.slug] ?? DEFAULT_ACCENT;
-              const profileUrl = char.image?.profileSheet ?? char.image?.main ?? "";
-              const personalityList: unknown = char.personality;
-              const firstTrait =
-                Array.isArray(personalityList) && personalityList.length > 0
-                  ? String(personalityList[0])
-                  : "";
-              const traitLabel = firstTrait.includes("—")
-                ? firstTrait.split("—")[0].trim()
-                : firstTrait;
-              const firstName = char.name.split(" ")[0];
-
-              return (
-                <Link
-                  key={char.slug}
-                  href={`/characters/${char.slug}`}
-                  className={`group border ${accent.card} rounded-3xl p-5 flex flex-col items-center gap-3 hover:shadow-lg transition-all hover:scale-[1.02] text-center`}
-                >
-                  {/* Official profile image */}
-                  <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden bg-white/70 border border-white/80 shadow-sm flex items-center justify-center flex-shrink-0">
-                    {profileUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={profileUrl}
-                        alt={`${char.name} official character profile`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-4xl select-none" aria-hidden="true">🍍</span>
+          <div className={`grid gap-6 ${storybooks.length === 1 ? "max-w-md" : "grid-cols-1 sm:grid-cols-2"}`}>
+            {storybooks.slice(0, 4).map((book) => (
+              <Link
+                key={book.slug}
+                href={`/stories/${book.slug}`}
+                className="group rounded-3xl overflow-hidden bg-white border border-tiki-brown/10 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all flex flex-col"
+              >
+                {/* Cover */}
+                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-pineapple-yellow/25 via-sky-blue/10 to-tropical-green/10 flex items-center justify-center flex-shrink-0">
+                  {book.coverUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={book.coverUrl}
+                      alt={book.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-6xl select-none" aria-hidden="true">📖</span>
+                  )}
+                  {/* Media badges */}
+                  <div className="absolute bottom-3 left-3 flex gap-1.5">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-white/85 text-tiki-brown/70 shadow-sm">
+                      📖 Read
+                    </span>
+                    {book.hasAudio && (
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ube-purple/85 text-white shadow-sm">
+                        🎧 Listen
+                      </span>
                     )}
-                  </div>
-
-                  {/* Name, role, first trait */}
-                  <div>
-                    <h3 className="text-base font-black text-tiki-brown leading-tight mb-0.5">
-                      {char.name}
-                    </h3>
-                    {(char as { role?: string }).role && (
-                      <p className={`text-xs font-semibold ${accent.link} mb-1`}>
-                        {(char as { role?: string }).role}
-                      </p>
-                    )}
-                    {traitLabel && (
-                      <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${accent.badge}`}>
-                        {traitLabel}
+                    {book.hasVideo && (
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-tropical-green/85 text-white shadow-sm">
+                        🎬 Watch
                       </span>
                     )}
                   </div>
+                </div>
 
-                  <span className={`text-xs font-bold ${accent.link} group-hover:underline mt-auto`}>
-                    Meet {firstName} →
+                {/* Body */}
+                <div className="p-5 flex flex-col gap-2 flex-1">
+                  <h3 className="text-base font-black text-tiki-brown leading-tight group-hover:text-ube-purple transition-colors">
+                    {book.title}
+                  </h3>
+                  {book.shortDescription && (
+                    <p className="text-sm text-tiki-brown/65 leading-relaxed line-clamp-2">
+                      {book.shortDescription}
+                    </p>
+                  )}
+                  <span className="mt-auto text-xs font-bold text-ube-purple">
+                    Read Story →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── C. PINEAPPLE BABY SPOTLIGHT ─────────────────────────────────────── */}
+      {pb && (
+        <section className="bg-pineapple-yellow/12 border-y border-pineapple-yellow/25 py-16 px-4">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-10 sm:gap-14">
+            {/* Portrait */}
+            <div className="flex-shrink-0 w-40 h-40 sm:w-56 sm:h-56 rounded-3xl overflow-hidden bg-pineapple-yellow/30 border-2 border-pineapple-yellow/50 shadow-lg">
+              {pb.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={pb.imageUrl}
+                  alt="Pineapple Baby"
+                  className="w-full h-full object-cover object-top"
+                />
+              ) : (
+                <span className="text-7xl flex items-center justify-center w-full h-full select-none" aria-hidden="true">🍍</span>
+              )}
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col gap-4 text-center sm:text-left">
+              <div className="inline-flex items-center gap-2 bg-pineapple-yellow/30 text-tiki-brown text-xs font-bold px-4 py-1.5 rounded-full self-center sm:self-start uppercase tracking-wide">
+                ⭐ The Star of the Show
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">
+                Pineapple Baby
+              </h2>
+              {pb.shortDescription && (
+                <p className="text-tiki-brown/70 text-base leading-relaxed max-w-lg">
+                  {pb.shortDescription}
+                </p>
+              )}
+              {pb.catchphrase && (
+                <blockquote className="text-lg font-black text-ube-purple italic">
+                  &ldquo;{pb.catchphrase}&rdquo;
+                </blockquote>
+              )}
+              <Link
+                href="/characters/pineapple-baby"
+                className="self-center sm:self-start inline-flex items-center gap-2 bg-pineapple-yellow text-tiki-brown font-bold px-6 py-3 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all text-sm"
+              >
+                Meet Pineapple Baby →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── D. FRUIT FRIENDS ────────────────────────────────────────────────── */}
+      {friends.length > 0 && (
+        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-16">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-tropical-green/10 text-tropical-green text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
+              The Crew
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3">
+              Pineapple Baby&apos;s Fruit Friends
+            </h2>
+            <p className="text-tiki-brown/65 text-base max-w-xl mx-auto leading-relaxed">
+              Every great hero has a crew. Meet the colorful characters who join the adventure.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
+            {friends.map((f) => {
+              const accent = FRIEND_ACCENT[f.slug] ?? DEFAULT_FRIEND_ACCENT;
+              return (
+                <Link
+                  key={f.slug}
+                  href={`/characters/${f.slug}`}
+                  className={`group border ${accent.card} rounded-3xl p-5 flex flex-col items-center gap-3 hover:shadow-lg transition-all hover:scale-[1.02] text-center bg-white/60`}
+                >
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white/80 border border-white shadow-sm flex items-center justify-center flex-shrink-0">
+                    {f.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={f.imageUrl}
+                        alt={`${f.name} official character`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-4xl select-none" aria-hidden="true">🍓</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-tiki-brown leading-tight mb-0.5">
+                      {f.name}
+                    </h3>
+                    {f.tagline && (
+                      <p className={`text-xs font-semibold ${accent.name} leading-snug`}>
+                        {f.tagline}
+                      </p>
+                    )}
+                  </div>
+                  <span className={`text-xs font-bold ${accent.name} group-hover:underline mt-auto`}>
+                    Meet {f.shortName} →
                   </span>
                 </Link>
               );
@@ -196,159 +348,107 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── C. STORY EXPERIENCE ─────────────────────────────────────────────── */}
-      <section className="bg-ube-purple/5 border-y border-ube-purple/12 py-20 px-4">
+      {/* ── E. TIKI TROUBLE ─────────────────────────────────────────────────── */}
+      {tiki && (
+        <section className="bg-warm-coral/8 border-y border-warm-coral/20 py-16 px-4">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row-reverse items-center gap-10 sm:gap-14">
+            {/* Portrait */}
+            <div className="flex-shrink-0 w-36 h-36 sm:w-52 sm:h-52 rounded-3xl overflow-hidden bg-warm-coral/20 border-2 border-warm-coral/40 shadow-lg">
+              {tiki.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={tiki.imageUrl}
+                  alt="Tiki Trouble"
+                  className="w-full h-full object-cover object-top"
+                />
+              ) : (
+                <span className="text-7xl flex items-center justify-center w-full h-full select-none" aria-hidden="true">🌴</span>
+              )}
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col gap-4 text-center sm:text-left flex-1">
+              <div className="inline-flex items-center gap-2 bg-warm-coral/15 text-warm-coral/90 text-xs font-bold px-4 py-1.5 rounded-full self-center sm:self-start uppercase tracking-wide">
+                ⚡ The Mischief-Maker
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">
+                Tiki Trouble
+              </h2>
+              {tiki.shortDescription && (
+                <p className="text-tiki-brown/70 text-base leading-relaxed max-w-lg">
+                  {tiki.shortDescription}
+                </p>
+              )}
+              {tiki.catchphrase && (
+                <blockquote className="text-lg font-black text-warm-coral/80 italic">
+                  &ldquo;{tiki.catchphrase}&rdquo;
+                </blockquote>
+              )}
+              <Link
+                href="/characters/tiki"
+                className="self-center sm:self-start inline-flex items-center gap-2 bg-warm-coral/80 text-white font-bold px-6 py-3 rounded-full shadow-md hover:bg-warm-coral/95 hover:shadow-lg transition-all text-sm"
+              >
+                Meet Tiki Trouble →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── F. READ / LISTEN / WATCH ────────────────────────────────────────── */}
+      <section className="bg-ube-purple/5 border-y border-ube-purple/12 py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-ube-purple/10 text-ube-purple text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
-              Story Experience
+              Story Experiences
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3">
-              4 Ways to Enjoy Each Story
+              Read, Listen &amp; Watch
             </h2>
             <p className="text-tiki-brown/65 text-base max-w-xl mx-auto leading-relaxed">
-              Every Fruit Baby episode is designed for multiple experiences — choose how
-              your family wants to enjoy it.
+              Every Fruit Baby storybook is crafted for multiple experiences — choose your family&apos;s favorite way to enjoy it.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                emoji: "📖",
-                title: "Read",
-                subtitle: "Picture Story",
-                description:
-                  "Follow scenes illustrated with official character artwork — a colorful storybook experience for all ages.",
-                color: "bg-pineapple-yellow/15 border-pineapple-yellow/30",
-              },
-              {
-                emoji: "🎧",
-                title: "Listen",
-                subtitle: "Audio Story",
-                description:
-                  "Hear the story brought to life with warm read-aloud narration — great for car rides and bedtime.",
-                color: "bg-sky-blue/15 border-sky-blue/25",
-              },
-              {
-                emoji: "🎞️",
-                title: "Watch",
-                subtitle: "Animated Clips",
-                description:
-                  "Short animated moments bring key scenes to life — kids get to see the characters move and react.",
-                color: "bg-tropical-green/12 border-tropical-green/25",
-              },
-              {
-                emoji: "🎬",
-                title: "Full Video",
-                subtitle: "Complete Story",
-                description:
-                  "Experience the whole episode as a fully produced short video — from opening to the big lesson.",
-                color: "bg-ube-purple/10 border-ube-purple/20",
-              },
-            ].map(({ emoji, title, subtitle, description, color }) => (
-              <div
-                key={title}
-                className={`${color} border rounded-3xl p-6 flex flex-col gap-3`}
-              >
-                <span className="text-4xl" aria-hidden="true">{emoji}</span>
-                <div>
-                  <p className="text-base font-black text-tiki-brown">{title}</p>
-                  <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-                    {subtitle}
-                  </p>
-                </div>
-                <p className="text-sm text-tiki-brown/70 leading-relaxed flex-1">
-                  {description}
-                </p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="bg-pineapple-yellow/15 border border-pineapple-yellow/30 rounded-3xl p-6 flex flex-col gap-3">
+              <span className="text-4xl" aria-hidden="true">📖</span>
+              <p className="text-base font-black text-tiki-brown">Read the Storybook</p>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                Flip through illustrated pages with official character artwork — a colorful storybook you can enjoy at your own pace.
+              </p>
+            </div>
+            <div className="bg-ube-purple/8 border border-ube-purple/18 rounded-3xl p-6 flex flex-col gap-3">
+              <span className="text-4xl" aria-hidden="true">🎧</span>
+              <p className="text-base font-black text-tiki-brown">Listen &amp; Read Along</p>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                Hear the story read aloud with warm narration while following along — perfect for car rides and bedtime.
+              </p>
+            </div>
+            <div className="bg-tropical-green/10 border border-tropical-green/22 rounded-3xl p-6 flex flex-col gap-3">
+              <span className="text-4xl" aria-hidden="true">🎬</span>
+              <p className="text-base font-black text-tiki-brown">Watch the Cartoon</p>
+              <p className="text-sm text-tiki-brown/70 leading-relaxed">
+                Watch the full episode as a short cartoon video — characters come to life from opening scene to the big lesson.
+              </p>
+            </div>
           </div>
 
-          <div className="text-center mt-10">
+          <div className="text-center mt-8">
             <Link
               href="/stories"
               className="inline-flex items-center gap-2 bg-ube-purple text-white font-bold px-8 py-3.5 rounded-full shadow-md hover:bg-ube-purple/85 hover:shadow-lg transition-all"
             >
-              Browse Stories →
+              Browse All Stories →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── D. EDUCATIONAL / FAMILY VALUE ───────────────────────────────────── */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-tropical-green/12 text-tropical-green text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
-                For Families &amp; Classrooms
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-5 leading-tight">
-                Stories That Teach Kindness
-              </h2>
-              <p className="text-tiki-brown/70 text-base leading-relaxed mb-6">
-                Every Fruit Baby adventure explores something real — friendship, sharing,
-                big feelings, tough choices, and the quiet power of kindness. Stories are
-                designed to spark conversations and leave little ones with something to
-                think about long after the story ends.
-              </p>
-              <ul className="flex flex-col gap-3">
-                {[
-                  { emoji: "💛", text: "Kindness and empathy in everyday moments" },
-                  { emoji: "🌱", text: "Lessons about friendship, sharing, and feelings" },
-                  { emoji: "📚", text: "Great for family read-alouds and classroom time" },
-                  { emoji: "🎨", text: "Vibrant visuals designed to spark curiosity" },
-                ].map(({ emoji, text }) => (
-                  <li
-                    key={text}
-                    className="flex items-start gap-3 text-sm text-tiki-brown/75 leading-relaxed"
-                  >
-                    <span className="text-lg flex-shrink-0" aria-hidden="true">{emoji}</span>
-                    {text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              {[
-                {
-                  emoji: "👨‍👩‍👧",
-                  title: "For Families",
-                  desc: "Warm stories built for shared reading moments, rainy-day watching, and bedtime routines.",
-                  bg: "bg-pineapple-yellow/15 border-pineapple-yellow/30",
-                },
-                {
-                  emoji: "🏫",
-                  title: "For Teachers",
-                  desc: "Short stories with clear, age-appropriate lessons — ready for classroom conversations.",
-                  bg: "bg-sky-blue/15 border-sky-blue/25",
-                },
-                {
-                  emoji: "🧸",
-                  title: "For Kids",
-                  desc: "Characters with big hearts, relatable feelings, and silly adventures that feel like real life.",
-                  bg: "bg-tropical-green/12 border-tropical-green/25",
-                },
-              ].map(({ emoji, title, desc, bg }) => (
-                <div key={title} className={`${bg} border rounded-2xl p-4 flex gap-3 items-start`}>
-                  <span className="text-2xl flex-shrink-0" aria-hidden="true">{emoji}</span>
-                  <div>
-                    <p className="text-sm font-black text-tiki-brown mb-0.5">{title}</p>
-                    <p className="text-xs text-tiki-brown/65 leading-relaxed">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── E. FRUIT BABY WORLD / ENVIRONMENTS ──────────────────────────────── */}
-      <section className="bg-pineapple-yellow/8 border-y border-pineapple-yellow/20 py-20 px-4">
+      {/* ── G. WORLD ENVIRONMENTS ───────────────────────────────────────────── */}
+      <section className="py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-pineapple-yellow/25 text-tiki-brown text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
               The World
             </div>
@@ -356,49 +456,18 @@ export default function HomePage() {
               A Colorful Little Universe
             </h2>
             <p className="text-tiki-brown/65 text-base max-w-xl mx-auto leading-relaxed">
-              Every Fruit Baby story grows from a colorful world of homes, gardens, beaches,
-              classrooms, markets, and magical little places.
+              Every story grows from a vibrant world of homes, gardens, beaches, and magical little places.
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[
-              {
-                emoji: "🌴",
-                place: "Pineapple Patch",
-                desc: "Home of Pineapple Baby — sunny, warm, and full of life.",
-                color: "bg-pineapple-yellow/20 border-pineapple-yellow/35",
-              },
-              {
-                emoji: "🌸",
-                place: "Ube Garden",
-                desc: "A dreamy purple valley of wildflowers and soft breezes.",
-                color: "bg-ube-purple/12 border-ube-purple/25",
-              },
-              {
-                emoji: "🏝️",
-                place: "Trouble Island",
-                desc: "Tiki Trouble's sneaky volcanic lair — dramatic and unpredictable.",
-                color: "bg-warm-coral/15 border-warm-coral/30",
-              },
-              {
-                emoji: "🥭",
-                place: "Mango Market",
-                desc: "Bright, busy, and buzzing with laughter and tropical treats.",
-                color: "bg-warm-coral/10 border-warm-coral/22",
-              },
-              {
-                emoji: "🌿",
-                place: "Kiwi Meadow",
-                desc: "Rolling green hills where quiet adventures and tiny wonders happen.",
-                color: "bg-tropical-green/12 border-tropical-green/25",
-              },
-              {
-                emoji: "🥥",
-                place: "Coconut Cove",
-                desc: "Calm, cozy, and always welcoming — a place to breathe and belong.",
-                color: "bg-tiki-brown/8 border-tiki-brown/15",
-              },
+              { emoji: "🌴",  place: "Pineapple Patch",  desc: "Home of Pineapple Baby — sunny, warm, and full of life.",                color: "bg-pineapple-yellow/20 border-pineapple-yellow/35" },
+              { emoji: "🌸",  place: "Ube Garden",        desc: "A dreamy purple valley of wildflowers and soft breezes.",               color: "bg-ube-purple/10 border-ube-purple/22" },
+              { emoji: "🏝️", place: "Trouble Island",    desc: "Tiki Trouble's sneaky volcanic lair — dramatic and unpredictable.",  color: "bg-warm-coral/15 border-warm-coral/28" },
+              { emoji: "🥭",  place: "Mango Market",      desc: "Bright, busy, and buzzing with laughter and tropical treats.",          color: "bg-warm-coral/8 border-warm-coral/18" },
+              { emoji: "🌿",  place: "Kiwi Meadow",       desc: "Rolling green hills where quiet adventures and tiny wonders happen.",    color: "bg-tropical-green/10 border-tropical-green/22" },
+              { emoji: "🥥",  place: "Coconut Cove",      desc: "Calm, cozy, and always welcoming — a place to breathe and belong.",      color: "bg-tiki-brown/6 border-tiki-brown/15" },
             ].map(({ emoji, place, desc, color }) => (
               <div key={place} className={`${color} border rounded-2xl p-4 sm:p-5 flex flex-col gap-2`}>
                 <span className="text-3xl" aria-hidden="true">{emoji}</span>
@@ -410,80 +479,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── F. COLLECTOR PREVIEW ────────────────────────────────────────────── */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-warm-coral/12 text-warm-coral/90 text-xs font-bold px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest">
-              Coming Soon
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3">
-              Fruit Baby Collectibles
-            </h2>
-            <p className="text-tiki-brown/65 text-base max-w-xl mx-auto leading-relaxed">
-              Bring your favorite Fruit Baby characters home. Plush friends, storybooks,
-              stickers, collector cards, and classroom kits — arriving soon.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
-            {[
-              { emoji: "🧸", label: "Plush Friends" },
-              { emoji: "📚", label: "Storybooks" },
-              { emoji: "✨", label: "Sticker Sets" },
-              { emoji: "🃏", label: "Collector Cards" },
-              { emoji: "🎒", label: "Classroom Kits" },
-            ].map(({ emoji, label }) => (
-              <div
-                key={label}
-                className="bg-white border border-tiki-brown/10 rounded-2xl p-5 flex flex-col items-center gap-2 text-center shadow-sm"
-              >
-                <span className="text-3xl" aria-hidden="true">{emoji}</span>
-                <p className="text-xs font-bold text-tiki-brown/70 uppercase tracking-wide">
-                  {label}
-                </p>
-                <span className="text-xs text-tiki-brown/35 font-semibold">Coming Soon</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 bg-tiki-brown text-white font-bold px-8 py-3.5 rounded-full shadow-md hover:bg-tiki-brown/85 hover:shadow-lg transition-all"
-            >
-              See Product Previews →
-            </Link>
-            <p className="text-xs text-tiki-brown/40 mt-3 font-semibold">
-              Previews only — no purchase available yet.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── G. FINAL CTA ────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-b from-ube-purple/8 to-bg-cream border-t border-ube-purple/12 py-20 px-4 text-center">
+      {/* ── H. FINAL CTA ────────────────────────────────────────────────────── */}
+      <section className="bg-gradient-to-b from-pineapple-yellow/20 via-pineapple-yellow/8 to-bg-cream border-t border-pineapple-yellow/25 py-20 px-4 text-center">
         <div className="max-w-2xl mx-auto">
-          <div className="text-5xl mb-5" aria-hidden="true">🍍</div>
+          {pb?.imageUrl ? (
+            <div className="w-20 h-20 mx-auto mb-5 rounded-full overflow-hidden border-2 border-pineapple-yellow/60 shadow-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={pb.imageUrl}
+                alt="Pineapple Baby"
+                className="w-full h-full object-cover object-top"
+              />
+            </div>
+          ) : (
+            <div className="text-5xl mb-5" aria-hidden="true">🍍</div>
+          )}
           <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-4">
             Your Fruit Baby Adventure Starts Here
           </h2>
           <p className="text-tiki-brown/65 text-base leading-relaxed mb-8 max-w-lg mx-auto">
-            Meet the characters, explore the stories, and discover what's coming to the
-            Fruit Baby World universe next.
+            Meet the characters, read the storybooks, and discover what&apos;s growing in the Fruit Baby World universe.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+            <Link
+              href="/stories"
+              className="inline-flex items-center justify-center gap-2 bg-ube-purple text-white font-bold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all"
+            >
+              📖 Read Storybooks
+            </Link>
             <Link
               href="/characters"
               className="inline-flex items-center justify-center gap-2 bg-pineapple-yellow text-tiki-brown font-bold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all"
             >
               🍍 Meet the Characters
-            </Link>
-            <Link
-              href="/stories"
-              className="inline-flex items-center justify-center gap-2 bg-ube-purple text-white font-bold px-8 py-3.5 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all"
-            >
-              🎬 Explore Stories
             </Link>
             <Link
               href="/shop"
