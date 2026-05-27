@@ -56,44 +56,70 @@ body {
 
 /* CRISP LOGO-STYLE TITLES */
 
-.brand-title-pineapple {
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: var(--pb-gold);
-  background: linear-gradient(135deg, #ffe84d 0%, #ffd84d 50%, #ffca40 100%);
+.brand-title-pineapple,
+.brand-title-pineapple-logo {
+  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-weight: 400;
+  letter-spacing: -0.07em;
+  line-height: 0.98;
+  color: #ffd94d;
+  background: linear-gradient(135deg, #fee66c 0%, #ffd84d 42%, #ffce3c 68%, #ffdc6e 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   -webkit-text-stroke: 2.5px var(--pb-dark-brown);
-  text-shadow: 
-    0 3px 0 rgba(63, 36, 16, 0.6),
-    0 6px 0 rgba(90, 53, 24, 0.3),
-    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  text-shadow:
+    1px 1px 0 rgba(63, 36, 16, 0.95),
+    -1px 1px 0 rgba(63, 36, 16, 0.95),
+    1px -1px 0 rgba(63, 36, 16, 0.95),
+    -1px -1px 0 rgba(63, 36, 16, 0.95),
+    0 6px 0 rgba(90, 53, 24, 0.24),
+    0 12px 10px rgba(63, 36, 16, 0.16);
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-word;
+  padding: 0.08em 0;
+}
+
+.brand-title-universe,
+.brand-title-universe-logo {
+  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  background: linear-gradient(135deg, #fff5d4 0%, #ffe8c0 35%, #ffd1d6 70%, #ffe4b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-text-stroke: 1.8px var(--pb-dark-brown);
+  text-shadow:
+    0 2px 0 rgba(63, 36, 16, 0.45),
+    0 4px 0 rgba(90, 53, 24, 0.20),
+    0 8px 8px rgba(63, 36, 16, 0.12);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
   padding: 0.1em 0;
 }
 
-.brand-title-universe {
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-weight: 900;
-  letter-spacing: -0.02em;
+.brand-title-section-logo {
+  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   line-height: 1.1;
-  background: linear-gradient(135deg, #fff8d6 0%, #ffe7c7 30%, #ffbccf 65%, #ffd8b8 100%);
+  background: linear-gradient(135deg, #fff4d8 0%, #ffe7cd 40%, #ffd5e0 80%, #ffecd3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.8px var(--pb-dark-brown);
-  text-shadow: 
-    0 2px 0 rgba(63, 36, 16, 0.5),
-    0 4px 0 rgba(90, 53, 24, 0.2);
+  -webkit-text-stroke: 1.6px var(--pb-dark-brown);
+  text-shadow:
+    0 1px 0 rgba(63, 36, 16, 0.45),
+    0 3px 0 rgba(90, 53, 24, 0.14),
+    0 6px 6px rgba(63, 36, 16, 0.10);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
-  padding: 0.1em 0;
+  padding: 0.08em 0;
 }
 
 .brand-title-soft {
@@ -106,8 +132,8 @@ body {
 }
 
 .brand-title-small-logo {
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-weight: 900;
+  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-weight: 700;
   font-size: 1rem;
   letter-spacing: -0.01em;
   background: linear-gradient(135deg, #ffe84d 0%, #ffd84d 100%);

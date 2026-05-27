@@ -115,7 +115,7 @@ export default function HomePage() {
                 <span className="title-charm title-charm-star" aria-hidden="true">✨</span>
                 <span className="title-charm title-charm-star" aria-hidden="true">★</span>
               </div>
-              <h1 className="brand-title-pineapple text-4xl sm:text-5xl lg:text-6xl">
+              <h1 className="brand-title-pineapple-logo text-4xl sm:text-5xl lg:text-6xl">
                 Pineapple Baby and the Fruit Baby Universe
               </h1>
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
@@ -389,7 +389,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
-                <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
+                <h2 className="brand-title-universe-logo text-3xl sm:text-4xl font-black leading-tight">
                   Featured Pineapple Baby Storybooks
                 </h2>
                 <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
@@ -498,7 +498,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
                   <span className="title-charm title-charm-star" aria-hidden="true">★</span>
-                  <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">Meet Pineapple Baby</h2>
+                  <h2 className="brand-title-universe-logo text-3xl sm:text-4xl font-black leading-tight">Meet Pineapple Baby</h2>
                   <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
                 </div>
               </div>
@@ -560,7 +560,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
                   <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
-                  <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
+                  <h2 className="brand-title-universe-logo text-3xl sm:text-4xl font-black leading-tight">
                     {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
                   </h2>
                   <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
@@ -597,7 +597,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-3 justify-center flex-wrap mb-3">
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
-              <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
+              <h2 className="brand-title-universe-logo text-3xl sm:text-4xl font-black leading-tight">
                 Explore Pineapple Baby&apos;s World
               </h2>
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>

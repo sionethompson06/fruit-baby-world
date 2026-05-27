@@ -55,9 +55,13 @@ export default function ShopPage() {
       <section className="bg-gradient-to-b from-ube-purple/15 via-bg-cream to-bg-cream py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="text-5xl mb-4" role="img" aria-label="collectibles">🛍️</div>
-          <h1 className="brand-title-universe text-4xl sm:text-5xl text-tiki-brown mb-4 leading-tight">
-            Pineapple Baby Collectibles &amp; Story Goods
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap justify-center mb-4">
+            <span className="title-charm title-charm-star" aria-hidden="true">★</span>
+            <h1 className="brand-title-universe-logo text-4xl sm:text-5xl text-tiki-brown leading-tight">
+              Pineapple Baby Collectibles &amp; Story Goods
+            </h1>
+            <span className="title-charm title-charm-diamond" aria-hidden="true">◆</span>
+          </div>
           <p className="text-tiki-brown/70 text-lg leading-relaxed mb-6">
             Plush friends, storybooks, classroom materials, and collectibles are
             being planned for the Pineapple Baby universe.

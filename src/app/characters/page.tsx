@@ -14,9 +14,13 @@ export default function CharactersPage() {
       <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="text-5xl mb-4">🍍🥭🥝🫐🥥</div>
-          <h1 className="brand-title-universe text-4xl sm:text-5xl mb-4 leading-tight">
-            Meet the Pineapple Baby Characters
-          </h1>
+          <div className="flex items-center justify-center sm:justify-center gap-2 flex-wrap mb-4">
+            <span className="title-charm title-charm-star" aria-hidden="true">★</span>
+            <h1 className="brand-title-universe-logo text-4xl sm:text-5xl leading-tight">
+              Meet the Pineapple Baby Characters
+            </h1>
+            <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
+          </div>
           <p className="text-tiki-brown/70 text-lg leading-relaxed">
             Discover the sweet friends, playful personalities, and mischievous
             rivals who bring Pineapple Baby&apos;s universe to life.
@@ -54,7 +58,7 @@ export default function CharactersPage() {
       {/* Pineapple Baby Friends */}
       <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 py-14">
         <div className="mb-8">
-          <h2 className="brand-title-universe text-2xl font-black mb-1">
+          <h2 className="brand-title-section-logo text-2xl font-black mb-1">
             🌟 The Pineapple Baby Friends
           </h2>
           <p className="text-sm text-tiki-brown/60">

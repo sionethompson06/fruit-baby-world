@@ -162,9 +162,13 @@ export default function StoriesPage() {
       <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
           <div className="text-5xl" role="img" aria-label="stories">📖</div>
-          <h1 className="brand-title-universe text-4xl sm:text-5xl leading-tight">
-            Pineapple Baby Stories
-          </h1>
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
+            <h1 className="brand-title-universe-logo text-4xl sm:text-5xl leading-tight">
+              Pineapple Baby Stories
+            </h1>
+            <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
+          </div>
           <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-lg">
             Illustrated adventures with heart-warming lessons — read, listen, and watch your favorite Pineapple Baby characters come to life.
           </p>
