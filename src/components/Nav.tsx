@@ -17,9 +17,9 @@ export default function Nav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <Link
           href="/"
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          className="brand-logo-link flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
-          <span className="text-2xl">🍍</span>
+          <span className="text-2xl" aria-hidden="true">🍍</span>
           <span className="brand-title-small-logo">Pineapple Baby</span>
         </Link>
 

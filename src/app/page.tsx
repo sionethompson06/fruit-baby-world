@@ -110,9 +110,20 @@ export default function HomePage() {
               🍍 Pineapple Baby universe
             </div>
 
-            <h1 className="brand-title-pineapple text-4xl sm:text-5xl lg:text-6xl">
-              Pineapple Baby and the Fruit Baby Universe
-            </h1>
+            <div className="flex flex-col items-center sm:items-start gap-1">
+              <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                <span className="title-charm title-charm-star" aria-hidden="true">✨</span>
+                <span className="title-charm title-charm-star" aria-hidden="true">★</span>
+              </div>
+              <h1 className="brand-title-pineapple text-4xl sm:text-5xl lg:text-6xl">
+                Pineapple Baby and the Fruit Baby Universe
+              </h1>
+              <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
+                <span className="title-charm title-charm-diamond" aria-hidden="true">◆</span>
+                <span className="title-charm title-charm-star" aria-hidden="true">★</span>
+              </div>
+            </div>
 
             <p className="text-lg sm:text-xl font-bold text-tiki-brown/80 leading-snug max-w-lg">
               {showcase.hero.subheadline || "Big heart. Bright adventures. Sweet stories with Pineapple Baby and friends."}
@@ -376,9 +387,13 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 bg-ube-purple/8 text-ube-purple text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest">
                 📚 Available Now
               </div>
-              <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
-                Featured Pineapple Baby Storybooks
-              </h2>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
+                <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
+                  Featured Pineapple Baby Storybooks
+                </h2>
+                <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
+              </div>
               <p className="text-tiki-brown/58 text-sm mt-2 max-w-md leading-relaxed">
                 Open colorful storybooks, listen along, and watch cartoon adventures.
               </p>
@@ -481,7 +496,11 @@ export default function HomePage() {
                 <div className="inline-flex items-center gap-2 bg-pineapple-yellow/40 text-tiki-brown text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-pineapple-yellow/60">
                   ⭐ The Star of the Show
                 </div>
-                <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">Meet Pineapple Baby</h2>
+                <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
+                  <span className="title-charm title-charm-star" aria-hidden="true">★</span>
+                  <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">Meet Pineapple Baby</h2>
+                  <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
+                </div>
               </div>
               <p className="text-base text-tiki-brown/72 leading-relaxed max-w-lg">
                 Pineapple Baby is the bright-hearted hero of the Fruit Baby Universe — curious, kind, brave, and always ready for a sweet adventure.
@@ -539,9 +558,13 @@ export default function HomePage() {
                 <div className="inline-flex items-center gap-2 bg-warm-coral/18 text-warm-coral/90 text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-warm-coral/30">
                   ⚡ The Mischief-Maker
                 </div>
-                <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
-                  {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
-                </h2>
+                <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
+                  <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
+                  <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
+                    {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
+                  </h2>
+                  <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
+                </div>
               </div>
               <p className="text-base text-tiki-brown/68 leading-relaxed max-w-lg">
                 {showcase.tikiTrouble.description ||
@@ -572,9 +595,13 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 bg-pineapple-yellow/25 text-tiki-brown text-xs font-black px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest border border-pineapple-yellow/40">
               🌍 The Universe
             </div>
-            <h2 className="brand-title-universe text-3xl sm:text-4xl font-black mb-3 leading-tight">
-              Explore Pineapple Baby&apos;s World
-            </h2>
+            <div className="flex items-center gap-3 justify-center flex-wrap mb-3">
+              <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
+              <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
+                Explore Pineapple Baby&apos;s World
+              </h2>
+              <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
+            </div>
             <p className="text-tiki-brown/58 text-base max-w-lg mx-auto leading-relaxed">
               Every story grows from a colorful world of homes, gardens, beaches, and magical little places.
             </p>
