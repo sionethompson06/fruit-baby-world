@@ -1,0 +1,37 @@
+{
+  "hero": {
+    "title": "Welcome to Pineapple Baby World",
+    "subtitle": "Big heart. Bright adventures. Sweet stories.",
+    "description": "Read colorful storybooks, listen along with narration, and watch playful Fruit Baby cartoons.",
+    "pineappleBaby2dImage": "",
+    "pineappleBaby3dImage": "",
+    "backgroundImage": "",
+    "ctaPrimaryLabel": "Read Storybooks",
+    "ctaPrimaryHref": "/stories",
+    "ctaSecondaryLabel": "Meet the Characters",
+    "ctaSecondaryHref": "/characters"
+  },
+  "supportingCast": {
+    "enabled": true,
+    "title": "Meet Pineapple Baby and Friends",
+    "description": "Every adventure is sweeter with friends.",
+    "items": [
+      { "characterSlug": "pineapple-baby", "displayName": "Pineapple Baby", "image2d": "", "image3d": "", "role": "hero" },
+      { "characterSlug": "ube-baby",       "displayName": "Ube Baby",       "image2d": "", "image3d": "", "role": "friend" },
+      { "characterSlug": "mango-baby",     "displayName": "Mango Baby",     "image2d": "", "image3d": "", "role": "friend" },
+      { "characterSlug": "kiwi-baby",      "displayName": "Kiwi Baby",      "image2d": "", "image3d": "", "role": "friend" },
+      { "characterSlug": "coconut-baby",   "displayName": "Coconut Baby",   "image2d": "", "image3d": "", "role": "friend" },
+      { "characterSlug": "strawberry-baby","displayName": "Strawberry Baby","image2d": "", "image3d": "", "role": "friend" },
+      { "characterSlug": "dragonfruit-baby","displayName": "Dragon Fruit Baby","image2d": "","image3d": "","role": "friend" }
+    ]
+  },
+  "featuredVillain": {
+    "enabled": true,
+    "characterSlug": "tiki",
+    "displayName": "Tiki Trouble",
+    "image2d": "",
+    "image3d": "",
+    "headline": "Watch out for Tiki Trouble!",
+    "description": "Tiki Trouble brings mischief, surprises, and silly problems for Pineapple Baby and friends to solve."
+  }
+}

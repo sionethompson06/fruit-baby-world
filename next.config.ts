@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     "/characters/**": ["./src/content/characters/**/*.json"],
     "/admin/characters": ["./src/content/characters/**/*.json"],
     "/admin/characters/**": ["./src/content/characters/**/*.json"],
+    "/": ["./src/content/site/**/*.json"],
   },
 };
 

@@ -51,7 +51,8 @@ function toHomepageAsset(c: ReturnType<typeof getPublicCharacterProfiles>[number
     slug: c.slug,
     name: c.name,
     shortName: c.shortName ?? c.name.split(" ")[0],
-    imageUrl: c.image?.profileSheet ?? c.image?.main ?? "",
+    // Prefer action/character art (main) over profile-sheet reference art on homepage
+    imageUrl: c.image?.main ?? c.image?.profileSheet ?? "",
     type: c.type,
     primaryColor: c.visualIdentity.primaryColors[0] ?? "#FFD84D",
     tagline: c.tagline ?? "",
