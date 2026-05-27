@@ -936,18 +936,12 @@ export default async function StoryDetailPage({
           )}
           {publicVideo && (
             <a
-              href="#story-panels"
+              href="#watch-story"
               className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tropical-green/10 border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/20 transition-colors"
             >
               🎬 Watch Cartoon
             </a>
           )}
-          <a
-            href="#story-panels"
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
-          >
-            🖼️ Panels
-          </a>
           <a
             href="#read-aloud"
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"

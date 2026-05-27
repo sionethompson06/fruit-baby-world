@@ -116,27 +116,15 @@ export default function StoryExperienceSwitcher({
         />
       )}
 
-      {/* Listen & Read mode — reader with audio banner */}
+      {/* Listen & Read mode — prominent audio bar is handled inside StorybookReader */}
       {mode === "listen" && narrationAudio && (
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 bg-ube-purple/8 border border-ube-purple/15 rounded-2xl px-4 py-3">
-            <span className="text-xl flex-shrink-0" aria-hidden>🎧</span>
-            <div>
-              <p className="text-xs font-black text-ube-purple leading-snug">
-                {narrationAudio.title ?? "Story Narration"}
-              </p>
-              <p className="text-xs text-ube-purple/60 leading-snug mt-0.5">
-                Press play to listen while you follow along with the storybook.
-              </p>
-            </div>
-          </div>
-          <StorybookReader
-            pages={pages}
-            episodeTitle={episodeTitle}
-            backHref={backHref}
-            narrationAudio={narrationAudio}
-          />
-        </div>
+        <StorybookReader
+          pages={pages}
+          episodeTitle={episodeTitle}
+          backHref={backHref}
+          narrationAudio={narrationAudio}
+          listenModeActive={true}
+        />
       )}
 
       {/* Watch Cartoon mode */}
