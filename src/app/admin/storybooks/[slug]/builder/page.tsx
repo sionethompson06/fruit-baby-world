@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug } from "@/lib/savedEpisodes";
 import { getStorybookPages, getAdminPreviewStorybookPages } from "@/lib/storybookPages";
+import { buildStorybookPublishReadiness } from "@/lib/storybookPublishReadiness";
 import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
 import type { StorybookVideoAsset } from "@/lib/storybookVideoTypes";
 import { type StorybookReaderPage } from "@/components/StorybookReader";
@@ -102,6 +103,8 @@ export default async function StorybookBuilderPage({
   const storyPageCount = storybookPages.filter(
     (p) => p.pageRole === "story-spread" || p.pageRole === "story-page"
   ).length;
+
+  const publishReadiness = buildStorybookPublishReadiness(raw);
 
   // Load existing storybook narration audio
   const rawNarration = isRec(raw.storybookNarration) ? raw.storybookNarration : null;
@@ -399,44 +402,66 @@ export default async function StorybookBuilderPage({
             />
           </div>
 
-          {/* Publish readiness checklist */}
+          {/* Publish readiness summary */}
           <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
             <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest">Publish Readiness</p>
-            {!isAlreadyPublished && (
+
+            {isAlreadyPublished ? (
+              <div className="flex items-start gap-2.5 bg-tropical-green/8 border border-tropical-green/25 rounded-2xl px-4 py-3">
+                <span className="text-base flex-shrink-0">✅</span>
+                <p className="text-xs text-tiki-brown/65 leading-relaxed">
+                  This storybook is published and live at{" "}
+                  <a href={`/stories/${normalised.slug}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors">
+                    /stories/{normalised.slug} ↗
+                  </a>
+                </p>
+              </div>
+            ) : (
               <div className="flex items-start gap-2.5 bg-tiki-brown/4 border border-tiki-brown/10 rounded-2xl px-4 py-3">
                 <span className="text-base flex-shrink-0">ℹ️</span>
                 <p className="text-xs text-tiki-brown/55 leading-relaxed">
-                  This storybook is not published yet. The public page will not be visible to readers until you publish below.
+                  Not published yet. Use <strong className="text-tiki-brown/70">Publish Storybook</strong> below to make it live.
+                  Audio and video are optional.
                 </p>
               </div>
             )}
+
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
-                { label: "Title", done: Boolean(normalised.title), optional: false, icon: "📝" },
-                { label: "About", done: Boolean(normalised.shortDescription), optional: false, icon: "📄" },
-                { label: "Front Cover", done: hasFrontCover, optional: false, icon: "📖" },
+                { label: "Title", done: publishReadiness.stats.hasTitle, optional: false, icon: "📝" },
+                { label: "About", done: publishReadiness.stats.hasAbout, optional: false, icon: "📄" },
                 {
-                  label: storyPageCount > 0 ? `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}` : "Story Spreads",
-                  done: storyPageCount > 0,
+                  label: publishReadiness.stats.totalBookImages > 0
+                    ? `${publishReadiness.stats.totalBookImages} image${publishReadiness.stats.totalBookImages !== 1 ? "s" : ""} uploaded`
+                    : "Book images",
+                  done: publishReadiness.stats.totalBookImages > 0,
                   optional: false,
                   icon: "🖼️",
                 },
                 {
-                  label: publicPageCount > 0 ? `${publicPageCount} Image${publicPageCount !== 1 ? "s" : ""} Public` : "Images Public",
-                  done: publicPageCount > 0,
+                  label: publishReadiness.stats.publicBookImages > 0
+                    ? `${publishReadiness.stats.publicBookImages} public`
+                    : "Images public",
+                  done: publishReadiness.stats.publicBookImages > 0,
                   optional: false,
                   icon: "✅",
                 },
-                { label: "Book Order", done: storybookPages.length > 1, optional: false, icon: "📋" },
+                { label: "Front Cover", done: hasFrontCover, optional: true, icon: "📖" },
                 { label: "Back Cover", done: hasBackCover, optional: true, icon: "📚" },
                 {
-                  label: hasPublicAudio ? "Audio Public" : initialNarration && initialNarration.status !== "archived" ? "Audio (Hidden)" : "Audio",
+                  label: storyPageCount > 0 ? `${storyPageCount} story page${storyPageCount !== 1 ? "s" : ""}` : "Story pages",
+                  done: storyPageCount > 0,
+                  optional: true,
+                  icon: "📋",
+                },
+                {
+                  label: hasPublicAudio ? "Audio public" : initialNarration && initialNarration.status !== "archived" ? "Audio (hidden)" : "Audio",
                   done: hasPublicAudio,
                   optional: true,
                   icon: "🎧",
                 },
                 {
-                  label: hasPublicVideo ? "Video Public" : initialVideo && initialVideo.status !== "archived" ? "Video (Hidden)" : "Video",
+                  label: hasPublicVideo ? "Video public" : initialVideo && initialVideo.status !== "archived" ? "Video (hidden)" : "Video",
                   done: hasPublicVideo,
                   optional: true,
                   icon: "🎬",
@@ -484,8 +509,8 @@ export default async function StorybookBuilderPage({
           />
           <SimplePublishAction
             slug={normalised.slug}
-            approvedForSave={normalised.approvedForSave}
             isAlreadyPublished={isAlreadyPublished}
+            readiness={publishReadiness}
           />
         </div>
 

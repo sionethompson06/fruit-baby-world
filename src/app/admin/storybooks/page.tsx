@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { loadEpisodeDrafts, loadEpisodeBySlug } from "@/lib/savedEpisodes";
 import { getStorybookPages } from "@/lib/storybookPages";
+import { buildStorybookPublishReadiness } from "@/lib/storybookPublishReadiness";
 
 export const metadata: Metadata = {
   title: "Storybooks | Admin",
@@ -29,13 +30,15 @@ export default async function StorybooksPage() {
 
   const enriched = drafts.map((draft) => {
     const result = loadEpisodeBySlug(draft.slug);
-    if (!result) return { draft, coverImageUrl: null as string | null, pageCount: 0 };
+    if (!result) return { draft, coverImageUrl: null as string | null, pageCount: 0, publishReady: false };
     const pages = getStorybookPages(result.raw);
     const cover = pages.find((p) => p.pageRole === "front-cover") ?? pages[0];
+    const readiness = buildStorybookPublishReadiness(result.raw);
     return {
       draft,
       coverImageUrl: cover?.imageUrl ?? null,
       pageCount: pages.length,
+      publishReady: readiness.ready,
     };
   });
 
@@ -97,7 +100,7 @@ export default async function StorybooksPage() {
         )}
 
         {/* Storybook cards */}
-        {enriched.map(({ draft, coverImageUrl, pageCount }) => (
+        {enriched.map(({ draft, coverImageUrl, pageCount, publishReady }) => (
           <article
             key={draft._filename}
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden flex flex-col sm:flex-row"
@@ -120,15 +123,12 @@ export default async function StorybooksPage() {
 
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                {draft.reviewStatus === "approved-for-save" ? (
-                  <StatusBadge label="Approved" className="bg-tropical-green/20 text-tropical-green" />
-                ) : draft.reviewStatus === "needs-review" ? (
-                  <StatusBadge label="Needs Review" className="bg-pineapple-yellow/50 text-tiki-brown" />
+                {draft.readyForPublicSite ? (
+                  <StatusBadge label="Published" className="bg-tropical-green/20 text-tropical-green" />
+                ) : publishReady ? (
+                  <StatusBadge label="Ready to Publish" className="bg-pineapple-yellow/40 text-tiki-brown/70" />
                 ) : (
                   <StatusBadge label="Draft" className="bg-tiki-brown/10 text-tiki-brown/60" />
-                )}
-                {draft.readyForPublicSite && (
-                  <StatusBadge label="Published" className="bg-ube-purple/15 text-ube-purple" />
                 )}
                 {pageCount > 0 && (
                   <StatusBadge
@@ -182,14 +182,25 @@ export default async function StorybooksPage() {
                 >
                   Edit Storybook →
                 </Link>
-                <a
-                  href={`/stories/${draft.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-tiki-brown/6 text-tiki-brown/50 hover:bg-tiki-brown/12 hover:text-tiki-brown transition-colors"
-                >
-                  Preview ↗
-                </a>
+                {draft.readyForPublicSite ? (
+                  <a
+                    href={`/stories/${draft.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-tropical-green/15 text-tropical-green hover:bg-tropical-green/25 transition-colors"
+                  >
+                    View Public ↗
+                  </a>
+                ) : (
+                  <a
+                    href={`/stories/${draft.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-tiki-brown/6 text-tiki-brown/50 hover:bg-tiki-brown/12 hover:text-tiki-brown transition-colors"
+                  >
+                    Preview ↗
+                  </a>
+                )}
               </div>
             </div>
           </article>
