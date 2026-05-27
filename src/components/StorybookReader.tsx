@@ -552,7 +552,7 @@ export default function StorybookReader({
           className="absolute bottom-3 right-3 bg-black/35 text-white text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm tabular-nums select-none pointer-events-none"
           aria-hidden="true"
         >
-          {index + 1} / {total}
+          {pageLabel}
         </div>
 
         {/* Start Reading overlay on front cover */}

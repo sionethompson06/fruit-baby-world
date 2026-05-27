@@ -824,32 +824,57 @@ export default async function StoryDetailPage({
               </div>
             )}
 
-            {/* CTA buttons */}
-            {hasReaderContent && (
-              <div className={`flex flex-wrap gap-3 ${frontCoverUrl ? "" : "justify-center"}`}>
-                <a
-                  href="#story-panels"
-                  className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
-                >
-                  <span aria-hidden>📖</span> Read Story
-                </a>
-                {narrationAudio && (
+            {/* Media badges + CTA buttons */}
+            {hasReaderContent ? (
+              <div className={`flex flex-col gap-3 ${frontCoverUrl ? "" : "items-center"}`}>
+                {/* What's available — informational chips */}
+                <div className={`flex flex-wrap gap-2 ${frontCoverUrl ? "" : "justify-center"}`}>
+                  {storybookReaderPages.length > 0 && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/70 border border-tiki-brown/12 text-tiki-brown/65">
+                      📖 Storybook
+                    </span>
+                  )}
+                  {narrationAudio && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/10 border border-ube-purple/15 text-ube-purple/80">
+                      🎧 Audio Available
+                    </span>
+                  )}
+                  {publicVideo && (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-tropical-green/10 border border-tropical-green/20 text-tropical-green/80">
+                      🎬 Watch Cartoon
+                    </span>
+                  )}
+                </div>
+                {/* Action buttons */}
+                <div className={`flex flex-wrap gap-3 ${frontCoverUrl ? "" : "justify-center"}`}>
                   <a
                     href="#story-panels"
-                    className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/30 text-ube-purple hover:bg-ube-purple/8 transition-colors"
+                    className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
                   >
-                    <span aria-hidden>🎧</span> Listen
+                    <span aria-hidden>📖</span> Read Storybook
                   </a>
-                )}
-                {publicVideo && (
-                  <a
-                    href="#story-panels"
-                    className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/8 transition-colors"
-                  >
-                    <span aria-hidden>🎬</span> Watch Cartoon
-                  </a>
-                )}
+                  {narrationAudio && (
+                    <a
+                      href="#listen-story"
+                      className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/30 text-ube-purple hover:bg-ube-purple/8 transition-colors"
+                    >
+                      <span aria-hidden>🎧</span> Listen &amp; Read
+                    </a>
+                  )}
+                  {publicVideo && (
+                    <a
+                      href="#watch-story"
+                      className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/8 transition-colors"
+                    >
+                      <span aria-hidden>🎬</span> Watch Cartoon
+                    </a>
+                  )}
+                </div>
               </div>
+            ) : (
+              <p className={`text-sm text-tiki-brown/50 italic ${frontCoverUrl ? "" : "text-center"}`}>
+                This storybook is coming soon.
+              </p>
             )}
 
             {/* Meta pills */}
