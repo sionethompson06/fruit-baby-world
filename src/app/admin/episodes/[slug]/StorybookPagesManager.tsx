@@ -697,12 +697,16 @@ function UploadForm({
 // ─── Page Thumbnail ───────────────────────────────────────────────────────────
 
 const ROLE_LABELS: Record<string, string> = {
-  "front-cover":  "Front Cover",
-  "inside-cover": "Inside Cover",
-  "story-spread": "Spread",
-  "story-page":   "Page",
-  "end-page":     "End Page",
-  "back-cover":   "Back Cover",
+  "front-cover":          "Front Cover",
+  "title-page":           "Title Page",
+  "publication-page":     "Publication Page",
+  "acknowledgement-page": "Acknowledgements",
+  "introduction-page":    "Introduction",
+  "inside-cover":         "Inside Cover",
+  "story-spread":         "Spread",
+  "story-page":           "Page",
+  "end-page":             "End Page",
+  "back-cover":           "Back Cover",
 };
 
 const LAYOUT_COLORS: Record<string, string> = {
@@ -935,6 +939,11 @@ export default function StorybookPagesManager({
   const publicPageCount = pages.filter((p) => p.status === "approved" && p.visibility === "public").length;
   const spreadCount = pages.filter((p) => p.pageRole === "story-spread").length;
   const frontCover = pages.find((p) => p.pageRole === "front-cover");
+  const titlePage = pages.find((p) => p.pageRole === "title-page");
+  const publicationPage = pages.find((p) => p.pageRole === "publication-page");
+  const acknowledgementPage = pages.find((p) => p.pageRole === "acknowledgement-page");
+  const introductionPage = pages.find((p) => p.pageRole === "introduction-page");
+  const insideCover = pages.find((p) => p.pageRole === "inside-cover");
   const backCover = pages.find((p) => p.pageRole === "back-cover");
   const endPage = pages.find((p) => p.pageRole === "end-page");
 
@@ -990,10 +999,11 @@ export default function StorybookPagesManager({
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[
-            { done: !!frontCover,       label: "Front cover uploaded" },
-            { done: spreadCount > 0,    label: "Story spreads uploaded" },
-            { done: publicPageCount > 0, label: "Pages marked public" },
-            { done: publicPageCount > 0, label: "Preview & publish" },
+            { done: !!frontCover,                                       label: "Front cover uploaded" },
+            { done: spreadCount > 0 || pages.filter((p) => p.pageRole === "story-page").length > 0, label: "Story spreads or pages uploaded" },
+            { done: pages.length > 1,                                   label: "Book order reviewed" },
+            { done: publicPageCount > 0,                                label: "Pages marked public" },
+            { done: publicPageCount > 0,                                label: "Preview & publish" },
           ].map(({ done, label }) => (
             <div key={label} className="flex items-center gap-2 text-xs text-tiki-brown/60">
               <span className={done ? "text-tropical-green" : "text-tiki-brown/30"}>
@@ -1028,13 +1038,13 @@ export default function StorybookPagesManager({
       <div className="flex flex-col gap-3">
         <div>
           <p className="text-sm font-bold text-tiki-brown flex items-center gap-2">
-            <span>🖼️</span> Cover & End Pages
+            <span>🖼️</span> Book Covers &amp; Front Matter
           </p>
           <p className="text-xs text-tiki-brown/50 mt-0.5">
-            Upload front cover, back cover, and end page separately.
+            Upload cover, title, publication, acknowledgement, introduction, and ending pages separately.
           </p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-tiki-brown/3 rounded-2xl border border-tiki-brown/10 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-tiki-brown/3 rounded-2xl border border-tiki-brown/10 p-4">
           <SlotUploadForm
             episodeSlug={episodeSlug}
             pageRole="front-cover"
@@ -1042,6 +1052,51 @@ export default function StorybookPagesManager({
             label="Front Cover"
             hint="First page — displayed alone"
             existingPage={frontCover}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="title-page"
+            layoutType="single-page"
+            label="Title Page"
+            hint="Book title and author — optional"
+            existingPage={titlePage}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="publication-page"
+            layoutType="single-page"
+            label="Publication / Copyright Page"
+            hint="Copyright and publishing info — optional"
+            existingPage={publicationPage}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="acknowledgement-page"
+            layoutType="single-page"
+            label="Acknowledgement Page"
+            hint="Acknowledgements — optional"
+            existingPage={acknowledgementPage}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="introduction-page"
+            layoutType="single-page"
+            label="Introduction Page"
+            hint="Intro or foreword — optional"
+            existingPage={introductionPage}
+            onPageSaved={handlePageSaved}
+          />
+          <SlotUploadForm
+            episodeSlug={episodeSlug}
+            pageRole="inside-cover"
+            layoutType="single-page"
+            label="Inside Cover / Intro Page"
+            hint="Inside front cover — optional"
+            existingPage={insideCover}
             onPageSaved={handlePageSaved}
           />
           <SlotUploadForm
@@ -1065,13 +1120,18 @@ export default function StorybookPagesManager({
         </div>
       </div>
 
-      {/* ── Current Pages ── */}
+      {/* ── Full Book Order ── */}
       {pages.length > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              📋 Current Pages ({pages.length})
-            </p>
+            <div>
+              <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
+                📋 Full Book Order ({pages.length})
+              </p>
+              <p className="text-xs text-tiki-brown/35 mt-0.5">
+                Arrange every uploaded book image in the exact order readers will see it.
+              </p>
+            </div>
             {pages.length > 1 && (
               <p className="text-xs text-tiki-brown/40">Use arrows to reorder</p>
             )}

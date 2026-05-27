@@ -5,14 +5,13 @@
 import fs from "fs";
 import path from "path";
 import type { Character } from "@/lib/content";
-import {
-  normalizeCharacterProfile,
-  normalizeCharacterProfiles,
-  type NormalizedCharacterProfile,
-  type ReferenceAssetInput,
-} from "@/lib/characterProfileNormalizer";
 
-export type { NormalizedCharacterProfile, ReferenceAssetInput };
+export type ReferenceAssetInput = { id: string; characterSlug: string; url?: string };
+export type NormalizedCharacterProfile = Character & {
+  displayName: string;
+  shortName: string;
+  slug: string;
+};
 
 const CHARACTERS_DIR = path.join(process.cwd(), "src/content/characters");
 
@@ -145,39 +144,48 @@ export function getCharacterDisplayName(slugOrName: string): string {
   return formatCharacterSlug(slugOrName);
 }
 
-// ─── Normalized profile variants (via characterProfileNormalizer) ───────────────
+// ─── Normalized profile variants ─────────────────────────────────────────────
+
+function toNormalized(c: Character): NormalizedCharacterProfile {
+  return {
+    ...c,
+    displayName: SLUG_DISPLAY_NAMES[c.slug] ?? c.name ?? formatCharacterSlug(c.slug),
+    shortName: c.shortName ?? (c.name ?? formatCharacterSlug(c.slug)).split(" ")[0],
+    slug: c.slug,
+  };
+}
 
 export function getAllNormalizedCharacterProfiles(
-  referenceAssets?: ReferenceAssetInput[]
+  _referenceAssets?: ReferenceAssetInput[]
 ): NormalizedCharacterProfile[] {
-  return normalizeCharacterProfiles(getAllCharacterProfiles(), referenceAssets);
+  return getAllCharacterProfiles().map(toNormalized);
 }
 
 export function getPublicNormalizedCharacterProfiles(
-  referenceAssets?: ReferenceAssetInput[]
+  _referenceAssets?: ReferenceAssetInput[]
 ): NormalizedCharacterProfile[] {
-  return normalizeCharacterProfiles(getPublicCharacterProfiles(), referenceAssets);
+  return getPublicCharacterProfiles().map(toNormalized);
 }
 
 export function getAdminUsableNormalizedCharacterProfiles(
-  referenceAssets?: ReferenceAssetInput[]
+  _referenceAssets?: ReferenceAssetInput[]
 ): NormalizedCharacterProfile[] {
-  return normalizeCharacterProfiles(getAdminUsableCharacterProfiles(), referenceAssets);
+  return getAdminUsableCharacterProfiles().map(toNormalized);
 }
 
 export function getNormalizedCharacterBySlug(
   slug: string,
-  referenceAssets?: ReferenceAssetInput[]
+  _referenceAssets?: ReferenceAssetInput[]
 ): NormalizedCharacterProfile | undefined {
   const c = getCharacterBySlug(slug);
   if (!c) return undefined;
-  return normalizeCharacterProfile(c, referenceAssets);
+  return toNormalized(c);
 }
 
 export function getNormalizedCharacterMap(
-  referenceAssets?: ReferenceAssetInput[]
+  _referenceAssets?: ReferenceAssetInput[]
 ): Record<string, NormalizedCharacterProfile> {
-  const profiles = getAllNormalizedCharacterProfiles(referenceAssets);
+  const profiles = getAllNormalizedCharacterProfiles();
   const map: Record<string, NormalizedCharacterProfile> = {};
   for (const p of profiles) {
     map[p.slug] = p;

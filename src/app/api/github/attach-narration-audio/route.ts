@@ -7,7 +7,26 @@
 //          Does not accept arbitrary file paths — slug is validated, path is server-controlled.
 // Phase:   13E — Attach Approved Narration Audio to Episode JSON.
 
-import type { EpisodeAudioNarration } from "@/lib/audioNarrationTypes";
+type EpisodeAudioNarration = {
+  id?: string;
+  type?: string;
+  url: string;
+  status: string;
+  visibility: string;
+  provider?: string;
+  voiceId?: string;
+  modelId?: string;
+  voiceStyle?: string;
+  pathname?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  scriptText?: string;
+  reviewNotes?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  attachedAt?: string;
+  notes?: string[];
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

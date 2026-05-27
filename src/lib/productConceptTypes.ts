@@ -1,9 +1,28 @@
 // Product concept types for the Product Concept Studio.
 // Planning-only — no commerce, no pricing, no inventory.
 
-import type { ProductMockupAsset } from "@/lib/productMockupTypes";
-
-export type { ProductMockupAsset };
+export type ProductMockupAsset = {
+  id: string;
+  type?: string;
+  status?: string;
+  url: string;
+  alt?: string;
+  visibility: "draft" | "public-ready" | "hidden" | "admin-only";
+  reviewStatus?: string;
+  productTitle?: string;
+  promptSummary?: string;
+  promptText?: string;
+  mockupStyle?: string;
+  reviewNotes?: string;
+  characterSlug?: string;
+  category?: string;
+  pathname?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  approvedBy?: string;
+  approvedAt?: string;
+  createdAt: string;
+};
 
 export type ProductConceptCategory =
   | "plush"

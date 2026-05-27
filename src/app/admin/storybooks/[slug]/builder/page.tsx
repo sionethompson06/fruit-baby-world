@@ -2,10 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { loadEpisodeBySlug } from "@/lib/savedEpisodes";
-import { getStorybookPages } from "@/lib/storybookPages";
+import { getStorybookPages, getAdminPreviewStorybookPages } from "@/lib/storybookPages";
+import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
+import type { StorybookVideoAsset } from "@/lib/storybookVideoTypes";
+import { type StorybookReaderPage } from "@/components/StorybookReader";
+import AdminStorybookPreview from "@/components/admin/AdminStorybookPreview";
 import StorybookPagesManager from "@/app/admin/episodes/[slug]/StorybookPagesManager";
 import StorybookDetailsEditor from "@/app/admin/episodes/[slug]/StorybookDetailsEditor";
 import SimplePublishAction from "./SimplePublishAction";
+import StorybookAudioManager from "./StorybookAudioManager";
+import StorybookVideoManager from "./StorybookVideoManager";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -91,6 +97,82 @@ export default async function StorybookBuilderPage({
   const publicPageCount = storybookPages.filter(
     (p) => p.status === "approved" && p.visibility === "public"
   ).length;
+  const hasFrontCover = storybookPages.some((p) => p.pageRole === "front-cover");
+  const hasBackCover = storybookPages.some((p) => p.pageRole === "back-cover");
+  const storyPageCount = storybookPages.filter(
+    (p) => p.pageRole === "story-spread" || p.pageRole === "story-page"
+  ).length;
+
+  // Load existing storybook narration audio
+  const rawNarration = isRec(raw.storybookNarration) ? raw.storybookNarration : null;
+  const initialNarration: StorybookNarrationAudio | null = rawNarration && typeof rawNarration.audioUrl === "string" ? {
+    id: typeof rawNarration.id === "string" ? rawNarration.id : `storybook-audio-${Date.now()}`,
+    title: typeof rawNarration.title === "string" ? rawNarration.title : undefined,
+    audioUrl: rawNarration.audioUrl,
+    pathname: typeof rawNarration.pathname === "string" ? rawNarration.pathname : undefined,
+    mimeType: typeof rawNarration.mimeType === "string" ? rawNarration.mimeType : "audio/mpeg",
+    sizeBytes: typeof rawNarration.sizeBytes === "number" ? rawNarration.sizeBytes : undefined,
+    durationSeconds: typeof rawNarration.durationSeconds === "number" ? rawNarration.durationSeconds : undefined,
+    sourceType: rawNarration.sourceType === "legacy-generated" ? "legacy-generated" : "admin-uploaded",
+    status: rawNarration.status === "approved" || rawNarration.status === "archived" ? rawNarration.status : "draft",
+    visibility: rawNarration.visibility === "public" ? "public" : "hidden",
+    createdAt: typeof rawNarration.createdAt === "string" ? rawNarration.createdAt : new Date().toISOString(),
+    updatedAt: typeof rawNarration.updatedAt === "string" ? rawNarration.updatedAt : undefined,
+  } : null;
+  const hasPublicAudio = initialNarration?.visibility === "public" && initialNarration?.status !== "archived";
+
+  // Load existing storybook video
+  const rawVideo = isRec(raw.storybookVideo) ? raw.storybookVideo : null;
+  const initialVideo: StorybookVideoAsset | null = rawVideo && typeof rawVideo.videoUrl === "string" ? {
+    id: typeof rawVideo.id === "string" ? rawVideo.id : `storybook-video-${Date.now()}`,
+    title: typeof rawVideo.title === "string" ? rawVideo.title : undefined,
+    description: typeof rawVideo.description === "string" ? rawVideo.description : undefined,
+    videoUrl: rawVideo.videoUrl,
+    posterImageUrl: typeof rawVideo.posterImageUrl === "string" ? rawVideo.posterImageUrl : undefined,
+    pathname: typeof rawVideo.pathname === "string" ? rawVideo.pathname : undefined,
+    posterPathname: typeof rawVideo.posterPathname === "string" ? rawVideo.posterPathname : undefined,
+    mimeType: typeof rawVideo.mimeType === "string" ? rawVideo.mimeType : "video/mp4",
+    sizeBytes: typeof rawVideo.sizeBytes === "number" ? rawVideo.sizeBytes : undefined,
+    durationSeconds: typeof rawVideo.durationSeconds === "number" ? rawVideo.durationSeconds : undefined,
+    sourceType: rawVideo.sourceType === "legacy-generated" || rawVideo.sourceType === "external-url" ? rawVideo.sourceType : "admin-uploaded",
+    status: rawVideo.status === "approved" || rawVideo.status === "archived" ? rawVideo.status : "draft",
+    visibility: rawVideo.visibility === "public" ? "public" : "hidden",
+    createdAt: typeof rawVideo.createdAt === "string" ? rawVideo.createdAt : new Date().toISOString(),
+    updatedAt: typeof rawVideo.updatedAt === "string" ? rawVideo.updatedAt : undefined,
+  } : null;
+  const hasPublicVideo = initialVideo?.visibility === "public" && initialVideo?.status !== "archived";
+
+  // Admin preview data — includes draft/hidden pages, audio, and video (never used on public routes)
+  const adminPreviewPagesRaw = getAdminPreviewStorybookPages(raw);
+  const adminPreviewTotalCount = adminPreviewPagesRaw.length;
+  const adminPreviewPublicCount = adminPreviewPagesRaw.filter(
+    (p) => p.status === "approved" && p.visibility === "public"
+  ).length;
+  const adminPreviewPages: StorybookReaderPage[] = adminPreviewPagesRaw.map((page) => ({
+    id: page.id,
+    pageNumber: page.pageNumber,
+    title: page.title,
+    caption: page.caption,
+    readAloudText: page.readAloudText,
+    imageUrl: page.imageUrl,
+    altText: page.altText,
+    characters: page.characters,
+    layoutType: page.layoutType,
+    displayMode: page.displayMode,
+    spreadNumber: page.spreadNumber,
+    pageRole: page.pageRole,
+  }));
+  const adminPreviewNarration = initialNarration && initialNarration.status !== "archived" ? {
+    audioUrl: initialNarration.audioUrl,
+    title: initialNarration.title,
+    mimeType: initialNarration.mimeType,
+  } : undefined;
+  const adminPreviewVideo = initialVideo && initialVideo.status !== "archived" ? {
+    videoUrl: initialVideo.videoUrl,
+    title: initialVideo.title,
+    description: initialVideo.description,
+    mimeType: initialVideo.mimeType,
+  } : undefined;
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -243,32 +325,27 @@ export default async function StorybookBuilderPage({
             id="audio"
             icon="🎙️"
             title="Audio Narration"
-            subtitle="Attach read-aloud narration for this storybook."
+            subtitle="Upload a finished narration file so readers can listen while they enjoy the storybook."
             badge={
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
-                Coming Soon
-              </span>
+              hasPublicAudio ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  Public
+                </span>
+              ) : initialNarration && initialNarration.status !== "archived" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/60 uppercase tracking-wide">
+                  Hidden
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
+                  Optional
+                </span>
+              )
             }
           />
-          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎧</span>
-              <div>
-                <h3 className="text-sm font-black text-tiki-brown">Add Audio Narration</h3>
-                <p className="text-xs text-tiki-brown/50">Attach a read-aloud audio file for this story</p>
-              </div>
-            </div>
-            <p className="text-sm text-tiki-brown/55 leading-relaxed">
-              Audio upload support is coming soon. For narration tools now, use the{" "}
-              <Link
-                href={`/admin/episodes/${normalised.slug}#audio`}
-                className="font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
-              >
-                legacy editor
-              </Link>
-              .
-            </p>
-          </div>
+          <StorybookAudioManager
+            episodeSlug={normalised.slug}
+            initialNarration={initialNarration}
+          />
         </div>
 
         {/* ── Video ── */}
@@ -276,33 +353,28 @@ export default async function StorybookBuilderPage({
           <SectionGroupHeader
             id="video"
             icon="🎬"
-            title="Cartoon Video"
-            subtitle="Upload or attach a finished cartoon video for this storybook."
+            title="Video / Cartoon"
+            subtitle="Upload a finished cartoon or video so readers can watch the story."
             badge={
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
-                Optional
-              </span>
+              hasPublicVideo ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
+                  Public
+                </span>
+              ) : initialVideo && initialVideo.status !== "archived" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/60 uppercase tracking-wide">
+                  Hidden
+                </span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45 uppercase tracking-wide">
+                  Optional
+                </span>
+              )
             }
           />
-          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🎬</span>
-              <div>
-                <h3 className="text-sm font-black text-tiki-brown">Upload Cartoon Video</h3>
-                <p className="text-xs text-tiki-brown/50">Attach a finished cartoon or animated video for this story</p>
-              </div>
-            </div>
-            <p className="text-sm text-tiki-brown/55 leading-relaxed">
-              Video upload support is coming soon. For video tools now, use the{" "}
-              <Link
-                href={`/admin/episodes/${normalised.slug}#video`}
-                className="font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
-              >
-                legacy editor
-              </Link>
-              .
-            </p>
-          </div>
+          <StorybookVideoManager
+            episodeSlug={normalised.slug}
+            initialVideo={initialVideo}
+          />
         </div>
 
         {/* ── Preview ── */}
@@ -311,60 +383,61 @@ export default async function StorybookBuilderPage({
             id="preview"
             icon="👁️"
             title="Preview"
-            subtitle="Preview the public storybook page before publishing."
+            subtitle="Preview the storybook draft or open the public page."
           />
+
+          {/* Admin draft preview + public preview buttons */}
+          <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6">
+            <AdminStorybookPreview
+              slug={normalised.slug}
+              episodeTitle={normalised.title}
+              adminPreviewPages={adminPreviewPages}
+              narrationAudio={adminPreviewNarration}
+              video={adminPreviewVideo}
+              totalPageCount={adminPreviewTotalCount}
+              publicPageCount={adminPreviewPublicCount}
+            />
+          </div>
+
+          {/* Publish readiness checklist */}
           <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-black text-tiki-brown">Preview Storybook</h3>
-                <p className="text-xs text-tiki-brown/50 mt-0.5">
-                  Opens the public story page in a new tab. Only approved/public content is visible to readers.
-                </p>
-                <p className="text-xs font-mono text-tiki-brown/35 mt-1">
-                  /stories/{normalised.slug}
+            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-widest">Publish Readiness</p>
+            {!isAlreadyPublished && (
+              <div className="flex items-start gap-2.5 bg-tiki-brown/4 border border-tiki-brown/10 rounded-2xl px-4 py-3">
+                <span className="text-base flex-shrink-0">ℹ️</span>
+                <p className="text-xs text-tiki-brown/55 leading-relaxed">
+                  This storybook is not published yet. The public page will not be visible to readers until you publish below.
                 </p>
               </div>
-              <a
-                href={`/stories/${normalised.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-shrink-0 flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors"
-              >
-                <span>👁️</span>
-                Preview Storybook
-              </a>
-            </div>
-
-            {/* Readiness checklist */}
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
+                { label: "Title", done: Boolean(normalised.title), optional: false, icon: "📝" },
+                { label: "About", done: Boolean(normalised.shortDescription), optional: false, icon: "📄" },
+                { label: "Front Cover", done: hasFrontCover, optional: false, icon: "📖" },
                 {
-                  label: "Title",
-                  done: Boolean(normalised.title),
-                  optional: false,
-                  icon: "📝",
-                },
-                {
-                  label: "About",
-                  done: Boolean(normalised.shortDescription),
-                  optional: false,
-                  icon: "📄",
-                },
-                {
-                  label: `${storybookPages.length} Image${storybookPages.length !== 1 ? "s" : ""}`,
-                  done: storybookPages.length > 0,
+                  label: storyPageCount > 0 ? `${storyPageCount} Spread${storyPageCount !== 1 ? "s" : ""}/Page${storyPageCount !== 1 ? "s" : ""}` : "Story Spreads",
+                  done: storyPageCount > 0,
                   optional: false,
                   icon: "🖼️",
                 },
                 {
-                  label: "Audio",
-                  done: false,
+                  label: publicPageCount > 0 ? `${publicPageCount} Image${publicPageCount !== 1 ? "s" : ""} Public` : "Images Public",
+                  done: publicPageCount > 0,
+                  optional: false,
+                  icon: "✅",
+                },
+                { label: "Book Order", done: storybookPages.length > 1, optional: false, icon: "📋" },
+                { label: "Back Cover", done: hasBackCover, optional: true, icon: "📚" },
+                {
+                  label: hasPublicAudio ? "Audio Public" : initialNarration && initialNarration.status !== "archived" ? "Audio (Hidden)" : "Audio",
+                  done: hasPublicAudio,
                   optional: true,
                   icon: "🎧",
                 },
                 {
-                  label: "Video",
-                  done: false,
+                  label: hasPublicVideo ? "Video Public" : initialVideo && initialVideo.status !== "archived" ? "Video (Hidden)" : "Video",
+                  done: hasPublicVideo,
                   optional: true,
                   icon: "🎬",
                 },
@@ -416,22 +489,49 @@ export default async function StorybookBuilderPage({
           />
         </div>
 
-        {/* ── Legacy editor link ── */}
-        <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-4">
-          <span className="text-base flex-shrink-0">🔧</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide mb-0.5">Legacy Editor</p>
-            <p className="text-xs text-tiki-brown/50 leading-relaxed">
-              Advanced tools — scene breakdown, narration generation, video generation, review approval — are available in the legacy editor.
-            </p>
+        {/* ── Developer / Legacy (collapsed) ── */}
+        <details className="group rounded-2xl border border-tiki-brown/10 bg-tiki-brown/3 overflow-hidden">
+          <summary className="flex items-center gap-2.5 px-5 py-4 cursor-pointer list-none select-none hover:bg-tiki-brown/5 transition-colors">
+            <span className="text-base flex-shrink-0">🔧</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Developer / Legacy</p>
+              <p className="text-[11px] text-tiki-brown/40 mt-0.5">Legacy generation tools — collapsed by default</p>
+            </div>
+            <span className="text-xs font-bold text-tiki-brown/35 flex-shrink-0 group-open:hidden">▸ Show</span>
+            <span className="text-xs font-bold text-tiki-brown/35 flex-shrink-0 hidden group-open:inline">▾ Hide</span>
+          </summary>
+
+          <div className="border-t border-tiki-brown/8 px-5 py-5 flex flex-col gap-4">
+            {/* Legacy Audio Tools */}
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Legacy Audio Tools</p>
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Retained temporarily for legacy workflows. The preferred workflow is uploading a finished narration audio file in the Audio section above.
+              </p>
+            </div>
+
+            {/* Legacy Video Tools */}
+            <div className="flex flex-col gap-1.5">
+              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">Legacy Video Tools</p>
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Retained temporarily for legacy workflows. The preferred workflow is uploading a finished cartoon/video file in the Video section above.
+              </p>
+            </div>
+
+            {/* Legacy editor link */}
+            <div className="flex items-center justify-between gap-4 pt-1">
+              <p className="text-xs text-tiki-brown/45 leading-relaxed">
+                Scene breakdown, narration generation, video generation, and review approval are available in the full legacy editor.
+              </p>
+              <Link
+                href={`/admin/episodes/${normalised.slug}`}
+                className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors flex-shrink-0 whitespace-nowrap"
+              >
+                Open Legacy Editor →
+              </Link>
+            </div>
           </div>
-          <Link
-            href={`/admin/episodes/${normalised.slug}`}
-            className="text-xs font-bold text-ube-purple hover:text-ube-purple/70 transition-colors flex-shrink-0 whitespace-nowrap"
-          >
-            Open Legacy Editor →
-          </Link>
-        </div>
+        </details>
 
         {/* Back link footer */}
         <div className="pt-2">

@@ -11,7 +11,7 @@
 //   public            → visible on public character pages, fully approved
 //   archived          → inactive, private
 
-import type { UploadedReferenceAsset } from "@/app/api/reference-assets/upload-character-reference/route";
+type UploadedReferenceAsset = { id: string; characterSlug: string; reviewStatus?: string; approvedForGeneration?: boolean; generationUseAllowed?: boolean };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

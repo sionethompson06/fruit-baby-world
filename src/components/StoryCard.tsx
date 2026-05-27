@@ -5,6 +5,9 @@ type MediaFlags = {
   hasAudio?: boolean;
   hasVideoClips?: boolean;
   hasFinalVideo?: boolean;
+  hasStorybookPages?: boolean;
+  hasStorybookAudio?: boolean;
+  hasStorybookVideo?: boolean;
 };
 
 type Props = {
@@ -25,7 +28,6 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
   const gradientTo =
     featuredChars[1]?.visualIdentity.primaryColors[0] ?? "#FFB347";
 
-  const hasIllustrated = Boolean(thumbnailUrl);
   const hasReadAloud = episode.scenes.length > 0;
 
   return (
@@ -120,29 +122,19 @@ export default function StoryCard({ episode, characterMap, thumbnailUrl, thumbna
         {/* Media type badges + CTA */}
         <div className="flex items-center justify-between pt-2 border-t border-tiki-brown/10 mt-auto flex-wrap gap-2">
           <div className="flex flex-wrap gap-1">
-            {hasReadAloud && (
+            {(mediaFlags?.hasStorybookPages || hasReadAloud) && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple/80">
                 📖 Read
               </span>
             )}
-            {hasIllustrated && (
+            {(mediaFlags?.hasStorybookAudio || mediaFlags?.hasAudio) && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-ube-purple/10 text-ube-purple/80">
+                🎧 Listen
+              </span>
+            )}
+            {(mediaFlags?.hasStorybookVideo || mediaFlags?.hasFinalVideo) && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green">
-                🖼️ Picture
-              </span>
-            )}
-            {mediaFlags?.hasAudio && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/70">
-                🎙️ Audio
-              </span>
-            )}
-            {mediaFlags?.hasVideoClips && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral">
-                🎬 Clips
-              </span>
-            )}
-            {mediaFlags?.hasFinalVideo && (
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-blue/30 text-tiki-brown/70">
-                🎥 Full Video
+                🎬 Watch
               </span>
             )}
           </div>

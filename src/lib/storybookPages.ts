@@ -3,25 +3,33 @@
 
 import type { StorybookPage, StorybookPageRole, StorybookLayoutType } from "@/lib/storybookPageTypes";
 
+type BookSection = "cover" | "front-matter" | "story" | "end-matter" | "back-cover";
+const BOOK_SECTIONS: BookSection[] = ["cover", "front-matter", "story", "end-matter", "back-cover"];
+
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 const PAGE_ROLES: StorybookPageRole[] = [
-  "front-cover", "inside-cover", "story-page", "story-spread", "end-page", "back-cover",
+  "front-cover", "title-page", "publication-page", "acknowledgement-page",
+  "introduction-page", "inside-cover", "story-page", "story-spread", "end-page", "back-cover",
 ];
 const LAYOUT_TYPES: StorybookLayoutType[] = [
   "single-page", "two-page-spread", "cover", "back-cover",
 ];
 
-// Role sort order: front-cover < inside-cover < story-spread/story-page < end-page < back-cover
+// Role fallback order for pages without a saved pageNumber
 const ROLE_ORDER: Record<StorybookPageRole, number> = {
-  "front-cover":   0,
-  "inside-cover":  1,
-  "story-spread":  2,
-  "story-page":    2,
-  "end-page":      3,
-  "back-cover":    4,
+  "front-cover":          0,
+  "title-page":           1,
+  "publication-page":     2,
+  "acknowledgement-page": 3,
+  "introduction-page":    4,
+  "inside-cover":         5,
+  "story-spread":         6,
+  "story-page":           6,
+  "end-page":             7,
+  "back-cover":           8,
 };
 
 function parseStorybookPage(v: unknown): StorybookPage | null {
@@ -64,6 +72,8 @@ function parseStorybookPage(v: unknown): StorybookPage | null {
     leftPageLabel: typeof v.leftPageLabel === "string" ? v.leftPageLabel : undefined,
     rightPageLabel: typeof v.rightPageLabel === "string" ? v.rightPageLabel : undefined,
     displayMode: v.displayMode === "spread" ? "spread" : v.displayMode === "single" ? "single" : undefined,
+    displayLabel: typeof v.displayLabel === "string" ? v.displayLabel : undefined,
+    bookSection: BOOK_SECTIONS.includes(v.bookSection as BookSection) ? (v.bookSection as BookSection) : undefined,
   } satisfies StorybookPage;
 }
 
@@ -71,20 +81,34 @@ function roleOf(p: StorybookPage): StorybookPageRole {
   return p.pageRole ?? "story-page";
 }
 
-export function getStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
-  if (!Array.isArray(raw.storybookPages)) return [];
-  return raw.storybookPages
-    .map(parseStorybookPage)
-    .filter((p): p is StorybookPage => p !== null)
-    .sort((a, b) => {
+// Sort by admin's saved pageNumber first; fall back to role order for unordered pages.
+export function sortStorybookPagesForBook(pages: StorybookPage[]): StorybookPage[] {
+  return [...pages].sort((a, b) => {
+    const aHasOrder = a.pageNumber > 0;
+    const bHasOrder = b.pageNumber > 0;
+
+    if (aHasOrder && bHasOrder) return a.pageNumber - b.pageNumber;
+
+    if (!aHasOrder && !bHasOrder) {
       const roleA = ROLE_ORDER[roleOf(a)];
       const roleB = ROLE_ORDER[roleOf(b)];
       if (roleA !== roleB) return roleA - roleB;
-      // Within the same role bucket, sort spreads by spreadNumber then pageNumber
-      const spreadA = a.spreadNumber ?? a.pageNumber;
-      const spreadB = b.spreadNumber ?? b.pageNumber;
+      const spreadA = a.spreadNumber ?? 0;
+      const spreadB = b.spreadNumber ?? 0;
       return spreadA - spreadB;
-    });
+    }
+
+    // One ordered, one not — ordered comes first
+    return aHasOrder ? -1 : 1;
+  });
+}
+
+export function getStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
+  if (!Array.isArray(raw.storybookPages)) return [];
+  const parsed = raw.storybookPages
+    .map(parseStorybookPage)
+    .filter((p): p is StorybookPage => p !== null);
+  return sortStorybookPagesForBook(parsed);
 }
 
 export function getPublicStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
@@ -93,6 +117,27 @@ export function getPublicStorybookPages(raw: Record<string, unknown>): Storybook
   );
 }
 
+export function getPublicStorybookBookPages(raw: Record<string, unknown>): StorybookPage[] {
+  const parsed = Array.isArray(raw.storybookPages)
+    ? raw.storybookPages
+        .map(parseStorybookPage)
+        .filter((p): p is StorybookPage => p !== null)
+        .filter((p) => p.status === "approved" && p.visibility === "public")
+    : [];
+  return sortStorybookPagesForBook(parsed);
+}
+
 export function shouldUseStorybookPagesForPublicReader(raw: Record<string, unknown>): boolean {
   return getPublicStorybookPages(raw).length > 0;
+}
+
+// Returns all non-archived pages for admin draft preview — includes draft and admin-only pages.
+// Never use this helper in public-facing routes.
+export function getAdminPreviewStorybookPages(raw: Record<string, unknown>): StorybookPage[] {
+  if (!Array.isArray(raw.storybookPages)) return [];
+  const parsed = raw.storybookPages
+    .map(parseStorybookPage)
+    .filter((p): p is StorybookPage => p !== null)
+    .filter((p) => p.status !== "archived");
+  return sortStorybookPagesForBook(parsed);
 }

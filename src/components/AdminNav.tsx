@@ -22,7 +22,6 @@ const legacyLinks = [
 export default function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
-
   async function handleLock() {
     await fetch("/api/admin/logout", { method: "POST" });
     router.push("/admin/login");
@@ -37,7 +36,7 @@ export default function AdminNav() {
     <nav className="bg-ube-purple/10 border-b border-ube-purple/20">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
 
-        {/* Primary nav row */}
+        {/* Primary row */}
         <div className="flex flex-wrap items-center gap-1 py-2">
           {primaryLinks.map(({ href, label, emoji }) => (
             <Link
@@ -56,8 +55,10 @@ export default function AdminNav() {
 
           {/* Lock */}
           <button
+            type="button"
             onClick={handleLock}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-warm-coral/70 hover:bg-warm-coral/10 hover:text-warm-coral ml-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all text-warm-coral/60 hover:bg-warm-coral/10 hover:text-warm-coral ml-auto"
+            title="Lock admin"
           >
             <span>🔒</span>
             <span className="hidden sm:inline">Lock</span>

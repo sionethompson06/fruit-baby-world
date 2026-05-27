@@ -5,14 +5,15 @@ import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes"
 import { getAllCharacters, type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
-import StorybookReader, { type StorybookReaderPage } from "@/components/StorybookReader";
+import { type StorybookReaderPage, type StorybookNarrationAudioProp } from "@/components/StorybookReader";
+import StoryExperienceSwitcher from "@/components/StoryExperienceSwitcher";
 import {
   getActiveEpisodeScenes,
   getApprovedPublicStoryPanels,
   type ApprovedPanel,
 } from "@/lib/episodeScenes";
 import {
-  getPublicStorybookPages,
+  getPublicStorybookBookPages,
   shouldUseStorybookPagesForPublicReader,
 } from "@/lib/storybookPages";
 import {
@@ -672,7 +673,7 @@ export default async function StoryDetailPage({
 
   // Storybook pages take priority over legacy story panels when available
   const useStorybookPages = shouldUseStorybookPagesForPublicReader(raw);
-  const publicStorybookPages = useStorybookPages ? getPublicStorybookPages(raw) : [];
+  const publicStorybookPages = useStorybookPages ? getPublicStorybookBookPages(raw) : [];
 
   // Premium StorybookReader pages (Phase 19B)
   const storybookReaderPages: StorybookReaderPage[] = publicStorybookPages.map((page) => ({
@@ -687,6 +688,7 @@ export default async function StoryDetailPage({
     layoutType: page.layoutType,
     displayMode: page.displayMode,
     spreadNumber: page.spreadNumber,
+    pageRole: page.pageRole,
   }));
 
   // Approved public story panels (fallback when no storybook pages)
@@ -731,6 +733,41 @@ export default async function StoryDetailPage({
     };
   })();
 
+  // Public storybook narration — only shown when visibility is "public" and not archived
+  const narrationAudio: StorybookNarrationAudioProp | null = (() => {
+    const sn = raw.storybookNarration;
+    if (typeof sn !== "object" || sn === null || Array.isArray(sn)) return null;
+    const n = sn as Record<string, unknown>;
+    if (typeof n.audioUrl !== "string" || !n.audioUrl.startsWith("https://")) return null;
+    if (n.visibility !== "public") return null;
+    if (n.status === "archived") return null;
+    return {
+      audioUrl: n.audioUrl,
+      title: typeof n.title === "string" ? n.title : undefined,
+      mimeType: typeof n.mimeType === "string" ? n.mimeType : undefined,
+    };
+  })();
+
+  // Public storybook video/cartoon — shown when visibility is "public" and not archived
+  const publicVideo: { videoUrl: string; title?: string; description?: string; posterImageUrl?: string; mimeType?: string } | null = (() => {
+    const sv = raw.storybookVideo;
+    if (typeof sv !== "object" || sv === null || Array.isArray(sv)) return null;
+    const v = sv as Record<string, unknown>;
+    if (typeof v.videoUrl !== "string" || !v.videoUrl.startsWith("https://")) return null;
+    if (v.visibility !== "public") return null;
+    if (v.status === "archived") return null;
+    return {
+      videoUrl: v.videoUrl,
+      title: typeof v.title === "string" ? v.title : undefined,
+      description: typeof v.description === "string" ? v.description : undefined,
+      posterImageUrl: typeof v.posterImageUrl === "string" ? v.posterImageUrl : undefined,
+      mimeType: typeof v.mimeType === "string" ? v.mimeType : undefined,
+    };
+  })();
+
+  // Front cover image URL — used as fallback poster for video player
+  const frontCoverUrl = publicStorybookPages.find((p) => p.pageRole === "front-cover")?.imageUrl;
+
   // Public-ready full final video — only shown when visibility === "public-ready"
   const publicFinalVideo = getPublicReadyFinalVideo(raw);
 
@@ -743,61 +780,105 @@ export default async function StoryDetailPage({
 
       {/* ── Hero ── */}
       <section
-        className="py-14 px-4 text-center"
+        className="py-12 px-4"
         style={{
           background: `linear-gradient(160deg, ${heroColorA}30 0%, ${heroColorB}18 60%, #FFF9ED 100%)`,
         }}
       >
-        <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
-          <span className="text-5xl select-none" role="img" aria-label="story">
-            📖
-          </span>
+        <div className={`max-w-4xl mx-auto flex gap-8 sm:gap-12 ${frontCoverUrl ? "flex-col sm:flex-row items-center" : "flex-col items-center text-center"}`}>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-tiki-brown leading-tight">
-            {title}
-          </h1>
-
-          {shortDesc && (
-            <p className="text-base sm:text-lg text-tiki-brown/70 leading-relaxed max-w-xl">
-              {shortDesc}
-            </p>
-          )}
-
-          {/* Character badges */}
-          {featuredChars.length > 0 && (
-            <div className="flex flex-wrap justify-center gap-2 mt-1">
-              {featuredChars.map((c) => (
-                <CharBadge key={c.id} char={c} />
-              ))}
+          {/* Front cover image */}
+          {frontCoverUrl && (
+            <div className="flex-shrink-0 w-44 sm:w-52">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={frontCoverUrl}
+                alt={`${title} cover`}
+                className="w-full rounded-2xl shadow-2xl border-2 border-white/60"
+              />
             </div>
           )}
 
-          {/* Meta pills */}
-          <div className="flex flex-wrap justify-center gap-2 text-xs font-semibold text-tiki-brown/60">
-            {setting && (
-              <span className="flex items-center gap-1 bg-white/60 border border-tiki-brown/10 px-3 py-1 rounded-full">
-                📍 {setting}
-              </span>
+          {/* Title & meta */}
+          <div className={`flex flex-col gap-4 ${frontCoverUrl ? "sm:flex-1" : "max-w-2xl"}`}>
+            {!frontCoverUrl && (
+              <span className="text-5xl select-none" role="img" aria-label="story">📖</span>
             )}
-            {ageRange && (
-              <span className="flex items-center gap-1 bg-white/60 border border-tiki-brown/10 px-3 py-1 rounded-full">
-                🎒 {ageRange}
-              </span>
+
+            <h1 className="text-3xl sm:text-5xl font-black text-tiki-brown leading-tight">
+              {title}
+            </h1>
+
+            {shortDesc && (
+              <p className={`text-base sm:text-lg text-tiki-brown/70 leading-relaxed ${frontCoverUrl ? "" : "max-w-xl"}`}>
+                {shortDesc}
+              </p>
             )}
-            {tone && (
-              <span className="flex items-center gap-1 bg-white/60 border border-tiki-brown/10 px-3 py-1 rounded-full">
-                ✨ {tone}
-              </span>
+
+            {/* Character badges */}
+            {featuredChars.length > 0 && (
+              <div className={`flex flex-wrap gap-2 ${frontCoverUrl ? "" : "justify-center"}`}>
+                {featuredChars.map((c) => (
+                  <CharBadge key={c.id} char={c} />
+                ))}
+              </div>
+            )}
+
+            {/* CTA buttons */}
+            {hasReaderContent && (
+              <div className={`flex flex-wrap gap-3 ${frontCoverUrl ? "" : "justify-center"}`}>
+                <a
+                  href="#story-panels"
+                  className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
+                >
+                  <span aria-hidden>📖</span> Read Story
+                </a>
+                {narrationAudio && (
+                  <a
+                    href="#story-panels"
+                    className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/30 text-ube-purple hover:bg-ube-purple/8 transition-colors"
+                  >
+                    <span aria-hidden>🎧</span> Listen
+                  </a>
+                )}
+                {publicVideo && (
+                  <a
+                    href="#story-panels"
+                    className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/8 transition-colors"
+                  >
+                    <span aria-hidden>🎬</span> Watch Cartoon
+                  </a>
+                )}
+              </div>
+            )}
+
+            {/* Meta pills */}
+            <div className={`flex flex-wrap gap-2 text-xs font-semibold text-tiki-brown/60 ${frontCoverUrl ? "" : "justify-center"}`}>
+              {setting && (
+                <span className="flex items-center gap-1 bg-white/60 border border-tiki-brown/10 px-3 py-1 rounded-full">
+                  📍 {setting}
+                </span>
+              )}
+              {ageRange && (
+                <span className="flex items-center gap-1 bg-white/60 border border-tiki-brown/10 px-3 py-1 rounded-full">
+                  🎒 {ageRange}
+                </span>
+              )}
+              {tone && (
+                <span className="flex items-center gap-1 bg-white/60 border border-tiki-brown/10 px-3 py-1 rounded-full">
+                  ✨ {tone}
+                </span>
+              )}
+            </div>
+
+            {/* Lesson pill */}
+            {lesson && (
+              <div className={`flex items-center gap-2 bg-pineapple-yellow/40 border border-pineapple-yellow/60 rounded-2xl px-4 py-2.5 max-w-sm ${frontCoverUrl ? "" : "self-center text-center"}`}>
+                <span className="text-base flex-shrink-0">💡</span>
+                <p className="text-sm font-bold text-tiki-brown leading-snug">{lesson}</p>
+              </div>
             )}
           </div>
-
-          {/* Lesson pill */}
-          {lesson && (
-            <div className="flex items-center gap-2 bg-pineapple-yellow/40 border border-pineapple-yellow/60 rounded-2xl px-4 py-2.5 max-w-sm text-center">
-              <span className="text-base flex-shrink-0">💡</span>
-              <p className="text-sm font-bold text-tiki-brown leading-snug">{lesson}</p>
-            </div>
-          )}
         </div>
       </section>
 
@@ -828,6 +909,14 @@ export default async function StoryDetailPage({
               🎧 Listen
             </a>
           )}
+          {publicVideo && (
+            <a
+              href="#story-panels"
+              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tropical-green/10 border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/20 transition-colors"
+            >
+              🎬 Watch Cartoon
+            </a>
+          )}
           <a
             href="#story-panels"
             className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
@@ -849,61 +938,6 @@ export default async function StoryDetailPage({
             </a>
           )}
         </nav>
-
-        {/* ── Story Mode cards ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {/* Read Story — active */}
-          <div className="flex flex-col items-center gap-2 bg-ube-purple rounded-2xl px-3 py-4 text-center shadow-sm">
-            <span className="text-2xl">📖</span>
-            <p className="text-xs font-black text-white leading-snug">Read Story</p>
-            <span className="text-xs font-bold text-white/70 bg-white/15 px-2 py-0.5 rounded-full">
-              Available
-            </span>
-          </div>
-
-          {/* Storybook / Story Panels — available or coming soon */}
-          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${hasReaderContent ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
-            <span className="text-2xl">📖</span>
-            <p className="text-xs font-black text-tiki-brown leading-snug">
-              {useStorybookPages ? "Storybook" : "Story Panels"}
-            </p>
-            {hasReaderContent ? (
-              <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
-                Available
-              </span>
-            ) : (
-              <span className="text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-2 py-0.5 rounded-full">
-                Coming Soon
-              </span>
-            )}
-          </div>
-
-          {/* Listen / Read Aloud */}
-          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${publicAudio ? "bg-tropical-green/10 border-tropical-green/25" : "bg-pineapple-yellow/20 border-pineapple-yellow/40"}`}>
-            <span className="text-2xl">{publicAudio ? "🎧" : "🎙️"}</span>
-            <p className="text-xs font-black text-tiki-brown leading-snug">
-              {publicAudio ? "Listen" : "Read Aloud"}
-            </p>
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${publicAudio ? "text-tropical-green bg-tropical-green/15" : "text-tiki-brown/60 bg-pineapple-yellow/30"}`}>
-              Available
-            </span>
-          </div>
-
-          {/* Watch — available or coming soon */}
-          <div className={`flex flex-col items-center gap-2 rounded-2xl px-3 py-4 text-center shadow-sm border ${publicClips.length > 0 ? "bg-tropical-green/10 border-tropical-green/25" : "bg-white border-tiki-brown/10"}`}>
-            <span className="text-2xl">🎬</span>
-            <p className="text-xs font-black text-tiki-brown leading-snug">Watch Short</p>
-            {publicClips.length > 0 ? (
-              <span className="text-xs font-bold text-tropical-green bg-tropical-green/15 px-2 py-0.5 rounded-full">
-                Available
-              </span>
-            ) : (
-              <span className="text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-2 py-0.5 rounded-full">
-                Coming Soon
-              </span>
-            )}
-          </div>
-        </div>
 
         {/* ── Today's Lesson ── */}
         <div className="bg-pineapple-yellow/15 border border-pineapple-yellow/45 rounded-3xl px-6 py-5 flex flex-col gap-3">
@@ -1012,7 +1046,7 @@ export default async function StoryDetailPage({
         ══════════════════════════════════════════ */}
 
         {storybookReaderPages.length > 0 ? (
-          /* ── Premium Storybook Reader (Phase 19B) ── */
+          /* ── Premium Storybook Reader / Watch Cartoon (Phase 19B + 20D) ── */
           <div
             id="story-panels"
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-8 flex flex-col gap-6"
@@ -1024,17 +1058,36 @@ export default async function StoryDetailPage({
                   <span aria-hidden>📖</span> Storybook Reader
                 </h2>
                 <p className="text-sm text-tiki-brown/55 leading-relaxed">
-                  Read through the story one beautiful page at a time.
+                  Read through the story one beautiful page at a time{publicVideo ? ", or watch the cartoon." : "."}
                 </p>
               </div>
-              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full">
-                {storybookReaderPages.length}{" "}
-                {storybookReaderPages.length === 1 ? "page" : "pages"}
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                {publicVideo && (
+                  <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full flex items-center gap-1">
+                    <span aria-hidden>🎬</span> Video Available
+                  </span>
+                )}
+                {narrationAudio && (
+                  <span className="flex-shrink-0 text-xs font-bold text-ube-purple bg-ube-purple/10 px-3 py-1.5 rounded-full flex items-center gap-1">
+                    <span aria-hidden>🎧</span> Audio Available
+                  </span>
+                )}
+                <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full">
+                  {storybookReaderPages.length}{" "}
+                  {storybookReaderPages.length === 1 ? "page" : "pages"}
+                </span>
+              </div>
             </div>
 
-            {/* Premium reader */}
-            <StorybookReader pages={storybookReaderPages} episodeTitle={title} />
+            {/* Read / Watch switcher (video available) or plain reader */}
+            <StoryExperienceSwitcher
+              pages={storybookReaderPages}
+              episodeTitle={title}
+              backHref="/stories"
+              narrationAudio={narrationAudio ?? undefined}
+              video={publicVideo ?? undefined}
+              fallbackPosterUrl={frontCoverUrl}
+            />
 
             {/* Talk about it */}
             {lesson && (

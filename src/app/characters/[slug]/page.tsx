@@ -6,7 +6,7 @@ import {
   getPublicCharactersFromDisk,
   getPublicCharacterBySlugFromDisk,
 } from "@/lib/characterContent";
-import { normalizeCharacterProfile } from "@/lib/characterProfileNormalizer";
+import { getNormalizedCharacterBySlug } from "@/lib/characterRegistry";
 import CharacterImage from "@/components/CharacterImage";
 import ProfileSheetImage from "@/components/ProfileSheetImage";
 
@@ -97,10 +97,17 @@ export default async function CharacterPage({
   const character = getPublicCharacterBySlugFromDisk(slug);
   if (!character) notFound();
 
-  const profile = normalizeCharacterProfile(character);
+  const _profile = getNormalizedCharacterBySlug(character.slug);
+  const palette = character.visualIdentity?.palette ?? [];
+  const mainImageUrl = character.image?.main ?? "";
+  const profileSheetUrl = character.image?.profileSheet ?? "";
+  const imageAlt = character.image?.alt ?? character.name;
+  const tagline = character.tagline ?? character.favoriteQuote ?? "";
+  const home = character.home ?? "";
+  const visualIdentitySummary = character.visualIdentity?.styleNotes ?? "";
   const emoji = emojiMap[character.slug] ?? "✨";
   const isVillain = character.type === "villain";
-  const accentColor = profile.colorPalette[0]?.hex ?? "#FFD84D";
+  const accentColor = character.visualIdentity?.palette?.[0]?.hex ?? character.visualIdentity?.primaryColors?.[0] ?? "#FFD84D";
 
   // Filtered public-safe content (exclude garbled table data)
   const cleanPersonality = cleanStrings(character.personality);
@@ -128,8 +135,8 @@ export default async function CharacterPage({
           <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
 
             <CharacterImage
-              src={profile.mainCharacterImageUrl}
-              alt={profile.imageAlt}
+              src={mainImageUrl}
+              alt={imageAlt}
               emoji={emoji}
               bgColor={`${accentColor}40`}
               className="w-40 h-40 sm:w-48 sm:h-48 rounded-3xl shadow-lg flex-shrink-0 border-4 border-white"
@@ -156,9 +163,9 @@ export default async function CharacterPage({
 
               <p className="text-base font-semibold text-tiki-brown/55">{character.role}</p>
 
-              {(profile.tagline || profile.favoriteQuote) && (
+              {(tagline) && (
                 <p className="text-lg italic text-tiki-brown/70">
-                  &ldquo;{profile.tagline || profile.favoriteQuote}&rdquo;
+                  &ldquo;{tagline}&rdquo;
                 </p>
               )}
 
@@ -166,9 +173,9 @@ export default async function CharacterPage({
                 {character.shortDescription}
               </p>
 
-              {profile.colorPalette.length > 0 && (
+              {palette.length > 0 && (
                 <div className="flex gap-2 justify-center sm:justify-start mt-1">
-                  {profile.colorPalette.filter((c) => c.hex).map((color, i) => (
+                  {palette.filter((c) => c.hex).map((color, i) => (
                     <div
                       key={i}
                       className="w-5 h-5 rounded-full border-2 border-white shadow-sm"
@@ -193,8 +200,8 @@ export default async function CharacterPage({
           </div>
           <div className="p-5 sm:p-8">
             <ProfileSheetImage
-              src={profile.officialProfileSheetUrl}
-              alt={profile.imageAlt}
+              src={profileSheetUrl}
+              alt={imageAlt}
               accentColor={accentColor}
               characterName={character.name}
               slug={character.slug}
@@ -270,15 +277,15 @@ export default async function CharacterPage({
             </SectionCard>
           )}
 
-          {profile.home && (
+          {home && (
             <SectionCard title="Where They Live" accentColor={accentColor}>
               <div className="flex items-start gap-3">
                 <span className="text-2xl flex-shrink-0">🏝️</span>
                 <div>
-                  <p className="text-base font-bold text-tiki-brown">{profile.home}</p>
-                  {profile.visualIdentitySummary && (
+                  <p className="text-base font-bold text-tiki-brown">{home}</p>
+                  {visualIdentitySummary && (
                     <p className="text-sm text-tiki-brown/65 leading-relaxed mt-1">
-                      {profile.visualIdentitySummary}
+                      {visualIdentitySummary}
                     </p>
                   )}
                 </div>
@@ -397,7 +404,7 @@ export default async function CharacterPage({
           <SectionCard title="Quick Facts" accentColor={accentColor}>
             <dl className="flex flex-col gap-3">
               {character.fruitType && <QuickFact label="Fruit Type" value={character.fruitType} />}
-              {profile.home && <QuickFact label="Home" value={profile.home} />}
+              {home && <QuickFact label="Home" value={home} />}
               {character.birthday && <QuickFact label="Birthday" value={character.birthday} />}
               {character.favoriteQuote && (
                 <div className="flex flex-col gap-0.5">
@@ -416,9 +423,9 @@ export default async function CharacterPage({
           </SectionCard>
 
           <SectionCard title="Visual Identity" accentColor={accentColor}>
-            {profile.colorPalette.length > 0 ? (
+            {palette.length > 0 ? (
               <div className="flex flex-col gap-2">
-                {profile.colorPalette.map((swatch, i) => (
+                {palette.map((swatch, i) => (
                   <div key={i} className="flex items-center gap-2.5">
                     {swatch.hex ? (
                       <div className="w-6 h-6 rounded-full border-2 border-white shadow-sm flex-shrink-0" style={{ backgroundColor: swatch.hex }} />
@@ -435,9 +442,9 @@ export default async function CharacterPage({
             ) : (
               <p className="text-xs text-tiki-brown/50 italic">Palette coming soon.</p>
             )}
-            {profile.visualIdentitySummary && (
+            {visualIdentitySummary && (
               <p className="text-xs text-tiki-brown/60 leading-relaxed mt-4 pt-3 border-t border-tiki-brown/10">
-                {profile.visualIdentitySummary}
+                {visualIdentitySummary}
               </p>
             )}
           </SectionCard>

@@ -11,7 +11,7 @@ import type {
   ProductConcept,
   ProductConceptCategory,
 } from "@/lib/productConceptTypes";
-import type { ProductMockupAsset } from "@/lib/productMockupTypes";
+import type { ProductMockupAsset } from "@/lib/productConceptTypes";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

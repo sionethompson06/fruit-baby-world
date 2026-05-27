@@ -319,6 +319,12 @@ function parseProviderError(err: unknown, isTimeout?: boolean) {
         if (typeof errData.message === "string") providerMessage = errData.message;
       }
     }
+
+    if (providerMessage.includes("response_format") || providerMessage.includes("Unknown parameter")) {
+      troubleshooting.unshift(
+        "The image request included an unsupported response_format parameter. This should be removed for gpt-image models."
+      );
+    }
   }
 
   const isTimeoutSignal =

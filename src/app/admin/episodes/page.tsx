@@ -245,7 +245,7 @@ export default async function EpisodesPage() {
           </p>
         </div>
 
-        {/* Character integrity note */}
+        {/* Character note */}
         <div className="flex items-start gap-3 bg-tiki-brown/3 border border-tiki-brown/8 rounded-2xl px-5 py-3">
           <span className="text-sm flex-shrink-0">🍍</span>
           <p className="text-xs text-tiki-brown/55 leading-relaxed">
