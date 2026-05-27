@@ -17,13 +17,10 @@ export default function Nav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <Link
           href="/"
-          className="flex items-center gap-2 font-bold text-xl text-tiki-brown hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <span className="text-2xl">🍍</span>
-          <span>
-            Fruit Baby{" "}
-            <span className="text-ube-purple">World</span>
-          </span>
+          <span className="brand-title-small-logo">Pineapple Baby</span>
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">

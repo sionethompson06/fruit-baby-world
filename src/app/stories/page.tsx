@@ -12,9 +12,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Fruit Baby Stories | Fruit Baby World",
+  title: "Pineapple Baby Stories | Pineapple Baby",
   description:
-    "Browse illustrated picture stories, audio adventures, and videos — all with heart-warming lessons for little learners.",
+    "Browse illustrated picture stories, audio adventures, and videos — all with heart-warming lessons from Pineapple Baby and friends.",
 };
 
 // ─── Coming Soon placeholder data ─────────────────────────────────────────────
@@ -162,11 +162,11 @@ export default function StoriesPage() {
       <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
           <div className="text-5xl" role="img" aria-label="stories">📖</div>
-          <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown leading-tight">
-            Fruit Baby Stories
+          <h1 className="brand-title-universe text-4xl sm:text-5xl leading-tight">
+            Pineapple Baby Stories
           </h1>
           <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-lg">
-            Illustrated adventures with heart-warming lessons — read, listen, and watch your favorite Fruit Baby characters come to life.
+            Illustrated adventures with heart-warming lessons — read, listen, and watch your favorite Pineapple Baby characters come to life.
           </p>
         </div>
       </section>
@@ -243,7 +243,7 @@ export default function StoriesPage() {
             <p className="text-5xl">🌺</p>
             <p className="text-base font-black text-tiki-brown">Coming Soon</p>
             <p className="text-sm text-tiki-brown/55 leading-relaxed max-w-md mx-auto">
-              Public Fruit Baby stories are being prepared. Check back soon!
+              Public Pineapple Baby stories are being prepared. Check back soon!
             </p>
           </div>
         )}

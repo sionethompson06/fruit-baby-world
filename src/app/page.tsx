@@ -15,9 +15,9 @@ import {
 import PineappleBabyHeroModelLoader from "@/components/PineappleBabyHeroModelLoader";
 
 export const metadata: Metadata = {
-  title: "Fruit Baby World — Pineapple Baby &amp; Friends",
+  title: "Pineapple Baby and the Fruit Baby Universe",
   description:
-    "Meet Pineapple Baby and friends! Read colorful storybooks, listen along with narration, and watch playful Fruit Baby cartoons — sweet stories with big heart.",
+    "Meet Pineapple Baby and friends! Read colorful storybooks, listen along with narration, and watch playful Pineapple Baby adventures — sweet stories with big heart.",
 };
 
 export const dynamic = "force-dynamic";
@@ -107,23 +107,20 @@ export default function HomePage() {
           <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-5 flex-1 min-w-0">
 
             <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm text-tiki-brown text-xs font-black px-5 py-2 rounded-full border border-pineapple-yellow/60 shadow-md uppercase tracking-widest">
-              ✨ Welcome to Fruit Baby World™
+              🍍 Pineapple Baby universe
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.04]">
-              <span className="text-tiki-brown">Welcome to</span>
-              <br className="hidden sm:block" />
-              <span className="text-ube-purple"> Pineapple Baby </span>
-              <span className="text-tiki-brown">World</span>
+            <h1 className="brand-title-pineapple text-4xl sm:text-5xl lg:text-6xl">
+              Pineapple Baby and the Fruit Baby Universe
             </h1>
 
             <p className="text-lg sm:text-xl font-bold text-tiki-brown/80 leading-snug max-w-lg">
-              {showcase.hero.subheadline || "Big heart. Bright adventures. Sweet stories."}
+              {showcase.hero.subheadline || "Big heart. Bright adventures. Sweet stories with Pineapple Baby and friends."}
             </p>
 
             <p className="text-base text-tiki-brown/62 leading-relaxed max-w-md">
               {showcase.hero.supportingCopy ||
-                "Read colorful storybooks, listen along with narration, and watch playful Fruit Baby cartoons."}
+                "Read colorful storybooks, listen along with narration, and watch playful Pineapple Baby adventures."}
             </p>
 
             {/* Friend chip row */}
@@ -209,7 +206,7 @@ export default function HomePage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={pbHeroImage}
-                    alt="Pineapple Baby — star of Fruit Baby World"
+                    alt="Pineapple Baby — star of Pineapple Baby and the Fruit Baby Universe"
                     className="w-full h-full object-contain object-bottom"
                   />
                 ) : (
@@ -379,7 +376,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 bg-ube-purple/8 text-ube-purple text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest">
                 📚 Available Now
               </div>
-              <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">
+              <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
                 Featured Pineapple Baby Storybooks
               </h2>
               <p className="text-tiki-brown/58 text-sm mt-2 max-w-md leading-relaxed">
@@ -484,10 +481,10 @@ export default function HomePage() {
                 <div className="inline-flex items-center gap-2 bg-pineapple-yellow/40 text-tiki-brown text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-pineapple-yellow/60">
                   ⭐ The Star of the Show
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">Meet Pineapple Baby</h2>
+                <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">Meet Pineapple Baby</h2>
               </div>
               <p className="text-base text-tiki-brown/72 leading-relaxed max-w-lg">
-                Pineapple Baby is the bright-hearted hero of Fruit Baby World — curious, kind, brave, and always ready for a sweet adventure.
+                Pineapple Baby is the bright-hearted hero of the Fruit Baby Universe — curious, kind, brave, and always ready for a sweet adventure.
               </p>
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                 {["Kind", "Brave", "Curious", "Big-Hearted"].map((trait) => (
@@ -542,7 +539,7 @@ export default function HomePage() {
                 <div className="inline-flex items-center gap-2 bg-warm-coral/18 text-warm-coral/90 text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-warm-coral/30">
                   ⚡ The Mischief-Maker
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown leading-tight">
+                <h2 className="brand-title-universe text-3xl sm:text-4xl font-black leading-tight">
                   {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
                 </h2>
               </div>
@@ -575,7 +572,7 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 bg-pineapple-yellow/25 text-tiki-brown text-xs font-black px-4 py-1.5 rounded-full mb-4 uppercase tracking-widest border border-pineapple-yellow/40">
               🌍 The Universe
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-tiki-brown mb-3 leading-tight">
+            <h2 className="brand-title-universe text-3xl sm:text-4xl font-black mb-3 leading-tight">
               Explore Pineapple Baby&apos;s World
             </h2>
             <p className="text-tiki-brown/58 text-base max-w-lg mx-auto leading-relaxed">
@@ -677,7 +674,7 @@ export default function HomePage() {
               Your Fruit Baby Adventure Starts Here
             </h2>
             <p className="text-tiki-brown/60 text-base leading-relaxed max-w-lg mx-auto">
-              Meet the characters, read the storybooks, and discover what&apos;s growing in the Fruit Baby World universe.
+              Meet the characters, read the storybooks, and discover what&apos;s growing in the Pineapple Baby and the Fruit Baby Universe.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 flex-wrap justify-center">

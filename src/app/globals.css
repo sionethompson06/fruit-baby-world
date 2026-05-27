@@ -42,3 +42,51 @@ body {
 .animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
 }
+
+.brand-title-pineapple {
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: #ffca4f;
+  background: linear-gradient(135deg, #ffde5e 0%, #ffcf4d 42%, #ffe8b3 72%, #ffca4f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 1px #5c371a;
+  text-shadow: 0 2px 0 rgba(92, 58, 26, 0.85), 0 10px 18px rgba(92, 58, 26, 0.18), 0 0 2px rgba(255, 236, 163, 0.75);
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.brand-title-universe {
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #633f26;
+  background: linear-gradient(135deg, #ffe7c7 0%, #ffd8b8 42%, #ffbccf 80%, #ffdfb8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 3px rgba(111, 60, 25, 0.35), 0 8px 14px rgba(111, 60, 25, 0.1);
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.brand-title-soft {
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #6b4329;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 8px rgba(92, 58, 26, 0.08);
+  display: inline-block;
+}
+
+.brand-title-small-logo {
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #8B5A2B;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+}

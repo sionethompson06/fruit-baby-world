@@ -51,7 +51,7 @@ export async function generateMetadata({
   const title = str(raw.title) || slug;
   const description = str(raw.shortDescription) || str(raw.episodeSummary);
   return {
-    title: `${title} | Fruit Baby World Stories`,
+    title: `${title} | Pineapple Baby Stories`,
     ...(description ? { description } : {}),
   };
 }
@@ -1029,7 +1029,7 @@ export default async function StoryDetailPage({
           )}
           {!shortDesc && featuredChars.length === 0 && (
             <p className="text-sm text-tiki-brown/55 leading-relaxed">
-              A Fruit Baby World story for young readers.
+              A Pineapple Baby story for young readers.
             </p>
           )}
         </PublicSection>

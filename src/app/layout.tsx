@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fruit Baby World",
+  title: "Pineapple Baby",
   description:
-    "A playful world of fruit friends, animated stories, and collectible character adventures.",
+    "A playful world of Pineapple Baby, storybook friends, animated stories, and collectible character adventures.",
 };
 
 export default function RootLayout({
@@ -31,7 +31,7 @@ export default function RootLayout({
         <Nav />
         <main className="flex-1">{children}</main>
         <footer className="bg-coconut-cream border-t border-pineapple-yellow/30 py-6 text-center text-sm text-tiki-brown/70">
-          © {new Date().getFullYear()} Fruit Baby World™. All rights reserved.
+          © {new Date().getFullYear()} Pineapple Baby™. All rights reserved.
         </footer>
       </body>
     </html>

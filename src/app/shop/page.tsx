@@ -5,9 +5,9 @@ import { buildPublicProductCards } from "@/lib/publicProductConcepts";
 import { getProductConceptCategoryLabel } from "@/lib/productConcepts";
 
 export const metadata: Metadata = {
-  title: "Fruit Baby Collectibles & Story Goods | Fruit Baby World",
+  title: "Pineapple Baby Collectibles & Story Goods | Pineapple Baby",
   description:
-    "Plush friends, storybooks, classroom materials, and collectibles are being planned for the Fruit Baby universe. Coming soon — no checkout yet.",
+    "Plush friends, storybooks, classroom materials, and collectibles are being planned for the Pineapple Baby universe. Coming soon — no checkout yet.",
 };
 
 export const dynamic = "force-dynamic";
@@ -55,12 +55,12 @@ export default function ShopPage() {
       <section className="bg-gradient-to-b from-ube-purple/15 via-bg-cream to-bg-cream py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <div className="text-5xl mb-4" role="img" aria-label="collectibles">🛍️</div>
-          <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown mb-4 leading-tight">
-            Fruit Baby Collectibles &amp; Story Goods
+          <h1 className="brand-title-universe text-4xl sm:text-5xl text-tiki-brown mb-4 leading-tight">
+            Pineapple Baby Collectibles &amp; Story Goods
           </h1>
           <p className="text-tiki-brown/70 text-lg leading-relaxed mb-6">
             Plush friends, storybooks, classroom materials, and collectibles are
-            being planned for the Fruit Baby universe.
+            being planned for the Pineapple Baby universe.
           </p>
           <div className="inline-flex items-center gap-2 bg-pineapple-yellow/30 border border-pineapple-yellow/50 rounded-full px-5 py-2.5">
             <span className="text-base">🎨</span>

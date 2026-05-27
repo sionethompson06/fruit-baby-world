@@ -27,9 +27,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const character = getPublicCharacterBySlugFromDisk(slug);
-  if (!character) return { title: "Not Found | Fruit Baby World" };
+  if (!character) return { title: "Not Found | Pineapple Baby" };
   return {
-    title: `${character.name} | Fruit Baby World`,
+    title: `${character.name} | Pineapple Baby`,
     description: character.tagline || character.shortDescription,
   };
 }
@@ -149,7 +149,7 @@ export default async function CharacterPage({
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 bg-white/80 text-tiki-brown text-xs font-bold px-3 py-1 rounded-full w-fit mx-auto sm:mx-0 border border-tiki-brown/15">
-                  🌟 Fruit Baby Universe
+                  🌟 Pineapple Baby Universe
                 </span>
               )}
 

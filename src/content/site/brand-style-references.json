@@ -1,0 +1,14 @@
+{
+  "titleReferences": [
+    {
+      "name": "Fruit Baby Universe title reference",
+      "path": "/brand-references/fruit-baby-universe-title-reference.png",
+      "usage": "Visual reference for playful supporting title style. Do not extract fonts."
+    },
+    {
+      "name": "Pineapple Baby hero title reference",
+      "path": "/brand-references/pineapple-baby-title-reference.png",
+      "usage": "Visual reference for large golden hero title style. Do not extract fonts."
+    }
+  ]
+}
