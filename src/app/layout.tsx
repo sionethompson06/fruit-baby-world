@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Bubblegum_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Bubblegum_Sans, Margarine } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 
@@ -20,6 +20,13 @@ const bubblegumSans = Bubblegum_Sans({
   display: "swap",
 });
 
+const margarine = Margarine({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-margarine",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Pineapple Baby",
   description:
@@ -32,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${bubblegumSans.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${bubblegumSans.variable} ${margarine.variable} h-full`}
     >
       <body className="min-h-full flex flex-col antialiased">
         <Nav />

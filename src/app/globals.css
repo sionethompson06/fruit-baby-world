@@ -52,29 +52,38 @@ body {
   --pb-cream: #fff2c6;
   --pb-pink: #ff8fb3;
   --pb-green: #79c943;
+
+  /* Fruit Baby Universe palette */
+  --fbu-brown: #5a3218;
+  --fbu-dark-brown: #3a1f0e;
+  --fbu-pink: #ff7f9f;
+  --fbu-rose: #e85d78;
+  --fbu-cream: #fff2bd;
+  --fbu-yellow: #ffd94d;
+  --fbu-gold: #f5a623;
+  --fbu-green: #78bd43;
+  --fbu-leaf: #5fa832;
+  --fbu-shadow: rgba(90, 50, 24, 0.35);
 }
 
 /* CRISP LOGO-STYLE TITLES */
 
 .brand-title-pineapple,
 .brand-title-pineapple-logo {
-  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-family: var(--font-margarine), var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
   font-weight: 400;
-  letter-spacing: -0.07em;
-  line-height: 0.98;
+  letter-spacing: 0.01em;
+  line-height: 1.0;
   color: #ffd94d;
-  background: linear-gradient(135deg, #fee66c 0%, #ffd84d 42%, #ffce3c 68%, #ffdc6e 100%);
+  background: linear-gradient(135deg, #fee878 0%, #ffd84d 45%, #f4a928 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 2.5px var(--pb-dark-brown);
+  -webkit-text-stroke: 2.5px var(--fbu-dark-brown);
   text-shadow:
-    1px 1px 0 rgba(63, 36, 16, 0.95),
-    -1px 1px 0 rgba(63, 36, 16, 0.95),
-    1px -1px 0 rgba(63, 36, 16, 0.95),
-    -1px -1px 0 rgba(63, 36, 16, 0.95),
-    0 6px 0 rgba(90, 53, 24, 0.24),
-    0 12px 10px rgba(63, 36, 16, 0.16);
+    0 2px 0 rgba(58, 31, 14, 0.92),
+    0 4px 0 rgba(90, 50, 24, 0.22),
+    0 8px 10px rgba(58, 31, 14, 0.14);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -83,19 +92,19 @@ body {
 
 .brand-title-universe,
 .brand-title-universe-logo {
-  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-family: var(--font-margarine), var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
   font-weight: 400;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.01em;
   line-height: 1.05;
-  background: linear-gradient(135deg, #fff5d4 0%, #ffe8c0 35%, #ffd1d6 70%, #ffe4b8 100%);
+  background: linear-gradient(135deg, #fff8cc 0%, #ffe88c 38%, #ffd84d 68%, #ffcf60 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.8px var(--pb-dark-brown);
+  -webkit-text-stroke: 2px var(--fbu-dark-brown);
   text-shadow:
-    0 2px 0 rgba(63, 36, 16, 0.45),
-    0 4px 0 rgba(90, 53, 24, 0.20),
-    0 8px 8px rgba(63, 36, 16, 0.12);
+    0 2px 0 rgba(58, 31, 14, 0.85),
+    0 4px 0 rgba(90, 50, 24, 0.20),
+    0 8px 8px rgba(58, 31, 14, 0.12);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -103,19 +112,19 @@ body {
 }
 
 .brand-title-section-logo {
-  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-family: var(--font-margarine), var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   line-height: 1.1;
-  background: linear-gradient(135deg, #fff4d8 0%, #ffe7cd 40%, #ffd5e0 80%, #ffecd3 100%);
+  background: linear-gradient(135deg, #fff4d8 0%, #ffe7a8 40%, #ffd4e0 80%, #ffecd3 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.6px var(--pb-dark-brown);
+  -webkit-text-stroke: 1.8px var(--fbu-dark-brown);
   text-shadow:
-    0 1px 0 rgba(63, 36, 16, 0.45),
-    0 3px 0 rgba(90, 53, 24, 0.14),
-    0 6px 6px rgba(63, 36, 16, 0.10);
+    0 2px 0 rgba(58, 31, 14, 0.80),
+    0 4px 0 rgba(90, 50, 24, 0.16),
+    0 6px 6px rgba(58, 31, 14, 0.10);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -132,17 +141,79 @@ body {
 }
 
 .brand-title-small-logo {
-  font-family: var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-  background: linear-gradient(135deg, #ffe84d 0%, #ffd84d 100%);
+  font-family: var(--font-margarine), var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-weight: 400;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, #fee878 0%, #ffd84d 55%, #f4a928 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.2px var(--pb-dark-brown);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  -webkit-text-stroke: 1.4px var(--fbu-dark-brown);
+  text-shadow:
+    0 1px 0 rgba(58, 31, 14, 0.85),
+    0 2px 0 rgba(90, 50, 24, 0.18);
   display: inline-block;
+}
+
+/* MULTI-COLOR HERO TITLE WORDS */
+
+/* Wrapper — sets font stack only, no fill */
+.brand-hero-title {
+  font-family: var(--font-margarine), var(--font-bubblegum-sans), "Bubblegum Sans", "Comic Sans MS", cursive;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.08;
+  display: block;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+/* Shared word-span base */
+.brand-word-gold,
+.brand-word-pink,
+.brand-word-cream {
+  display: inline;
+  padding: 0.06em 0;
+  -webkit-text-stroke: 2.5px var(--fbu-dark-brown);
+  text-shadow:
+    0 2px 0 rgba(58, 31, 14, 0.92),
+    0 4px 0 rgba(90, 50, 24, 0.22),
+    0 8px 10px rgba(58, 31, 14, 0.12);
+}
+
+/* Gold/yellow — "Pineapple Baby" */
+.brand-word-gold {
+  background: linear-gradient(160deg, #fee878 0%, #ffd84d 48%, #f4a928 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Pink/rose — "Fruit" */
+.brand-word-pink {
+  background: linear-gradient(160deg, #ffb8cc 0%, #ff7f9f 48%, #e85d78 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Cream/yellow — "Baby Universe" */
+.brand-word-cream {
+  background: linear-gradient(160deg, #fff8cc 0%, #ffe88c 38%, #ffd84d 72%, #f5c832 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Connector words — "and the" */
+.brand-word-connector {
+  display: inline;
+  color: var(--fbu-brown);
+  -webkit-text-fill-color: var(--fbu-brown);
+  opacity: 0.52;
+  font-size: 0.70em;
+  letter-spacing: 0.03em;
 }
 
 /* DECORATIVE CHARM ELEMENTS */
@@ -162,16 +233,16 @@ body {
 }
 
 .title-charm-star {
-  color: #ffb300;
+  color: var(--fbu-gold);
   animation: charm-twinkle 3s ease-in-out infinite;
 }
 
 .title-charm-heart {
-  color: #ff8fb3;
+  color: var(--fbu-pink);
 }
 
 .title-charm-diamond {
-  color: #ffd84d;
+  color: var(--fbu-yellow);
   opacity: 0.75;
 }
 
@@ -179,6 +250,11 @@ body {
   color: #ffea00;
   animation: charm-twinkle 2.5s ease-in-out infinite;
   animation-delay: 0.3s;
+}
+
+.title-charm-green {
+  color: var(--fbu-green);
+  opacity: 0.80;
 }
 
 @keyframes charm-twinkle {
