@@ -11,13 +11,15 @@ export default function CharactersPage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-16 px-4 text-center">
+      <section className="characters-coconut-grove-hero py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto">
-          <div className="text-5xl mb-4">🍍🥭🥝🫐🥥</div>
-          <div className="flex items-center justify-center sm:justify-center gap-2 flex-wrap mb-4">
+          <div className="flex items-center justify-center gap-2 flex-wrap mb-4">
             <span className="title-charm title-charm-star" aria-hidden="true">★</span>
-            <h1 className="brand-title-universe-logo text-4xl sm:text-5xl leading-tight">
-              Meet the Pineapple Baby Characters
+            <h1 className="brand-bubblegum-title brand-bubblegum-title--hero text-4xl sm:text-5xl">
+              <span className="brand-word-cream">Meet the </span>
+              <span className="brand-word-pineapple">Pineapple </span>
+              <span className="brand-word-baby">Baby </span>
+              <span className="brand-word-peach">Characters</span>
             </h1>
             <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
           </div>
@@ -25,33 +27,6 @@ export default function CharactersPage() {
             Discover the sweet friends, playful personalities, and mischievous
             rivals who bring Pineapple Baby&apos;s universe to life.
           </p>
-        </div>
-      </section>
-
-      {/* Value strip */}
-      <section className="bg-white border-y border-pineapple-yellow/30 py-5 px-4">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5 text-center">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-2xl">📚</span>
-            <p className="text-xs font-bold text-tiki-brown uppercase tracking-wide">For Educators</p>
-            <p className="text-xs text-tiki-brown/60 leading-relaxed">
-              Each character teaches real values — kindness, confidence, and creativity.
-            </p>
-          </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-2xl">🧸</span>
-            <p className="text-xs font-bold text-tiki-brown uppercase tracking-wide">For Collectors</p>
-            <p className="text-xs text-tiki-brown/60 leading-relaxed">
-              Designed for plushies, art prints, enamel pins, and limited collectibles.
-            </p>
-          </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="text-2xl">🎬</span>
-            <p className="text-xs font-bold text-tiki-brown uppercase tracking-wide">Story-First Design</p>
-            <p className="text-xs text-tiki-brown/60 leading-relaxed">
-              Built for animated adventures, picture books, and kids&apos; content creators.
-            </p>
-          </div>
         </div>
       </section>
 
