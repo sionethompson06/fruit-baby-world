@@ -805,7 +805,7 @@ export default async function StoryDetailPage({
               <span className="text-5xl select-none" role="img" aria-label="story">📖</span>
             )}
 
-            <h1 className="text-3xl sm:text-5xl font-black text-tiki-brown leading-tight">
+            <h1 className="brand-title-universe-logo text-3xl sm:text-5xl leading-tight">
               {title}
             </h1>
 

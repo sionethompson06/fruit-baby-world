@@ -100,11 +100,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 2.5px var(--fbu-dark-brown);
+  -webkit-text-stroke: 2px var(--fbu-outline-gold);
   text-shadow:
-    0 2px 0 rgba(58, 31, 14, 0.92),
-    0 4px 0 rgba(90, 50, 24, 0.22),
-    0 8px 10px rgba(58, 31, 14, 0.14);
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.20),
+    0 6px 8px rgba(124, 67, 10, 0.10);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -141,11 +141,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.6px var(--fbu-outline-soft);
+  -webkit-text-stroke: 1.6px var(--fbu-outline-gold);
   text-shadow:
-    0 2px 0 rgba(90, 50, 24, 0.55),
-    0 3px 0 rgba(90, 50, 24, 0.14),
-    0 5px 5px rgba(90, 50, 24, 0.08);
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.14),
+    0 5px 5px rgba(124, 67, 10, 0.07);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -190,17 +190,12 @@ body {
   word-break: break-word;
 }
 
-/* Shared word-span base */
+/* Shared word-span base (legacy gradient classes) */
 .brand-word-gold,
 .brand-word-pink,
 .brand-word-cream {
   display: inline;
   padding: 0.06em 0;
-  -webkit-text-stroke: 2.5px var(--fbu-dark-brown);
-  text-shadow:
-    0 2px 0 rgba(58, 31, 14, 0.92),
-    0 4px 0 rgba(90, 50, 24, 0.22),
-    0 8px 10px rgba(58, 31, 14, 0.12);
 }
 
 /* Gold/yellow — "Pineapple Baby" */
@@ -209,6 +204,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-stroke: 2px var(--fbu-outline-gold);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.20),
+    0 6px 8px rgba(124, 67, 10, 0.10);
 }
 
 /* Pink/rose — "Fruit" */
@@ -217,6 +217,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-stroke: 2px var(--fbu-outline-pink);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-pink-dark),
+    0 3px 0 rgba(149, 48, 80, 0.20),
+    0 6px 8px rgba(149, 48, 80, 0.10);
 }
 
 /* Cream/yellow — "Baby Universe" */
@@ -225,6 +230,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-stroke: 2px var(--fbu-outline-gold);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.20),
+    0 6px 8px rgba(124, 67, 10, 0.10);
 }
 
 /* Connector words — "and the" */
@@ -237,44 +247,59 @@ body {
   letter-spacing: 0.03em;
 }
 
-/* ─── FBU WORD SPANS — solid fill + brown outline + crisp sticker shadow ─── */
-/* Solid color (not background-clip) so fill stays vivid across all browsers   */
+/* ─── FBU WORD SPANS — solid fill + tone-matched outline + soft shadow ─── */
+/* Solid color (not background-clip) so fill stays vivid across all browsers  */
 
 .fbu-word-pineapple,
 .fbu-word-fruit,
 .fbu-word-baby,
 .fbu-word-universe {
   display: inline;
-  -webkit-text-stroke: 2.5px var(--fbu-outline);
-  text-shadow:
-    0 2px 0 var(--fbu-outline-dark),
-    0 4px 0 rgba(47, 22, 8, 0.30),
-    0 6px 8px rgba(47, 22, 8, 0.15);
   padding: 0.05em 0;
 }
 
-/* "Pineapple Baby" — warm golden yellow */
+/* "Pineapple Baby" — warm golden yellow, amber outline */
 .fbu-word-pineapple {
   color: #ffd84d;
   -webkit-text-fill-color: #ffd84d;
+  -webkit-text-stroke: 2px var(--fbu-outline-gold);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.22),
+    0 5px 7px rgba(124, 67, 10, 0.10);
 }
 
-/* "Fruit" — soft pink/coral */
+/* "Fruit" — soft pink/coral, rose outline */
 .fbu-word-fruit {
   color: var(--fbu-fruit-pink);
   -webkit-text-fill-color: var(--fbu-fruit-pink);
+  -webkit-text-stroke: 2px var(--fbu-outline-pink);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-pink-dark),
+    0 3px 0 rgba(149, 48, 80, 0.22),
+    0 5px 7px rgba(149, 48, 80, 0.10);
 }
 
-/* "Baby" — warm cream yellow */
+/* "Baby" — warm cream yellow, amber outline */
 .fbu-word-baby {
   color: var(--fbu-baby-yellow);
   -webkit-text-fill-color: var(--fbu-baby-yellow);
+  -webkit-text-stroke: 2px var(--fbu-outline-gold);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.22),
+    0 5px 7px rgba(124, 67, 10, 0.10);
 }
 
-/* "Universe" — golden yellow */
+/* "Universe" — golden yellow, amber outline */
 .fbu-word-universe {
   color: var(--fbu-universe-gold);
   -webkit-text-fill-color: var(--fbu-universe-gold);
+  -webkit-text-stroke: 2px var(--fbu-outline-gold);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.22),
+    0 5px 7px rgba(124, 67, 10, 0.10);
 }
 
 /* Connector / soft words — "and the", etc. */
@@ -287,25 +312,17 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* SECTION-LEVEL OVERRIDES — tone-matched outlines at text-3xl/4xl */
-/* Applied when fbu-word-* spans live inside an .fbu-section heading  */
+/* SECTION-LEVEL OVERRIDES — lighter stroke at text-3xl/4xl */
+/* Colors are already tone-matched in the base; this just reduces stroke width */
 
 .fbu-section .fbu-word-pineapple,
 .fbu-section .fbu-word-baby,
 .fbu-section .fbu-word-universe {
-  -webkit-text-stroke: 1.8px var(--fbu-outline-gold);
-  text-shadow:
-    0 2px 0 var(--fbu-outline-gold-dark),
-    0 3px 0 rgba(124, 67, 10, 0.22),
-    0 5px 6px rgba(124, 67, 10, 0.10);
+  -webkit-text-stroke: 1.6px var(--fbu-outline-gold);
 }
 
 .fbu-section .fbu-word-fruit {
-  -webkit-text-stroke: 1.8px var(--fbu-outline-pink);
-  text-shadow:
-    0 2px 0 var(--fbu-outline-pink-dark),
-    0 3px 0 rgba(149, 48, 80, 0.22),
-    0 5px 6px rgba(149, 48, 80, 0.10);
+  -webkit-text-stroke: 1.6px var(--fbu-outline-pink);
 }
 
 /* DECORATIVE CHARM ELEMENTS */

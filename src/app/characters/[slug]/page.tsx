@@ -153,7 +153,7 @@ export default async function CharacterPage({
                 </span>
               )}
 
-              <h1 className="text-4xl sm:text-5xl font-black text-tiki-brown leading-tight">
+              <h1 className="brand-title-universe-logo text-4xl sm:text-5xl leading-tight">
                 {character.name}
               </h1>
 
