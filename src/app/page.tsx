@@ -399,7 +399,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
-                <h2 className="brand-hero-title text-3xl sm:text-4xl leading-tight">
+                <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
                   Featured{" "}
                   <span className="fbu-word-pineapple">Pineapple Baby</span>{" "}
                   <span className="fbu-word-universe">Storybooks</span>
@@ -510,7 +510,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
                   <span className="title-charm title-charm-star" aria-hidden="true">★</span>
-                  <h2 className="brand-hero-title text-3xl sm:text-4xl leading-tight">
+                  <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
                     Meet{" "}<span className="fbu-word-pineapple">Pineapple Baby</span>
                   </h2>
                   <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
@@ -611,7 +611,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-3 justify-center flex-wrap mb-3">
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
-              <h2 className="brand-hero-title text-3xl sm:text-4xl leading-tight">
+              <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
                 Explore{" "}
                 <span className="fbu-word-pineapple">Pineapple Baby&apos;s</span>{" "}
                 <span className="fbu-word-universe">World</span>
@@ -651,7 +651,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
               <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
-              <h2 className="brand-hero-title text-3xl sm:text-4xl leading-tight">
+              <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
                 <span className="fbu-word-fruit">Read,</span>{" "}
                 <span className="fbu-word-baby">Listen</span>{" "}
                 &amp;{" "}
@@ -722,7 +722,7 @@ export default function HomePage() {
           <div>
             <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
-              <h2 className="brand-hero-title text-3xl sm:text-4xl leading-tight">
+              <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
                 Your{" "}
                 <span className="fbu-word-fruit">Fruit</span>{" "}
                 <span className="fbu-word-baby">Baby</span>{" "}

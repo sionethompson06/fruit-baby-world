@@ -68,6 +68,14 @@ body {
   /* FBU title palette — word-level fill + outline */
   --fbu-outline: #4a260f;
   --fbu-outline-dark: #2f1608;
+  /* Tone-matched section outlines (softer, 21A.4G) */
+  --fbu-outline-hero: #4a260f;
+  --fbu-outline-gold: #a85e10;
+  --fbu-outline-gold-dark: #7c430a;
+  --fbu-outline-pink: #c04465;
+  --fbu-outline-pink-dark: #953050;
+  --fbu-outline-cream: #b87c1a;
+  --fbu-outline-soft: #7a4a22;
   --fbu-fruit-pink: #ff7c99;
   --fbu-fruit-coral: #ff9a8b;
   --fbu-baby-cream: #fff1b8;
@@ -113,11 +121,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 2px var(--fbu-dark-brown);
+  -webkit-text-stroke: 1.8px var(--fbu-outline-gold);
   text-shadow:
-    0 2px 0 rgba(58, 31, 14, 0.85),
-    0 4px 0 rgba(90, 50, 24, 0.20),
-    0 8px 8px rgba(58, 31, 14, 0.12);
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.20),
+    0 6px 7px rgba(124, 67, 10, 0.10);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -133,11 +141,11 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.8px var(--fbu-dark-brown);
+  -webkit-text-stroke: 1.6px var(--fbu-outline-soft);
   text-shadow:
-    0 2px 0 rgba(58, 31, 14, 0.80),
-    0 4px 0 rgba(90, 50, 24, 0.16),
-    0 6px 6px rgba(58, 31, 14, 0.10);
+    0 2px 0 rgba(90, 50, 24, 0.55),
+    0 3px 0 rgba(90, 50, 24, 0.14),
+    0 5px 5px rgba(90, 50, 24, 0.08);
   display: inline-block;
   max-width: 100%;
   word-break: break-word;
@@ -162,10 +170,10 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  -webkit-text-stroke: 1.4px var(--fbu-dark-brown);
+  -webkit-text-stroke: 1.3px var(--fbu-outline-gold);
   text-shadow:
-    0 1px 0 rgba(58, 31, 14, 0.85),
-    0 2px 0 rgba(90, 50, 24, 0.18);
+    0 1px 0 var(--fbu-outline-gold-dark),
+    0 2px 0 rgba(124, 67, 10, 0.16);
   display: inline-block;
 }
 
@@ -277,6 +285,27 @@ body {
   opacity: 0.50;
   font-size: 0.72em;
   letter-spacing: 0.02em;
+}
+
+/* SECTION-LEVEL OVERRIDES — tone-matched outlines at text-3xl/4xl */
+/* Applied when fbu-word-* spans live inside an .fbu-section heading  */
+
+.fbu-section .fbu-word-pineapple,
+.fbu-section .fbu-word-baby,
+.fbu-section .fbu-word-universe {
+  -webkit-text-stroke: 1.8px var(--fbu-outline-gold);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-gold-dark),
+    0 3px 0 rgba(124, 67, 10, 0.22),
+    0 5px 6px rgba(124, 67, 10, 0.10);
+}
+
+.fbu-section .fbu-word-fruit {
+  -webkit-text-stroke: 1.8px var(--fbu-outline-pink);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-pink-dark),
+    0 3px 0 rgba(149, 48, 80, 0.22),
+    0 5px 6px rgba(149, 48, 80, 0.10);
 }
 
 /* DECORATIVE CHARM ELEMENTS */
