@@ -68,10 +68,16 @@ export async function POST(request: Request): Promise<Response> {
   }
   const episodeSlug = body.episodeSlug as string;
 
-  if (!Array.isArray(body.orderedIds) || body.orderedIds.length === 0) {
-    return Response.json({ ok: false, status: "validation_error", message: "orderedIds must be a non-empty array of page IDs." } satisfies ReorderResult, { status: 400 });
+  if (!Array.isArray(body.orderedIds)) {
+    return Response.json({ ok: false, status: "validation_error", message: "orderedIds must be an array of page IDs." } satisfies ReorderResult, { status: 400 });
   }
   const orderedIds = (body.orderedIds as unknown[]).filter((id): id is string => typeof id === "string");
+  const archivedIds = Array.isArray(body.archivedIds)
+    ? new Set((body.archivedIds as unknown[]).filter((id): id is string => typeof id === "string"))
+    : new Set<string>();
+  if (orderedIds.length === 0 && archivedIds.size === 0) {
+    return Response.json({ ok: false, status: "validation_error", message: "orderedIds and archivedIds cannot both be empty." } satisfies ReorderResult, { status: 400 });
+  }
 
   const filePath = `src/content/episodes/${episodeSlug}.json`;
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
@@ -140,16 +146,19 @@ export async function POST(request: Request): Promise<Response> {
     }
   });
 
-  // Append any pages not in orderedIds at the end (preserving them)
+  const now = new Date().toISOString();
+
+  // Handle pages not in orderedIds: archive if explicitly removed, otherwise preserve as-is
   const reorderedIds = new Set(orderedIds);
-  let appendIdx = reordered.length + 1;
   for (const p of existingPages) {
-    if (isRecord(p) && typeof p.id === "string" && !reorderedIds.has(p.id)) {
-      reordered.push({ ...p, pageNumber: appendIdx++ });
+    if (!isRecord(p) || typeof p.id !== "string") continue;
+    if (reorderedIds.has(p.id)) continue;
+    if (archivedIds.has(p.id)) {
+      reordered.push({ ...p, status: "archived", visibility: "admin-only", updatedAt: now });
+    } else {
+      reordered.push({ ...p });
     }
   }
-
-  const now = new Date().toISOString();
   const updatedEpisode: Record<string, unknown> = {
     ...episode,
     storybookPages: reordered,
@@ -157,7 +166,9 @@ export async function POST(request: Request): Promise<Response> {
   };
 
   const episodeTitle = typeof episode.title === "string" ? episode.title : episodeSlug;
-  const commitMessage = `Reorder storybook pages: ${episodeTitle}`;
+  const commitMessage = archivedIds.size > 0
+    ? `Reorder storybook pages: ${episodeTitle} (archive ${archivedIds.size})`
+    : `Reorder storybook pages: ${episodeTitle}`;
 
   const fileContent = JSON.stringify(updatedEpisode, null, 2);
   const contentBase64 = Buffer.from(fileContent, "utf-8").toString("base64");
@@ -182,7 +193,7 @@ export async function POST(request: Request): Promise<Response> {
       status: "reordered",
       path: filePath,
       commitMessage,
-      pageCount: reordered.length,
+      pageCount: reordered.filter((p) => isRecord(p) && p.status !== "archived").length,
       htmlUrl: getHtmlUrl(putData),
     } satisfies ReorderResult, { status: 200 });
   } catch {

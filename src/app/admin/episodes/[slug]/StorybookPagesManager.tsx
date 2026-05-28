@@ -827,11 +827,17 @@ function PageList({
   episodeSlug: string;
   initialPages: StorybookPage[];
 }) {
+  // Exclude archived pages from the active order on init
   const [pages, setPages] = useState<StorybookPage[]>(
-    [...initialPages].sort((a, b) => a.pageNumber - b.pageNumber)
+    [...initialPages]
+      .filter((p) => p.status !== "archived")
+      .sort((a, b) => a.pageNumber - b.pageNumber)
   );
+  // Track IDs explicitly removed by the admin — sent as archivedIds to the API
+  const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
   const [reorderState, setReorderState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [savedCounts, setSavedCounts] = useState<{ active: number; archived: number } | null>(null);
 
   function moveUp(idx: number) {
     if (idx === 0) return;
@@ -839,6 +845,7 @@ function PageList({
     [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
     setPages(next.map((p, i) => ({ ...p, pageNumber: i + 1 })));
     setReorderState("idle");
+    setSavedCounts(null);
   }
 
   function moveDown(idx: number) {
@@ -847,25 +854,36 @@ function PageList({
     [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
     setPages(next.map((p, i) => ({ ...p, pageNumber: i + 1 })));
     setReorderState("idle");
+    setSavedCounts(null);
   }
 
   function removePage(idx: number) {
+    const removed = pages[idx];
+    // Track the ID so it gets archived when saved
+    setRemovedIds((prev) => new Set([...prev, removed.id]));
     setPages(
       pages
         .filter((_, i) => i !== idx)
         .map((p, i) => ({ ...p, pageNumber: i + 1 }))
     );
     setReorderState("idle");
+    setSavedCounts(null);
   }
 
   async function saveOrder() {
     setReorderState("saving");
     setErrorMsg("");
+    setSavedCounts(null);
+    const archivedArr = [...removedIds];
     try {
       const res = await fetch("/api/github/reorder-storybook-pages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ episodeSlug, orderedIds: pages.map((p) => p.id) }),
+        body: JSON.stringify({
+          episodeSlug,
+          orderedIds: pages.map((p) => p.id),
+          archivedIds: archivedArr,
+        }),
       });
       const data = await res.json();
       if (!data.ok) {
@@ -873,14 +891,19 @@ function PageList({
         setErrorMsg(data.message ?? "Failed to save order.");
         return;
       }
+      const counts = { active: pages.length, archived: archivedArr.length };
       setReorderState("saved");
+      setSavedCounts(counts);
+      setRemovedIds(new Set()); // cleared — server has persisted the archived state
     } catch {
       setReorderState("error");
       setErrorMsg("Network error while saving order.");
     }
   }
 
-  if (pages.length === 0) {
+  const pendingRemovals = removedIds.size;
+
+  if (pages.length === 0 && pendingRemovals === 0) {
     return (
       <div className="flex items-center justify-center h-20 rounded-2xl bg-tiki-brown/4 border border-tiki-brown/8">
         <p className="text-xs text-tiki-brown/35 font-semibold">No pages added yet</p>
@@ -890,27 +913,48 @@ function PageList({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-2">
-        {pages.map((page, idx) => (
-          <PageThumbnail
-            key={page.id}
-            page={page}
-            onMoveUp={() => moveUp(idx)}
-            onMoveDown={() => moveDown(idx)}
-            onRemove={() => removePage(idx)}
-            isFirst={idx === 0}
-            isLast={idx === pages.length - 1}
-            isSaving={reorderState === "saving"}
-          />
-        ))}
-      </div>
+      {pages.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {pages.map((page, idx) => (
+            <PageThumbnail
+              key={page.id}
+              page={page}
+              onMoveUp={() => moveUp(idx)}
+              onMoveDown={() => moveDown(idx)}
+              onRemove={() => removePage(idx)}
+              isFirst={idx === 0}
+              isLast={idx === pages.length - 1}
+              isSaving={reorderState === "saving"}
+            />
+          ))}
+        </div>
+      )}
+
+      {pages.length === 0 && pendingRemovals > 0 && (
+        <div className="flex items-center justify-center h-16 rounded-2xl bg-warm-coral/5 border border-warm-coral/15">
+          <p className="text-xs text-warm-coral/70 font-semibold">
+            All pages removed — save to archive them.
+          </p>
+        </div>
+      )}
+
+      {pendingRemovals > 0 && (
+        <div className="flex items-center gap-2 bg-warm-coral/8 border border-warm-coral/20 rounded-xl px-3 py-2">
+          <span className="text-xs text-warm-coral/80 font-semibold">
+            {pendingRemovals} page{pendingRemovals !== 1 ? "s" : ""} will be archived on save.
+          </span>
+        </div>
+      )}
 
       {reorderState === "error" && (
         <p className="text-xs text-warm-coral">{errorMsg}</p>
       )}
 
-      {reorderState === "saved" && (
-        <p className="text-xs text-tropical-green font-semibold">Order saved to GitHub.</p>
+      {reorderState === "saved" && savedCounts && (
+        <p className="text-xs text-tropical-green font-semibold">
+          Saved — {savedCounts.active} active page{savedCounts.active !== 1 ? "s" : ""}
+          {savedCounts.archived > 0 ? `, ${savedCounts.archived} archived.` : "."}
+        </p>
       )}
 
       <button
