@@ -81,7 +81,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════════════════════
           A. HERO — Pineapple Baby hero art stage
       ══════════════════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-pineapple-yellow/50 via-pineapple-yellow/18 to-bg-cream pt-10 pb-20 sm:pb-24 px-4">
+      <section className="homepage-pineapple-grove-hero relative overflow-hidden pt-10 pb-20 sm:pb-24 px-4">
 
         {/* Layered ambient glow blobs */}
         <div className="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
