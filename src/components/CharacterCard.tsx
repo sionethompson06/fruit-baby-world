@@ -1,6 +1,20 @@
+import type React from "react";
 import Link from "next/link";
 import type { Character } from "@/lib/content";
 import CharacterImage from "./CharacterImage";
+
+const GLOW_COLORS: Record<string, string> = {
+  "pineapple-baby":    "rgba(255, 216, 77,  0.52)",
+  "ube-baby":          "rgba(142, 92,  247, 0.42)",
+  "mango-baby":        "rgba(255, 155, 50,  0.46)",
+  "kiwi-baby":         "rgba(80,  190, 80,  0.44)",
+  "coconut-baby":      "rgba(110, 210, 190, 0.46)",
+  "strawberry-baby":   "rgba(255, 90,  120, 0.44)",
+  "dragon-fruit-baby": "rgba(255, 40,  170, 0.40)",
+  "tiki":              "rgba(220, 110, 40,  0.44)",
+  "tiki-trouble":      "rgba(220, 110, 40,  0.44)",
+};
+const DEFAULT_GLOW = "rgba(255, 216, 77, 0.36)";
 
 const emojiMap: Record<string, string> = {
   "pineapple-baby": "🍍",
@@ -17,6 +31,7 @@ function getTraitName(trait: string): string {
 
 export default function CharacterCard({ character }: { character: Character }) {
   const emoji = emojiMap[character.slug] ?? "✨";
+  const glowColor = GLOW_COLORS[character.slug] ?? DEFAULT_GLOW;
   const isVillain = character.type === "villain";
   const isNew = character.approvalMode === "draft" && !isVillain;
   const palette = character.visualIdentity.palette ?? [];
@@ -30,10 +45,11 @@ export default function CharacterCard({ character }: { character: Character }) {
   return (
     <Link
       href={`/characters/${character.slug}`}
+      style={{ "--character-glow": glowColor } as React.CSSProperties}
       className="block group focus:outline-none focus-visible:ring-2 focus-visible:ring-pineapple-yellow rounded-3xl"
     >
       <div
-        className={`rounded-3xl overflow-hidden flex flex-col shadow-md transition-all group-hover:shadow-lg group-hover:scale-[1.02] ${
+        className={`character-card rounded-3xl overflow-hidden flex flex-col shadow-md transition-all group-hover:scale-[1.02] ${
           isVillain
             ? "border-2 border-tiki-brown/50 bg-coconut-cream"
             : "border-2 border-white bg-white"

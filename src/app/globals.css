@@ -553,6 +553,18 @@ a:focus-visible {
   background-repeat: no-repeat;
 }
 
+/* Character card — per-character hover glow --------------------------------- */
+/* --character-glow is set as an inline CSS variable on the Link element.      */
+/* box-shadow handles both the drop shadow glow and an inset border ring.      */
+
+.group:hover .character-card,
+.group:focus-within .character-card {
+  box-shadow:
+    0 10px 40px var(--character-glow, rgba(255, 216, 77, 0.40)),
+    0  4px 16px var(--character-glow, rgba(255, 216, 77, 0.24)),
+    inset 0 0 0 2px var(--character-glow, rgba(255, 216, 77, 0.50));
+}
+
 .brand-logo-link {
   position: relative;
 }

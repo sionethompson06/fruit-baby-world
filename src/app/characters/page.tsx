@@ -5,7 +5,13 @@ export const dynamic = "force-dynamic";
 
 export default function CharactersPage() {
   const allCharacters = getPublicNormalizedCharacterProfiles();
-  const fruitBabies = allCharacters.filter((c) => c.type === "fruit-baby");
+  const fruitBabies = allCharacters
+    .filter((c) => c.type === "fruit-baby")
+    .sort((a, b) => {
+      if (a.slug === "pineapple-baby") return -1;
+      if (b.slug === "pineapple-baby") return 1;
+      return 0;
+    });
   const rivals = allCharacters.filter((c) => c.type === "villain");
 
   return (
