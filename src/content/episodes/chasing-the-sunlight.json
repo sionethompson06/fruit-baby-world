@@ -426,11 +426,11 @@
       "pathname": "episodes/chasing-the-sunlight/storybook-pages/page-1779828277402.png",
       "mimeType": "image/png",
       "altText": "Spread 1",
-      "status": "approved",
-      "visibility": "public",
+      "status": "archived",
+      "visibility": "admin-only",
       "sourceType": "admin-uploaded",
       "createdAt": "2026-05-26T20:44:38.769Z",
-      "updatedAt": "2026-05-27T03:44:46.672Z",
+      "updatedAt": "2026-05-28T22:20:09.122Z",
       "pageRole": "story-spread",
       "layoutType": "two-page-spread",
       "spreadNumber": 1,
@@ -448,5 +448,5 @@
     "storebookPublishedAt": "2026-05-27T03:44:46.672Z"
   },
   "createdAt": "2026-05-26T09:45:26.706Z",
-  "updatedAt": "2026-05-28T22:01:41.704Z"
+  "updatedAt": "2026-05-28T22:20:09.122Z"
 }
