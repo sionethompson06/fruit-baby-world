@@ -46,19 +46,19 @@ function friendlyPageLabel(
   spreadPages: StorybookReaderPage[]
 ): string {
   switch (page.pageRole) {
-    case "front-cover":         return "Cover";
-    case "title-page":          return "Title Page";
-    case "publication-page":    return "Publication Page";
-    case "acknowledgement-page":return "Acknowledgements";
-    case "introduction-page":   return "Introduction";
-    case "inside-cover":        return "Inside Cover";
-    case "end-page":            return "The End";
-    case "back-cover":          return "Back Cover";
+    case "front-cover":          return "Cover";
+    case "title-page":           return "Title Page";
+    case "publication-page":     return "Publication Page";
+    case "acknowledgement-page": return "Acknowledgements";
+    case "introduction-page":    return "Introduction";
+    case "inside-cover":         return "Inside Cover";
+    case "end-page":             return "The End";
+    case "back-cover":           return "Back Cover";
     case "story-spread": {
       const si = spreadPages.indexOf(page);
       return si >= 0 ? `Spread ${si + 1} of ${spreadPages.length}` : "Spread";
     }
-    case "story-page":          return `Page ${index + 1} of ${total}`;
+    case "story-page": return `Page ${index + 1} of ${total}`;
     default:
       if (isSpreadPage(page)) {
         const si = spreadPages.indexOf(page);
@@ -82,7 +82,6 @@ function thumbLabel(page: StorybookReaderPage, index: number): string {
   }
 }
 
-// Chip shown above the image for front-matter pages
 function frontMatterChip(page: StorybookReaderPage): string | null {
   switch (page.pageRole) {
     case "title-page":           return "Title Page";
@@ -94,45 +93,52 @@ function frontMatterChip(page: StorybookReaderPage): string | null {
   }
 }
 
-// ─── Layout-aware frame styles ────────────────────────────────────────────────
+// ─── Frame styles ─────────────────────────────────────────────────────────────
 
 type FrameStyle = {
-  containerCls: string;
+  containerCls: string;  // used by focus mode
   shadowCls: string;
   imgCls: string;
+  bookMaxWidthCls: string; // used by inline flipbook flex layout
 };
 
 function getFrameStyle(page: StorybookReaderPage): FrameStyle {
-  const spread = isSpreadPage(page);
-  const isCover    = page.pageRole === "front-cover" || page.layoutType === "cover";
-  const isBackLike = page.pageRole === "back-cover"  || page.layoutType === "back-cover" || page.pageRole === "end-page";
+  const spread   = isSpreadPage(page);
+  const isCover  = page.pageRole === "front-cover" || page.layoutType === "cover";
+  const isBackLike =
+    page.pageRole === "back-cover" ||
+    page.layoutType === "back-cover" ||
+    page.pageRole === "end-page";
 
   if (isCover) {
     return {
-      containerCls: "w-full max-w-[260px] sm:max-w-xs mx-auto",
-      shadowCls: "rounded-2xl overflow-hidden shadow-[0_20px_64px_rgba(0,0,0,0.28)] border-2 border-white/75",
-      imgCls: "w-full block",
+      containerCls:   "w-full max-w-[260px] sm:max-w-xs mx-auto",
+      shadowCls:      "rounded-2xl overflow-hidden shadow-[0_20px_64px_rgba(0,0,0,0.28)] border-2 border-white/75",
+      imgCls:         "w-full block",
+      bookMaxWidthCls:"max-w-[260px] sm:max-w-xs",
     };
   }
   if (isBackLike) {
     return {
-      containerCls: "w-full max-w-[260px] sm:max-w-xs mx-auto",
-      shadowCls: "rounded-2xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.18)] border border-tiki-brown/12",
-      imgCls: "w-full block",
+      containerCls:   "w-full max-w-[260px] sm:max-w-xs mx-auto",
+      shadowCls:      "rounded-2xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.18)] border border-tiki-brown/12",
+      imgCls:         "w-full block",
+      bookMaxWidthCls:"max-w-[260px] sm:max-w-xs",
     };
   }
   if (spread) {
     return {
-      containerCls: "w-full max-w-5xl mx-auto",
-      shadowCls: "rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-tiki-brown/10 bg-white",
-      imgCls: "w-full block max-h-[65vh] object-contain",
+      containerCls:   "w-full max-w-5xl mx-auto",
+      shadowCls:      "rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-tiki-brown/10 bg-white",
+      imgCls:         "w-full block max-h-[65vh] object-contain",
+      bookMaxWidthCls:"max-w-5xl",
     };
   }
-  // Front matter pages + regular story pages
   return {
-    containerCls: "w-full max-w-md sm:max-w-lg mx-auto",
-    shadowCls: "rounded-2xl overflow-hidden shadow-[0_6px_32px_rgba(0,0,0,0.10)] border border-tiki-brown/8 bg-white",
-    imgCls: "w-full block",
+    containerCls:   "w-full max-w-md sm:max-w-lg mx-auto",
+    shadowCls:      "rounded-2xl overflow-hidden shadow-[0_6px_32px_rgba(0,0,0,0.10)] border border-tiki-brown/8 bg-white",
+    imgCls:         "w-full block",
+    bookMaxWidthCls:"max-w-md sm:max-w-lg",
   };
 }
 
@@ -219,7 +225,6 @@ function NarrationPlayerBar({
 // ─── Progress pips / bar ──────────────────────────────────────────────────────
 
 function ProgressIndicator({ index, total }: { index: number; total: number }) {
-  // Pip dots for short books, a bar for long ones
   if (total <= 14) {
     return (
       <div className="flex gap-1 flex-wrap justify-center" aria-hidden="true">
@@ -273,8 +278,8 @@ function ThumbnailStrip({
     >
       {pages.map((p, i) => {
         const isActive = i === activeIndex;
-        const spread = isSpreadPage(p);
-        const label = thumbLabel(p, i);
+        const spread   = isSpreadPage(p);
+        const label    = thumbLabel(p, i);
         return (
           <button
             key={p.id}
@@ -364,12 +369,12 @@ function FocusModeReader({
   onAudioToggle?: () => void;
   onAudioSeek?: (t: number) => void;
 }) {
-  const thumbsRef = useRef<HTMLDivElement>(null);
+  const thumbsRef  = useRef<HTMLDivElement>(null);
   const displayText = page.caption || page.readAloudText || null;
-  const altText = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
-  const spread = isSpreadPage(page);
-  const pageLabel = friendlyPageLabel(page, index, total, spreadPages);
-  const chip = frontMatterChip(page);
+  const altText    = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
+  const spread     = isSpreadPage(page);
+  const pageLabel  = friendlyPageLabel(page, index, total, spreadPages);
+  const chip       = frontMatterChip(page);
 
   useEffect(() => {
     if (thumbsRef.current) {
@@ -527,6 +532,35 @@ function FocusModeReader({
   );
 }
 
+// ─── Flipbook arrow button ────────────────────────────────────────────────────
+
+function FlipbookArrow({
+  direction,
+  disabled,
+  onClick,
+}: {
+  direction: "prev" | "next";
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={direction === "prev" ? "Previous page" : "Next page"}
+      className="flex-shrink-0 w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-white border-2 border-pineapple-yellow/50 text-tiki-brown/65 shadow-sm hover:bg-pineapple-yellow/20 hover:border-pineapple-yellow/75 hover:text-tiki-brown hover:shadow-md disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube-purple/50"
+    >
+      <span
+        className="text-2xl sm:text-3xl font-black leading-none select-none"
+        aria-hidden="true"
+      >
+        {direction === "prev" ? "‹" : "›"}
+      </span>
+    </button>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StorybookReader({
@@ -542,15 +576,17 @@ export default function StorybookReader({
   narrationAudio?: StorybookNarrationAudioProp;
   listenModeActive?: boolean;
 }) {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex]       = useState(0);
   const [focusMode, setFocusMode] = useState(false);
-  const touchStartX = useRef<number | null>(null);
-  const thumbsRef = useRef<HTMLDivElement>(null);
+  const [turnDir, setTurnDir]   = useState<"next" | "prev" | null>(null);
+  const turningRef              = useRef(false);
+  const touchStartX             = useRef<number | null>(null);
+  const thumbsRef               = useRef<HTMLDivElement>(null);
 
-  // Audio state — lives here so the <audio> stays mounted across page turns and mode switches
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState(0);
+  // Audio state — persists across page turns and mode switches
+  const audioRef              = useRef<HTMLAudioElement>(null);
+  const [audioPlaying, setAudioPlaying]     = useState(false);
+  const [audioDuration, setAudioDuration]   = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
 
   const toggleAudio = useCallback(() => {
@@ -566,33 +602,60 @@ export default function StorybookReader({
     setAudioCurrentTime(t);
   }, []);
 
-  const total = pages.length;
-  const page = pages[index];
-  const isFirst = index === 0;
-  const isLast = index === total - 1;
-
-  const spreadPages = collectSpreadPages(pages);
-  const pageLabel = friendlyPageLabel(page, index, total, spreadPages);
-  const chip = frontMatterChip(page);
-  const frame = getFrameStyle(page);
+  const total      = pages.length;
+  const page       = pages[index];
+  const isFirst    = index === 0;
+  const isLast     = index === total - 1;
+  const spreadPages  = collectSpreadPages(pages);
+  const pageLabel    = friendlyPageLabel(page, index, total, spreadPages);
+  const chip         = frontMatterChip(page);
+  const frame        = getFrameStyle(page);
   const spreadLayout = isSpreadPage(page);
-  const displayText = page.caption || page.readAloudText || null;
-  const altText = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
+  const displayText  = page.caption || page.readAloudText || null;
+  const altText      = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
   const isEndingPage = page.pageRole === "end-page" || page.pageRole === "back-cover";
 
-  // Keyboard navigation
+  // ── Navigation ─────────────────────────────────────────────────────────────
+
+  const goNext = useCallback(() => {
+    if (index >= total - 1 || turningRef.current) return;
+    turningRef.current = true;
+    setTurnDir("next");
+    setIndex((i) => Math.min(total - 1, i + 1));
+    setTimeout(() => { turningRef.current = false; }, 380);
+  }, [index, total]);
+
+  const goPrev = useCallback(() => {
+    if (index <= 0 || turningRef.current) return;
+    turningRef.current = true;
+    setTurnDir("prev");
+    setIndex((i) => Math.max(0, i - 1));
+    setTimeout(() => { turningRef.current = false; }, 380);
+  }, [index]);
+
+  const goToPage = useCallback((i: number) => {
+    if (i === index || turningRef.current) return;
+    turningRef.current = true;
+    setTurnDir(i > index ? "next" : "prev");
+    setIndex(i);
+    setTimeout(() => { turningRef.current = false; }, 380);
+  }, [index]);
+
+  // ── Keyboard navigation ────────────────────────────────────────────────────
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "ArrowLeft") setIndex((i) => Math.max(0, i - 1));
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(total - 1, i + 1));
+      if (e.key === "ArrowLeft")  goPrev();
+      if (e.key === "ArrowRight") goNext();
       if (e.key === "Escape" && focusMode) setFocusMode(false);
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [total, focusMode]);
+  }, [goNext, goPrev, focusMode]);
 
-  // Keep active thumbnail in view
+  // ── Keep active thumbnail in view ──────────────────────────────────────────
+
   useEffect(() => {
     if (thumbsRef.current) {
       const active = thumbsRef.current.querySelector('[aria-selected="true"]') as HTMLElement;
@@ -600,7 +663,8 @@ export default function StorybookReader({
     }
   }, [index]);
 
-  // Touch/swipe
+  // ── Touch / swipe ──────────────────────────────────────────────────────────
+
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX;
   }
@@ -609,15 +673,26 @@ export default function StorybookReader({
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     touchStartX.current = null;
     if (Math.abs(dx) < 50) return;
-    if (dx < 0) setIndex((i) => Math.min(total - 1, i + 1));
-    if (dx > 0) setIndex((i) => Math.max(0, i - 1));
+    if (dx < 0) goNext();
+    if (dx > 0) goPrev();
   }
 
-  if (total === 0) return null;
+  if (total === 0) {
+    return (
+      <div className="py-16 text-center text-tiki-brown/50 italic text-sm">
+        Storybook coming soon.
+      </div>
+    );
+  }
 
   const audioProps = narrationAudio
     ? { audioPlaying, audioDuration, audioCurrentTime, onAudioToggle: toggleAudio, onAudioSeek: seekAudio }
     : {};
+
+  // Animation class for the current page based on turn direction
+  const pageAnimCls =
+    turnDir === "next" ? "flipbook-page-enter-next" :
+    turnDir === "prev" ? "flipbook-page-enter-prev" : "";
 
   return (
     <div>
@@ -647,11 +722,11 @@ export default function StorybookReader({
           episodeTitle={episodeTitle}
           isFirst={isFirst}
           isLast={isLast}
-          onPrev={() => setIndex((i) => Math.max(0, i - 1))}
-          onNext={() => setIndex((i) => Math.min(total - 1, i + 1))}
-          onSelect={setIndex}
+          onPrev={goPrev}
+          onNext={goNext}
+          onSelect={goToPage}
           onExit={() => setFocusMode(false)}
-          onReadAgain={() => setIndex(0)}
+          onReadAgain={() => { setTurnDir(null); setIndex(0); }}
           backHref={backHref}
           touchHandlers={{ onTouchStart, onTouchEnd }}
           spreadPages={spreadPages}
@@ -659,11 +734,11 @@ export default function StorybookReader({
         />
       )}
 
-      {/* Inline reader */}
+      {/* ── Inline flipbook reader ── */}
       {!focusMode && (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
 
-          {/* Prominent audio bar for listen mode */}
+          {/* Prominent audio bar — listen mode */}
           {narrationAudio && listenModeActive && (
             <NarrationPlayerBar
               playing={audioPlaying}
@@ -684,60 +759,78 @@ export default function StorybookReader({
             </div>
           )}
 
-          {/* ── Image frame — layout-aware ── */}
-          <div
-            className={`select-none ${frame.containerCls}`}
-            onTouchStart={onTouchStart}
-            onTouchEnd={onTouchEnd}
-          >
-            <div className={`relative ${frame.shadowCls}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={page.imageUrl}
-                alt={altText}
-                className={frame.imgCls}
-              />
+          {/* ── Book stage: soft backdrop + arrows flanking the book ── */}
+          <div className="rounded-3xl py-5 sm:py-8 px-2 sm:px-4 bg-gradient-to-b from-coconut-cream to-pineapple-yellow/10 border border-pineapple-yellow/20">
+            <div
+              className="flex items-center justify-center gap-1.5 sm:gap-3"
+              onTouchStart={onTouchStart}
+              onTouchEnd={onTouchEnd}
+            >
+              {/* Left arrow */}
+              <FlipbookArrow direction="prev" disabled={isFirst} onClick={goPrev} />
 
-              {/* Center gutter for spreads */}
-              {spreadLayout && (
-                <div
-                  className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-tiki-brown/15 to-transparent pointer-events-none"
-                  aria-hidden="true"
-                />
-              )}
-
-              {/* Page label badge */}
+              {/* Book frame */}
               <div
-                className="absolute bottom-3 right-3 bg-black/40 text-white text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm select-none pointer-events-none"
-                aria-hidden="true"
+                className={`min-w-0 flex-1 ${frame.bookMaxWidthCls} select-none`}
+                aria-live="polite"
+                aria-atomic="true"
+                aria-label={`Page: ${pageLabel}`}
               >
-                {pageLabel}
+                <div className={`relative ${frame.shadowCls}`}>
+
+                  {/* Page-turn animated wrapper — key remounts on each index change */}
+                  <div key={`page-${index}`} className={pageAnimCls}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={page.imageUrl}
+                      alt={altText}
+                      className={frame.imgCls}
+                    />
+                  </div>
+
+                  {/* Subtle page-thickness edges */}
+                  <div
+                    className="absolute inset-y-0 right-0 w-1 bg-gradient-to-r from-transparent to-black/10 z-10 pointer-events-none rounded-r-2xl"
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-b from-transparent to-black/8 z-10 pointer-events-none"
+                    aria-hidden="true"
+                  />
+
+                  {/* Center gutter for two-page spreads */}
+                  {spreadLayout && (
+                    <div
+                      className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-tiki-brown/15 to-transparent z-10 pointer-events-none"
+                      aria-hidden="true"
+                    />
+                  )}
+
+                  {/* Page label badge */}
+                  <div
+                    className="absolute bottom-3 right-3 bg-black/38 text-white text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm select-none pointer-events-none z-20"
+                    aria-hidden="true"
+                  >
+                    {pageLabel}
+                  </div>
+
+                  {/* Start Reading overlay on front cover */}
+                  {page.pageRole === "front-cover" && index === 0 && total > 1 && (
+                    <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none z-20">
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        className="pointer-events-auto flex items-center gap-2 text-sm font-black px-7 py-3.5 rounded-2xl bg-ube-purple text-white shadow-2xl hover:bg-ube-purple/90 transition-all active:scale-95"
+                      >
+                        📖 Start Reading →
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Start Reading overlay on front cover */}
-              {page.pageRole === "front-cover" && index === 0 && total > 1 && (
-                <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none">
-                  <button
-                    type="button"
-                    onClick={() => setIndex(1)}
-                    className="pointer-events-auto flex items-center gap-2 text-sm font-black px-7 py-3.5 rounded-2xl bg-ube-purple text-white shadow-2xl hover:bg-ube-purple/90 transition-all active:scale-95"
-                  >
-                    📖 Start Reading →
-                  </button>
-                </div>
-              )}
-
-              {/* Swipe chevrons on mobile */}
-              {!isFirst && (
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none sm:hidden" aria-hidden="true">
-                  <span className="text-white/60 text-2xl font-black drop-shadow">‹</span>
-                </div>
-              )}
-              {!isLast && (
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none sm:hidden" aria-hidden="true">
-                  <span className="text-white/60 text-2xl font-black drop-shadow">›</span>
-                </div>
-              )}
+              {/* Right arrow */}
+              <FlipbookArrow direction="next" disabled={isLast} onClick={goNext} />
             </div>
           </div>
 
@@ -766,53 +859,32 @@ export default function StorybookReader({
             </div>
           )}
 
-          {/* Navigation row */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIndex((i) => Math.max(0, i - 1))}
-              disabled={isFirst}
-              aria-label="Previous page"
-              className="flex items-center justify-center gap-1.5 min-w-[76px] text-sm font-bold px-5 py-3 rounded-2xl bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 disabled:opacity-25 disabled:cursor-not-allowed transition-all active:scale-95"
+          {/* Progress row */}
+          <div className="flex items-center gap-3 px-1">
+            <span
+              className="text-xs font-bold text-tiki-brown/40 tabular-nums flex-shrink-0"
+              aria-live="polite"
+              aria-atomic="true"
             >
-              <span aria-hidden="true">←</span>
-              <span className="hidden sm:inline">Previous</span>
-              <span className="sm:hidden">Prev</span>
-            </button>
-
-            <div className="flex-1 flex flex-col items-center gap-1.5">
-              <span
-                className="text-xs font-bold text-tiki-brown/40 tabular-nums"
-                aria-live="polite"
-                aria-atomic="true"
-              >
-                {pageLabel}
-              </span>
+              {pageLabel}
+            </span>
+            <div className="flex-1 flex items-center">
               <ProgressIndicator index={index} total={total} />
             </div>
-
-            <button
-              type="button"
-              onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}
-              disabled={isLast}
-              aria-label="Next page"
-              className="flex items-center justify-center gap-1.5 min-w-[76px] text-sm font-bold px-5 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/85 disabled:opacity-25 disabled:cursor-not-allowed transition-all active:scale-95"
-            >
-              <span className="hidden sm:inline">Next</span>
-              <span className="sm:hidden">Next</span>
-              <span aria-hidden="true">→</span>
-            </button>
+            <span className="text-xs font-bold text-tiki-brown/30 tabular-nums flex-shrink-0">
+              {index + 1} / {total}
+            </span>
           </div>
 
           {/* Thumbnail strip */}
           <ThumbnailStrip
             pages={pages}
             activeIndex={index}
-            onSelect={setIndex}
+            onSelect={goToPage}
             stripRef={thumbsRef}
           />
 
-          {/* Audio bar (standard read mode — not shown when prominent bar is shown above) */}
+          {/* Audio bar (standard read mode) */}
           {narrationAudio && !listenModeActive && (
             <NarrationPlayerBar
               playing={audioPlaying}
@@ -828,7 +900,7 @@ export default function StorybookReader({
             <div className="flex items-center justify-center gap-3 pt-1">
               <button
                 type="button"
-                onClick={() => setIndex(0)}
+                onClick={() => { setTurnDir(null); setIndex(0); }}
                 className="flex items-center gap-2 text-sm font-bold px-5 py-3 rounded-2xl bg-pineapple-yellow/25 border border-pineapple-yellow/50 text-tiki-brown hover:bg-pineapple-yellow/45 transition-all"
               >
                 🔁 Read Again
