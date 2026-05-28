@@ -34,11 +34,12 @@ export default function StoryExperienceSwitcher({
 }) {
   const [mode, setMode] = useState<Mode>("read");
 
-  // Hash-based deep linking: hero CTAs can link to #listen-story / #watch-story
+  // Hash-based deep linking: hero CTAs can link to #open-reader / #listen-story / #watch-story
   useEffect(() => {
     const check = () => {
       const h = window.location.hash;
-      if (h === "#listen-story" && narrationAudio) setMode("listen");
+      if (h === "#open-reader") setMode("read");
+      else if (h === "#listen-story" && narrationAudio) setMode("listen");
       else if (h === "#watch-story" && video) setMode("watch");
     };
     check();
@@ -51,6 +52,7 @@ export default function StoryExperienceSwitcher({
   return (
     <div className="flex flex-col gap-5">
       {/* Always-present anchor targets so hero CTAs can scroll + trigger mode */}
+      <span id="open-reader" className="sr-only" aria-hidden="true" />
       {narrationAudio && <span id="listen-story" className="sr-only" aria-hidden="true" />}
       {video && <span id="watch-story" className="sr-only" aria-hidden="true" />}
 

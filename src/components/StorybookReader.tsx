@@ -305,14 +305,14 @@ function ThumbnailStrip({
 
 function FocusModeReader({
   page, index, total, pages, episodeTitle,
-  isFirst, isLast,
+  isFirst, isLast, pageAnimCls,
   onPrev, onNext, onSelect, onExit, onReadAgain,
   backHref, touchHandlers, spreadPages,
   audioPlaying, audioDuration, audioCurrentTime, onAudioToggle, onAudioSeek,
 }: {
   page: StorybookReaderPage; index: number; total: number;
   pages: StorybookReaderPage[]; episodeTitle: string;
-  isFirst: boolean; isLast: boolean;
+  isFirst: boolean; isLast: boolean; pageAnimCls: string;
   onPrev: () => void; onNext: () => void;
   onSelect: (i: number) => void; onExit: () => void; onReadAgain: () => void;
   backHref: string;
@@ -324,12 +324,11 @@ function FocusModeReader({
   audioPlaying?: boolean; audioDuration?: number; audioCurrentTime?: number;
   onAudioToggle?: () => void; onAudioSeek?: (t: number) => void;
 }) {
-  const thumbsRef  = useRef<HTMLDivElement>(null);
+  const thumbsRef   = useRef<HTMLDivElement>(null);
   const displayText = page.caption || page.readAloudText || null;
-  const altText    = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
-  const spread     = isSpreadPage(page);
-  const pageLabel  = friendlyPageLabel(page, index, total, spreadPages);
-  const chip       = frontMatterChip(page);
+  const altText     = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
+  const spread      = isSpreadPage(page);
+  const pageLabel   = friendlyPageLabel(page, index, total, spreadPages);
 
   useEffect(() => {
     if (thumbsRef.current) {
@@ -347,55 +346,55 @@ function FocusModeReader({
       aria-label={`Reading: ${episodeTitle}`}
     >
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-pineapple-yellow/30 bg-[#FFF7E8]/90 backdrop-blur-sm flex-shrink-0">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="text-lg select-none" aria-hidden="true">📖</span>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-black text-tiki-brown truncate leading-tight">{episodeTitle}</span>
-            {chip && (
-              <span className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide leading-tight">
-                {chip}
-              </span>
-            )}
-          </div>
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-pineapple-yellow/30 bg-[#FFF7E8]/90 backdrop-blur-sm flex-shrink-0 gap-3">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-base select-none flex-shrink-0" aria-hidden="true">📖</span>
+          <span className="text-sm font-black text-tiki-brown truncate leading-tight">{episodeTitle}</span>
         </div>
+        <span
+          className="flex-shrink-0 text-[11px] font-bold px-3 py-1 rounded-full bg-pineapple-yellow/30 text-tiki-brown/65 border border-pineapple-yellow/40 select-none hidden sm:block"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {pageLabel}
+        </span>
         <button
           type="button"
           onClick={onExit}
-          aria-label="Exit focus mode"
-          className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-white/70 border border-tiki-brown/10 text-tiki-brown/60 hover:bg-white hover:text-tiki-brown transition-all flex-shrink-0"
+          aria-label="Exit reader"
+          className="flex-shrink-0 flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-white/70 border border-tiki-brown/10 text-tiki-brown/60 hover:bg-white hover:text-tiki-brown transition-all"
         >
-          ✕ Exit
+          ✕ Exit Reader
         </button>
       </div>
 
-      {/* Image area */}
+      {/* Main area: left arrow | image | right arrow */}
       <div
-        className="flex-1 flex items-center justify-center px-4 sm:px-10 py-4 overflow-hidden"
+        className="flex-1 flex items-center justify-center gap-2 sm:gap-4 px-2 sm:px-4 py-3 overflow-hidden"
         onTouchStart={touchHandlers.onTouchStart}
         onTouchEnd={touchHandlers.onTouchEnd}
       >
-        <div className={`relative flex items-center justify-center ${spread ? "w-full max-w-5xl" : "max-w-2xl mx-auto w-full"}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={page.imageUrl}
-            alt={altText}
-            className="max-w-full max-h-[calc(100dvh-300px)] w-auto h-auto block rounded-2xl shadow-2xl"
-          />
+        <FlipbookArrow direction="prev" disabled={isFirst} onClick={onPrev} />
+
+        {/* Image container */}
+        <div className={`relative min-w-0 flex-1 flex items-center justify-center ${spread ? "max-w-5xl" : "max-w-sm sm:max-w-md"}`}>
+          <div key={`focus-page-${index}`} className={pageAnimCls}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={page.imageUrl}
+              alt={altText}
+              className="max-w-full max-h-[calc(100dvh-220px)] w-auto h-auto block rounded-2xl shadow-2xl"
+            />
+          </div>
           {spread && (
             <div
-              className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-gradient-to-b from-transparent via-tiki-brown/15 to-transparent pointer-events-none"
+              className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 pointer-events-none"
+              style={{ background: "linear-gradient(to bottom, transparent, rgba(139,90,43,0.12) 30%, rgba(139,90,43,0.20) 50%, rgba(139,90,43,0.12) 70%, transparent)" }}
               aria-hidden="true"
             />
           )}
-          <div
-            className="absolute bottom-3 right-3 bg-black/45 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-sm select-none pointer-events-none"
-            aria-hidden="true"
-          >
-            {pageLabel}
-          </div>
           {page.pageRole === "front-cover" && index === 0 && total > 1 && (
-            <div className="absolute inset-0 flex items-end justify-center pb-8 pointer-events-none">
+            <div className="absolute inset-0 flex items-end justify-center pb-6 pointer-events-none">
               <button
                 type="button"
                 onClick={onNext}
@@ -406,12 +405,14 @@ function FocusModeReader({
             </div>
           )}
         </div>
+
+        <FlipbookArrow direction="next" disabled={isLast} onClick={onNext} />
       </div>
 
-      {/* Bottom panel */}
-      <div className="flex-shrink-0 bg-[#FFF7E8]/90 backdrop-blur-sm border-t border-pineapple-yellow/30 px-4 sm:px-8 py-4 flex flex-col gap-3">
+      {/* Bottom panel — caption, progress, thumbnails, audio, end actions */}
+      <div className="flex-shrink-0 bg-[#FFF7E8]/90 backdrop-blur-sm border-t border-pineapple-yellow/30 px-4 sm:px-8 py-3 flex flex-col gap-2.5">
         {(page.title || displayText) && (
-          <div className="text-center max-w-xl mx-auto flex flex-col gap-1">
+          <div className="text-center max-w-xl mx-auto flex flex-col gap-0.5">
             {page.title && (
               <p className="text-sm font-black text-tiki-brown leading-snug">{page.title}</p>
             )}
@@ -424,27 +425,10 @@ function FocusModeReader({
         )}
 
         <div className="flex items-center gap-3 max-w-xl mx-auto w-full">
-          <button
-            type="button"
-            onClick={onPrev}
-            disabled={isFirst}
-            aria-label="Previous page"
-            className="flex items-center gap-1 text-sm font-bold px-4 py-2.5 rounded-2xl bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-          >
-            ← Prev
-          </button>
-          <div className="flex-1 flex flex-col items-center gap-1.5">
-            <ProgressIndicator index={index} total={total} />
-          </div>
-          <button
-            type="button"
-            onClick={onNext}
-            disabled={isLast}
-            aria-label="Next page"
-            className="flex items-center gap-1 text-sm font-bold px-4 py-2.5 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/85 disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
-          >
-            Next →
-          </button>
+          <ProgressIndicator index={index} total={total} />
+          <span className="flex-shrink-0 text-xs tabular-nums text-tiki-brown/28 font-semibold select-none">
+            {index + 1}/{total}
+          </span>
         </div>
 
         <div className="max-w-xl mx-auto w-full">
@@ -620,6 +604,26 @@ export default function StorybookReader({
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev, focusMode]);
 
+  // ── Hash-based trigger: #open-reader → open immersive reader ───────────────
+
+  useEffect(() => {
+    const check = () => {
+      if (window.location.hash === "#open-reader") setFocusMode(true);
+    };
+    check();
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
+  }, []);
+
+  // ── Scroll lock while immersive reader is open ─────────────────────────────
+
+  useEffect(() => {
+    if (focusMode) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [focusMode]);
+
   // ── Thumbnail scroll ───────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -677,7 +681,7 @@ export default function StorybookReader({
         />
       )}
 
-      {/* Focus mode overlay — unchanged */}
+      {/* Immersive full-screen reader overlay */}
       {focusMode && (
         <FocusModeReader
           page={page}
@@ -687,6 +691,7 @@ export default function StorybookReader({
           episodeTitle={episodeTitle}
           isFirst={isFirst}
           isLast={isLast}
+          pageAnimCls={pageAnimCls}
           onPrev={goPrev}
           onNext={goNext}
           onSelect={goToPage}

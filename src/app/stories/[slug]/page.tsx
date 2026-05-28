@@ -848,7 +848,7 @@ export default async function StoryDetailPage({
                 {/* Action buttons */}
                 <div className={`flex flex-wrap gap-3 ${frontCoverUrl ? "" : "justify-center"}`}>
                   <a
-                    href="#story-panels"
+                    href="#open-reader"
                     className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
                   >
                     <span aria-hidden>📖</span> Read Storybook
