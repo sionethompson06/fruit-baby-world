@@ -519,12 +519,14 @@ export default function StorybookReader({
   backHref = "/stories",
   narrationAudio,
   listenModeActive = false,
+  immersiveOnly = false,
 }: {
   pages: StorybookReaderPage[];
   episodeTitle: string;
   backHref?: string;
   narrationAudio?: StorybookNarrationAudioProp;
   listenModeActive?: boolean;
+  immersiveOnly?: boolean;
 }) {
   const [index, setIndex]         = useState(0);
   const [focusMode, setFocusMode] = useState(false);
@@ -704,8 +706,8 @@ export default function StorybookReader({
         />
       )}
 
-      {/* ── Inline flipbook reader ── */}
-      {!focusMode && (
+      {/* ── Inline flipbook reader — hidden when immersiveOnly ── */}
+      {!focusMode && !immersiveOnly && (
         <div className="flex flex-col gap-4">
 
           {/* Prominent audio bar — listen mode */}

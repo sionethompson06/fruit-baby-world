@@ -24,6 +24,7 @@ export default function StoryExperienceSwitcher({
   narrationAudio,
   video,
   fallbackPosterUrl,
+  immersiveOnly = false,
 }: {
   pages: StorybookReaderPage[];
   episodeTitle: string;
@@ -31,6 +32,7 @@ export default function StoryExperienceSwitcher({
   narrationAudio?: StorybookNarrationAudioProp;
   video?: VideoProps;
   fallbackPosterUrl?: string;
+  immersiveOnly?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>("read");
 
@@ -56,8 +58,8 @@ export default function StoryExperienceSwitcher({
       {narrationAudio && <span id="listen-story" className="sr-only" aria-hidden="true" />}
       {video && <span id="watch-story" className="sr-only" aria-hidden="true" />}
 
-      {/* Mode switcher tab bar — shown when audio or video is available */}
-      {hasTabs && (
+      {/* Mode switcher tab bar — hidden in immersiveOnly mode */}
+      {hasTabs && !immersiveOnly && (
         <div className="flex items-center gap-1.5 bg-tiki-brown/4 rounded-2xl p-1.5">
           <button
             type="button"
@@ -115,6 +117,7 @@ export default function StoryExperienceSwitcher({
           episodeTitle={episodeTitle}
           backHref={backHref}
           narrationAudio={narrationAudio}
+          immersiveOnly={immersiveOnly}
         />
       )}
 
@@ -126,6 +129,7 @@ export default function StoryExperienceSwitcher({
           backHref={backHref}
           narrationAudio={narrationAudio}
           listenModeActive={true}
+          immersiveOnly={immersiveOnly}
         />
       )}
 

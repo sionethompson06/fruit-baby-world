@@ -4,17 +4,14 @@ import { notFound } from "next/navigation";
 import { loadEpisodeBySlug, loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
 import { getAllCharacters, type Character } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
-import StoryPanelReader, { type ReaderPanel } from "@/components/StoryPanelReader";
 import { type StorybookReaderPage, type StorybookNarrationAudioProp } from "@/components/StorybookReader";
 import StoryExperienceSwitcher from "@/components/StoryExperienceSwitcher";
+import StorybookVideoPlayer from "@/components/StorybookVideoPlayer";
 import {
   getActiveEpisodeScenes,
-  getApprovedPublicStoryPanels,
-  type ApprovedPanel,
 } from "@/lib/episodeScenes";
 import {
   getPublicStorybookBookPages,
-  shouldUseStorybookPagesForPublicReader,
 } from "@/lib/storybookPages";
 import {
   getPublicReadyVideoClipsForEpisode,
@@ -237,125 +234,6 @@ function SceneBlock({
               ))}
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Story panel placeholder card ────────────────────────────────────────────
-
-function PanelPlaceholder({
-  scene,
-  index,
-}: {
-  scene: Record<string, unknown>;
-  index: number;
-}) {
-  const num = scene.sceneNumber ?? index + 1;
-  const title = str(scene.title);
-  const summary = str(scene.summary);
-
-  return (
-    <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden flex flex-col">
-      {/* Placeholder panel area */}
-      <div className="flex items-center justify-center h-36 bg-gradient-to-br from-pineapple-yellow/15 via-sky-blue/10 to-tropical-green/10 border-b border-tiki-brown/8">
-        <div className="flex flex-col items-center gap-2 text-center px-4">
-          <span className="text-3xl select-none">🖼️</span>
-          <span className="text-xs font-bold text-tiki-brown/35 uppercase tracking-wide">
-            Artwork not added yet
-          </span>
-        </div>
-      </div>
-
-      {/* Panel info */}
-      <div className="px-4 py-3 flex flex-col gap-1 bg-white">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/60">
-            Panel {String(num)}
-          </span>
-          {title && (
-            <span className="text-xs font-bold text-tiki-brown/70">{title}</span>
-          )}
-        </div>
-        {summary && (
-          <p className="text-xs text-tiki-brown/55 leading-relaxed line-clamp-2">
-            {summary}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Approved story panel card ───────────────────────────────────────────────
-
-function ApprovedPanelCard({
-  panel,
-  scene,
-  charMap,
-}: {
-  panel: ApprovedPanel;
-  scene?: Record<string, unknown>;
-  charMap: Record<string, Character>;
-}) {
-  const sceneTitle = str(scene?.title) || panel.panelTitle;
-  const sceneSummary = str(scene?.summary);
-  const chars = strArr(scene?.characters ?? panel.referenceCharacters);
-  const altText =
-    panel.asset.alt ||
-    `Illustrated story panel for Scene ${panel.sceneNumber}: ${sceneTitle}`;
-
-  return (
-    <div className="rounded-3xl overflow-hidden flex flex-col shadow-md bg-white border border-tiki-brown/10">
-      {/* Panel image — full width, aspect-ratio preserving */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={panel.asset.url}
-        alt={altText}
-        className="w-full block"
-      />
-
-      {/* Panel info — warm cream card */}
-      <div className="px-6 py-5 flex flex-col gap-3 bg-pineapple-yellow/5 border-t border-tiki-brown/8">
-        {/* Scene number + title */}
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ube-purple/15 text-ube-purple flex-shrink-0">
-            Scene {panel.sceneNumber}
-          </span>
-          {sceneTitle && (
-            <span className="text-sm font-black text-tiki-brown leading-snug">
-              {sceneTitle}
-            </span>
-          )}
-        </div>
-
-        {/* Scene summary */}
-        {sceneSummary && (
-          <p className="text-sm text-tiki-brown/75 leading-relaxed">
-            {sceneSummary}
-          </p>
-        )}
-
-        {/* Character badges */}
-        {chars.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {chars.map((id) => {
-              const c = charMap[id];
-              return c ? (
-                <CharBadge key={id} char={c} />
-              ) : (
-                <CharNameBadge key={id} name={id} />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Public caption */}
-        {panel.caption && (
-          <p className="text-xs text-tiki-brown/55 leading-relaxed italic border-t border-tiki-brown/8 pt-2">
-            {panel.caption}
-          </p>
         )}
       </div>
     </div>
@@ -671,11 +549,9 @@ export default async function StoryDetailPage({
 
   const merchTieIns = strArr(raw.merchTieIns);
 
-  // Storybook pages take priority over legacy story panels when available
-  const useStorybookPages = shouldUseStorybookPagesForPublicReader(raw);
-  const publicStorybookPages = useStorybookPages ? getPublicStorybookBookPages(raw) : [];
+  // Public storybook pages for the immersive reader
+  const publicStorybookPages = getPublicStorybookBookPages(raw);
 
-  // Premium StorybookReader pages (Phase 19B)
   const storybookReaderPages: StorybookReaderPage[] = publicStorybookPages.map((page) => ({
     id: page.id,
     pageNumber: page.pageNumber,
@@ -691,32 +567,8 @@ export default async function StoryDetailPage({
     pageRole: page.pageRole,
   }));
 
-  // Approved public story panels (fallback when no storybook pages)
-  const approvedPanels: ApprovedPanel[] = useStorybookPages ? [] : getApprovedPublicStoryPanels(raw);
-  const sceneByNumber = Object.fromEntries(scenes.map((s) => [Number(s.sceneNumber) || 0, s]));
-
-  // Legacy reader panels — only built when no storybookPages present
-  const readerPanels: ReaderPanel[] = approvedPanels.map((panel) => {
-    const scene = sceneByNumber[panel.sceneNumber];
-    const rawCharIds = scene
-      ? strArr(scene.characters ?? panel.referenceCharacters)
-      : panel.referenceCharacters;
-    const characterNames = rawCharIds.map((id) => {
-      const c = charMap[id];
-      return c ? c.shortName : formatCharName(id);
-    });
-    return {
-      sceneNumber: panel.sceneNumber,
-      panelTitle: str(scene?.title) || panel.panelTitle,
-      caption: panel.caption,
-      sceneSummary: str(scene?.summary),
-      characterNames,
-      asset: { url: panel.asset.url, alt: panel.asset.alt },
-    };
-  });
-
-  // Whether any reader content is available
-  const hasReaderContent = storybookReaderPages.length > 0 || readerPanels.length > 0;
+  // Whether the immersive storybook reader is available
+  const hasReaderContent = storybookReaderPages.length > 0;
 
   // Public-ready narration audio — only shown when approved and public-ready
   const publicAudio: PublicAudio | null = (() => {
@@ -1061,138 +913,75 @@ export default async function StoryDetailPage({
         )}
 
         {/* ══════════════════════════════════════════
-            STORYBOOK READER — storybookPages preferred, panels fallback
+            IMMERSIVE READER — mounted for hash-triggered overlay
+            (not rendered inline; FocusModeReader is position:fixed)
         ══════════════════════════════════════════ */}
 
-        {storybookReaderPages.length > 0 ? (
-          /* ── Premium Storybook Reader / Watch Cartoon (Phase 19B + 20D) ── */
-          <div
-            id="story-panels"
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-8 flex flex-col gap-6"
-          >
-            {/* Section header */}
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-xl font-black text-tiki-brown flex items-center gap-2">
-                  <span aria-hidden>📖</span> Storybook Reader
-                </h2>
-                <p className="text-sm text-tiki-brown/55 leading-relaxed">
-                  Read through the story one beautiful page at a time{publicVideo ? ", or watch the cartoon." : "."}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {publicVideo && (
-                  <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full flex items-center gap-1">
-                    <span aria-hidden>🎬</span> Video Available
-                  </span>
-                )}
-                {narrationAudio && (
-                  <span className="flex-shrink-0 text-xs font-bold text-ube-purple bg-ube-purple/10 px-3 py-1.5 rounded-full flex items-center gap-1">
-                    <span aria-hidden>🎧</span> Audio Available
-                  </span>
-                )}
-                <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1.5 rounded-full">
-                  {storybookReaderPages.length}{" "}
-                  {storybookReaderPages.length === 1 ? "page" : "pages"}
-                </span>
-              </div>
-            </div>
-
-            {/* Read / Watch switcher (video available) or plain reader */}
+        {storybookReaderPages.length > 0 && (
+          <div className="h-0 overflow-hidden" aria-hidden="true">
             <StoryExperienceSwitcher
               pages={storybookReaderPages}
               episodeTitle={title}
               backHref="/stories"
               narrationAudio={narrationAudio ?? undefined}
-              video={publicVideo ?? undefined}
               fallbackPosterUrl={frontCoverUrl}
+              immersiveOnly={true}
             />
-
-            {/* Talk about it */}
-            {lesson && (
-              <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
-                <span className="text-xl flex-shrink-0" aria-hidden>💬</span>
-                <div>
-                  <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
-                    Talk About It
-                  </p>
-                  <p className="text-sm text-tiki-brown/80 leading-relaxed">{lesson}</p>
-                </div>
-              </div>
-            )}
           </div>
-        ) : readerPanels.length > 0 ? (
-          /* ── Legacy Panel Reader (fallback) ── */
+        )}
+
+        {/* ══════════════════════════════════════════
+            READY TO READ CTA — only shown when storybook pages are available
+        ══════════════════════════════════════════ */}
+
+        {storybookReaderPages.length > 0 && (
+          <div className="bg-gradient-to-br from-ube-purple/8 to-pineapple-yellow/12 rounded-3xl border border-ube-purple/15 px-6 sm:px-8 py-7 flex flex-col sm:flex-row items-center gap-5">
+            <div className="flex-1 flex flex-col gap-1.5 text-center sm:text-left">
+              <p className="text-base font-black text-tiki-brown">Ready to read?</p>
+              <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                Open the storybook and read one page at a time.
+                {narrationAudio ? " Listen along with narration too." : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 justify-center sm:justify-end flex-shrink-0">
+              <a
+                href="#open-reader"
+                className="flex items-center gap-2 text-sm font-black px-6 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
+              >
+                <span aria-hidden>📖</span> Read Storybook
+              </a>
+              {narrationAudio && (
+                <a
+                  href="#listen-story"
+                  className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/25 text-ube-purple hover:bg-ube-purple/8 transition-colors"
+                >
+                  <span aria-hidden>🎧</span> Listen &amp; Read
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            WATCH THE CARTOON — public video, shown inline
+        ══════════════════════════════════════════ */}
+
+        {publicVideo && (
           <div
-            id="story-panels"
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-5 sm:p-8 flex flex-col gap-6"
+            id="watch-story"
+            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
           >
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span aria-hidden>🖼️</span> Picture Story Reader
+                <h2 className="text-xl font-black text-tiki-brown flex items-center gap-2">
+                  <span aria-hidden>🎬</span> Watch the Cartoon
                 </h2>
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Move through the story one illustrated moment at a time.
+                <p className="text-sm text-tiki-brown/55 leading-relaxed">
+                  Enjoy the animated version of this story.
                 </p>
               </div>
-              <span className="flex-shrink-0 text-xs font-bold text-tropical-green bg-tropical-green/15 px-3 py-1 rounded-full">
-                {readerPanels.length}{" "}
-                {readerPanels.length === 1 ? "illustrated panel" : "illustrated panels"}
-              </span>
             </div>
-
-            <StoryPanelReader panels={readerPanels} />
-
-            {lesson && (
-              <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
-                <span className="text-xl flex-shrink-0" aria-hidden>💬</span>
-                <div>
-                  <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
-                    Talk About It
-                  </p>
-                  <p className="text-sm text-tiki-brown/80 leading-relaxed">{lesson}</p>
-                </div>
-              </div>
-            )}
-
-            <p className="text-xs text-tiki-brown/40 leading-relaxed">
-              All story panels are reviewed before appearing here.
-            </p>
-          </div>
-        ) : (
-          /* ── Empty state ── */
-          <div
-            id="story-panels"
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-5"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span aria-hidden>📖</span> Storybook Coming Soon
-                </h2>
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Beautiful illustrated pages are on the way for this story.
-                </p>
-              </div>
-              <span className="flex-shrink-0 text-xs font-bold text-warm-coral/70 bg-warm-coral/10 px-3 py-1 rounded-full">
-                Coming Soon
-              </span>
-            </div>
-
-            {scenes.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {scenes.map((scene, i) => (
-                  <PanelPlaceholder key={i} scene={scene} index={i} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-28 rounded-2xl bg-tiki-brown/4 border border-tiki-brown/8">
-                <p className="text-xs text-tiki-brown/35 font-semibold">
-                  Storybook pages are coming soon.
-                </p>
-              </div>
-            )}
+            <StorybookVideoPlayer video={publicVideo} fallbackPosterUrl={frontCoverUrl} />
           </div>
         )}
 
