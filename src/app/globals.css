@@ -64,6 +64,19 @@ body {
   --fbu-green: #78bd43;
   --fbu-leaf: #5fa832;
   --fbu-shadow: rgba(90, 50, 24, 0.35);
+
+  /* FBU title palette — word-level fill + outline */
+  --fbu-outline: #4a260f;
+  --fbu-outline-dark: #2f1608;
+  --fbu-fruit-pink: #ff7c99;
+  --fbu-fruit-coral: #ff9a8b;
+  --fbu-baby-cream: #fff1b8;
+  --fbu-baby-yellow: #ffd95a;
+  --fbu-universe-gold: #ffc944;
+  --fbu-universe-cream: #fff4c8;
+  --fbu-leaf-green: #72b93f;
+  --fbu-sparkle-gold: #ffcf3a;
+  --fbu-heart-pink: #ff8fb3;
 }
 
 /* CRISP LOGO-STYLE TITLES */
@@ -214,6 +227,56 @@ body {
   opacity: 0.52;
   font-size: 0.70em;
   letter-spacing: 0.03em;
+}
+
+/* ─── FBU WORD SPANS — solid fill + brown outline + crisp sticker shadow ─── */
+/* Solid color (not background-clip) so fill stays vivid across all browsers   */
+
+.fbu-word-pineapple,
+.fbu-word-fruit,
+.fbu-word-baby,
+.fbu-word-universe {
+  display: inline;
+  -webkit-text-stroke: 2.5px var(--fbu-outline);
+  text-shadow:
+    0 2px 0 var(--fbu-outline-dark),
+    0 4px 0 rgba(47, 22, 8, 0.30),
+    0 6px 8px rgba(47, 22, 8, 0.15);
+  padding: 0.05em 0;
+}
+
+/* "Pineapple Baby" — warm golden yellow */
+.fbu-word-pineapple {
+  color: #ffd84d;
+  -webkit-text-fill-color: #ffd84d;
+}
+
+/* "Fruit" — soft pink/coral */
+.fbu-word-fruit {
+  color: var(--fbu-fruit-pink);
+  -webkit-text-fill-color: var(--fbu-fruit-pink);
+}
+
+/* "Baby" — warm cream yellow */
+.fbu-word-baby {
+  color: var(--fbu-baby-yellow);
+  -webkit-text-fill-color: var(--fbu-baby-yellow);
+}
+
+/* "Universe" — golden yellow */
+.fbu-word-universe {
+  color: var(--fbu-universe-gold);
+  -webkit-text-fill-color: var(--fbu-universe-gold);
+}
+
+/* Connector / soft words — "and the", etc. */
+.fbu-word-soft {
+  display: inline;
+  color: var(--fbu-brown);
+  -webkit-text-fill-color: var(--fbu-brown);
+  opacity: 0.50;
+  font-size: 0.72em;
+  letter-spacing: 0.02em;
 }
 
 /* DECORATIVE CHARM ELEMENTS */
