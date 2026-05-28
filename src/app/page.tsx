@@ -480,7 +480,7 @@ export default function HomePage() {
           D. PINEAPPLE BABY SPOTLIGHT
       ══════════════════════════════════════════════════════════════════════ */}
       {pb && (
-        <section className="relative overflow-hidden bg-gradient-to-br from-pineapple-yellow/35 via-pineapple-yellow/15 to-tropical-green/8 border-b border-pineapple-yellow/25 py-16 px-4">
+        <section className="homepage-pineapple-playground-section relative overflow-hidden border-b border-pineapple-yellow/25 py-16 px-4">
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
             <span className="absolute top-4 left-10 text-4xl opacity-[0.13] rotate-[-15deg]">⭐</span>
             <span className="absolute top-10 right-14 text-3xl opacity-[0.10] rotate-[10deg]">✨</span>
