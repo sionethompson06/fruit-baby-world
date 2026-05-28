@@ -96,15 +96,15 @@ function frontMatterChip(page: StorybookReaderPage): string | null {
 // ─── Frame styles ─────────────────────────────────────────────────────────────
 
 type FrameStyle = {
-  containerCls: string;  // used by focus mode
+  containerCls: string;    // focus mode
   shadowCls: string;
   imgCls: string;
-  bookMaxWidthCls: string; // used by inline flipbook flex layout
+  bookMaxWidthCls: string; // inline flex layout
 };
 
 function getFrameStyle(page: StorybookReaderPage): FrameStyle {
-  const spread   = isSpreadPage(page);
-  const isCover  = page.pageRole === "front-cover" || page.layoutType === "cover";
+  const spread    = isSpreadPage(page);
+  const isCover   = page.pageRole === "front-cover" || page.layoutType === "cover";
   const isBackLike =
     page.pageRole === "back-cover" ||
     page.layoutType === "back-cover" ||
@@ -112,33 +112,35 @@ function getFrameStyle(page: StorybookReaderPage): FrameStyle {
 
   if (isCover) {
     return {
-      containerCls:   "w-full max-w-[260px] sm:max-w-xs mx-auto",
-      shadowCls:      "rounded-2xl overflow-hidden shadow-[0_20px_64px_rgba(0,0,0,0.28)] border-2 border-white/75",
-      imgCls:         "w-full block",
-      bookMaxWidthCls:"max-w-[260px] sm:max-w-xs",
+      containerCls:    "w-full max-w-[260px] sm:max-w-xs mx-auto",
+      // Strong cover shadow + warm gold trim ring
+      shadowCls:       "rounded-2xl overflow-hidden shadow-[0_28px_80px_rgba(0,0,0,0.32),0_8px_24px_rgba(0,0,0,0.16)] ring-2 ring-pineapple-yellow/55 ring-offset-2 ring-offset-transparent",
+      imgCls:          "w-full block",
+      bookMaxWidthCls: "max-w-[260px] sm:max-w-xs",
     };
   }
   if (isBackLike) {
     return {
-      containerCls:   "w-full max-w-[260px] sm:max-w-xs mx-auto",
-      shadowCls:      "rounded-2xl overflow-hidden shadow-[0_12px_48px_rgba(0,0,0,0.18)] border border-tiki-brown/12",
-      imgCls:         "w-full block",
-      bookMaxWidthCls:"max-w-[260px] sm:max-w-xs",
+      containerCls:    "w-full max-w-[260px] sm:max-w-xs mx-auto",
+      shadowCls:       "rounded-2xl overflow-hidden shadow-[0_16px_56px_rgba(0,0,0,0.22),0_4px_16px_rgba(0,0,0,0.10)] ring-1 ring-pineapple-yellow/35 ring-offset-1",
+      imgCls:          "w-full block",
+      bookMaxWidthCls: "max-w-[260px] sm:max-w-xs",
     };
   }
   if (spread) {
     return {
-      containerCls:   "w-full max-w-5xl mx-auto",
-      shadowCls:      "rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.12)] border border-tiki-brown/10 bg-white",
-      imgCls:         "w-full block max-h-[65vh] object-contain",
-      bookMaxWidthCls:"max-w-5xl",
+      containerCls:    "w-full max-w-5xl mx-auto",
+      shadowCls:       "rounded-2xl overflow-hidden shadow-[0_12px_52px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.08)] border border-amber-100/80 bg-white",
+      imgCls:          "w-full block max-h-[65vh] object-contain",
+      bookMaxWidthCls: "max-w-5xl",
     };
   }
+  // Single page / front matter
   return {
-    containerCls:   "w-full max-w-md sm:max-w-lg mx-auto",
-    shadowCls:      "rounded-2xl overflow-hidden shadow-[0_6px_32px_rgba(0,0,0,0.10)] border border-tiki-brown/8 bg-white",
-    imgCls:         "w-full block",
-    bookMaxWidthCls:"max-w-md sm:max-w-lg",
+    containerCls:    "w-full max-w-md sm:max-w-lg mx-auto",
+    shadowCls:       "rounded-2xl overflow-hidden shadow-[0_8px_44px_rgba(0,0,0,0.12),0_2px_10px_rgba(0,0,0,0.07)] border border-amber-100/60 bg-white",
+    imgCls:          "w-full block",
+    bookMaxWidthCls: "max-w-md sm:max-w-lg",
   };
 }
 
@@ -154,29 +156,18 @@ function formatTime(secs: number): string {
 // ─── Narration player bar ─────────────────────────────────────────────────────
 
 function NarrationPlayerBar({
-  playing,
-  duration,
-  currentTime,
-  onToggle,
-  onSeek,
-  prominent = false,
+  playing, duration, currentTime, onToggle, onSeek, prominent = false,
 }: {
-  playing: boolean;
-  duration: number;
-  currentTime: number;
-  onToggle: () => void;
-  onSeek: (t: number) => void;
-  prominent?: boolean;
+  playing: boolean; duration: number; currentTime: number;
+  onToggle: () => void; onSeek: (t: number) => void; prominent?: boolean;
 }) {
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
   return (
-    <div
-      className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
-        prominent
-          ? "bg-ube-purple/12 border-2 border-ube-purple/25 shadow-sm"
-          : "bg-ube-purple/8 border border-ube-purple/15"
-      }`}
-    >
+    <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
+      prominent
+        ? "bg-ube-purple/12 border-2 border-ube-purple/25 shadow-sm"
+        : "bg-ube-purple/8 border border-ube-purple/15"
+    }`}>
       <button
         type="button"
         onClick={onToggle}
@@ -189,7 +180,6 @@ function NarrationPlayerBar({
       >
         <span className="text-sm">{playing ? "⏸" : "▶"}</span>
       </button>
-
       <div className="flex-1 flex flex-col gap-1.5 min-w-0">
         <span className="text-xs font-black text-ube-purple leading-none">
           {prominent ? "🎧 Listen While You Read" : "Listen While Reading"}
@@ -213,10 +203,8 @@ function NarrationPlayerBar({
           />
         </div>
       </div>
-
       <span className="flex-shrink-0 text-xs tabular-nums text-ube-purple/60 font-semibold">
-        {formatTime(currentTime)}
-        {duration > 0 ? ` / ${formatTime(duration)}` : ""}
+        {formatTime(currentTime)}{duration > 0 ? ` / ${formatTime(duration)}` : ""}
       </span>
     </div>
   );
@@ -256,10 +244,7 @@ function ProgressIndicator({ index, total }: { index: number; total: number }) {
 // ─── Thumbnail strip ──────────────────────────────────────────────────────────
 
 function ThumbnailStrip({
-  pages,
-  activeIndex,
-  onSelect,
-  stripRef,
+  pages, activeIndex, onSelect, stripRef,
 }: {
   pages: StorybookReaderPage[];
   activeIndex: number;
@@ -267,7 +252,6 @@ function ThumbnailStrip({
   stripRef: React.RefObject<HTMLDivElement | null>;
 }) {
   if (pages.length <= 1) return null;
-
   return (
     <div
       ref={stripRef}
@@ -292,13 +276,11 @@ function ThumbnailStrip({
               isActive ? "scale-110 opacity-100" : "opacity-40 hover:opacity-65"
             }`}
           >
-            <div
-              className={`rounded-xl overflow-hidden border-2 transition-all duration-200 ${
-                isActive
-                  ? "border-ube-purple shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
-                  : "border-transparent"
-              }`}
-            >
+            <div className={`rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+              isActive
+                ? "border-ube-purple shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
+                : "border-transparent"
+            }`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={p.imageUrl}
@@ -307,11 +289,9 @@ function ThumbnailStrip({
                 loading="lazy"
               />
             </div>
-            <span
-              className={`text-[10px] font-bold leading-none truncate max-w-[4.5rem] ${
-                isActive ? "text-ube-purple" : "text-tiki-brown/35"
-              }`}
-            >
+            <span className={`text-[10px] font-bold leading-none truncate max-w-[4.5rem] ${
+              isActive ? "text-ube-purple" : "text-tiki-brown/35"
+            }`}>
               {label}
             </span>
           </button>
@@ -324,50 +304,25 @@ function ThumbnailStrip({
 // ─── Focus mode overlay ───────────────────────────────────────────────────────
 
 function FocusModeReader({
-  page,
-  index,
-  total,
-  pages,
-  episodeTitle,
-  isFirst,
-  isLast,
-  onPrev,
-  onNext,
-  onSelect,
-  onExit,
-  onReadAgain,
-  backHref,
-  touchHandlers,
-  spreadPages,
-  audioPlaying,
-  audioDuration,
-  audioCurrentTime,
-  onAudioToggle,
-  onAudioSeek,
+  page, index, total, pages, episodeTitle,
+  isFirst, isLast,
+  onPrev, onNext, onSelect, onExit, onReadAgain,
+  backHref, touchHandlers, spreadPages,
+  audioPlaying, audioDuration, audioCurrentTime, onAudioToggle, onAudioSeek,
 }: {
-  page: StorybookReaderPage;
-  index: number;
-  total: number;
-  pages: StorybookReaderPage[];
-  episodeTitle: string;
-  isFirst: boolean;
-  isLast: boolean;
-  onPrev: () => void;
-  onNext: () => void;
-  onSelect: (i: number) => void;
-  onExit: () => void;
-  onReadAgain: () => void;
+  page: StorybookReaderPage; index: number; total: number;
+  pages: StorybookReaderPage[]; episodeTitle: string;
+  isFirst: boolean; isLast: boolean;
+  onPrev: () => void; onNext: () => void;
+  onSelect: (i: number) => void; onExit: () => void; onReadAgain: () => void;
   backHref: string;
   touchHandlers: {
     onTouchStart: (e: React.TouchEvent) => void;
     onTouchEnd: (e: React.TouchEvent) => void;
   };
   spreadPages: StorybookReaderPage[];
-  audioPlaying?: boolean;
-  audioDuration?: number;
-  audioCurrentTime?: number;
-  onAudioToggle?: () => void;
-  onAudioSeek?: (t: number) => void;
+  audioPlaying?: boolean; audioDuration?: number; audioCurrentTime?: number;
+  onAudioToggle?: () => void; onAudioSeek?: (t: number) => void;
 }) {
   const thumbsRef  = useRef<HTMLDivElement>(null);
   const displayText = page.caption || page.readAloudText || null;
@@ -396,9 +351,7 @@ function FocusModeReader({
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="text-lg select-none" aria-hidden="true">📖</span>
           <div className="flex flex-col min-w-0">
-            <span className="text-sm font-black text-tiki-brown truncate leading-tight">
-              {episodeTitle}
-            </span>
+            <span className="text-sm font-black text-tiki-brown truncate leading-tight">{episodeTitle}</span>
             {chip && (
               <span className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide leading-tight">
                 {chip}
@@ -535,9 +488,7 @@ function FocusModeReader({
 // ─── Flipbook arrow button ────────────────────────────────────────────────────
 
 function FlipbookArrow({
-  direction,
-  disabled,
-  onClick,
+  direction, disabled, onClick,
 }: {
   direction: "prev" | "next";
   disabled: boolean;
@@ -549,10 +500,25 @@ function FlipbookArrow({
       onClick={onClick}
       disabled={disabled}
       aria-label={direction === "prev" ? "Previous page" : "Next page"}
-      className="flex-shrink-0 w-10 h-10 sm:w-14 sm:h-14 rounded-full flex items-center justify-center bg-white border-2 border-pineapple-yellow/50 text-tiki-brown/65 shadow-sm hover:bg-pineapple-yellow/20 hover:border-pineapple-yellow/75 hover:text-tiki-brown hover:shadow-md disabled:opacity-20 disabled:cursor-not-allowed transition-all active:scale-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube-purple/50"
+      className={`
+        flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full
+        flex items-center justify-center
+        bg-white/90 backdrop-blur-sm
+        border-2 border-pineapple-yellow/55
+        text-tiki-brown/65
+        shadow-[0_4px_18px_rgba(212,160,16,0.20)]
+        hover:bg-pineapple-yellow/22 hover:border-pineapple-yellow/85
+        hover:text-tiki-brown hover:-translate-y-0.5
+        hover:shadow-[0_7px_22px_rgba(212,160,16,0.32)]
+        disabled:opacity-18 disabled:cursor-not-allowed
+        disabled:shadow-none disabled:translate-y-0
+        transition-all duration-200
+        active:scale-90 active:translate-y-0
+        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube-purple/50
+      `}
     >
       <span
-        className="text-2xl sm:text-3xl font-black leading-none select-none"
+        className="text-[1.75rem] sm:text-[2.25rem] font-black leading-none select-none"
         aria-hidden="true"
       >
         {direction === "prev" ? "‹" : "›"}
@@ -576,17 +542,17 @@ export default function StorybookReader({
   narrationAudio?: StorybookNarrationAudioProp;
   listenModeActive?: boolean;
 }) {
-  const [index, setIndex]       = useState(0);
+  const [index, setIndex]         = useState(0);
   const [focusMode, setFocusMode] = useState(false);
-  const [turnDir, setTurnDir]   = useState<"next" | "prev" | null>(null);
-  const turningRef              = useRef(false);
-  const touchStartX             = useRef<number | null>(null);
-  const thumbsRef               = useRef<HTMLDivElement>(null);
+  const [turnDir, setTurnDir]     = useState<"next" | "prev" | null>(null);
+  const turningRef                = useRef(false);
+  const touchStartX               = useRef<number | null>(null);
+  const thumbsRef                 = useRef<HTMLDivElement>(null);
 
-  // Audio state — persists across page turns and mode switches
-  const audioRef              = useRef<HTMLAudioElement>(null);
-  const [audioPlaying, setAudioPlaying]     = useState(false);
-  const [audioDuration, setAudioDuration]   = useState(0);
+  // Audio — persists across page turns and mode switches
+  const audioRef                        = useRef<HTMLAudioElement>(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState(0);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
 
   const toggleAudio = useCallback(() => {
@@ -602,17 +568,17 @@ export default function StorybookReader({
     setAudioCurrentTime(t);
   }, []);
 
-  const total      = pages.length;
-  const page       = pages[index];
-  const isFirst    = index === 0;
-  const isLast     = index === total - 1;
-  const spreadPages  = collectSpreadPages(pages);
-  const pageLabel    = friendlyPageLabel(page, index, total, spreadPages);
-  const chip         = frontMatterChip(page);
-  const frame        = getFrameStyle(page);
+  const total       = pages.length;
+  const page        = pages[index];
+  const isFirst     = index === 0;
+  const isLast      = index === total - 1;
+  const spreadPages = collectSpreadPages(pages);
+  const pageLabel   = friendlyPageLabel(page, index, total, spreadPages);
+  const chip        = frontMatterChip(page);
+  const frame       = getFrameStyle(page);
   const spreadLayout = isSpreadPage(page);
-  const displayText  = page.caption || page.readAloudText || null;
-  const altText      = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
+  const displayText = page.caption || page.readAloudText || null;
+  const altText     = page.altText || `${episodeTitle} — Page ${page.pageNumber}`;
   const isEndingPage = page.pageRole === "end-page" || page.pageRole === "back-cover";
 
   // ── Navigation ─────────────────────────────────────────────────────────────
@@ -641,7 +607,7 @@ export default function StorybookReader({
     setTimeout(() => { turningRef.current = false; }, 380);
   }, [index]);
 
-  // ── Keyboard navigation ────────────────────────────────────────────────────
+  // ── Keyboard ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -654,7 +620,7 @@ export default function StorybookReader({
     return () => window.removeEventListener("keydown", onKey);
   }, [goNext, goPrev, focusMode]);
 
-  // ── Keep active thumbnail in view ──────────────────────────────────────────
+  // ── Thumbnail scroll ───────────────────────────────────────────────────────
 
   useEffect(() => {
     if (thumbsRef.current) {
@@ -689,14 +655,13 @@ export default function StorybookReader({
     ? { audioPlaying, audioDuration, audioCurrentTime, onAudioToggle: toggleAudio, onAudioSeek: seekAudio }
     : {};
 
-  // Animation class for the current page based on turn direction
   const pageAnimCls =
     turnDir === "next" ? "flipbook-page-enter-next" :
     turnDir === "prev" ? "flipbook-page-enter-prev" : "";
 
   return (
     <div>
-      {/* Persistent hidden audio — stays mounted across page turns */}
+      {/* Hidden persistent audio — stays mounted across page turns */}
       {narrationAudio && (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <audio
@@ -712,7 +677,7 @@ export default function StorybookReader({
         />
       )}
 
-      {/* Focus mode overlay */}
+      {/* Focus mode overlay — unchanged */}
       {focusMode && (
         <FocusModeReader
           page={page}
@@ -750,7 +715,7 @@ export default function StorybookReader({
             />
           )}
 
-          {/* Front-matter page chip */}
+          {/* Front-matter chip */}
           {chip && (
             <div className="flex items-center justify-center">
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 border border-pineapple-yellow/40 uppercase tracking-wide">
@@ -759,26 +724,68 @@ export default function StorybookReader({
             </div>
           )}
 
-          {/* ── Book stage: soft backdrop + arrows flanking the book ── */}
-          <div className="rounded-3xl py-5 sm:py-8 px-2 sm:px-4 bg-gradient-to-b from-coconut-cream to-pineapple-yellow/10 border border-pineapple-yellow/20">
+          {/* ══ Magical book stage ══════════════════════════════════════════ */}
+          <div className="flipbook-stage-bg rounded-[2rem] relative overflow-hidden py-6 sm:py-10 px-3 sm:px-6 border border-pineapple-yellow/35 shadow-[0_2px_20px_rgba(220,180,50,0.14)]">
+
+            {/* ── CSS-only stage decorations — aria-hidden, outside image ── */}
+            {/* Top-left sparkle */}
+            <span
+              className="absolute top-2.5 left-3 text-[13px] text-pineapple-yellow/70 select-none pointer-events-none flipbook-sparkle"
+              aria-hidden="true"
+            >✦</span>
+            {/* Top-right heart */}
+            <span
+              className="absolute top-2.5 right-3.5 text-[11px] text-blush-pink/65 select-none pointer-events-none flipbook-sparkle flipbook-sparkle-d1"
+              aria-hidden="true"
+            >♡</span>
+            {/* Top inner-left diamond */}
+            <span
+              className="absolute top-2 left-[28%] text-[9px] text-sky-blue/65 select-none pointer-events-none hidden sm:block flipbook-sparkle flipbook-sparkle-d2"
+              aria-hidden="true"
+            >✧</span>
+            {/* Top inner-right diamond */}
+            <span
+              className="absolute top-2 right-[28%] text-[9px] text-mango-orange/55 select-none pointer-events-none hidden sm:block flipbook-sparkle flipbook-sparkle-d3"
+              aria-hidden="true"
+            >◆</span>
+            {/* Mid-left edge star */}
+            <span
+              className="absolute top-[38%] left-1.5 text-[9px] text-tropical-green/38 select-none pointer-events-none hidden sm:block flipbook-sparkle flipbook-sparkle-d4"
+              aria-hidden="true"
+            >◇</span>
+            {/* Mid-right edge star */}
+            <span
+              className="absolute top-[38%] right-1.5 text-[10px] text-blush-pink/38 select-none pointer-events-none hidden sm:block flipbook-sparkle flipbook-sparkle-d2"
+              aria-hidden="true"
+            >★</span>
+
+            {/* Arrow + book + arrow */}
             <div
-              className="flex items-center justify-center gap-1.5 sm:gap-3"
+              className="relative z-10 flex items-center justify-center gap-2 sm:gap-4"
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
               {/* Left arrow */}
               <FlipbookArrow direction="prev" disabled={isFirst} onClick={goPrev} />
 
-              {/* Book frame */}
+              {/* Book frame wrapper */}
               <div
-                className={`min-w-0 flex-1 ${frame.bookMaxWidthCls} select-none`}
+                className={`relative min-w-0 flex-1 ${frame.bookMaxWidthCls} select-none`}
                 aria-live="polite"
                 aria-atomic="true"
                 aria-label={`Page: ${pageLabel}`}
               >
+                {/* Floor shadow — oval under the book */}
+                <div
+                  className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-4/5 h-6 rounded-full pointer-events-none -z-10"
+                  style={{ background: "radial-gradient(ellipse, rgba(139,90,43,0.18) 0%, transparent 72%)" }}
+                  aria-hidden="true"
+                />
+
+                {/* Book frame */}
                 <div className={`relative ${frame.shadowCls}`}>
 
-                  {/* Page-turn animated wrapper — key remounts on each index change */}
+                  {/* Page-turn animated wrapper */}
                   <div key={`page-${index}`} className={pageAnimCls}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -788,27 +795,29 @@ export default function StorybookReader({
                     />
                   </div>
 
-                  {/* Subtle page-thickness edges */}
+                  {/* Page thickness — right edge (warm amber) */}
                   <div
-                    className="absolute inset-y-0 right-0 w-1 bg-gradient-to-r from-transparent to-black/10 z-10 pointer-events-none rounded-r-2xl"
+                    className="absolute inset-y-0 right-0 w-[5px] bg-gradient-to-r from-transparent via-amber-200/40 to-amber-300/55 z-10 pointer-events-none rounded-r-2xl"
                     aria-hidden="true"
                   />
+                  {/* Page thickness — bottom edge */}
                   <div
-                    className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-b from-transparent to-black/8 z-10 pointer-events-none"
+                    className="absolute inset-x-0 bottom-0 h-[4px] bg-gradient-to-b from-transparent to-amber-200/35 z-10 pointer-events-none"
                     aria-hidden="true"
                   />
 
-                  {/* Center gutter for two-page spreads */}
+                  {/* Center gutter for spreads */}
                   {spreadLayout && (
                     <div
-                      className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-gradient-to-b from-transparent via-tiki-brown/15 to-transparent z-10 pointer-events-none"
+                      className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[3px] bg-gradient-to-b from-transparent via-tiki-brown/12 to-transparent z-10 pointer-events-none"
+                      style={{ background: "linear-gradient(to bottom, transparent, rgba(139,90,43,0.10) 30%, rgba(139,90,43,0.18) 50%, rgba(139,90,43,0.10) 70%, transparent)" }}
                       aria-hidden="true"
                     />
                   )}
 
                   {/* Page label badge */}
                   <div
-                    className="absolute bottom-3 right-3 bg-black/38 text-white text-xs font-bold px-2.5 py-1 rounded-full backdrop-blur-sm select-none pointer-events-none z-20"
+                    className="absolute bottom-2.5 right-2.5 bg-black/35 text-white text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-full backdrop-blur-sm select-none pointer-events-none z-20"
                     aria-hidden="true"
                   >
                     {pageLabel}
@@ -832,13 +841,37 @@ export default function StorybookReader({
               {/* Right arrow */}
               <FlipbookArrow direction="next" disabled={isLast} onClick={goNext} />
             </div>
+
+            {/* ── Title plaque + page badge — inside stage ── */}
+            <div className="relative z-10 mt-4 sm:mt-5 flex flex-col items-center gap-2">
+              {/* Story title plaque */}
+              <div className="px-4 sm:px-6 py-1.5 sm:py-2 rounded-2xl bg-white/55 border border-pineapple-yellow/42 shadow-sm text-center max-w-[88%] backdrop-blur-sm">
+                <span
+                  className="[font-family:var(--font-margarine)] text-xs sm:text-sm text-tiki-brown/65 leading-snug block truncate"
+                >
+                  {episodeTitle}
+                </span>
+              </div>
+              {/* Page progress badge */}
+              <span
+                className="text-[11px] font-bold px-4 py-1 rounded-full bg-pineapple-yellow/30 text-tiki-brown/58 border border-pineapple-yellow/45 select-none"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {pageLabel}
+              </span>
+            </div>
           </div>
+          {/* ══ End stage ═══════════════════════════════════════════════════ */}
 
           {/* "The End" flourish */}
           {isLast && isEndingPage && (
-            <div className="text-center">
-              <span className="text-xl font-black text-tiki-brown/35 tracking-widest select-none">
-                ✨ The End
+            <div className="text-center py-1">
+              <span
+                className="[font-family:var(--font-margarine)] text-lg text-pineapple-yellow/75 tracking-widest select-none"
+                aria-hidden="true"
+              >
+                ✨ The End ✨
               </span>
             </div>
           )}
@@ -859,20 +892,11 @@ export default function StorybookReader({
             </div>
           )}
 
-          {/* Progress row */}
-          <div className="flex items-center gap-3 px-1">
-            <span
-              className="text-xs font-bold text-tiki-brown/40 tabular-nums flex-shrink-0"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {pageLabel}
-            </span>
-            <div className="flex-1 flex items-center">
-              <ProgressIndicator index={index} total={total} />
-            </div>
-            <span className="text-xs font-bold text-tiki-brown/30 tabular-nums flex-shrink-0">
-              {index + 1} / {total}
+          {/* Progress row — pips only (label is in the stage plaque) */}
+          <div className="flex items-center justify-center gap-3 px-1">
+            <ProgressIndicator index={index} total={total} />
+            <span className="text-xs font-bold text-tiki-brown/28 tabular-nums flex-shrink-0">
+              {index + 1}/{total}
             </span>
           </div>
 
