@@ -546,7 +546,7 @@ export default function HomePage() {
           E. TIKI TROUBLE — villain feature block
       ══════════════════════════════════════════════════════════════════════ */}
       {showcase.tikiTrouble.enabled && tiki && (
-        <section className="relative overflow-hidden bg-gradient-to-br from-warm-coral/18 via-warm-coral/8 to-bg-cream border-y border-warm-coral/20 py-16 px-4">
+        <section className="homepage-trouble-island-section relative overflow-hidden border-y border-warm-coral/20 py-16 px-4">
           <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
             <span className="absolute top-5 right-6 text-5xl opacity-[0.09] rotate-[18deg]">💥</span>
             <span className="absolute bottom-5 left-8 text-4xl opacity-[0.07] rotate-[-14deg]">⚡</span>
