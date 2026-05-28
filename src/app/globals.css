@@ -87,6 +87,37 @@ body {
   --fbu-leaf-green: #72b93f;
   --fbu-sparkle-gold: #ffcf3a;
   --fbu-heart-pink: #ff8fb3;
+
+  /* ── Bubblegum 3D title color palette ─────────────────────────────────── */
+  --brand-title-yellow-fill: #ffe878;
+  --brand-title-yellow-highlight: #fffbc8;
+  --brand-title-yellow-mid: #ffd960;
+  --brand-title-yellow-outline: #d4920a;
+  --brand-title-yellow-shadow: rgba(196, 128, 10, 0.22);
+
+  --brand-title-pink-fill: #ffb0d0;
+  --brand-title-pink-highlight: #ffd8e8;
+  --brand-title-pink-mid: #ff90c0;
+  --brand-title-pink-outline: #d06098;
+  --brand-title-pink-shadow: rgba(200, 88, 140, 0.22);
+
+  --brand-title-cream-fill: #fff8c0;
+  --brand-title-cream-highlight: #fffef0;
+  --brand-title-cream-mid: #fff090;
+  --brand-title-cream-outline: #d4aa30;
+  --brand-title-cream-shadow: rgba(196, 158, 40, 0.18);
+
+  --brand-title-blue-fill: #b8e8ff;
+  --brand-title-blue-highlight: #e0f6ff;
+  --brand-title-blue-mid: #88d4ff;
+  --brand-title-blue-outline: #489acb;
+  --brand-title-blue-shadow: rgba(60, 140, 200, 0.18);
+
+  --brand-title-peach-fill: #ffcba0;
+  --brand-title-peach-highlight: #ffe8cc;
+  --brand-title-peach-mid: #ffb480;
+  --brand-title-peach-outline: #d87840;
+  --brand-title-peach-shadow: rgba(210, 114, 58, 0.20);
 }
 
 /* CRISP LOGO-STYLE TITLES */
@@ -102,6 +133,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  paint-order: stroke fill;
   -webkit-text-stroke: 1.8px var(--fbu-outline-gold-soft);
   text-shadow:
     0 1px 0 var(--fbu-outline-gold-light),
@@ -123,6 +155,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  paint-order: stroke fill;
   -webkit-text-stroke: 1.5px var(--fbu-outline-gold-soft);
   text-shadow:
     0 1px 0 var(--fbu-outline-gold-light),
@@ -142,6 +175,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  paint-order: stroke fill;
   -webkit-text-stroke: 1.4px var(--fbu-outline-gold-soft);
   text-shadow:
     0 1px 0 rgba(168, 112, 16, 0.42),
@@ -170,6 +204,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  paint-order: stroke fill;
   -webkit-text-stroke: 1.2px var(--fbu-outline-gold-soft);
   text-shadow:
     0 1px 0 var(--fbu-outline-gold-light),
@@ -190,65 +225,146 @@ body {
   word-break: break-word;
 }
 
-/* Shared word-span base (legacy gradient classes) */
+/* ── BUBBLEGUM 3D TITLE SYSTEM ─────────────────────────────────────────── */
+/* Margarine + paint-order + layered tone-matched shadows = candy 3D effect  */
+
+.brand-bubblegum-title {
+  font-family: var(--font-margarine), "Margarine", cursive;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  display: block;
+  max-width: 100%;
+  word-break: break-word;
+  paint-order: stroke fill;
+}
+
+.brand-bubblegum-title--hero {
+  line-height: 1.08;
+}
+
+.brand-bubblegum-title--section {
+  line-height: 1.1;
+}
+
+.brand-bubblegum-title--small {
+  line-height: 1.15;
+}
+
+/* Yellow / Pineapple Baby / Universe */
 .brand-word-gold,
+.brand-word-yellow,
+.brand-word-pineapple,
+.brand-word-universe {
+  display: inline;
+  padding: 0.05em 0;
+  color: var(--brand-title-yellow-fill);
+  -webkit-text-fill-color: var(--brand-title-yellow-fill);
+  -webkit-text-stroke: 2px var(--brand-title-yellow-outline);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 #e0ab10,
+    0 2px 0 #c48c0c,
+    0 3px 0 #a8720a,
+    0 4px 6px rgba(168, 112, 10, 0.18);
+}
+
+/* Pink / Fruit */
 .brand-word-pink,
-.brand-word-cream {
+.brand-word-fruit {
   display: inline;
-  padding: 0.06em 0;
-}
-
-/* Gold/yellow — "Pineapple Baby" */
-.brand-word-gold {
-  background: linear-gradient(160deg, #fee878 0%, #ffd84d 48%, #f4a928 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  -webkit-text-stroke: 2px var(--fbu-outline-gold);
+  padding: 0.05em 0;
+  color: var(--brand-title-pink-fill);
+  -webkit-text-fill-color: var(--brand-title-pink-fill);
+  -webkit-text-stroke: 2px var(--brand-title-pink-outline);
+  paint-order: stroke fill;
   text-shadow:
-    0 2px 0 var(--fbu-outline-gold-dark),
-    0 3px 0 rgba(124, 67, 10, 0.20),
-    0 6px 8px rgba(124, 67, 10, 0.10);
+    0 1px 0 #e090b8,
+    0 2px 0 #c87098,
+    0 3px 0 #ac5080,
+    0 4px 6px rgba(172, 80, 124, 0.18);
 }
 
-/* Pink/rose — "Fruit" */
-.brand-word-pink {
-  background: linear-gradient(160deg, #ffb8cc 0%, #ff7f9f 48%, #e85d78 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  -webkit-text-stroke: 2px var(--fbu-outline-pink);
-  text-shadow:
-    0 2px 0 var(--fbu-outline-pink-dark),
-    0 3px 0 rgba(149, 48, 80, 0.20),
-    0 6px 8px rgba(149, 48, 80, 0.10);
-}
-
-/* Cream/yellow — "Baby Universe" */
-.brand-word-cream {
-  background: linear-gradient(160deg, #fff8cc 0%, #ffe88c 38%, #ffd84d 72%, #f5c832 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  -webkit-text-stroke: 2px var(--fbu-outline-gold);
-  text-shadow:
-    0 2px 0 var(--fbu-outline-gold-dark),
-    0 3px 0 rgba(124, 67, 10, 0.20),
-    0 6px 8px rgba(124, 67, 10, 0.10);
-}
-
-/* Connector words — "and the" */
-.brand-word-connector {
+/* Cream / Baby */
+.brand-word-cream,
+.brand-word-baby {
   display: inline;
-  color: var(--fbu-brown);
-  -webkit-text-fill-color: var(--fbu-brown);
-  opacity: 0.52;
-  font-size: 0.70em;
-  letter-spacing: 0.03em;
+  padding: 0.05em 0;
+  color: var(--brand-title-cream-fill);
+  -webkit-text-fill-color: var(--brand-title-cream-fill);
+  -webkit-text-stroke: 2px var(--brand-title-cream-outline);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 #e8d050,
+    0 2px 0 #ceb038,
+    0 3px 0 #b09028,
+    0 4px 6px rgba(176, 144, 40, 0.18);
 }
 
-/* ─── FBU WORD SPANS — solid fill + tone-matched outline + soft shadow ─── */
-/* Solid color (not background-clip) so fill stays vivid across all browsers  */
+/* Blue */
+.brand-word-blue {
+  display: inline;
+  padding: 0.05em 0;
+  color: var(--brand-title-blue-fill);
+  -webkit-text-fill-color: var(--brand-title-blue-fill);
+  -webkit-text-stroke: 2px var(--brand-title-blue-outline);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 #7cc8e8,
+    0 2px 0 #58b0d0,
+    0 3px 0 #3898b8,
+    0 4px 6px rgba(56, 148, 188, 0.18);
+}
+
+/* Peach */
+.brand-word-peach {
+  display: inline;
+  padding: 0.05em 0;
+  color: var(--brand-title-peach-fill);
+  -webkit-text-fill-color: var(--brand-title-peach-fill);
+  -webkit-text-stroke: 2px var(--brand-title-peach-outline);
+  paint-order: stroke fill;
+  text-shadow:
+    0 1px 0 #e8a878,
+    0 2px 0 #cc8858,
+    0 3px 0 #b06840,
+    0 4px 6px rgba(176, 104, 60, 0.18);
+}
+
+/* Connector "and the" — soft, smaller */
+.brand-word-connector,
+.brand-word-soft {
+  display: inline;
+  color: #9b6e4a;
+  -webkit-text-fill-color: #9b6e4a;
+  opacity: 0.55;
+  font-size: 0.72em;
+  letter-spacing: 0.02em;
+}
+
+/* Section context — thinner stroke at text-3xl/4xl */
+.brand-bubblegum-title--section .brand-word-gold,
+.brand-bubblegum-title--section .brand-word-yellow,
+.brand-bubblegum-title--section .brand-word-pineapple,
+.brand-bubblegum-title--section .brand-word-universe,
+.brand-bubblegum-title--section .brand-word-cream,
+.brand-bubblegum-title--section .brand-word-baby {
+  -webkit-text-stroke: 1.6px var(--brand-title-yellow-outline);
+}
+
+.brand-bubblegum-title--section .brand-word-pink,
+.brand-bubblegum-title--section .brand-word-fruit {
+  -webkit-text-stroke: 1.6px var(--brand-title-pink-outline);
+}
+
+.brand-bubblegum-title--section .brand-word-blue {
+  -webkit-text-stroke: 1.6px var(--brand-title-blue-outline);
+}
+
+.brand-bubblegum-title--section .brand-word-peach {
+  -webkit-text-stroke: 1.6px var(--brand-title-peach-outline);
+}
+
+/* ─── FBU WORD SPANS — legacy aliases, now using bubblegum system ─────── */
 
 .fbu-word-pineapple,
 .fbu-word-fruit,
@@ -256,6 +372,7 @@ body {
 .fbu-word-universe {
   display: inline;
   padding: 0.05em 0;
+  paint-order: stroke fill;
 }
 
 /* "Pineapple Baby" — warm golden yellow, amber outline */

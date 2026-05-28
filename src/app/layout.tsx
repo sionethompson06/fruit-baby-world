@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bubblegum_Sans, Margarine } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
+import BubblegumSvgFilters from "@/components/BubblegumSvgFilters";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${bubblegumSans.variable} ${margarine.variable} h-full`}
     >
       <body className="min-h-full flex flex-col antialiased">
+        <BubblegumSvgFilters />
         <Nav />
         <main className="flex-1">{children}</main>
         <footer className="bg-coconut-cream border-t border-pineapple-yellow/30 py-6 text-center text-sm text-tiki-brown/70">

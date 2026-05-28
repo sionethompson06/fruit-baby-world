@@ -116,12 +116,12 @@ export default function HomePage() {
                 <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
                 <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
               </div>
-              <h1 className="brand-hero-title text-4xl sm:text-5xl lg:text-6xl">
-                <span className="fbu-word-pineapple">Pineapple Baby</span>
-                <span className="fbu-word-soft"> and the </span>
-                <span className="fbu-word-fruit">Fruit</span>{" "}
-                <span className="fbu-word-baby">Baby</span>{" "}
-                <span className="fbu-word-universe">Universe</span>
+              <h1 className="brand-bubblegum-title brand-bubblegum-title--hero text-4xl sm:text-5xl lg:text-6xl">
+                <span className="brand-word-pineapple">Pineapple Baby</span>
+                <span className="brand-word-soft"> and the </span>
+                <span className="brand-word-fruit">Fruit</span>{" "}
+                <span className="brand-word-baby">Baby</span>{" "}
+                <span className="brand-word-universe">Universe</span>
               </h1>
               <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
                 <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
@@ -399,10 +399,10 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
-                <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
+                <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
                   Featured{" "}
-                  <span className="fbu-word-pineapple">Pineapple Baby</span>{" "}
-                  <span className="fbu-word-universe">Storybooks</span>
+                  <span className="brand-word-pineapple">Pineapple Baby</span>{" "}
+                  <span className="brand-word-universe">Storybooks</span>
                 </h2>
                 <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
               </div>
@@ -510,8 +510,8 @@ export default function HomePage() {
                 </div>
                 <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
                   <span className="title-charm title-charm-star" aria-hidden="true">★</span>
-                  <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
-                    Meet{" "}<span className="fbu-word-pineapple">Pineapple Baby</span>
+                  <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
+                    Meet{" "}<span className="brand-word-pineapple">Pineapple Baby</span>
                   </h2>
                   <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
                 </div>
@@ -611,10 +611,10 @@ export default function HomePage() {
             </div>
             <div className="flex items-center gap-3 justify-center flex-wrap mb-3">
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
-              <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
+              <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
                 Explore{" "}
-                <span className="fbu-word-pineapple">Pineapple Baby&apos;s</span>{" "}
-                <span className="fbu-word-universe">World</span>
+                <span className="brand-word-pineapple">Pineapple Baby&apos;s</span>{" "}
+                <span className="brand-word-universe">World</span>
               </h2>
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
             </div>
@@ -651,11 +651,11 @@ export default function HomePage() {
             </div>
             <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
               <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
-              <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
-                <span className="fbu-word-fruit">Read,</span>{" "}
-                <span className="fbu-word-baby">Listen</span>{" "}
+              <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
+                <span className="brand-word-fruit">Read,</span>{" "}
+                <span className="brand-word-baby">Listen</span>{" "}
                 &amp;{" "}
-                <span className="fbu-word-universe">Watch</span>
+                <span className="brand-word-universe">Watch</span>
               </h2>
               <span className="title-charm title-charm-star" aria-hidden="true">✦</span>
             </div>
@@ -722,11 +722,11 @@ export default function HomePage() {
           <div>
             <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
-              <h2 className="brand-hero-title fbu-section text-3xl sm:text-4xl leading-tight">
+              <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
                 Your{" "}
-                <span className="fbu-word-fruit">Fruit</span>{" "}
-                <span className="fbu-word-baby">Baby</span>{" "}
-                <span className="fbu-word-universe">Adventure</span>{" "}
+                <span className="brand-word-fruit">Fruit</span>{" "}
+                <span className="brand-word-baby">Baby</span>{" "}
+                <span className="brand-word-universe">Adventure</span>{" "}
                 Starts Here
               </h2>
               <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
