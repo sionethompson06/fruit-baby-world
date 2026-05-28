@@ -498,9 +498,9 @@ a:focus-visible {
   background-image:
     linear-gradient(
       to bottom,
-      rgba(255, 249, 220, 0.72) 0%,
-      rgba(255, 246, 205, 0.62) 40%,
-      rgba(255, 245, 200, 0.76) 100%
+      rgba(255, 249, 220, 0.87) 0%,
+      rgba(255, 246, 205, 0.77) 40%,
+      rgba(255, 245, 200, 0.91) 100%
     ),
     url("/backgrounds/pineapple_grove_1.png");
   background-size: cover;
