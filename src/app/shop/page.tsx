@@ -3,6 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { buildPublicProductCards } from "@/lib/publicProductConcepts";
 import { getProductConceptCategoryLabel } from "@/lib/productConcepts";
+import { getPublicShopCollectableSections } from "@/lib/shopCollectables";
+import type { ShopCollectableItem } from "@/lib/shopCollectablesTypes";
 
 export const metadata: Metadata = {
   title: "Pineapple Baby Collectibles & Story Goods | Pineapple Baby",
@@ -45,8 +47,48 @@ const CATEGORY_OVERVIEW = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+// ─── Collectable product card ─────────────────────────────────────────────────
+
+function CollectableCard({ item }: { item: ShopCollectableItem }) {
+  const productLabel = item.productType === "plushy" ? "Plushy Collectable" : "Squishy Collectable";
+  return (
+    <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden flex flex-col">
+      {/* Image area */}
+      <div className="relative aspect-square bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center">
+        {item.imageUrl ? (
+          <Image
+            src={item.imageUrl}
+            alt={`${item.characterName} ${productLabel}`}
+            fill
+            className="object-contain p-3"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-2 py-8">
+            <span className="text-4xl opacity-20">🛍️</span>
+            <p className="text-xs text-tiki-brown/30 font-semibold text-center px-2">Image coming soon</p>
+          </div>
+        )}
+        <div className="absolute top-3 left-3">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-pineapple-yellow/85 text-tiki-brown shadow-sm">
+            Coming Soon
+          </span>
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div className="p-4 flex flex-col gap-1.5 flex-1">
+        <p className="text-sm font-black text-tiki-brown leading-tight">{item.characterName}</p>
+        <p className="text-xs font-semibold text-tiki-brown/50">{productLabel}</p>
+        <p className="text-xs font-bold text-ube-purple/70 mt-auto pt-2">{item.statusLabel}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function ShopPage() {
   const cards = buildPublicProductCards();
+  const collectableSections = getPublicShopCollectableSections();
 
   return (
     <div className="flex flex-col bg-bg-cream min-h-screen">
@@ -77,7 +119,24 @@ export default function ShopPage() {
 
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex flex-col gap-16 pb-20">
 
-        {/* ── B. Featured Product Concepts ─────────────────────────────────── */}
+        {/* ── B. Collectable sections ───────────────────────────────────────── */}
+        {collectableSections.map((section) => (
+          <section key={section.id} className="flex flex-col gap-6">
+            <div>
+              <h2 className="brand-title-section-logo text-2xl font-black mb-1">
+                {section.productType === "plushy" ? "🧸" : "🫶"} {section.title}
+              </h2>
+              <p className="text-sm text-tiki-brown/55">{section.description}</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {section.items.map((item) => (
+                <CollectableCard key={item.id} item={item} />
+              ))}
+            </div>
+          </section>
+        ))}
+
+        {/* ── C. Featured Product Concepts ─────────────────────────────────── */}
         <section className="flex flex-col gap-6">
           <div>
             <h2 className="text-2xl font-black text-tiki-brown mb-1">
@@ -181,7 +240,7 @@ export default function ShopPage() {
           )}
         </section>
 
-        {/* ── C. Product Categories ──────────────────────────────────────────── */}
+        {/* ── D. Product Categories ──────────────────────────────────────────── */}
         <section className="flex flex-col gap-5">
           <h2 className="text-xl font-black text-tiki-brown">
             What&apos;s Being Planned
@@ -202,7 +261,7 @@ export default function ShopPage() {
           </div>
         </section>
 
-        {/* ── D. Brand Integrity Note ────────────────────────────────────────── */}
+        {/* ── E. Brand Integrity Note ────────────────────────────────────────── */}
         <section className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm px-6 sm:px-8 py-8 flex flex-col gap-3 text-center max-w-2xl mx-auto w-full">
           <span className="text-3xl">🔒</span>
           <h2 className="text-base font-black text-tiki-brown">

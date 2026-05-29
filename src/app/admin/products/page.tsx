@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllProductConcepts } from "@/lib/productConcepts";
+import { getShopCollectablesConfig } from "@/lib/shopCollectables";
 import ProductConceptManagerSection from "./ProductConceptManagerSection";
 import ProductPromptBuilderSection from "./ProductPromptBuilderSection";
+import ShopCollectablesManager from "./ShopCollectablesManager";
 
 export const metadata: Metadata = {
   title: "Products | Admin",
@@ -13,6 +15,7 @@ export const revalidate = 0;
 
 export default function AdminProductsPage() {
   const concepts = getAllProductConcepts();
+  const collectablesConfig = getShopCollectablesConfig();
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-tropical-green/8 to-white">
@@ -26,13 +29,15 @@ export default function AdminProductsPage() {
         <div>
           <h1 className="text-2xl font-black text-tiki-brown mb-1">🛍️ Products</h1>
           <p className="text-sm text-tiki-brown/60">
-            Plan and manage product concepts.
+            Plan and manage product concepts and shop collectables.
           </p>
         </div>
 
+        <ShopCollectablesManager initialConfig={collectablesConfig} />
         <ProductConceptManagerSection characters={[]} initialConcepts={concepts} />
         <ProductPromptBuilderSection />
       </div>
     </main>
   );
 }
+

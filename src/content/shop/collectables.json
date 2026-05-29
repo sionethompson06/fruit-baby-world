@@ -1,0 +1,197 @@
+{
+  "sections": [
+    {
+      "id": "plushy-collectables",
+      "title": "Plushy Collectables",
+      "description": "Soft Fruit Baby friends to collect and cuddle.",
+      "productType": "plushy",
+      "items": [
+        {
+          "id": "pineapple-baby-plushy",
+          "characterSlug": "pineapple-baby",
+          "characterName": "Pineapple Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 0,
+          "enabled": true
+        },
+        {
+          "id": "ube-baby-plushy",
+          "characterSlug": "ube-baby",
+          "characterName": "Ube Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 1,
+          "enabled": true
+        },
+        {
+          "id": "mango-baby-plushy",
+          "characterSlug": "mango-baby",
+          "characterName": "Mango Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 2,
+          "enabled": true
+        },
+        {
+          "id": "kiwi-baby-plushy",
+          "characterSlug": "kiwi-baby",
+          "characterName": "Kiwi Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 3,
+          "enabled": true
+        },
+        {
+          "id": "coconut-baby-plushy",
+          "characterSlug": "coconut-baby",
+          "characterName": "Coconut Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 4,
+          "enabled": true
+        },
+        {
+          "id": "strawberry-baby-plushy",
+          "characterSlug": "strawberry-baby",
+          "characterName": "Strawberry Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 5,
+          "enabled": true
+        },
+        {
+          "id": "dragonfruit-baby-plushy",
+          "characterSlug": "dragonfruit-baby",
+          "characterName": "Dragon Fruit Baby",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 6,
+          "enabled": true
+        },
+        {
+          "id": "tiki-plushy",
+          "characterSlug": "tiki",
+          "characterName": "Tiki Trouble",
+          "productType": "plushy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 7,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "id": "squishy-collectables",
+      "title": "Squishy Collectables",
+      "description": "Squeezable Fruit Baby collectibles full of sweet personality.",
+      "productType": "squishy",
+      "items": [
+        {
+          "id": "pineapple-baby-squishy",
+          "characterSlug": "pineapple-baby",
+          "characterName": "Pineapple Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 0,
+          "enabled": true
+        },
+        {
+          "id": "ube-baby-squishy",
+          "characterSlug": "ube-baby",
+          "characterName": "Ube Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 1,
+          "enabled": true
+        },
+        {
+          "id": "mango-baby-squishy",
+          "characterSlug": "mango-baby",
+          "characterName": "Mango Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 2,
+          "enabled": true
+        },
+        {
+          "id": "kiwi-baby-squishy",
+          "characterSlug": "kiwi-baby",
+          "characterName": "Kiwi Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 3,
+          "enabled": true
+        },
+        {
+          "id": "coconut-baby-squishy",
+          "characterSlug": "coconut-baby",
+          "characterName": "Coconut Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 4,
+          "enabled": true
+        },
+        {
+          "id": "strawberry-baby-squishy",
+          "characterSlug": "strawberry-baby",
+          "characterName": "Strawberry Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 5,
+          "enabled": true
+        },
+        {
+          "id": "dragonfruit-baby-squishy",
+          "characterSlug": "dragonfruit-baby",
+          "characterName": "Dragon Fruit Baby",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 6,
+          "enabled": true
+        },
+        {
+          "id": "tiki-squishy",
+          "characterSlug": "tiki",
+          "characterName": "Tiki Trouble",
+          "productType": "squishy",
+          "imageUrl": "",
+          "imagePathname": "",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 7,
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "updatedAt": ""
+}
