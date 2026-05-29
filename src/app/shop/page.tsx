@@ -23,11 +23,19 @@ export default function ShopPage() {
           <div className="text-5xl mb-4" role="img" aria-label="collectibles">🛍️</div>
           <div className="flex items-center gap-2 flex-wrap justify-center mb-4">
             <span className="title-charm title-charm-star" aria-hidden="true">★</span>
-            <h1 className="brand-title-universe-logo text-4xl sm:text-5xl text-tiki-brown leading-tight">
-              Pineapple Baby Collectibles &amp; Story Goods
+            <h1 className="brand-bubblegum-title brand-bubblegum-title--hero text-4xl sm:text-5xl leading-tight">
+              <span className="brand-word-pineapple">Pineapple</span>{" "}
+              <span className="brand-word-baby">Baby</span>{" "}
+              <span className="brand-word-blue">Collectibles</span>{" "}
+              <span className="brand-word-soft">&amp;</span>{" "}
+              <span className="brand-word-pink">Story</span>{" "}
+              <span className="brand-word-peach">Goods</span>
             </h1>
             <span className="title-charm title-charm-diamond" aria-hidden="true">◆</span>
           </div>
+          <p className="text-sm font-semibold text-tiki-brown/70 max-w-lg mx-auto leading-relaxed mb-5">
+            Fruit Babies are only harvested during their special season — once they&apos;re gone, they may not return for a while! Don&apos;t miss your chance to collect your favorite Fruit Baby before this limited harvest sells out.
+          </p>
           <div className="inline-flex items-center gap-2 bg-pineapple-yellow/30 border border-pineapple-yellow/50 rounded-full px-5 py-2.5">
             <span className="text-base">🎨</span>
             <p className="text-sm font-bold text-tiki-brown">
