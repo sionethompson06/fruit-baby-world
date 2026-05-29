@@ -11,8 +11,8 @@
           "characterSlug": "pineapple-baby",
           "characterName": "Pineapple Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/pineapple-baby-1780022688275.png",
+          "imagePathname": "shop/collectables/plushy/pineapple-baby-1780022688275.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 0,
           "enabled": true
@@ -22,8 +22,8 @@
           "characterSlug": "ube-baby",
           "characterName": "Ube Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/ube-baby-1780022704245.png",
+          "imagePathname": "shop/collectables/plushy/ube-baby-1780022704245.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 1,
           "enabled": true
@@ -33,8 +33,8 @@
           "characterSlug": "mango-baby",
           "characterName": "Mango Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/mango-baby-1780022710582.png",
+          "imagePathname": "shop/collectables/plushy/mango-baby-1780022710582.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 2,
           "enabled": true
@@ -44,8 +44,8 @@
           "characterSlug": "kiwi-baby",
           "characterName": "Kiwi Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/kiwi-baby-1780022716697.png",
+          "imagePathname": "shop/collectables/plushy/kiwi-baby-1780022716697.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 3,
           "enabled": true
@@ -55,8 +55,8 @@
           "characterSlug": "coconut-baby",
           "characterName": "Coconut Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/coconut-baby-1780022724256.png",
+          "imagePathname": "shop/collectables/plushy/coconut-baby-1780022724256.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 4,
           "enabled": true
@@ -66,8 +66,8 @@
           "characterSlug": "strawberry-baby",
           "characterName": "Strawberry Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/strawberry-baby-1780022730326.png",
+          "imagePathname": "shop/collectables/plushy/strawberry-baby-1780022730326.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 5,
           "enabled": true
@@ -77,8 +77,8 @@
           "characterSlug": "dragonfruit-baby",
           "characterName": "Dragon Fruit Baby",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/dragonfruit-baby-1780022737081.png",
+          "imagePathname": "shop/collectables/plushy/dragonfruit-baby-1780022737081.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 6,
           "enabled": true
@@ -88,8 +88,8 @@
           "characterSlug": "tiki",
           "characterName": "Tiki Trouble",
           "productType": "plushy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/tiki-1780022742266.png",
+          "imagePathname": "shop/collectables/plushy/tiki-1780022742266.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 7,
           "enabled": true
@@ -193,5 +193,5 @@
       ]
     }
   ],
-  "updatedAt": ""
+  "updatedAt": "2026-05-29T02:45:47.500Z"
 }
