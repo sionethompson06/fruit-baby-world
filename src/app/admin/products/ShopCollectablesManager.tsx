@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import type {
   ShopCollectablesConfig,
   ShopCollectablesSection,
@@ -47,15 +46,13 @@ function CollectableItemRow({
   return (
     <div className="flex items-start gap-4 bg-white rounded-2xl border border-tiki-brown/10 p-4">
       {/* Image preview / placeholder */}
-      <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center relative">
+      <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
         {displayImage ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={displayImage}
             alt={`${item.characterName} ${item.productType}`}
-            fill
-            className="object-contain"
-            sizes="80px"
-            unoptimized={displayImage.startsWith("blob:")}
+            className="w-full h-full object-contain"
           />
         ) : (
           <span className="text-3xl opacity-25">🛍️</span>

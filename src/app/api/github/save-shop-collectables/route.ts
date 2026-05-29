@@ -1,9 +1,19 @@
 // POST /api/github/save-shop-collectables
-// Writes the shop collectables config JSON to GitHub.
+// Writes the shop collectables config JSON to GitHub AND to local disk.
 // Auth: Protected by proxy.ts — requires valid admin cookie.
 
+import fs from "fs";
+import path from "path";
 import { normalizeShopCollectablesConfig } from "@/lib/shopCollectables";
 import type { ShopCollectablesConfig } from "@/lib/shopCollectablesTypes";
+
+const LOCAL_COLLECTABLES_PATH = path.join(
+  process.cwd(),
+  "src",
+  "content",
+  "shop",
+  "collectables.json"
+);
 
 type SaveResult =
   | {
@@ -90,6 +100,16 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const fileContent = JSON.stringify(normalized, null, 2);
+
+  // Write to local disk immediately so the running server serves updated data
+  // without waiting for a git pull or redeployment. Errors are non-fatal.
+  try {
+    fs.mkdirSync(path.dirname(LOCAL_COLLECTABLES_PATH), { recursive: true });
+    fs.writeFileSync(LOCAL_COLLECTABLES_PATH, fileContent, "utf-8");
+  } catch {
+    // Read-only filesystem (production serverless) — local write not possible; GitHub is the source of truth.
+  }
+
   const contentBase64 = Buffer.from(fileContent, "utf-8").toString("base64");
   const commitMessage = `Update shop collectables config (${now.slice(0, 10)})`;
 

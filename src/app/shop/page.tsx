@@ -54,14 +54,14 @@ function CollectableCard({ item }: { item: ShopCollectableItem }) {
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden flex flex-col">
       {/* Image area */}
-      <div className="relative aspect-square bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center">
+      <div className="relative aspect-square bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center overflow-hidden">
         {item.imageUrl ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
             src={item.imageUrl}
             alt={`${item.characterName} ${productLabel}`}
-            fill
-            className="object-contain p-3"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="absolute inset-0 w-full h-full object-contain p-3"
+            loading="lazy"
           />
         ) : (
           <div className="flex flex-col items-center gap-2 py-8">
