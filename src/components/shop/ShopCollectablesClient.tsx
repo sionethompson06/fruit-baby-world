@@ -98,7 +98,7 @@ function ProductModal({
       <div className="absolute inset-0 bg-gradient-to-br from-pineapple-yellow/20 via-bg-cream/85 to-ube-purple/15 backdrop-blur-sm" />
 
       {/* Panel */}
-      <div className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-md w-full flex flex-col overflow-hidden">
+      <div className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-xl w-full flex flex-col overflow-hidden">
         {/* Close */}
         <div className="flex justify-end p-3 pb-0">
           <button
@@ -112,7 +112,7 @@ function ProductModal({
         </div>
 
         {/* Large image */}
-        <div className="relative aspect-square mx-2 rounded-2xl overflow-hidden bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center">
+        <div className="relative aspect-square mx-4 rounded-2xl overflow-hidden bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
