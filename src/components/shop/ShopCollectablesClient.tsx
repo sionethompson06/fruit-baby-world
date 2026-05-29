@@ -36,11 +36,7 @@ function CollectableCard({
             <p className="text-xs text-tiki-brown/30 font-semibold text-center px-2">Image coming soon</p>
           </div>
         )}
-        <div className="absolute top-3 left-3 pointer-events-none">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-pineapple-yellow/85 text-tiki-brown shadow-sm">
-            Coming Soon
-          </span>
-        </div>
+
       </div>
 
       {/* Body */}
