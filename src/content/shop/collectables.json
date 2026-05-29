@@ -107,8 +107,8 @@
           "characterSlug": "pineapple-baby",
           "characterName": "Pineapple Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/pineapple-baby-1780023435976.png",
+          "imagePathname": "shop/collectables/squishy/pineapple-baby-1780023435976.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 0,
           "enabled": true
@@ -118,8 +118,8 @@
           "characterSlug": "ube-baby",
           "characterName": "Ube Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/ube-baby-1780023441400.png",
+          "imagePathname": "shop/collectables/squishy/ube-baby-1780023441400.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 1,
           "enabled": true
@@ -129,8 +129,8 @@
           "characterSlug": "mango-baby",
           "characterName": "Mango Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/mango-baby-1780023448320.png",
+          "imagePathname": "shop/collectables/squishy/mango-baby-1780023448320.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 2,
           "enabled": true
@@ -140,8 +140,8 @@
           "characterSlug": "kiwi-baby",
           "characterName": "Kiwi Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/kiwi-baby-1780023452198.png",
+          "imagePathname": "shop/collectables/squishy/kiwi-baby-1780023452198.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 3,
           "enabled": true
@@ -151,8 +151,8 @@
           "characterSlug": "coconut-baby",
           "characterName": "Coconut Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/coconut-baby-1780023457001.png",
+          "imagePathname": "shop/collectables/squishy/coconut-baby-1780023457001.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 4,
           "enabled": true
@@ -162,8 +162,8 @@
           "characterSlug": "strawberry-baby",
           "characterName": "Strawberry Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/strawberry-baby-1780023464468.png",
+          "imagePathname": "shop/collectables/squishy/strawberry-baby-1780023464468.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 5,
           "enabled": true
@@ -173,8 +173,8 @@
           "characterSlug": "dragonfruit-baby",
           "characterName": "Dragon Fruit Baby",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/dragonfruit-baby-1780023470282.png",
+          "imagePathname": "shop/collectables/squishy/dragonfruit-baby-1780023470282.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 6,
           "enabled": true
@@ -184,8 +184,8 @@
           "characterSlug": "tiki",
           "characterName": "Tiki Trouble",
           "productType": "squishy",
-          "imageUrl": "",
-          "imagePathname": "",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishy/tiki-1780023473797.png",
+          "imagePathname": "shop/collectables/squishy/tiki-1780023473797.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 7,
           "enabled": true
@@ -193,5 +193,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-05-29T02:45:47.500Z"
+  "updatedAt": "2026-05-29T02:57:58.319Z"
 }
