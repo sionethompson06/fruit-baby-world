@@ -78,56 +78,8 @@
       "displayMode": "spread"
     },
     {
-      "id": "storybook-page-1780178780378",
-      "pageNumber": 5,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178779071.png",
-      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178779071.png",
-      "mimeType": "image/png",
-      "altText": "End Page",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-30T22:06:20.378Z",
-      "updatedAt": "2026-05-30T22:06:20.378Z",
-      "pageRole": "end-page",
-      "layoutType": "single-page",
-      "displayMode": "single"
-    },
-    {
-      "id": "storybook-page-1780178784850",
-      "pageNumber": 6,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178783778.png",
-      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178783778.png",
-      "mimeType": "image/png",
-      "altText": "Back Cover",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-30T22:06:24.849Z",
-      "updatedAt": "2026-05-30T22:06:24.849Z",
-      "pageRole": "back-cover",
-      "layoutType": "back-cover",
-      "displayMode": "single"
-    },
-    {
-      "id": "storybook-page-1780178796027",
-      "pageNumber": 7,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178794915.png",
-      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178794915.png",
-      "mimeType": "image/png",
-      "altText": "Page 7",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-30T22:06:36.027Z",
-      "updatedAt": "2026-05-30T22:06:36.027Z",
-      "pageRole": "story-page",
-      "layoutType": "single-page",
-      "displayMode": "single"
-    },
-    {
       "id": "storybook-page-1780178801112",
-      "pageNumber": 8,
+      "pageNumber": 5,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178799963.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178799963.png",
       "mimeType": "image/png",
@@ -144,7 +96,7 @@
     },
     {
       "id": "storybook-page-1780178804306",
-      "pageNumber": 9,
+      "pageNumber": 6,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178803041.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178803041.png",
       "mimeType": "image/png",
@@ -161,7 +113,7 @@
     },
     {
       "id": "storybook-page-1780178807247",
-      "pageNumber": 10,
+      "pageNumber": 7,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178806367.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178806367.png",
       "mimeType": "image/png",
@@ -178,7 +130,7 @@
     },
     {
       "id": "storybook-page-1780178810239",
-      "pageNumber": 11,
+      "pageNumber": 8,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178809242.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178809242.png",
       "mimeType": "image/png",
@@ -195,7 +147,7 @@
     },
     {
       "id": "storybook-page-1780178813055",
-      "pageNumber": 12,
+      "pageNumber": 9,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178812023.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178812023.png",
       "mimeType": "image/png",
@@ -212,7 +164,7 @@
     },
     {
       "id": "storybook-page-1780178816086",
-      "pageNumber": 13,
+      "pageNumber": 10,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178814905.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178814905.png",
       "mimeType": "image/png",
@@ -229,7 +181,7 @@
     },
     {
       "id": "storybook-page-1780178818878",
-      "pageNumber": 14,
+      "pageNumber": 11,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178817921.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178817921.png",
       "mimeType": "image/png",
@@ -246,7 +198,7 @@
     },
     {
       "id": "storybook-page-1780178821807",
-      "pageNumber": 15,
+      "pageNumber": 12,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178820742.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178820742.png",
       "mimeType": "image/png",
@@ -263,7 +215,7 @@
     },
     {
       "id": "storybook-page-1780178824832",
-      "pageNumber": 16,
+      "pageNumber": 13,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178823821.png",
       "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178823821.png",
       "mimeType": "image/png",
@@ -277,6 +229,54 @@
       "layoutType": "two-page-spread",
       "spreadNumber": 10,
       "displayMode": "spread"
+    },
+    {
+      "id": "storybook-page-1780178780378",
+      "pageNumber": 14,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178779071.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178779071.png",
+      "mimeType": "image/png",
+      "altText": "End Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-30T22:06:20.378Z",
+      "updatedAt": "2026-05-30T22:06:20.378Z",
+      "pageRole": "end-page",
+      "layoutType": "single-page",
+      "displayMode": "single"
+    },
+    {
+      "id": "storybook-page-1780178796027",
+      "pageNumber": 15,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178794915.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178794915.png",
+      "mimeType": "image/png",
+      "altText": "Page 7",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-30T22:06:36.027Z",
+      "updatedAt": "2026-05-30T22:06:36.027Z",
+      "pageRole": "story-page",
+      "layoutType": "single-page",
+      "displayMode": "single"
+    },
+    {
+      "id": "storybook-page-1780178784850",
+      "pageNumber": 16,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178783778.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178783778.png",
+      "mimeType": "image/png",
+      "altText": "Back Cover",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-30T22:06:24.849Z",
+      "updatedAt": "2026-05-30T22:06:24.849Z",
+      "pageRole": "back-cover",
+      "layoutType": "back-cover",
+      "displayMode": "single"
     }
   ],
   "review": {
@@ -288,5 +288,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-30T22:07:04.832Z"
+  "updatedAt": "2026-05-30T22:18:03.366Z"
 }
