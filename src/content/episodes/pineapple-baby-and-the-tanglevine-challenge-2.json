@@ -59,6 +59,23 @@
       "pageRole": "acknowledgement-page",
       "layoutType": "single-page",
       "displayMode": "single"
+    },
+    {
+      "id": "storybook-page-1780178460355",
+      "pageNumber": 4,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178458965.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780178458965.png",
+      "mimeType": "image/png",
+      "altText": "Spread 1",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-30T22:01:00.355Z",
+      "updatedAt": "2026-05-30T22:01:00.355Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 1,
+      "displayMode": "spread"
     }
   ],
   "review": {
@@ -70,5 +87,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-30T22:00:41.834Z"
+  "updatedAt": "2026-05-30T22:01:00.355Z"
 }
