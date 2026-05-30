@@ -1,0 +1,25 @@
+{
+  "title": "Pineapple Baby and the Tanglevine Challenge",
+  "slug": "pineapple-baby-and-the-tanglevine-challenge",
+  "shortDescription": "In Pineapple Baby and the Tanglevine Challenge, the Friendship Harvest Games begin as a joyful adventure through Tropical Grove — but everything changes when Tiki Trouble twists the course with tricky Tanglevines. As hidden paths, wiggly bridges, gloomy groves, and magical locks stand in their way, Pineapple Baby, Mango Baby, and Coconut Baby must use their special gifts to help one another move forward. Along the way, they discover that true leadership is not about shining alone, but helping every friend’s light become part of the solution.",
+  "featuredCharacters": [
+    "Coconut Baby",
+    "Mango Baby",
+    "Pineapple Baby",
+    "Tiki Trouble"
+  ],
+  "status": "draft",
+  "productionStatus": "storybook-draft",
+  "sourceType": "admin-created-storybook",
+  "storybookPages": [],
+  "review": {
+    "status": "draft",
+    "approvedForSave": false
+  },
+  "publishing": {
+    "publicStatus": "not-published",
+    "readyForPublicSite": false
+  },
+  "createdAt": "2026-05-30T21:38:01.630Z",
+  "updatedAt": "2026-05-30T21:38:01.630Z"
+}
