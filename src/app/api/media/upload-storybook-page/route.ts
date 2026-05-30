@@ -33,6 +33,7 @@ type UploadResult =
         mimeType: string;
         altText: string;
         uploadedAt: string;
+        originalFilename?: string;
       };
     }
   | {
@@ -110,6 +111,9 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ ok: false, status: "validation_error", message: "altText is required." } satisfies UploadResult, { status: 400 });
   }
   const altText = body.altText.trim();
+  const originalFilename = typeof body.originalFilename === "string" && body.originalFilename.trim()
+    ? body.originalFilename.trim()
+    : undefined;
 
   let imageBuffer: Buffer;
   try {
@@ -141,6 +145,7 @@ export async function POST(request: Request): Promise<Response> {
         mimeType,
         altText,
         uploadedAt: new Date().toISOString(),
+        ...(originalFilename ? { originalFilename } : {}),
       },
     } satisfies UploadResult, { status: 200 });
   } catch (err) {

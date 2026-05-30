@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import type { StorybookPage, StorybookPageRole, StorybookLayoutType } from "@/lib/storybookPageTypes";
 
@@ -109,6 +109,7 @@ function BulkUploadForm({
             imageBase64: base64,
             mimeType: file.type,
             altText: uploadMode === "spread" ? `Spread ${spreadNumber}` : `Page ${pageNumber}`,
+            originalFilename: file.name,
           }),
         });
 
@@ -125,6 +126,7 @@ function BulkUploadForm({
           pathname: uploadData.asset.pathname,
           mimeType: uploadData.asset.mimeType,
           altText: uploadMode === "spread" ? `Spread ${spreadNumber}` : `Page ${pageNumber}`,
+          originalFilename: file.name,
           status: "draft",
           visibility: "admin-only",
         };
@@ -372,7 +374,7 @@ function SlotUploadForm({
       const uploadRes = await fetch("/api/media/upload-storybook-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ episodeSlug, imageBase64: base64, mimeType: file.type, altText: label }),
+        body: JSON.stringify({ episodeSlug, imageBase64: base64, mimeType: file.type, altText: label, originalFilename: file.name }),
       });
 
       const uploadData = await uploadRes.json();
@@ -394,6 +396,7 @@ function SlotUploadForm({
             pathname: uploadData.asset.pathname,
             mimeType: uploadData.asset.mimeType,
             altText: label,
+            originalFilename: file.name,
             status: "draft",
             visibility: "admin-only",
             pageRole,
@@ -457,7 +460,11 @@ function SlotUploadForm({
         <p className="text-xs text-warm-coral">{(state as { phase: "error"; message: string }).message}</p>
       )}
       {state.phase === "done" && (
-        <p className="text-xs text-tropical-green font-semibold">Saved.</p>
+        <p className="text-xs text-tropical-green font-semibold truncate">
+          ✓ Saved{(state as { phase: "done"; page: StorybookPage }).page.originalFilename
+            ? ` — ${(state as { phase: "done"; page: StorybookPage }).page.originalFilename}`
+            : "."}
+        </p>
       )}
     </div>
   );
@@ -515,7 +522,7 @@ function UploadForm({
       const uploadRes = await fetch("/api/media/upload-storybook-page", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ episodeSlug, imageBase64, mimeType: file.type, altText: altText.trim() }),
+        body: JSON.stringify({ episodeSlug, imageBase64, mimeType: file.type, altText: altText.trim(), originalFilename: file.name }),
       });
       const uploadData = await uploadRes.json();
       if (!uploadData.ok) {
@@ -541,6 +548,7 @@ function UploadForm({
             pathname: uploadedAsset.pathname,
             mimeType: uploadedAsset.mimeType,
             altText: uploadedAsset.altText,
+            originalFilename: file.name,
             title: title.trim() || undefined,
             caption: caption.trim() || undefined,
             readAloudText: readAloudText.trim() || undefined,
@@ -783,6 +791,11 @@ function PageThumbnail({
           <p className="text-xs text-tiki-brown/55 truncate italic">{page.caption}</p>
         )}
         <p className="text-xs text-tiki-brown/40 truncate">{page.altText}</p>
+        {(page.originalFilename ?? page.pathname) && (
+          <p className="text-xs text-tiki-brown/30 truncate font-mono leading-tight">
+            {page.originalFilename ?? page.pathname?.split("/").pop()}
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1 flex-shrink-0">
@@ -835,6 +848,21 @@ function PageList({
   );
   // Track IDs explicitly removed by the admin — sent as archivedIds to the API
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set());
+
+  // Merge pages added externally (new uploads) without disrupting the current order.
+  // We key on length only — IDs dedup inside, so no extra re-renders from reference churn.
+  useEffect(() => {
+    setPages((prev) => {
+      const existingIds = new Set(prev.map((p) => p.id));
+      const incoming = initialPages.filter(
+        (p) => p.status !== "archived" && !existingIds.has(p.id)
+      );
+      if (incoming.length === 0) return prev;
+      const merged = [...prev, ...incoming];
+      return merged.map((p, i) => ({ ...p, pageNumber: i + 1 }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPages.length]);
   const [reorderState, setReorderState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [savedCounts, setSavedCounts] = useState<{ active: number; archived: number } | null>(null);

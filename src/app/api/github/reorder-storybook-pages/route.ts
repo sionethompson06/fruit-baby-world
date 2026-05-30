@@ -1,6 +1,11 @@
 // POST /api/github/reorder-storybook-pages
-// Reorders the storybookPages[] array in the episode JSON on GitHub.
+// Reorders the storybookPages[] array in the episode JSON on GitHub AND local disk.
 // Auth: Protected by proxy.ts — requires valid admin cookie.
+
+import fs from "fs";
+import path from "path";
+
+const LOCAL_EPISODES_DIR = path.join(process.cwd(), "src", "content", "episodes");
 
 type ReorderResult =
   | {
@@ -187,6 +192,14 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const putData = (await putRes.json()) as Record<string, unknown>;
+
+    // Write to local disk so the running server reflects the reorder immediately.
+    try {
+      fs.mkdirSync(LOCAL_EPISODES_DIR, { recursive: true });
+      fs.writeFileSync(path.join(LOCAL_EPISODES_DIR, `${episodeSlug}.json`), fileContent, "utf-8");
+    } catch {
+      // Read-only filesystem in production — GitHub is source of truth.
+    }
 
     return Response.json({
       ok: true,

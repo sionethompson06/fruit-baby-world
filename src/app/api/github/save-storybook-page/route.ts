@@ -1,8 +1,12 @@
 // POST /api/github/save-storybook-page
-// Saves or updates a storybook page in the episode JSON on GitHub.
+// Saves or updates a storybook page in the episode JSON on GitHub AND local disk.
 // Auth: Protected by proxy.ts — requires valid admin cookie.
 
+import fs from "fs";
+import path from "path";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
+
+const LOCAL_EPISODES_DIR = path.join(process.cwd(), "src", "content", "episodes");
 
 type SaveResult =
   | {
@@ -183,6 +187,9 @@ export async function POST(request: Request): Promise<Response> {
     leftPageLabel: typeof pageData.leftPageLabel === "string" ? pageData.leftPageLabel : undefined,
     rightPageLabel: typeof pageData.rightPageLabel === "string" ? pageData.rightPageLabel : undefined,
     displayMode: pageData.displayMode === "spread" ? "spread" : pageData.displayMode === "single" ? "single" : undefined,
+    originalFilename: typeof pageData.originalFilename === "string" && pageData.originalFilename
+      ? pageData.originalFilename
+      : undefined,
   };
 
   // Replace existing entry or append
@@ -222,6 +229,15 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const putData = (await putRes.json()) as Record<string, unknown>;
+
+    // Write to local disk so the running server reflects the save immediately
+    // without waiting for a git pull or redeployment. Non-fatal on serverless.
+    try {
+      fs.mkdirSync(LOCAL_EPISODES_DIR, { recursive: true });
+      fs.writeFileSync(path.join(LOCAL_EPISODES_DIR, `${episodeSlug}.json`), fileContent, "utf-8");
+    } catch {
+      // Read-only filesystem in production — GitHub is source of truth.
+    }
 
     return Response.json({
       ok: true,

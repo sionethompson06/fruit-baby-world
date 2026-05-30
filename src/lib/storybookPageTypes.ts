@@ -30,6 +30,7 @@ export type StorybookPage = {
   readAloudText?: string;
   imageUrl: string;
   pathname?: string;
+  originalFilename?: string;
   mimeType: string;
   altText: string;
   sceneNumber?: number;
@@ -57,6 +58,7 @@ export type StorybookPageInput = {
   readAloudText?: string;
   imageUrl: string;
   pathname?: string;
+  originalFilename?: string;
   mimeType: string;
   altText: string;
   sceneNumber?: number;
