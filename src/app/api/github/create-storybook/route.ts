@@ -1,6 +1,11 @@
 // POST /api/github/create-storybook
-// Creates a minimal new storybook JSON record on GitHub.
+// Creates a minimal new storybook JSON record on GitHub AND on local disk.
 // Generates slug from title, avoids collisions, commits file.
+
+import fs from "fs";
+import path from "path";
+
+const EPISODES_DIR = path.join(process.cwd(), "src", "content", "episodes");
 
 type CreateResult =
   | { ok: true; status: "created"; slug: string; path: string; commitMessage: string; htmlUrl: string }
@@ -203,6 +208,16 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const putData = (await putRes.json()) as Record<string, unknown>;
+
+    // Write to local disk so the running server can immediately load the new
+    // storybook without waiting for a git pull or redeployment. Non-fatal on
+    // read-only serverless filesystems.
+    try {
+      fs.mkdirSync(EPISODES_DIR, { recursive: true });
+      fs.writeFileSync(path.join(EPISODES_DIR, `${slug}.json`), fileContent, "utf-8");
+    } catch {
+      // Read-only filesystem in production — GitHub is source of truth.
+    }
 
     return Response.json(
       {
