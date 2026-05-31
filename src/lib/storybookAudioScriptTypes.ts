@@ -1,0 +1,61 @@
+// Types for the page-by-page audio script attached to a storybook.
+// No audio generation — this is script authoring only.
+
+export type StorybookAudioScriptStatus =
+  | "draft"
+  | "ready-for-generation"
+  | "approved"
+  | "archived";
+
+export type StorybookAudioScriptBlockType =
+  | "narration"
+  | "dialogue"
+  | "sound-effect";
+
+export type StorybookAudioScriptBlockStatus =
+  | "draft"
+  | "approved"
+  | "archived";
+
+export type StorybookAudioSpeaker = {
+  speakerSlug: string;
+  speakerName: string;
+  characterSlug?: string;
+  provider?: string;
+  voiceId?: string;
+  voiceLabel?: string;
+};
+
+export type StorybookAudioScriptBlock = {
+  id: string;
+  type: StorybookAudioScriptBlockType;
+  speakerSlug: string;
+  speakerName: string;
+  text: string;
+  voiceId?: string;
+  sortOrder: number;
+  status: StorybookAudioScriptBlockStatus;
+  // Populated after audio generation (Phase Audio 2+)
+  audioUrl?: string;
+  pathname?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type StorybookAudioScriptPage = {
+  pageId: string;
+  pageNumber?: number;
+  pageRole?: string;
+  originalFilename?: string;
+  scriptBlocks: StorybookAudioScriptBlock[];
+  updatedAt?: string;
+};
+
+export type StorybookAudioScript = {
+  version: 1;
+  status: StorybookAudioScriptStatus;
+  defaultNarratorVoiceId?: string;
+  speakers: StorybookAudioSpeaker[];
+  pages: StorybookAudioScriptPage[];
+  updatedAt: string;
+};

@@ -13,6 +13,8 @@ import StorybookDetailsEditor from "@/app/admin/episodes/[slug]/StorybookDetails
 import SimplePublishAction from "./SimplePublishAction";
 import StorybookAudioManager from "./StorybookAudioManager";
 import StorybookVideoManager from "./StorybookVideoManager";
+import StorybookAudioScriptStudio from "./StorybookAudioScriptStudio";
+import { normalizeStorybookAudioScript } from "@/lib/storybookAudioScript";
 import { normalizeStorybookStatus, getStorybookStatusLabel } from "@/lib/storybookStatus";
 import StorybookVisibilityControls from "@/components/admin/StorybookVisibilityControls";
 
@@ -104,6 +106,13 @@ export default async function StorybookBuilderPage({
   ).length;
 
   const publishReadiness = buildStorybookPublishReadiness(raw);
+
+  // Load and normalize storybook audio script
+  const initialAudioScript = normalizeStorybookAudioScript(
+    raw.storybookAudioScript,
+    storybookPages,
+    normalised.featuredCharacters
+  );
 
   // Load existing storybook narration audio
   const rawNarration = isRec(raw.storybookNarration) ? raw.storybookNarration : null;
@@ -359,6 +368,11 @@ export default async function StorybookBuilderPage({
           <StorybookAudioManager
             episodeSlug={normalised.slug}
             initialNarration={initialNarration}
+          />
+          <StorybookAudioScriptStudio
+            slug={normalised.slug}
+            storybookPages={storybookPages}
+            initialStorybookAudioScript={initialAudioScript}
           />
         </div>
 
