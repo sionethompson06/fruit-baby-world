@@ -3,6 +3,7 @@ import Link from "next/link";
 import { loadEpisodeDrafts, loadEpisodeBySlug } from "@/lib/savedEpisodes";
 import { getStorybookPages } from "@/lib/storybookPages";
 import { buildStorybookPublishReadiness } from "@/lib/storybookPublishReadiness";
+import { normalizeStorybookStatus } from "@/lib/storybookStatus";
 
 export const metadata: Metadata = {
   title: "Storybooks | Admin",
@@ -34,11 +35,13 @@ export default async function StorybooksPage() {
     const pages = getStorybookPages(result.raw);
     const cover = pages.find((p) => p.pageRole === "front-cover") ?? pages[0];
     const readiness = buildStorybookPublishReadiness(result.raw);
+    const storybookStatus = normalizeStorybookStatus(result.raw);
     return {
       draft,
       coverImageUrl: cover?.imageUrl ?? null,
       pageCount: pages.length,
       publishReady: readiness.ready,
+      storybookStatus,
     };
   });
 
@@ -100,7 +103,7 @@ export default async function StorybooksPage() {
         )}
 
         {/* Storybook cards */}
-        {enriched.map(({ draft, coverImageUrl, pageCount, publishReady }) => (
+        {enriched.map(({ draft, coverImageUrl, pageCount, publishReady, storybookStatus }) => (
           <article
             key={draft._filename}
             className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden flex flex-col sm:flex-row"
@@ -123,8 +126,12 @@ export default async function StorybooksPage() {
 
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
-                {draft.readyForPublicSite ? (
+                {storybookStatus === "published" ? (
                   <StatusBadge label="Published" className="bg-tropical-green/20 text-tropical-green" />
+                ) : storybookStatus === "hidden" ? (
+                  <StatusBadge label="Hidden" className="bg-pineapple-yellow/40 text-tiki-brown/70" />
+                ) : storybookStatus === "archived" ? (
+                  <StatusBadge label="Archived" className="bg-warm-coral/15 text-warm-coral/70" />
                 ) : publishReady ? (
                   <StatusBadge label="Ready to Publish" className="bg-pineapple-yellow/40 text-tiki-brown/70" />
                 ) : (
@@ -182,7 +189,7 @@ export default async function StorybooksPage() {
                 >
                   Edit Storybook →
                 </Link>
-                {draft.readyForPublicSite ? (
+                {storybookStatus === "published" ? (
                   <a
                     href={`/stories/${draft.slug}`}
                     target="_blank"

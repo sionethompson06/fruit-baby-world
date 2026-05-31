@@ -13,6 +13,8 @@ import StorybookDetailsEditor from "@/app/admin/episodes/[slug]/StorybookDetails
 import SimplePublishAction from "./SimplePublishAction";
 import StorybookAudioManager from "./StorybookAudioManager";
 import StorybookVideoManager from "./StorybookVideoManager";
+import { normalizeStorybookStatus, getStorybookStatusLabel } from "@/lib/storybookStatus";
+import StorybookVisibilityControls from "@/components/admin/StorybookVisibilityControls";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -88,11 +90,8 @@ export default async function StorybookBuilderPage({
     typeof v === "object" && v !== null && !Array.isArray(v);
 
   const reviewObj = isRec(raw.review) ? raw.review : null;
-  const publishingObj = isRec(raw.publishing) ? raw.publishing : null;
-  const isAlreadyPublished =
-    normalised.readyForPublicSite ||
-    normalised.publicStatus === "published" ||
-    (publishingObj !== null && publishingObj.publicStatus === "published");
+  const currentStatus = normalizeStorybookStatus(raw);
+  const isAlreadyPublished = currentStatus === "published";
 
   const storybookPages = getStorybookPages(raw);
   const publicPageCount = storybookPages.filter(
@@ -194,8 +193,13 @@ export default async function StorybookBuilderPage({
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/15 text-ube-purple uppercase tracking-widest">
               Storybook Builder
             </span>
-            <Pill className="bg-tiki-brown/6 text-tiki-brown/45">
-              {isAlreadyPublished ? "Published" : normalised.publicStatus === "not-published" ? "Draft" : normalised.publicStatus}
+            <Pill className={
+              currentStatus === "published" ? "bg-tropical-green/20 text-tropical-green" :
+              currentStatus === "hidden" ? "bg-pineapple-yellow/30 text-tiki-brown/70" :
+              currentStatus === "archived" ? "bg-warm-coral/15 text-warm-coral/70" :
+              "bg-tiki-brown/6 text-tiki-brown/45"
+            }>
+              {getStorybookStatusLabel(raw)}
             </Pill>
             {normalised.approvedForSave && (
               <Pill className="bg-tropical-green/20 text-tropical-green">Approved</Pill>
@@ -236,6 +240,12 @@ export default async function StorybookBuilderPage({
             </a>
           ))}
         </nav>
+
+        {/* ── Storybook Visibility Controls ── */}
+        <StorybookVisibilityControls
+          slug={normalised.slug}
+          initialStatus={currentStatus}
+        />
 
         {/* ── Details ── */}
         <div className="flex flex-col gap-4">
@@ -500,16 +510,24 @@ export default async function StorybookBuilderPage({
             title="Publish"
             subtitle="Make this storybook live on the public site."
             badge={
-              isAlreadyPublished ? (
+              currentStatus === "published" ? (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-tropical-green/15 text-tropical-green uppercase tracking-wide">
                   Live ✓
+                </span>
+              ) : currentStatus === "hidden" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown/70 uppercase tracking-wide">
+                  Hidden
+                </span>
+              ) : currentStatus === "archived" ? (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-warm-coral/15 text-warm-coral/70 uppercase tracking-wide">
+                  Archived
                 </span>
               ) : undefined
             }
           />
           <SimplePublishAction
             slug={normalised.slug}
-            isAlreadyPublished={isAlreadyPublished}
+            initialStatus={currentStatus}
             readiness={publishReadiness}
           />
         </div>

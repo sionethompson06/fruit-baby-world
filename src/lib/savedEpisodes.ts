@@ -218,9 +218,11 @@ export function loadPublicSavedEpisodes(): Episode[] {
       const raw = JSON.parse(text) as RawEpisodeDraft;
 
       const isPublicReady =
-        raw.publishing?.readyForPublicSite === true ||
-        raw.publishing?.publicStatus === "published" ||
-        raw.status === "published";
+        raw.status !== "archived" &&
+        raw.status !== "hidden" &&
+        (raw.publishing?.readyForPublicSite === true ||
+          raw.publishing?.publicStatus === "published" ||
+          raw.status === "published");
 
       if (!isPublicReady) continue;
 
