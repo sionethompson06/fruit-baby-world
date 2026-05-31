@@ -462,6 +462,24 @@
       "spreadNumber": 20,
       "displayMode": "spread",
       "originalFilename": "06_spread_2_the_hidden_path_true_sight.png"
+    },
+    {
+      "id": "storybook-page-1780205892630",
+      "pageNumber": 27,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205891556.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205891556.png",
+      "mimeType": "image/png",
+      "altText": "Spread 21",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T05:38:12.630Z",
+      "updatedAt": "2026-05-31T05:38:12.630Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 21,
+      "displayMode": "spread",
+      "originalFilename": "05_spread_1_tiki_trouble_changes_the_course.png"
     }
   ],
   "review": {
@@ -473,5 +491,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-31T05:38:09.623Z"
+  "updatedAt": "2026-05-31T05:38:12.630Z"
 }
