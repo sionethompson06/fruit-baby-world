@@ -23,6 +23,7 @@ import PublicFinalVideoPlayer from "./components/PublicFinalVideoPlayer";
 // ─── Public eligibility ───────────────────────────────────────────────────────
 
 function isPublicReady(raw: Record<string, unknown>): boolean {
+  if (raw.status === "archived" || raw.status === "hidden") return false;
   const pub =
     typeof raw.publishing === "object" && raw.publishing !== null
       ? (raw.publishing as Record<string, unknown>)
