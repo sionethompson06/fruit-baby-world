@@ -116,6 +116,24 @@
       "spreadNumber": 2,
       "displayMode": "spread",
       "originalFilename": "04_spread_2_the_missing_dream_blanket.png"
+    },
+    {
+      "id": "storybook-page-1780219747218",
+      "pageNumber": 7,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219746344.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219746344.png",
+      "mimeType": "image/png",
+      "altText": "Spread 3",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:29:07.218Z",
+      "updatedAt": "2026-05-31T09:29:07.218Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 3,
+      "displayMode": "spread",
+      "originalFilename": "05_spread_3_the_dark_path_to_whispering_hollow.png"
     }
   ],
   "review": {
@@ -127,5 +145,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-31T09:22:02.220Z",
-  "updatedAt": "2026-05-31T09:29:04.439Z"
+  "updatedAt": "2026-05-31T09:29:07.218Z"
 }
