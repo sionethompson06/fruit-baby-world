@@ -444,6 +444,24 @@
       "spreadNumber": 19,
       "displayMode": "spread",
       "originalFilename": "07_spread_3_the_wiggly_vine_bridge_shell_shield.png"
+    },
+    {
+      "id": "storybook-page-1780205889623",
+      "pageNumber": 26,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205888559.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205888559.png",
+      "mimeType": "image/png",
+      "altText": "Spread 20",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T05:38:09.623Z",
+      "updatedAt": "2026-05-31T05:38:09.623Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 20,
+      "displayMode": "spread",
+      "originalFilename": "06_spread_2_the_hidden_path_true_sight.png"
     }
   ],
   "review": {
@@ -455,5 +473,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-31T05:38:06.723Z"
+  "updatedAt": "2026-05-31T05:38:09.623Z"
 }
