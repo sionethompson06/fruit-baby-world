@@ -260,6 +260,24 @@
       "spreadNumber": 10,
       "displayMode": "spread",
       "originalFilename": "12_spread_10_a_real_apologyv.png"
+    },
+    {
+      "id": "storybook-page-1780219776001",
+      "pageNumber": 15,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219775042.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219775042.png",
+      "mimeType": "image/png",
+      "altText": "Spread 11",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:29:36.001Z",
+      "updatedAt": "2026-05-31T09:29:36.001Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 11,
+      "displayMode": "spread",
+      "originalFilename": "13_spread_11_next_time_i_will_ask.png"
     }
   ],
   "review": {
@@ -271,5 +289,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-31T09:22:02.220Z",
-  "updatedAt": "2026-05-31T09:29:33.218Z"
+  "updatedAt": "2026-05-31T09:29:36.001Z"
 }
