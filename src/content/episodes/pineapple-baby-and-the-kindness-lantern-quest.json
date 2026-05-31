@@ -188,6 +188,24 @@
       "spreadNumber": 6,
       "displayMode": "spread",
       "originalFilename": "08_spread_6_the_broken_courage_ribbon.png"
+    },
+    {
+      "id": "storybook-page-1780219764099",
+      "pageNumber": 11,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219762658.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219762658.png",
+      "mimeType": "image/png",
+      "altText": "Spread 7",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:29:24.099Z",
+      "updatedAt": "2026-05-31T09:29:24.099Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 7,
+      "displayMode": "spread",
+      "originalFilename": "09_spread_7_tiki_tells_the_truth.png"
     }
   ],
   "review": {
@@ -199,5 +217,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-31T09:22:02.220Z",
-  "updatedAt": "2026-05-31T09:29:20.820Z"
+  "updatedAt": "2026-05-31T09:29:24.099Z"
 }
