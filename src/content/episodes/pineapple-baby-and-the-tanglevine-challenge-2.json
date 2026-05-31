@@ -426,6 +426,24 @@
       "spreadNumber": 18,
       "displayMode": "spread",
       "originalFilename": "08_spread_4_the_gloomy_grove_joy_spark.png"
+    },
+    {
+      "id": "storybook-page-1780205886723",
+      "pageNumber": 25,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205885027.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205885027.png",
+      "mimeType": "image/png",
+      "altText": "Spread 19",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T05:38:06.723Z",
+      "updatedAt": "2026-05-31T05:38:06.723Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 19,
+      "displayMode": "spread",
+      "originalFilename": "07_spread_3_the_wiggly_vine_bridge_shell_shield.png"
     }
   ],
   "review": {
@@ -437,5 +455,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-31T05:38:03.105Z"
+  "updatedAt": "2026-05-31T05:38:06.723Z"
 }
