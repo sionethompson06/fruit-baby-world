@@ -8,6 +8,7 @@ import type {
   StorybookAudioSpeaker,
   StorybookAudioScriptBlockType,
   StorybookAudioScriptStatus,
+  StorybookAudioScriptBlockStatus,
 } from "@/lib/storybookAudioScriptTypes";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
 
@@ -17,6 +18,12 @@ type SaveState =
   | { phase: "idle" }
   | { phase: "saving" }
   | { phase: "saved" }
+  | { phase: "error"; message: string };
+
+type BlockGenerateState =
+  | { phase: "idle" }
+  | { phase: "generating" }
+  | { phase: "success"; message: string }
   | { phase: "error"; message: string };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -44,6 +51,12 @@ const BLOCK_TYPE_LABELS: Record<StorybookAudioScriptBlockType, string> = {
   "sound-effect": "Sound Effect",
 };
 
+const BLOCK_STATUS_LABELS: Record<StorybookAudioScriptBlockStatus, string> = {
+  draft: "Draft",
+  approved: "Approved",
+  archived: "Archived",
+};
+
 const SCRIPT_STATUS_LABELS: Record<StorybookAudioScriptStatus, string> = {
   draft: "Draft",
   "ready-for-generation": "Ready for Generation",
@@ -60,6 +73,29 @@ function pageLabel(page: StorybookPage): string {
   return `Page ${page.pageNumber}`;
 }
 
+function formatGeneratedAt(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  } catch {
+    return iso;
+  }
+}
+
+// ─── Voice ID resolution ──────────────────────────────────────────────────────
+
+function resolveVoiceId(
+  block: StorybookAudioScriptBlock,
+  speakers: StorybookAudioSpeaker[],
+  defaultNarratorVoiceId: string | undefined
+): string | undefined {
+  if (block.voiceId) return block.voiceId;
+  const speaker = speakers.find((s) => s.speakerSlug === block.speakerSlug);
+  if (speaker?.voiceId) return speaker.voiceId;
+  if (block.speakerSlug === "narrator" && defaultNarratorVoiceId) return defaultNarratorVoiceId;
+  return undefined;
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SpeakerRow({
@@ -70,7 +106,7 @@ function SpeakerRow({
   onChange: (updated: StorybookAudioSpeaker) => void;
 }) {
   return (
-    <div className="grid grid-cols-[1fr_1fr] gap-2 items-center py-2 border-b border-tiki-brown/8 last:border-0">
+    <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 items-center py-2 border-b border-tiki-brown/8 last:border-0">
       <div className="flex flex-col gap-0.5 min-w-0">
         <span className="text-xs font-bold text-tiki-brown/70 truncate">{speaker.speakerName}</span>
         <span className="text-[10px] text-tiki-brown/40 font-mono truncate">{speaker.speakerSlug}</span>
@@ -82,6 +118,13 @@ function SpeakerRow({
         onChange={(e) => onChange({ ...speaker, voiceLabel: e.target.value || undefined })}
         className="text-xs px-2.5 py-1.5 rounded-lg border border-tiki-brown/15 bg-white text-tiki-brown/70 placeholder:text-tiki-brown/30 focus:outline-none focus:border-ube-purple/40 transition-colors"
       />
+      <input
+        type="text"
+        value={speaker.voiceId ?? ""}
+        placeholder="ElevenLabs voice ID"
+        onChange={(e) => onChange({ ...speaker, voiceId: e.target.value || undefined })}
+        className="text-xs px-2.5 py-1.5 rounded-lg border border-tiki-brown/15 bg-white text-tiki-brown/70 placeholder:text-tiki-brown/30 focus:outline-none focus:border-ube-purple/40 transition-colors font-mono"
+      />
     </div>
   );
 }
@@ -89,22 +132,36 @@ function SpeakerRow({
 function BlockEditor({
   block,
   speakers,
+  script,
+  slug,
+  pageId,
   onUpdate,
   onRemove,
   onMoveUp,
   onMoveDown,
   isFirst,
   isLast,
+  onAutoSave,
 }: {
   block: StorybookAudioScriptBlock;
   speakers: StorybookAudioSpeaker[];
+  script: StorybookAudioScript;
+  slug: string;
+  pageId: string;
   onUpdate: (updated: StorybookAudioScriptBlock) => void;
   onRemove: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   isFirst: boolean;
   isLast: boolean;
+  onAutoSave: (updatedBlock: StorybookAudioScriptBlock) => Promise<void>;
 }) {
+  const [genState, setGenState] = useState<BlockGenerateState>({ phase: "idle" });
+
+  const resolvedVoiceId = resolveVoiceId(block, speakers, script.defaultNarratorVoiceId);
+  const canGenerate = block.text.trim().length > 0 && !!resolvedVoiceId && genState.phase !== "generating";
+  const hasAudio = !!block.audioUrl;
+
   const handleSpeakerChange = (slug: string) => {
     const found = speakers.find((s) => s.speakerSlug === slug);
     onUpdate({
@@ -112,6 +169,69 @@ function BlockEditor({
       speakerSlug: slug,
       speakerName: found?.speakerName ?? slug,
     });
+  };
+
+  const handleGenerateAudio = async () => {
+    if (!canGenerate) return;
+    setGenState({ phase: "generating" });
+
+    const speaker = speakers.find((s) => s.speakerSlug === block.speakerSlug);
+
+    try {
+      const res = await fetch("/api/storybook-audio/generate-block", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          pageId,
+          blockId: block.id,
+          text: block.text,
+          speakerSlug: block.speakerSlug,
+          speakerName: block.speakerName,
+          voiceId: resolvedVoiceId,
+        }),
+      });
+
+      const data = (await res.json()) as {
+        ok: boolean;
+        audioUrl?: string;
+        pathname?: string;
+        mimeType?: string;
+        sizeBytes?: number;
+        generatedAt?: string;
+        provider?: string;
+        modelId?: string;
+        message?: string;
+        providerMessage?: string;
+      };
+
+      if (!data.ok) {
+        const msg = data.providerMessage ?? data.message ?? "Audio generation failed.";
+        setGenState({ phase: "error", message: msg });
+        return;
+      }
+
+      const updatedBlock: StorybookAudioScriptBlock = {
+        ...block,
+        audioUrl: data.audioUrl,
+        pathname: data.pathname,
+        mimeType: data.mimeType,
+        sizeBytes: data.sizeBytes,
+        generatedAt: data.generatedAt,
+        generationProvider: "elevenlabs",
+        generationModelId: data.modelId,
+        generationError: undefined,
+        updatedAt: new Date().toISOString(),
+      };
+
+      onUpdate(updatedBlock);
+      setGenState({ phase: "success", message: "Audio draft generated and saved." });
+
+      // Auto-save to GitHub
+      await onAutoSave(updatedBlock);
+    } catch {
+      setGenState({ phase: "error", message: "Network error. Please try again." });
+    }
   };
 
   return (
@@ -140,6 +260,17 @@ function BlockEditor({
             ))}
           </select>
         )}
+
+        {/* Block status */}
+        <select
+          value={block.status}
+          onChange={(e) => onUpdate({ ...block, status: e.target.value as StorybookAudioScriptBlockStatus })}
+          className="text-xs px-2 py-1 rounded-lg border border-tiki-brown/15 bg-white text-tiki-brown/65 focus:outline-none focus:border-ube-purple/40 transition-colors"
+        >
+          {(["draft", "approved", "archived"] as StorybookAudioScriptBlockStatus[]).map((s) => (
+            <option key={s} value={s}>{BLOCK_STATUS_LABELS[s]}</option>
+          ))}
+        </select>
 
         {/* Reorder / remove controls */}
         <div className="flex items-center gap-1 ml-auto flex-shrink-0">
@@ -186,6 +317,64 @@ function BlockEditor({
         rows={2}
         className="text-xs px-3 py-2 rounded-lg border border-tiki-brown/15 bg-white text-tiki-brown/75 placeholder:text-tiki-brown/30 resize-y focus:outline-none focus:border-ube-purple/40 transition-colors leading-relaxed"
       />
+
+      {/* Audio preview player */}
+      {hasAudio && block.audioUrl && (
+        <audio
+          src={block.audioUrl}
+          controls
+          preload="metadata"
+          aria-label={`Preview ${block.speakerName} audio draft`}
+          className="w-full h-10"
+        />
+      )}
+
+      {/* Generated metadata badge */}
+      {hasAudio && block.generatedAt && (
+        <p className="text-[10px] text-tiki-brown/40 leading-snug">
+          {block.generationProvider === "elevenlabs" ? "ElevenLabs" : block.generationProvider ?? "Generated"}
+          {" · generated "}
+          {formatGeneratedAt(block.generatedAt)}
+          {block.generationModelId && (
+            <span className="font-mono"> · {block.generationModelId}</span>
+          )}
+        </p>
+      )}
+
+      {/* Voice ID warning / generate button */}
+      {block.type !== "sound-effect" && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {!resolvedVoiceId ? (
+            <p className="text-[10px] text-warm-coral/70 italic">
+              Add a voice ID to this speaker before generating audio.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleGenerateAudio}
+              disabled={!canGenerate}
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/10 text-tropical-green hover:bg-tropical-green/20 border border-tropical-green/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {genState.phase === "generating"
+                ? "Generating…"
+                : hasAudio
+                ? "Regenerate Draft"
+                : "Generate Audio Draft"}
+            </button>
+          )}
+
+          {genState.phase === "success" && (
+            <span className="text-[10px] text-tropical-green font-semibold">
+              ✓ {genState.message}
+            </span>
+          )}
+          {genState.phase === "error" && (
+            <span className="text-[10px] text-warm-coral font-semibold">
+              ✕ {genState.message}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -219,6 +408,13 @@ export default function StorybookAudioScriptStudio({
       speakers: prev.speakers.map((s) =>
         s.speakerSlug === updated.speakerSlug ? updated : s
       ),
+    }));
+  }, []);
+
+  const updateDefaultNarratorVoiceId = useCallback((value: string) => {
+    setScript((prev) => ({
+      ...prev,
+      defaultNarratorVoiceId: value.trim() || undefined,
     }));
   }, []);
 
@@ -312,6 +508,22 @@ export default function StorybookAudioScriptStudio({
 
   // ── Save ──────────────────────────────────────────────────────────────────
 
+  const saveScript = useCallback(async (scriptToSave: StorybookAudioScript): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/github/save-storybook-audio-script", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug, storybookAudioScript: scriptToSave }),
+      });
+      const data = (await res.json()) as { ok: boolean; storybookAudioScript?: StorybookAudioScript; message?: string };
+      if (!data.ok) return false;
+      if (data.storybookAudioScript) setScript(data.storybookAudioScript);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [slug]);
+
   const handleSave = async () => {
     setSaveState({ phase: "saving" });
     try {
@@ -331,6 +543,31 @@ export default function StorybookAudioScriptStudio({
       setSaveState({ phase: "error", message: "Network error. Please try again." });
     }
   };
+
+  // Auto-save after audio generation: update the script state with the new block
+  // and then persist to GitHub silently.
+  const handleAutoSaveAfterGeneration = useCallback(async (pageId: string, updatedBlock: StorybookAudioScriptBlock) => {
+    // Build updated script with the new block already applied
+    setScript((prev) => {
+      const updatedScript: StorybookAudioScript = {
+        ...prev,
+        pages: prev.pages.map((p) =>
+          p.pageId !== pageId
+            ? p
+            : {
+                ...p,
+                scriptBlocks: p.scriptBlocks.map((b) =>
+                  b.id === updatedBlock.id ? updatedBlock : b
+                ),
+                updatedAt: new Date().toISOString(),
+              }
+        ),
+      };
+      // Fire-and-forget save (errors silently ignored — user can still manual-save)
+      saveScript(updatedScript).catch(() => undefined);
+      return updatedScript;
+    });
+  }, [saveScript]);
 
   const updateScriptStatus = (status: StorybookAudioScriptStatus) => {
     setScript((prev) => ({ ...prev, status }));
@@ -395,19 +632,33 @@ export default function StorybookAudioScriptStudio({
       {/* ── Speakers tab ── */}
       {activeTab === "speakers" && (
         <div className="px-6 py-4 flex flex-col gap-3">
+          {/* Default Narrator Voice ID */}
+          <div className="flex items-center gap-3 pb-3 border-b border-tiki-brown/10">
+            <label className="text-xs font-bold text-tiki-brown/60 whitespace-nowrap">
+              Default Narrator Voice ID:
+            </label>
+            <input
+              type="text"
+              value={script.defaultNarratorVoiceId ?? ""}
+              placeholder="ElevenLabs voice ID for narrator"
+              onChange={(e) => updateDefaultNarratorVoiceId(e.target.value)}
+              className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-tiki-brown/15 bg-white text-tiki-brown/70 placeholder:text-tiki-brown/30 focus:outline-none focus:border-ube-purple/40 transition-colors font-mono"
+            />
+          </div>
+
           <p className="text-xs text-tiki-brown/50 leading-relaxed">
-            Assign voice labels to speakers for future audio generation. Voice labels are optional.
+            Assign voice IDs to speakers for audio generation. Voice labels are optional.
           </p>
           <div className="flex flex-col">
-            <div className="grid grid-cols-[1fr_1fr] gap-2 py-1.5 border-b border-tiki-brown/10">
+            <div className="grid grid-cols-[1fr_1fr_1fr] gap-2 py-1.5 border-b border-tiki-brown/10">
               <span className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">Speaker</span>
               <span className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">Voice Label</span>
+              <span className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-wide">Voice ID (ElevenLabs)</span>
             </div>
             {script.speakers.map((speaker) => (
               <SpeakerRow key={speaker.speakerSlug} speaker={speaker} onChange={updateSpeaker} />
             ))}
           </div>
-          {/* TODO: Phase Audio 2+ — add per-speaker provider/voiceId fields and test generation */}
         </div>
       )}
 
@@ -485,12 +736,18 @@ export default function StorybookAudioScriptStudio({
                           key={block.id}
                           block={block}
                           speakers={script.speakers}
+                          script={script}
+                          slug={slug}
+                          pageId={selectedPage.pageId}
                           onUpdate={(updated) => updateBlock(selectedPage.pageId, updated)}
                           onRemove={() => removeBlock(selectedPage.pageId, block.id)}
                           onMoveUp={() => moveBlock(selectedPage.pageId, block.id, "up")}
                           onMoveDown={() => moveBlock(selectedPage.pageId, block.id, "down")}
                           isFirst={idx === 0}
                           isLast={idx === arr.length - 1}
+                          onAutoSave={(updatedBlock) =>
+                            handleAutoSaveAfterGeneration(selectedPage.pageId, updatedBlock)
+                          }
                         />
                       ))}
                   </div>
@@ -504,8 +761,6 @@ export default function StorybookAudioScriptStudio({
                 >
                   + Add Script Block
                 </button>
-
-                {/* TODO: Phase Audio 2+ — "Generate Audio for Page" button here */}
               </>
             )}
           </div>
@@ -536,7 +791,6 @@ export default function StorybookAudioScriptStudio({
         >
           {saveState.phase === "saving" ? "Saving…" : "Save Script"}
         </button>
-        {/* TODO: Phase Audio 2+ — "Generate All Audio" button here */}
         {/* TODO: Phase Audio 3+ — "Compile Full Narration" and "Approve Final" buttons here */}
       </div>
     </div>
