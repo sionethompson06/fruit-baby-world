@@ -46,6 +46,23 @@
       "layoutType": "single-page",
       "displayMode": "single",
       "originalFilename": "02_title_page_opening_summary.png"
+    },
+    {
+      "id": "storybook-page-1780219706248",
+      "pageNumber": 3,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219705256.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219705256.png",
+      "mimeType": "image/png",
+      "altText": "End Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:28:26.248Z",
+      "updatedAt": "2026-05-31T09:28:26.248Z",
+      "pageRole": "end-page",
+      "layoutType": "single-page",
+      "displayMode": "single",
+      "originalFilename": "14_end_page_what_we_learned_kindness_lantern_festival.png"
     }
   ],
   "review": {
@@ -57,5 +74,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-31T09:22:02.220Z",
-  "updatedAt": "2026-05-31T09:28:19.956Z"
+  "updatedAt": "2026-05-31T09:28:26.248Z"
 }
