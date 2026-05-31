@@ -318,6 +318,24 @@
       "spreadNumber": 12,
       "displayMode": "spread",
       "originalFilename": "04_opening_spread_welcome_to_friendship_harvest_games.png"
+    },
+    {
+      "id": "storybook-page-1780205862713",
+      "pageNumber": 19,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205861516.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205861516.png",
+      "mimeType": "image/png",
+      "altText": "Spread 13",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T05:37:42.713Z",
+      "updatedAt": "2026-05-31T05:37:42.713Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 13,
+      "displayMode": "spread",
+      "originalFilename": "14_final_ending_page_tikis_quiet_change_of_heart.png"
     }
   ],
   "review": {
@@ -329,5 +347,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-31T05:37:39.206Z"
+  "updatedAt": "2026-05-31T05:37:42.713Z"
 }
