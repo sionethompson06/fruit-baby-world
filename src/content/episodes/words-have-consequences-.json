@@ -2,7 +2,7 @@
   "id": "",
   "slug": "words-have-consequences-",
   "title": "Words Have Consequences ",
-  "status": "published",
+  "status": "draft",
   "reviewStatus": "approved-for-save",
   "productionStatus": "generated-draft",
   "featuredCharacters": [
@@ -123,14 +123,15 @@
     "checkedFidelityItems": []
   },
   "publishing": {
-    "publicStatus": "published",
-    "readyForPublicSite": true,
+    "publicStatus": "not-published",
+    "readyForPublicSite": false,
     "publishedAt": "2026-04-29T17:36:20.589Z",
-    "reviewNotes": "Marked public-ready from Fruit Baby Story Studio."
+    "reviewNotes": "Marked public-ready from Fruit Baby Story Studio.",
+    "unpublishedAt": "2026-05-31T20:59:28.082Z"
   },
   "createdIn": "Fruit Baby Story Studio",
   "generatedAt": "2026-04-29T04:18:29.553Z",
-  "updatedAt": "2026-05-20T18:13:40.191Z",
+  "updatedAt": "2026-05-31T20:59:28.082Z",
   "media": {
     "storyPanelMode": {
       "status": "assets-attached",
