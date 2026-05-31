@@ -336,6 +336,24 @@
       "spreadNumber": 13,
       "displayMode": "spread",
       "originalFilename": "14_final_ending_page_tikis_quiet_change_of_heart.png"
+    },
+    {
+      "id": "storybook-page-1780205869347",
+      "pageNumber": 20,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205867979.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205867979.png",
+      "mimeType": "image/png",
+      "altText": "Spread 14",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T05:37:49.347Z",
+      "updatedAt": "2026-05-31T05:37:49.347Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 14,
+      "displayMode": "spread",
+      "originalFilename": "11_spread_7_helping_tiki_fix_the_final_locks.png"
     }
   ],
   "review": {
@@ -347,5 +365,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-31T05:37:42.713Z"
+  "updatedAt": "2026-05-31T05:37:49.347Z"
 }
