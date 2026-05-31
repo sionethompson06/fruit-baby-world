@@ -19,6 +19,9 @@ const CHAR_IMAGES: Record<string, string> = {
   "strawberry-baby": "/characters/strawberry-baby/strawberry%20waiving_hello_goodbye_happy.png",
   "dragon-fruit-baby":
     "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.png",
+  // dragonfruit-baby is the actual slug in the character JSON; aliases to same image
+  "dragonfruit-baby":
+    "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.png",
   tiki: "/characters/tiki/tiki%20laughing_funny_teasing_.png",
   "tiki-trouble": "/characters/tiki/tiki%20laughing_funny_teasing_.png",
 };

@@ -6,14 +6,22 @@
 // Future storybooks: save character names or slugs in the featuredCharacters array
 // (either format works — this helper normalizes at read time).
 
+// Canonical slug aliases — resolves alternate spellings to the canonical slug.
+// Applied after basic slug normalization so both display-name and slug inputs work.
+const SLUG_ALIASES: Record<string, string> = {
+  "dragonfruit-baby": "dragon-fruit-baby",
+  "dragonfruit": "dragon-fruit-baby",
+};
+
 export function normalizeCharacterSlug(value: string): string {
-  // Already a valid slug — lowercase, digits, hyphens only
-  if (/^[a-z][a-z0-9-]*$/.test(value)) return value;
-  // Convert display name → slug: "Pineapple Baby" → "pineapple-baby"
-  return value
+  // Base normalization: lowercase, trim, spaces → hyphens, strip unsafe chars
+  const base = value
+    .trim()
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
+  // Resolve known aliases to canonical slugs
+  return SLUG_ALIASES[base] ?? base;
 }
 
 export function getStoryCharacterSlugs(
