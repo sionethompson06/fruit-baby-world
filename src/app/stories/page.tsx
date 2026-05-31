@@ -161,11 +161,12 @@ export default function StoriesPage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-16 px-4 text-center">
         <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
-          <div className="text-5xl" role="img" aria-label="stories">📖</div>
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
-            <h1 className="brand-title-universe-logo text-4xl sm:text-5xl leading-tight">
-              Pineapple Baby Stories
+            <h1 className="brand-bubblegum-title brand-bubblegum-title--hero text-4xl sm:text-5xl leading-tight">
+              <span className="brand-word-pineapple">Pineapple</span>{" "}
+              <span className="brand-word-baby">Baby</span>{" "}
+              <span className="brand-word-pink">Stories</span>
             </h1>
             <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
           </div>
@@ -209,7 +210,16 @@ export default function StoriesPage() {
       )}
 
       {/* Available Stories */}
-      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
+      <div
+        className="w-full relative"
+        style={{
+          backgroundImage: "url('/backgrounds/pineapple_grove_1.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <div className="absolute inset-0 bg-[#FFF9EC]/85 pointer-events-none" />
+      <section className="relative max-w-5xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
         <div>
           <h2 className="text-2xl font-black text-tiki-brown mb-1">Available Stories</h2>
           <p className="text-sm text-tiki-brown/60">
@@ -252,6 +262,7 @@ export default function StoriesPage() {
           </div>
         )}
       </section>
+      </div>
 
       {/* Coming Soon */}
       <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pb-12 flex flex-col gap-6">
