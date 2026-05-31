@@ -55,6 +55,7 @@ function parseStorybookPage(v: unknown): StorybookPage | null {
     readAloudText: typeof v.readAloudText === "string" ? v.readAloudText : undefined,
     imageUrl: v.imageUrl,
     pathname: typeof v.pathname === "string" ? v.pathname : undefined,
+    originalFilename: typeof v.originalFilename === "string" ? v.originalFilename : undefined,
     mimeType,
     altText,
     sceneNumber: typeof v.sceneNumber === "number" ? v.sceneNumber : undefined,
