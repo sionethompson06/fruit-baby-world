@@ -170,6 +170,24 @@
       "spreadNumber": 5,
       "displayMode": "spread",
       "originalFilename": "07_spread_5_the_teasing_echo_cave.png"
+    },
+    {
+      "id": "storybook-page-1780219760820",
+      "pageNumber": 10,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219759850.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219759850.png",
+      "mimeType": "image/png",
+      "altText": "Spread 6",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:29:20.820Z",
+      "updatedAt": "2026-05-31T09:29:20.820Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 6,
+      "displayMode": "spread",
+      "originalFilename": "08_spread_6_the_broken_courage_ribbon.png"
     }
   ],
   "review": {
@@ -181,5 +199,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-31T09:22:02.220Z",
-  "updatedAt": "2026-05-31T09:29:17.751Z"
+  "updatedAt": "2026-05-31T09:29:20.820Z"
 }
