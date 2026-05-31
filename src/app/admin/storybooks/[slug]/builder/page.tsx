@@ -14,6 +14,7 @@ import SimplePublishAction from "./SimplePublishAction";
 import StorybookAudioManager from "./StorybookAudioManager";
 import StorybookVideoManager from "./StorybookVideoManager";
 import { normalizeStorybookStatus, getStorybookStatusLabel } from "@/lib/storybookStatus";
+import StorybookVisibilityControls from "@/components/admin/StorybookVisibilityControls";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -239,6 +240,12 @@ export default async function StorybookBuilderPage({
             </a>
           ))}
         </nav>
+
+        {/* ── Storybook Visibility Controls ── */}
+        <StorybookVisibilityControls
+          slug={normalised.slug}
+          initialStatus={currentStatus}
+        />
 
         {/* ── Details ── */}
         <div className="flex flex-col gap-4">

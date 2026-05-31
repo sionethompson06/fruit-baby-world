@@ -100,7 +100,7 @@ export default function SimplePublishAction({
   }
 
   async function handleUnpublish() {
-    if (!confirm("Unpublish this storybook? It will remain editable in admin but will not appear publicly.")) return;
+    if (!confirm("Remove this storybook from public pages? It will remain editable in admin.")) return;
     await callStatusRoute("draft", "unpublish");
   }
 
@@ -236,7 +236,7 @@ export default function SimplePublishAction({
               disabled={isWorking}
               className="text-xs font-semibold px-4 py-2 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 disabled:opacity-50 transition-colors"
             >
-              {isWorking && phase.name === "working" && phase.action === "unpublish" ? "Saving…" : "Unpublish"}
+              {isWorking && phase.name === "working" && phase.action === "unpublish" ? "Saving…" : "Remove from Public"}
             </button>
             <button
               type="button"
