@@ -123,6 +123,13 @@ function parseBlock(raw: unknown, fallbackOrder: number): StorybookAudioScriptBl
     status,
     audioUrl: typeof raw.audioUrl === "string" ? raw.audioUrl : undefined,
     pathname: typeof raw.pathname === "string" ? raw.pathname : undefined,
+    mimeType: typeof raw.mimeType === "string" ? raw.mimeType : undefined,
+    sizeBytes: typeof raw.sizeBytes === "number" ? raw.sizeBytes : undefined,
+    durationSeconds: typeof raw.durationSeconds === "number" ? raw.durationSeconds : undefined,
+    generatedAt: typeof raw.generatedAt === "string" ? raw.generatedAt : undefined,
+    generationProvider: raw.generationProvider === "elevenlabs" ? "elevenlabs" : undefined,
+    generationModelId: typeof raw.generationModelId === "string" ? raw.generationModelId : undefined,
+    generationError: typeof raw.generationError === "string" ? raw.generationError : undefined,
     createdAt: typeof raw.createdAt === "string" ? raw.createdAt : undefined,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : undefined,
   };

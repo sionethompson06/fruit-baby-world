@@ -80,5 +80,7 @@ export const config = {
     "/api/media/upload-homepage-showcase-image",
     "/api/media/upload-homepage-3d-model",
     "/api/github/save-homepage-showcase",
+    "/api/github/save-storybook-audio-script",
+    "/api/storybook-audio/generate-block",
   ],
 };

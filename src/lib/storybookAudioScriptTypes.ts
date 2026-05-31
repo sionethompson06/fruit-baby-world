@@ -38,6 +38,13 @@ export type StorybookAudioScriptBlock = {
   // Populated after audio generation (Phase Audio 2+)
   audioUrl?: string;
   pathname?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+  durationSeconds?: number;
+  generatedAt?: string;
+  generationProvider?: "elevenlabs";
+  generationModelId?: string;
+  generationError?: string;
   createdAt?: string;
   updatedAt?: string;
 };
