@@ -46,6 +46,20 @@ const COMING_SOON_CARDS = [
   },
 ] as const;
 
+// ─── Individual character images for Browse by Character ──────────────────────
+
+const CHAR_IMAGES: Record<string, string> = {
+  "pineapple-baby": "/characters/pineapple-baby/pineapple%20happy_smile_fun_playing.png",
+  "mango-baby": "/characters/mango-baby/mango%20happy_fun_enjoy_playing.png",
+  "kiwi-baby": "/characters/kiwi-baby/Kiwi%20playful_joyful_running_fun.png",
+  "coconut-baby": "/characters/coconut-baby/Coconut%20smile_happy_welcoming_cute.png",
+  "ube-baby": "/characters/ube-baby/ube%20happy_fun_listening.png",
+  "strawberry-baby": "/characters/strawberry-baby/strawberry%20waiving_hello_goodbye_happy.png",
+  "dragon-fruit-baby": "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.png",
+  "tiki": "/characters/tiki/tiki%20laughing_funny_teasing_.png",
+  "tiki-trouble": "/characters/tiki/tiki%20laughing_funny_teasing_.png",
+};
+
 // ─── Episode media map ────────────────────────────────────────────────────────
 
 type EpisodeMediaInfo = {
@@ -184,7 +198,7 @@ export default function StoriesPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             {publicChars.map((char) => {
-              const imgUrl = char.image?.profileSheet ?? char.image?.main ?? "";
+              const imgUrl = CHAR_IMAGES[char.slug] ?? "";
               return (
                 <Link
                   key={char.slug}
@@ -196,7 +210,7 @@ export default function StoriesPage() {
                     <img
                       src={imgUrl}
                       alt={char.name}
-                      className="w-8 h-8 rounded-full object-cover object-top border border-tiki-brown/10 flex-shrink-0"
+                      className="w-10 h-10 rounded-full object-cover object-top border border-tiki-brown/10 flex-shrink-0"
                     />
                   )}
                   <span className="text-sm font-bold text-tiki-brown pr-0.5">
@@ -213,12 +227,13 @@ export default function StoriesPage() {
       <div
         className="w-full relative"
         style={{
-          backgroundImage: "url('/backgrounds/pineapple_grove_1.png')",
+          backgroundImage:
+            "linear-gradient(rgba(255, 248, 236, 0.82), rgba(255, 236, 238, 0.88)), url('/backgrounds/Heartberry_Hallow.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="absolute inset-0 bg-[#FFF9EC]/85 pointer-events-none" />
       <section className="relative max-w-5xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
         <div>
           <h2 className="text-2xl font-black text-tiki-brown mb-1">Available Stories</h2>
