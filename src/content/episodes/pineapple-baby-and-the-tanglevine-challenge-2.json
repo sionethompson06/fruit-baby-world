@@ -236,19 +236,19 @@
     {
       "id": "storybook-page-1780178780378",
       "pageNumber": 14,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205700040.png",
-      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205700040.png",
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205840849.png",
+      "pathname": "episodes/pineapple-baby-and-the-tanglevine-challenge-2/storybook-pages/page-1780205840849.png",
       "mimeType": "image/png",
       "altText": "End Page",
       "status": "draft",
       "visibility": "admin-only",
       "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-31T05:35:01.577Z",
-      "updatedAt": "2026-05-31T05:35:01.577Z",
+      "createdAt": "2026-05-31T05:37:22.459Z",
+      "updatedAt": "2026-05-31T05:37:22.459Z",
       "pageRole": "end-page",
       "layoutType": "single-page",
       "displayMode": "single",
-      "originalFilename": "14_final_ending_page_tikis_quiet_change_of_heart.png"
+      "originalFilename": "15_reflection_page_what_we_learned_in_tropical_grove.png"
     },
     {
       "id": "storybook-page-1780178796027",
@@ -311,5 +311,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-30T21:41:09.663Z",
-  "updatedAt": "2026-05-31T05:35:24.025Z"
+  "updatedAt": "2026-05-31T05:37:22.459Z"
 }
