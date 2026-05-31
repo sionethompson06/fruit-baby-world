@@ -1,5 +1,5 @@
 // POST /api/github/update-storybook-status
-// Sets story-level status to draft, hidden, or archived.
+// Sets story-level status to draft, coming-soon, hidden, or archived.
 // Does not alter storybookPages, images, audio, or video.
 // Auth: Protected by proxy.ts — requires valid admin cookie.
 //
@@ -10,7 +10,7 @@ import path from "path";
 
 const LOCAL_EPISODES_DIR = path.join(process.cwd(), "src", "content", "episodes");
 
-type TargetStatus = "draft" | "hidden" | "archived";
+type TargetStatus = "draft" | "coming-soon" | "hidden" | "archived";
 
 type UpdateStatusResult =
   | { ok: true; status: TargetStatus; slug: string }
@@ -26,7 +26,7 @@ type UpdateStatusResult =
     };
 
 const SAFE_SLUG = /^[a-z0-9-]+$/;
-const VALID_STATUSES: TargetStatus[] = ["draft", "hidden", "archived"];
+const VALID_STATUSES: TargetStatus[] = ["draft", "coming-soon", "hidden", "archived"];
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -162,6 +162,14 @@ export async function POST(request: Request): Promise<Response> {
       unpublishedAt: now,
     };
     commitVerb = "Unpublish";
+  } else if (newStatus === "coming-soon") {
+    publishingUpdate = {
+      ...existingPublishing,
+      publicStatus: "coming-soon",
+      readyForPublicSite: false,
+      comingSoonAt: now,
+    };
+    commitVerb = "Mark coming soon";
   } else if (newStatus === "hidden") {
     publishingUpdate = {
       ...existingPublishing,

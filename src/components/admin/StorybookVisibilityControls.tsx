@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
-type StorybookStatus = "draft" | "published" | "hidden" | "archived";
+type StorybookStatus = "draft" | "coming-soon" | "published" | "hidden" | "archived";
 
-type WorkingAction = "publish" | "unpublish" | "hide" | "archive" | "restore";
+type WorkingAction = "publish" | "coming-soon" | "unpublish" | "hide" | "archive" | "restore";
 
 const STATUS_META: Record<
   StorybookStatus,
@@ -16,6 +16,13 @@ const STATUS_META: Record<
     description: "Visible to the public on /stories.",
     panelClass: "bg-tropical-green/8 border-tropical-green/25",
     badgeClass: "bg-tropical-green/20 text-tropical-green",
+  },
+  "coming-soon": {
+    label: "Coming Soon",
+    icon: "🌟",
+    description: "Visible as a teaser in the Coming Soon section. Not yet readable.",
+    panelClass: "bg-pineapple-yellow/12 border-pineapple-yellow/35",
+    badgeClass: "bg-pineapple-yellow/40 text-tiki-brown/75",
   },
   hidden: {
     label: "Hidden from Public",
@@ -56,7 +63,7 @@ export default function StorybookVisibilityControls({
   const meta = STATUS_META[currentStatus];
 
   async function callPublish() {
-    if (!confirm("Publish this storybook? It will become visible on /stories.")) return;
+    if (!confirm("Publish this storybook? It will become fully readable on /stories.")) return;
     setWorking("publish");
     setError(null);
     setSuccessMsg(null);
@@ -81,7 +88,7 @@ export default function StorybookVisibilityControls({
   }
 
   async function callStatusRoute(
-    newStatus: "draft" | "hidden" | "archived",
+    newStatus: "draft" | "coming-soon" | "hidden" | "archived",
     action: WorkingAction,
     confirmMsg: string
   ) {
@@ -101,10 +108,10 @@ export default function StorybookVisibilityControls({
       } else {
         setCurrentStatus(newStatus);
         const msgs: Record<string, string> = {
+          "coming-soon": "Marked as Coming Soon. Now visible as a public teaser.",
           unpublish: "Removed from public. Storybook is now a draft.",
           hide: "Hidden from public pages.",
-          archive:
-            "Storybook archived. All uploaded files are preserved.",
+          archive: "Storybook archived. All uploaded files are preserved.",
           restore: "Restored to draft.",
         };
         setSuccessMsg(msgs[action] ?? "Status updated.");
@@ -117,179 +124,107 @@ export default function StorybookVisibilityControls({
   }
 
   return (
-    <div className={`rounded-2xl border px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4 ${meta.panelClass}`}>
+    <div className={`rounded-2xl border px-5 py-4 flex flex-col gap-3 ${meta.panelClass}`}>
 
-      {/* Left: status info */}
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <span className="text-xl flex-shrink-0" aria-hidden="true">{meta.icon}</span>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
-              Storybook Visibility
-            </span>
-            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${meta.badgeClass}`}>
-              {meta.label}
-            </span>
-          </div>
-          <p className="text-xs text-tiki-brown/55 mt-0.5 leading-snug">{meta.description}</p>
-        </div>
+      {/* Header row: label + badge + description */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-base flex-shrink-0" aria-hidden="true">{meta.icon}</span>
+        <span className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
+          Storybook Visibility
+        </span>
+        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide ${meta.badgeClass}`}>
+          {meta.label}
+        </span>
+        <span className="text-xs text-tiki-brown/50 leading-snug hidden sm:inline">
+          — {meta.description}
+        </span>
       </div>
+      <p className="text-xs text-tiki-brown/50 leading-snug sm:hidden">{meta.description}</p>
 
-      {/* Right: action buttons */}
-      <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+      {/* Action buttons */}
+      <div className="flex flex-wrap items-center gap-2">
+
+        {/* ── Published ── */}
         {currentStatus === "published" && (
           <>
-            <ActionBtn
-              label="Remove from Public"
-              loadingLabel="Saving…"
-              loading={working === "unpublish"}
-              disabled={isWorking}
-              variant="neutral"
-              onClick={() =>
-                callStatusRoute(
-                  "draft",
-                  "unpublish",
-                  "Remove this storybook from public pages? It will remain editable in admin."
-                )
-              }
-            />
-            <ActionBtn
-              label="Hide from Public"
-              loadingLabel="Saving…"
-              loading={working === "hide"}
-              disabled={isWorking}
-              variant="subtle"
-              onClick={() =>
-                callStatusRoute(
-                  "hidden",
-                  "hide",
-                  "Hide this storybook from public pages? It will remain editable in admin."
-                )
-              }
-            />
-            <ActionBtn
-              label="Archive Storybook"
-              loadingLabel="Archiving…"
-              loading={working === "archive"}
-              disabled={isWorking}
-              variant="danger"
-              onClick={() =>
-                callStatusRoute(
-                  "archived",
-                  "archive",
-                  "Archive this storybook? It will be removed from public pages and normal admin lists. Uploaded files will not be deleted."
-                )
-              }
-            />
+            <ActionBtn label="Mark as Coming Soon" loadingLabel="Saving…" loading={working === "coming-soon"} disabled={isWorking} variant="yellow"
+              onClick={() => callStatusRoute("coming-soon", "coming-soon",
+                "Mark as Coming Soon? This storybook will appear as a teaser but won't be available to read yet.")} />
+            <ActionBtn label="Remove from Public" loadingLabel="Saving…" loading={working === "unpublish"} disabled={isWorking} variant="neutral"
+              onClick={() => callStatusRoute("draft", "unpublish",
+                "Remove from public pages? This storybook will remain editable in admin.")} />
+            <ActionBtn label="Hide from Public" loadingLabel="Saving…" loading={working === "hide"} disabled={isWorking} variant="subtle"
+              onClick={() => callStatusRoute("hidden", "hide",
+                "Hide this storybook from public pages? It will remain editable in admin.")} />
+            <ActionBtn label="Archive Storybook" loadingLabel="Archiving…" loading={working === "archive"} disabled={isWorking} variant="danger"
+              onClick={() => callStatusRoute("archived", "archive",
+                "Archive this storybook? It will be removed from public pages and normal admin lists. Uploaded files will not be deleted.")} />
           </>
         )}
 
+        {/* ── Coming Soon ── */}
+        {currentStatus === "coming-soon" && (
+          <>
+            <ActionBtn label="Publish Storybook" loadingLabel="Publishing…" loading={working === "publish"} disabled={isWorking} variant="green"
+              onClick={callPublish} />
+            <ActionBtn label="Move to Draft" loadingLabel="Saving…" loading={working === "unpublish"} disabled={isWorking} variant="neutral"
+              onClick={() => callStatusRoute("draft", "unpublish",
+                "Move to draft? This storybook will no longer appear in the Coming Soon section.")} />
+            <ActionBtn label="Hide from Public" loadingLabel="Saving…" loading={working === "hide"} disabled={isWorking} variant="subtle"
+              onClick={() => callStatusRoute("hidden", "hide",
+                "Hide this storybook from public pages? It will remain editable in admin.")} />
+            <ActionBtn label="Archive Storybook" loadingLabel="Archiving…" loading={working === "archive"} disabled={isWorking} variant="danger"
+              onClick={() => callStatusRoute("archived", "archive",
+                "Archive this storybook? Uploaded files will not be deleted.")} />
+          </>
+        )}
+
+        {/* ── Hidden ── */}
         {currentStatus === "hidden" && (
           <>
-            <ActionBtn
-              label="Publish Storybook"
-              loadingLabel="Publishing…"
-              loading={working === "publish"}
-              disabled={isWorking}
-              variant="green"
-              onClick={callPublish}
-            />
-            <ActionBtn
-              label="Move to Draft"
-              loadingLabel="Saving…"
-              loading={working === "unpublish"}
-              disabled={isWorking}
-              variant="neutral"
-              onClick={() =>
-                callStatusRoute(
-                  "draft",
-                  "unpublish",
-                  "Move this storybook to draft? It will remain editable in admin."
-                )
-              }
-            />
-            <ActionBtn
-              label="Archive Storybook"
-              loadingLabel="Archiving…"
-              loading={working === "archive"}
-              disabled={isWorking}
-              variant="danger"
-              onClick={() =>
-                callStatusRoute(
-                  "archived",
-                  "archive",
-                  "Archive this storybook? Uploaded files will not be deleted."
-                )
-              }
-            />
+            <ActionBtn label="Publish Storybook" loadingLabel="Publishing…" loading={working === "publish"} disabled={isWorking} variant="green"
+              onClick={callPublish} />
+            <ActionBtn label="Mark as Coming Soon" loadingLabel="Saving…" loading={working === "coming-soon"} disabled={isWorking} variant="yellow"
+              onClick={() => callStatusRoute("coming-soon", "coming-soon",
+                "Mark as Coming Soon? This storybook will appear as a teaser but won't be available to read yet.")} />
+            <ActionBtn label="Move to Draft" loadingLabel="Saving…" loading={working === "unpublish"} disabled={isWorking} variant="neutral"
+              onClick={() => callStatusRoute("draft", "unpublish",
+                "Move this storybook to draft? It will remain editable in admin.")} />
+            <ActionBtn label="Archive Storybook" loadingLabel="Archiving…" loading={working === "archive"} disabled={isWorking} variant="danger"
+              onClick={() => callStatusRoute("archived", "archive",
+                "Archive this storybook? Uploaded files will not be deleted.")} />
           </>
         )}
 
+        {/* ── Archived ── */}
         {currentStatus === "archived" && (
-          <ActionBtn
-            label="Restore to Draft"
-            loadingLabel="Restoring…"
-            loading={working === "restore"}
-            disabled={isWorking}
-            variant="neutral"
-            onClick={() =>
-              callStatusRoute(
-                "draft",
-                "restore",
-                "Restore this storybook to draft? It will become editable again in admin."
-              )
-            }
-          />
+          <ActionBtn label="Restore to Draft" loadingLabel="Restoring…" loading={working === "restore"} disabled={isWorking} variant="neutral"
+            onClick={() => callStatusRoute("draft", "restore",
+              "Restore this storybook to draft? It will become editable again in admin.")} />
         )}
 
+        {/* ── Draft ── */}
         {currentStatus === "draft" && (
           <>
-            <ActionBtn
-              label="Hide from Public"
-              loadingLabel="Saving…"
-              loading={working === "hide"}
-              disabled={isWorking}
-              variant="subtle"
-              onClick={() =>
-                callStatusRoute(
-                  "hidden",
-                  "hide",
-                  "Hide this storybook? It is already a draft, so this mainly marks it as intentionally hidden."
-                )
-              }
-            />
-            <ActionBtn
-              label="Archive Storybook"
-              loadingLabel="Archiving…"
-              loading={working === "archive"}
-              disabled={isWorking}
-              variant="danger"
-              onClick={() =>
-                callStatusRoute(
-                  "archived",
-                  "archive",
-                  "Archive this storybook? It will be removed from normal admin lists. Uploaded files will not be deleted."
-                )
-              }
-            />
+            <ActionBtn label="Mark as Coming Soon" loadingLabel="Saving…" loading={working === "coming-soon"} disabled={isWorking} variant="yellow"
+              onClick={() => callStatusRoute("coming-soon", "coming-soon",
+                "Mark as Coming Soon? This storybook will appear as a public teaser but won't be available to read yet.")} />
+            <ActionBtn label="Hide from Public" loadingLabel="Saving…" loading={working === "hide"} disabled={isWorking} variant="subtle"
+              onClick={() => callStatusRoute("hidden", "hide",
+                "Hide this storybook? It is already a draft, so this marks it as intentionally hidden.")} />
+            <ActionBtn label="Archive Storybook" loadingLabel="Archiving…" loading={working === "archive"} disabled={isWorking} variant="danger"
+              onClick={() => callStatusRoute("archived", "archive",
+                "Archive this storybook? It will be removed from normal admin lists. Uploaded files will not be deleted.")} />
           </>
         )}
       </div>
 
-      {/* Feedback messages — full width below buttons */}
-      {(error || successMsg) && (
-        <div className="w-full sm:col-span-full">
-          {error && (
-            <p className="text-xs text-warm-coral font-semibold leading-relaxed">
-              ✕ {error}
-            </p>
-          )}
-          {successMsg && !error && (
-            <p className="text-xs text-tropical-green font-semibold leading-relaxed">
-              ✓ {successMsg}
-            </p>
-          )}
-        </div>
+      {/* Feedback */}
+      {error && (
+        <p className="text-xs text-warm-coral font-semibold leading-relaxed">✕ {error}</p>
+      )}
+      {successMsg && !error && (
+        <p className="text-xs text-tropical-green font-semibold leading-relaxed">✓ {successMsg}</p>
       )}
     </div>
   );
@@ -297,11 +232,13 @@ export default function StorybookVisibilityControls({
 
 // ─── Shared button primitive ───────────────────────────────────────────────────
 
-type Variant = "green" | "neutral" | "subtle" | "danger";
+type Variant = "green" | "yellow" | "neutral" | "subtle" | "danger";
 
 const VARIANT_CLASS: Record<Variant, string> = {
   green:
     "bg-tropical-green/20 text-tropical-green hover:bg-tropical-green/35 border border-tropical-green/30",
+  yellow:
+    "bg-pineapple-yellow/40 text-tiki-brown/75 hover:bg-pineapple-yellow/60 border border-pineapple-yellow/50",
   neutral:
     "bg-tiki-brown/8 text-tiki-brown/65 hover:bg-tiki-brown/15 border border-tiki-brown/15",
   subtle:

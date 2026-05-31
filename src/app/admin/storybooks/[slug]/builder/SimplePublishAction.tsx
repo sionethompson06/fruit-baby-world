@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { StorybookPublishReadiness } from "@/lib/storybookPublishReadiness";
 
-type StorybookStatus = "draft" | "published" | "hidden" | "archived";
+type StorybookStatus = "draft" | "coming-soon" | "published" | "hidden" | "archived";
 
 type Phase =
   | { name: "idle" }

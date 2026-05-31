@@ -194,9 +194,10 @@ export default async function StorybookBuilderPage({
               Storybook Builder
             </span>
             <Pill className={
-              currentStatus === "published" ? "bg-tropical-green/20 text-tropical-green" :
-              currentStatus === "hidden" ? "bg-pineapple-yellow/30 text-tiki-brown/70" :
-              currentStatus === "archived" ? "bg-warm-coral/15 text-warm-coral/70" :
+              currentStatus === "published"   ? "bg-tropical-green/20 text-tropical-green" :
+              currentStatus === "coming-soon" ? "bg-pineapple-yellow/40 text-tiki-brown/75" :
+              currentStatus === "hidden"      ? "bg-sky-blue/20 text-tiki-brown/60" :
+              currentStatus === "archived"    ? "bg-warm-coral/15 text-warm-coral/70" :
               "bg-tiki-brown/6 text-tiki-brown/45"
             }>
               {getStorybookStatusLabel(raw)}

@@ -266,3 +266,70 @@ export function loadPublicSavedEpisodes(): Episode[] {
 
   return publicEpisodes;
 }
+
+// ─── Coming Soon episode loader for /stories ─────────────────────────────────
+// Returns episodes marked as "coming-soon" for display as public teasers.
+// These are NOT readable — they appear in the Coming Soon section only.
+// Call only from Server Components — uses Node.js fs.
+
+export type ComingSoonEpisode = {
+  slug: string;
+  title: string;
+  shortDescription: string;
+  lesson: string;
+  featuredCharacters: string[];
+  coverImageUrl: string | null;
+};
+
+export function loadComingSoonSavedEpisodes(): ComingSoonEpisode[] {
+  const cwd = process.cwd();
+  const dir = path.join(cwd, "src", "content", "episodes");
+
+  let filenames: string[];
+  try {
+    const all = fs.readdirSync(dir);
+    filenames = all.filter((f) => f.endsWith(".json"));
+  } catch {
+    return [];
+  }
+
+  const result: ComingSoonEpisode[] = [];
+
+  for (const filename of filenames) {
+    const fullPath = path.join(dir, filename);
+    try {
+      const text = fs.readFileSync(fullPath, "utf-8");
+      const raw = JSON.parse(text) as RawEpisodeDraft;
+
+      const isComingSoon =
+        raw.status === "coming-soon" ||
+        (raw.publishing as Record<string, unknown> | undefined)?.publicStatus === "coming-soon";
+
+      if (!isComingSoon) continue;
+
+      const slug = raw.slug ?? filename.replace(/\.json$/, "");
+
+      // Extract front cover image URL
+      const pages = Array.isArray((raw as Record<string, unknown>).storybookPages)
+        ? ((raw as Record<string, unknown>).storybookPages as Record<string, unknown>[])
+        : [];
+      const frontCover = pages.find(
+        (p) => p.pageRole === "front-cover" && typeof p.imageUrl === "string"
+      );
+      const coverImageUrl = frontCover ? String(frontCover.imageUrl) : null;
+
+      result.push({
+        slug,
+        title: raw.title?.trim() ?? "Untitled Storybook",
+        shortDescription: raw.shortDescription ?? raw.episodeSummary ?? "",
+        lesson: raw.lesson?.trim() ?? "",
+        featuredCharacters: raw.featuredCharacters ?? [],
+        coverImageUrl,
+      });
+    } catch {
+      // skip unparseable files
+    }
+  }
+
+  return result;
+}

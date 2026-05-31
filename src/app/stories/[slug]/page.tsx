@@ -24,15 +24,26 @@ import PublicFinalVideoPlayer from "./components/PublicFinalVideoPlayer";
 
 function isPublicReady(raw: Record<string, unknown>): boolean {
   if (raw.status === "archived" || raw.status === "hidden") return false;
+  if (raw.status === "coming-soon") return false;
   const pub =
     typeof raw.publishing === "object" && raw.publishing !== null
       ? (raw.publishing as Record<string, unknown>)
       : null;
+  if (pub?.publicStatus === "coming-soon") return false;
   return (
     raw.status === "published" ||
     pub?.readyForPublicSite === true ||
     pub?.publicStatus === "published"
   );
+}
+
+function isComingSoon(raw: Record<string, unknown>): boolean {
+  if (raw.status === "coming-soon") return true;
+  const pub =
+    typeof raw.publishing === "object" && raw.publishing !== null
+      ? (raw.publishing as Record<string, unknown>)
+      : null;
+  return pub?.publicStatus === "coming-soon";
 }
 
 // ─── Metadata ────────────────────────────────────────────────────────────────
@@ -44,8 +55,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const result = loadEpisodeBySlug(slug);
-  if (!result || !isPublicReady(result.raw)) return {};
+  if (!result) return {};
   const { raw } = result;
+  if (!isPublicReady(raw) && !isComingSoon(raw)) return {};
   const title = str(raw.title) || slug;
   const description = str(raw.shortDescription) || str(raw.episodeSummary);
   return {
@@ -520,9 +532,85 @@ export default async function StoryDetailPage({
   const { slug } = await params;
   const result = loadEpisodeBySlug(slug);
 
-  if (!result || !isPublicReady(result.raw)) notFound();
+  if (!result) notFound();
+  // draft / hidden / archived → 404
+  if (!isPublicReady(result.raw) && !isComingSoon(result.raw)) notFound();
 
   const { raw } = result;
+
+  // ── Coming Soon teaser page ───────────────────────────────────────────────────
+  if (isComingSoon(raw)) {
+    const title = str(raw.title) || "Untitled Storybook";
+    const shortDesc = str(raw.shortDescription) || str(raw.episodeSummary);
+    const lesson = str(raw.lesson);
+    const storybookPages = Array.isArray(raw.storybookPages)
+      ? (raw.storybookPages as Record<string, unknown>[])
+      : [];
+    const frontCoverUrl = storybookPages.find(
+      (p) => p.pageRole === "front-cover" && typeof p.imageUrl === "string"
+    )?.imageUrl as string | undefined;
+    const featuredCharIds = strArr(raw.featuredCharacters);
+
+    return (
+      <div className="flex flex-col bg-bg-cream min-h-screen">
+        <section
+          className="py-14 px-4 text-center"
+          style={{ background: "linear-gradient(160deg, #FFD84D22 0%, #7AC94318 60%, #FFF9ED 100%)" }}
+        >
+          <div className="max-w-xl mx-auto flex flex-col items-center gap-6">
+            {frontCoverUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={frontCoverUrl}
+                alt={`${title} cover`}
+                className="w-44 rounded-2xl shadow-2xl border-2 border-white/60"
+              />
+            ) : (
+              <span className="text-7xl select-none" role="img" aria-label="storybook">📖</span>
+            )}
+            <div className="flex flex-col items-center gap-3">
+              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-pineapple-yellow/60 text-tiki-brown/80 uppercase tracking-wide">
+                🌟 Coming Soon
+              </span>
+              <h1 className="brand-title-universe-logo text-3xl sm:text-4xl leading-tight text-center">
+                {title}
+              </h1>
+              {shortDesc && (
+                <p className="text-base text-tiki-brown/65 leading-relaxed max-w-md">{shortDesc}</p>
+              )}
+              {lesson && (
+                <div className="flex items-center gap-2 bg-pineapple-yellow/30 border border-pineapple-yellow/50 rounded-2xl px-4 py-2.5 max-w-sm">
+                  <span className="text-base flex-shrink-0">💡</span>
+                  <p className="text-sm font-bold text-tiki-brown leading-snug">{lesson}</p>
+                </div>
+              )}
+              {featuredCharIds.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {featuredCharIds.map((id) => (
+                    <span key={id} className="text-sm font-semibold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple/80">
+                      {id.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="bg-white/80 border border-tiki-brown/10 rounded-3xl px-6 py-5 max-w-sm w-full">
+              <p className="text-base font-black text-tiki-brown mb-1">Growing Soon</p>
+              <p className="text-sm text-tiki-brown/60 leading-relaxed">
+                This Pineapple Baby storybook is being prepared. Check back soon to read the full story!
+              </p>
+            </div>
+            <Link
+              href="/stories"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
+            >
+              ← Back to Stories
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   // Character lookup — prefer disk-loaded chars so new approved characters resolve correctly
   let diskChars: Character[] = [];

@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { getPublicEpisodes } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
-import { loadPublicSavedEpisodes } from "@/lib/savedEpisodes";
+import { loadPublicSavedEpisodes, loadComingSoonSavedEpisodes } from "@/lib/savedEpisodes";
 import { getPublicCharacterProfiles } from "@/lib/characterRegistry";
 import StoriesPageClient, {
   type EpisodeMediaInfo,
@@ -159,6 +159,33 @@ export default function StoriesPage() {
     ...savedEpisodes.filter((e) => !staticSlugs.has(e.slug)),
   ];
 
+  // Real coming-soon storybooks from the CMS
+  const realComingSoon = loadComingSoonSavedEpisodes();
+  const realComingSoonSlugs = new Set(realComingSoon.map((e) => e.slug));
+  // Merge real + hardcoded placeholders, real entries win by slug
+  const comingSoonCards = [
+    ...realComingSoon.map((e) => ({
+      slug: e.slug,
+      title: e.title,
+      emoji: null as string | null,
+      coverImageUrl: e.coverImageUrl,
+      description: e.shortDescription,
+      characters: e.featuredCharacters,
+      lesson: e.lesson,
+      isReal: true,
+    })),
+    ...COMING_SOON_CARDS.filter((c) => !realComingSoonSlugs.has(c.slug)).map((c) => ({
+      slug: c.slug,
+      title: c.title,
+      emoji: c.emoji as string,
+      coverImageUrl: null as string | null,
+      description: c.description,
+      characters: [...c.characters],
+      lesson: c.lesson,
+      isReal: false,
+    })),
+  ];
+
   let allChars: import("@/lib/content").Character[] = [];
   try {
     allChars = loadAllCharactersFromDisk();
@@ -206,50 +233,71 @@ export default function StoriesPage() {
       />
 
       {/* Coming Soon */}
-      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pb-12 flex flex-col gap-6">
-        <h2 className="text-2xl font-black text-tiki-brown">🌟 Coming Soon</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {COMING_SOON_CARDS.map((card) => (
-            <div
-              key={card.slug}
-              className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-sm"
-            >
-              <div className="relative flex items-center justify-center h-44 bg-gradient-to-br from-pineapple-yellow/20 via-sky-blue/10 to-tropical-green/10">
-                <span className="text-6xl select-none">{card.emoji}</span>
-                <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-warm-coral/15 text-warm-coral/80">
-                  Coming Soon
-                </span>
-              </div>
-              <div className="p-5 flex flex-col gap-3 flex-1">
-                <h3 className="text-lg font-black text-tiki-brown leading-tight">
-                  {card.title}
-                </h3>
-                <p className="text-sm text-tiki-brown/65 leading-relaxed">
-                  {card.description}
-                </p>
-                <div className="bg-pineapple-yellow/15 rounded-2xl px-3 py-2">
-                  <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-0.5">
-                    Lesson
-                  </p>
-                  <p className="text-sm text-tiki-brown/70 leading-snug">
-                    {card.lesson}
-                  </p>
+      {comingSoonCards.length > 0 && (
+        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pb-12 flex flex-col gap-6">
+          <h2 className="text-2xl font-black text-tiki-brown">🌟 Coming Soon</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {comingSoonCards.map((card) => (
+              <div
+                key={card.slug}
+                className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-sm"
+              >
+                {/* Cover / placeholder image */}
+                <div className="relative flex items-center justify-center h-44 bg-gradient-to-br from-pineapple-yellow/20 via-sky-blue/10 to-tropical-green/10 overflow-hidden">
+                  {card.coverImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={card.coverImageUrl}
+                      alt={card.title}
+                      className="w-full h-full object-cover object-top"
+                    />
+                  ) : card.emoji ? (
+                    <span className="text-6xl select-none">{card.emoji}</span>
+                  ) : (
+                    <span className="text-6xl select-none opacity-30">📖</span>
+                  )}
+                  <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-pineapple-yellow/80 text-tiki-brown/80 shadow-sm">
+                    🌟 Coming Soon
+                  </span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {card.characters.map((name) => (
-                    <span
-                      key={name}
-                      className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/8 text-ube-purple/70"
-                    >
-                      {name}
-                    </span>
-                  ))}
+
+                <div className="p-5 flex flex-col gap-3 flex-1">
+                  <h3 className="text-lg font-black text-tiki-brown leading-tight">
+                    {card.title}
+                  </h3>
+                  {card.description && (
+                    <p className="text-sm text-tiki-brown/65 leading-relaxed">
+                      {card.description}
+                    </p>
+                  )}
+                  {card.lesson && (
+                    <div className="bg-pineapple-yellow/15 rounded-2xl px-3 py-2">
+                      <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-0.5">
+                        Lesson
+                      </p>
+                      <p className="text-sm text-tiki-brown/70 leading-snug">
+                        {card.lesson}
+                      </p>
+                    </div>
+                  )}
+                  {card.characters.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {card.characters.map((name) => (
+                        <span
+                          key={name}
+                          className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/8 text-ube-purple/70"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

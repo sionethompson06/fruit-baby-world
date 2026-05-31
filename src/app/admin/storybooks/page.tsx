@@ -128,8 +128,10 @@ export default async function StorybooksPage() {
               <div className="flex flex-wrap items-center gap-2">
                 {storybookStatus === "published" ? (
                   <StatusBadge label="Published" className="bg-tropical-green/20 text-tropical-green" />
+                ) : storybookStatus === "coming-soon" ? (
+                  <StatusBadge label="Coming Soon" className="bg-pineapple-yellow/40 text-tiki-brown/75" />
                 ) : storybookStatus === "hidden" ? (
-                  <StatusBadge label="Hidden" className="bg-pineapple-yellow/40 text-tiki-brown/70" />
+                  <StatusBadge label="Hidden" className="bg-sky-blue/20 text-tiki-brown/60" />
                 ) : storybookStatus === "archived" ? (
                   <StatusBadge label="Archived" className="bg-warm-coral/15 text-warm-coral/70" />
                 ) : publishReady ? (
@@ -197,6 +199,15 @@ export default async function StorybooksPage() {
                     className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-tropical-green/15 text-tropical-green hover:bg-tropical-green/25 transition-colors"
                   >
                     View Public ↗
+                  </a>
+                ) : storybookStatus === "coming-soon" ? (
+                  <a
+                    href={`/stories/${draft.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-full bg-pineapple-yellow/25 text-tiki-brown/60 hover:bg-pineapple-yellow/40 transition-colors"
+                  >
+                    View Teaser ↗
                   </a>
                 ) : (
                   <a
