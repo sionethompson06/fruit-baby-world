@@ -48,42 +48,8 @@
       "originalFilename": "02_title_page_opening_summary.png"
     },
     {
-      "id": "storybook-page-1780219706248",
-      "pageNumber": 3,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219705256.png",
-      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219705256.png",
-      "mimeType": "image/png",
-      "altText": "End Page",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-31T09:28:26.248Z",
-      "updatedAt": "2026-05-31T09:28:26.248Z",
-      "pageRole": "end-page",
-      "layoutType": "single-page",
-      "displayMode": "single",
-      "originalFilename": "14_end_page_what_we_learned_kindness_lantern_festival.png"
-    },
-    {
-      "id": "storybook-page-1780219710049",
-      "pageNumber": 4,
-      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219708406.png",
-      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219708406.png",
-      "mimeType": "image/png",
-      "altText": "Back Cover",
-      "status": "draft",
-      "visibility": "admin-only",
-      "sourceType": "admin-uploaded",
-      "createdAt": "2026-05-31T09:28:30.049Z",
-      "updatedAt": "2026-05-31T09:28:30.049Z",
-      "pageRole": "back-cover",
-      "layoutType": "back-cover",
-      "displayMode": "single",
-      "originalFilename": "15_back_cover_kindness_lantern_quest.png"
-    },
-    {
       "id": "storybook-page-1780219741055",
-      "pageNumber": 5,
+      "pageNumber": 3,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219739963.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219739963.png",
       "mimeType": "image/png",
@@ -101,7 +67,7 @@
     },
     {
       "id": "storybook-page-1780219744439",
-      "pageNumber": 6,
+      "pageNumber": 4,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219743038.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219743038.png",
       "mimeType": "image/png",
@@ -119,7 +85,7 @@
     },
     {
       "id": "storybook-page-1780219747218",
-      "pageNumber": 7,
+      "pageNumber": 5,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219746344.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219746344.png",
       "mimeType": "image/png",
@@ -137,7 +103,7 @@
     },
     {
       "id": "storybook-page-1780219750174",
-      "pageNumber": 8,
+      "pageNumber": 6,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219749092.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219749092.png",
       "mimeType": "image/png",
@@ -155,7 +121,7 @@
     },
     {
       "id": "storybook-page-1780219757751",
-      "pageNumber": 9,
+      "pageNumber": 7,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219756606.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219756606.png",
       "mimeType": "image/png",
@@ -173,7 +139,7 @@
     },
     {
       "id": "storybook-page-1780219760820",
-      "pageNumber": 10,
+      "pageNumber": 8,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219759850.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219759850.png",
       "mimeType": "image/png",
@@ -191,7 +157,7 @@
     },
     {
       "id": "storybook-page-1780219764099",
-      "pageNumber": 11,
+      "pageNumber": 9,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219762658.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219762658.png",
       "mimeType": "image/png",
@@ -209,7 +175,7 @@
     },
     {
       "id": "storybook-page-1780219767350",
-      "pageNumber": 12,
+      "pageNumber": 10,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219766011.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219766011.png",
       "mimeType": "image/png",
@@ -227,7 +193,7 @@
     },
     {
       "id": "storybook-page-1780219770359",
-      "pageNumber": 13,
+      "pageNumber": 11,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219769332.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219769332.png",
       "mimeType": "image/png",
@@ -245,7 +211,7 @@
     },
     {
       "id": "storybook-page-1780219773218",
-      "pageNumber": 14,
+      "pageNumber": 12,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219772183.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219772183.png",
       "mimeType": "image/png",
@@ -263,7 +229,7 @@
     },
     {
       "id": "storybook-page-1780219776001",
-      "pageNumber": 15,
+      "pageNumber": 13,
       "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219775042.png",
       "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219775042.png",
       "mimeType": "image/png",
@@ -278,6 +244,40 @@
       "spreadNumber": 11,
       "displayMode": "spread",
       "originalFilename": "13_spread_11_next_time_i_will_ask.png"
+    },
+    {
+      "id": "storybook-page-1780219706248",
+      "pageNumber": 14,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219705256.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219705256.png",
+      "mimeType": "image/png",
+      "altText": "End Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:28:26.248Z",
+      "updatedAt": "2026-05-31T09:28:26.248Z",
+      "pageRole": "end-page",
+      "layoutType": "single-page",
+      "displayMode": "single",
+      "originalFilename": "14_end_page_what_we_learned_kindness_lantern_festival.png"
+    },
+    {
+      "id": "storybook-page-1780219710049",
+      "pageNumber": 15,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219708406.png",
+      "pathname": "episodes/pineapple-baby-and-the-kindness-lantern-quest/storybook-pages/page-1780219708406.png",
+      "mimeType": "image/png",
+      "altText": "Back Cover",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-05-31T09:28:30.049Z",
+      "updatedAt": "2026-05-31T09:28:30.049Z",
+      "pageRole": "back-cover",
+      "layoutType": "back-cover",
+      "displayMode": "single",
+      "originalFilename": "15_back_cover_kindness_lantern_quest.png"
     }
   ],
   "review": {
@@ -289,5 +289,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-05-31T09:22:02.220Z",
-  "updatedAt": "2026-05-31T09:29:36.001Z"
+  "updatedAt": "2026-05-31T09:32:48.770Z"
 }
