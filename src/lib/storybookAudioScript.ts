@@ -10,6 +10,7 @@ import type {
   StorybookAudioScriptStatus,
   StorybookAudioScriptBlockType,
   StorybookAudioScriptBlockStatus,
+  StorybookFullBookAudioPreview,
 } from "@/lib/storybookAudioScriptTypes";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
 
@@ -136,9 +137,12 @@ function parseBlock(raw: unknown, fallbackOrder: number): StorybookAudioScriptBl
   };
 }
 
-const VALID_PAGE_AUDIO_PREVIEW_STATUSES = new Set<"draft" | "approved" | "archived">([
+const VALID_PREVIEW_STATUSES = new Set<"draft" | "approved" | "archived">([
   "draft", "approved", "archived",
 ]);
+
+// Keep old name for backward compat inside this module
+const VALID_PAGE_AUDIO_PREVIEW_STATUSES = VALID_PREVIEW_STATUSES;
 
 function parsePageAudioPreview(raw: unknown): StorybookAudioScriptPageAudioPreview | undefined {
   if (!isRecord(raw)) return undefined;
@@ -155,6 +159,34 @@ function parsePageAudioPreview(raw: unknown): StorybookAudioScriptPageAudioPrevi
     generationProvider: "storybook-page-sequence",
     blockIds,
     status,
+  };
+}
+
+export function parseFullBookAudioPreview(raw: unknown): StorybookFullBookAudioPreview | undefined {
+  if (!isRecord(raw)) return undefined;
+  if (typeof raw.generatedAt !== "string" || !raw.generatedAt) return undefined;
+  if (raw.generationProvider !== "storybook-full-sequence") return undefined;
+  const status = VALID_PREVIEW_STATUSES.has(raw.status as "draft" | "approved" | "archived")
+    ? (raw.status as "draft" | "approved" | "archived")
+    : "draft";
+  const pageIds = Array.isArray(raw.pageIds)
+    ? raw.pageIds.filter((id): id is string => typeof id === "string")
+    : [];
+  const blockIds = Array.isArray(raw.blockIds)
+    ? raw.blockIds.filter((id): id is string => typeof id === "string")
+    : [];
+  const missingAudioBlockIds = Array.isArray(raw.missingAudioBlockIds)
+    ? raw.missingAudioBlockIds.filter((id): id is string => typeof id === "string")
+    : [];
+  return {
+    generatedAt: raw.generatedAt,
+    generationProvider: "storybook-full-sequence",
+    status,
+    pageIds,
+    blockIds,
+    missingAudioBlockIds,
+    totalBlocks: typeof raw.totalBlocks === "number" ? raw.totalBlocks : blockIds.length,
+    totalPages: typeof raw.totalPages === "number" ? raw.totalPages : pageIds.length,
   };
 }
 
@@ -288,6 +320,7 @@ export function normalizeStorybookAudioScript(
     speakers,
     pages,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
+    fullBookAudioPreview: parseFullBookAudioPreview(raw.fullBookAudioPreview),
   };
 }
 
@@ -315,4 +348,70 @@ export function getMissingAudioBlocks(page: StorybookAudioScriptPage): Storybook
  */
 export function hasMissingBlockAudio(page: StorybookAudioScriptPage): boolean {
   return getMissingAudioBlocks(page).length > 0;
+}
+
+// ─── Full-book audio helpers ──────────────────────────────────────────────────
+
+/**
+ * Returns ordered sequence of {pageId, block} pairs for all non-archived pages.
+ * Pages are ordered by their position in storybookPages array (book order).
+ * Blocks are sorted by sortOrder; archived and empty-text blocks excluded.
+ */
+export function getFullBookAudioSequence(
+  script: StorybookAudioScript,
+  storybookPages: StorybookPage[]
+): Array<{ pageId: string; pageNumber?: number; pageRole?: string; block: StorybookAudioScriptBlock }> {
+  const result: Array<{ pageId: string; pageNumber?: number; pageRole?: string; block: StorybookAudioScriptBlock }> = [];
+
+  for (const sbPage of storybookPages) {
+    const scriptPage = script.pages.find((p) => p.pageId === sbPage.id);
+    if (!scriptPage) continue;
+    const playable = getPlayableBlocksForPage(scriptPage);
+    for (const block of playable) {
+      result.push({
+        pageId: sbPage.id,
+        pageNumber: sbPage.pageNumber,
+        pageRole: sbPage.pageRole,
+        block,
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Returns counts of playable vs. missing audio across the full book.
+ */
+export function getFullBookAudioStats(
+  script: StorybookAudioScript,
+  storybookPages: StorybookPage[]
+): {
+  totalBlocks: number;
+  blocksWithAudio: number;
+  missingAudioBlocks: number;
+  totalPages: number;
+  pageIds: string[];
+} {
+  const sequence = getFullBookAudioSequence(script, storybookPages);
+  const pageIdSet = new Set<string>();
+  let blocksWithAudio = 0;
+  let missingAudioBlocks = 0;
+
+  for (const item of sequence) {
+    pageIdSet.add(item.pageId);
+    if (item.block.audioUrl) {
+      blocksWithAudio++;
+    } else {
+      missingAudioBlocks++;
+    }
+  }
+
+  return {
+    totalBlocks: sequence.length,
+    blocksWithAudio,
+    missingAudioBlocks,
+    totalPages: pageIdSet.size,
+    pageIds: Array.from(pageIdSet),
+  };
 }

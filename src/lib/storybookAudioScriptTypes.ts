@@ -66,6 +66,17 @@ export type StorybookAudioScriptPage = {
   updatedAt?: string;
 };
 
+export type StorybookFullBookAudioPreview = {
+  generatedAt: string;
+  generationProvider: "storybook-full-sequence";
+  status: "draft" | "approved" | "archived";
+  pageIds: string[];
+  blockIds: string[];
+  missingAudioBlockIds: string[];
+  totalBlocks: number;
+  totalPages: number;
+};
+
 export type StorybookAudioScript = {
   version: 1;
   status: StorybookAudioScriptStatus;
@@ -73,4 +84,5 @@ export type StorybookAudioScript = {
   speakers: StorybookAudioSpeaker[];
   pages: StorybookAudioScriptPage[];
   updatedAt: string;
+  fullBookAudioPreview?: StorybookFullBookAudioPreview;
 };

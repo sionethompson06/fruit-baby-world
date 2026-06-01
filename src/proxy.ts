@@ -83,5 +83,6 @@ export const config = {
     "/api/github/save-storybook-audio-script",
     "/api/storybook-audio/generate-block",
     "/api/storybook-audio/generate-page",
+    "/api/storybook-audio/generate-full-book",
   ],
 };

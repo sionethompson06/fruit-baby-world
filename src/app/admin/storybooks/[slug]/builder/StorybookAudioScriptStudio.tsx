@@ -10,11 +10,14 @@ import type {
   StorybookAudioScriptBlockType,
   StorybookAudioScriptStatus,
   StorybookAudioScriptBlockStatus,
+  StorybookFullBookAudioPreview,
 } from "@/lib/storybookAudioScriptTypes";
 import {
   getPlayableBlocksForPage,
   getMissingAudioBlocks,
   hasMissingBlockAudio,
+  getFullBookAudioSequence,
+  getFullBookAudioStats,
 } from "@/lib/storybookAudioScript";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
 
@@ -38,6 +41,12 @@ type PageGenState =
   | { phase: "done"; message: string; blockErrors?: { blockId: string; error: string }[] }
   | { phase: "error"; message: string };
 
+type FullBookGenState =
+  | { phase: "idle" }
+  | { phase: "generating"; mode: "missing-only" | "regenerate-all" }
+  | { phase: "done"; message: string; blockErrors?: { pageId: string; blockId: string; error: string }[] }
+  | { phase: "error"; message: string };
+
 type GeneratedBlockResult = {
   blockId: string;
   audioUrl: string | null;
@@ -48,6 +57,10 @@ type GeneratedBlockResult = {
   provider: "elevenlabs" | "existing" | null;
   modelId: string | null;
   error: string | null;
+};
+
+type FullBookGeneratedBlockResult = GeneratedBlockResult & {
+  pageId: string;
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -575,6 +588,244 @@ function PageSequencePlayer({
   );
 }
 
+// ─── FullBookSequencePlayer ───────────────────────────────────────────────────
+
+type FullBookSequenceItem = {
+  pageId: string;
+  pageNumber?: number;
+  pageRole?: string;
+  pageLabel: string;
+  block: StorybookAudioScriptBlock;
+};
+
+function FullBookSequencePlayer({
+  sequence,
+  speakerName,
+  onClose,
+}: {
+  sequence: FullBookSequenceItem[];
+  speakerName: (slug: string) => string;
+  onClose: () => void;
+}) {
+  const playableItems = sequence.filter((item) => !!item.block.audioUrl);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Reset player when sequence changes
+  useEffect(() => {
+    setCurrentIndex(0);
+    setPlaying(false);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
+  }, [sequence]);
+
+  // Attach ended listener whenever index changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => {
+      const nextIdx = currentIndex + 1;
+      if (nextIdx < playableItems.length) {
+        setCurrentIndex(nextIdx);
+        const nextUrl = playableItems[nextIdx]?.block.audioUrl;
+        if (nextUrl) {
+          audio.src = nextUrl;
+          audio.play().catch(() => setPlaying(false));
+        }
+      } else {
+        setPlaying(false);
+        setCurrentIndex(0);
+      }
+    };
+
+    audio.addEventListener("ended", handleEnded);
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [currentIndex, playableItems]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const handlePlay = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const item = playableItems[currentIndex];
+    if (!item?.block.audioUrl) return;
+
+    if (!playing) {
+      if (audio.src !== item.block.audioUrl) {
+        audio.src = item.block.audioUrl;
+      }
+      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  };
+
+  const handlePause = () => {
+    audioRef.current?.pause();
+    setPlaying(false);
+  };
+
+  const handleStop = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+    }
+    setPlaying(false);
+    setCurrentIndex(0);
+  };
+
+  const handleSkip = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+    }
+    setPlaying(false);
+    const nextIdx = currentIndex + 1;
+    if (nextIdx < playableItems.length) {
+      setCurrentIndex(nextIdx);
+    } else {
+      setCurrentIndex(0);
+    }
+  };
+
+  if (playableItems.length === 0) {
+    return (
+      <div className="rounded-xl border border-ube-purple/20 bg-ube-purple/4 p-3 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-ube-purple/80">Full Storybook Preview</span>
+          <button type="button" onClick={onClose} className="text-xs text-tiki-brown/40 hover:text-tiki-brown/70 transition-colors">
+            ✕ Close
+          </button>
+        </div>
+        <p className="text-xs text-tiki-brown/50">No blocks have audio yet. Generate audio to preview.</p>
+      </div>
+    );
+  }
+
+  const currentItem = playableItems[currentIndex];
+  const missingCount = sequence.filter((item) => !item.block.audioUrl).length;
+  const displayDots = playableItems.slice(0, 20);
+
+  return (
+    <div className="rounded-xl border border-ube-purple/20 bg-ube-purple/4 p-3 flex flex-col gap-2">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio ref={audioRef} preload="none" />
+
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <span className="text-xs font-bold text-ube-purple/80">Full Storybook Preview</span>
+        <div className="flex items-center gap-2">
+          {currentItem && (
+            <span className="text-[10px] text-tiki-brown/55">
+              {currentItem.pageLabel} — Block {currentIndex + 1} of {playableItems.length}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => { handleStop(); onClose(); }}
+            className="text-xs text-tiki-brown/40 hover:text-tiki-brown/70 transition-colors"
+          >
+            ✕ Close
+          </button>
+        </div>
+      </div>
+
+      {currentItem && (
+        <div className="text-[10px] text-tiki-brown/60 leading-snug">
+          <span className="font-semibold">Now playing: {speakerName(currentItem.block.speakerSlug)}</span>
+          {currentItem.block.text && (
+            <span className="block text-tiki-brown/45 italic mt-0.5">
+              &ldquo;{currentItem.block.text.slice(0, 80)}{currentItem.block.text.length > 80 ? "…" : ""}&rdquo;
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Controls */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          onClick={handlePlay}
+          disabled={playing}
+          title="Play"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/20 border border-ube-purple/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ▶ Play
+        </button>
+        <button
+          type="button"
+          onClick={handlePause}
+          disabled={!playing}
+          title="Pause"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ⏸ Pause
+        </button>
+        <button
+          type="button"
+          onClick={handleStop}
+          title="Stop"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 transition-colors"
+        >
+          ⏹ Stop
+        </button>
+        <button
+          type="button"
+          onClick={handleSkip}
+          disabled={playableItems.length <= 1}
+          title="Skip to next block"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ⏭ Skip
+        </button>
+      </div>
+
+      {/* Block progress dots (max 20) */}
+      <div className="flex items-center gap-1 flex-wrap">
+        {displayDots.map((item, i) => (
+          <button
+            key={item.block.id}
+            type="button"
+            onClick={() => {
+              handleStop();
+              setCurrentIndex(i);
+            }}
+            title={`Block ${i + 1}: ${speakerName(item.block.speakerSlug)} — ${item.pageLabel}`}
+            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+              i === currentIndex
+                ? "text-ube-purple font-bold"
+                : "text-tiki-brown/40"
+            }`}
+          >
+            {i === currentIndex ? "●" : "○"}
+          </button>
+        ))}
+        {playableItems.length > 20 && (
+          <span className="text-[10px] text-tiki-brown/35">+{playableItems.length - 20} more</span>
+        )}
+      </div>
+
+      {missingCount > 0 && (
+        <p className="text-[10px] text-amber-600/80 bg-amber-50 border border-amber-200 rounded px-2 py-1 leading-snug">
+          {missingCount} block{missingCount !== 1 ? "s are" : " is"} missing audio and will be skipped during preview.
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StorybookAudioScriptStudio({
@@ -594,6 +845,8 @@ export default function StorybookAudioScriptStudio({
   const [activeTab, setActiveTab] = useState<"pages" | "speakers">("pages");
   const [pageGenStates, setPageGenStates] = useState<Map<string, PageGenState>>(new Map());
   const [showPagePlayer, setShowPagePlayer] = useState(false);
+  const [fullBookGenState, setFullBookGenState] = useState<FullBookGenState>({ phase: "idle" });
+  const [showFullBookPlayer, setShowFullBookPlayer] = useState(false);
 
   const selectedPage = script.pages.find((p) => p.pageId === selectedPageId) ?? null;
   const selectedStorybookPage = storybookPages.find((p) => p.id === selectedPageId) ?? null;
@@ -904,6 +1157,167 @@ export default function StorybookAudioScriptStudio({
     [script, slug, saveScript, setPageGenState]
   );
 
+  // ── Full-book generation ──────────────────────────────────────────────────
+
+  const handleGenerateFullBook = useCallback(
+    async (mode: "missing-only" | "regenerate-all") => {
+      const sequence = getFullBookAudioSequence(script, storybookPages);
+      if (sequence.length === 0) return;
+
+      if (mode === "regenerate-all") {
+        const confirmed = window.confirm(
+          "Regenerate all audio drafts for this storybook? Existing draft audio links in the script will be replaced. The final public narration file will not be changed."
+        );
+        if (!confirmed) return;
+      }
+
+      // Build blocks payload, grouped by page
+      const pageMap = new Map<string, { pageId: string; blocks: Array<{
+        blockId: string;
+        text: string;
+        speakerSlug: string;
+        speakerName: string;
+        voiceId: string | undefined;
+        audioUrl: string | undefined;
+        regenerate: boolean;
+      }> }>();
+
+      const voiceErrors: Array<{ speakerName: string; pageLabel: string; blockIndex: number }> = [];
+
+      for (const item of sequence) {
+        // For missing-only mode, skip blocks that already have audio
+        if (mode === "missing-only" && item.block.audioUrl) {
+          // Still need to include in payload so API can track them
+          // Just mark them as not needing regeneration
+        }
+
+        const resolvedVoiceId = resolveVoiceId(item.block, script.speakers, script.defaultNarratorVoiceId);
+        // Only flag missing voiceId error if this block needs generation
+        const needsGeneration = mode === "regenerate-all" || !item.block.audioUrl;
+        if (needsGeneration && !resolvedVoiceId) {
+          const sbPage = storybookPages.find((p) => p.id === item.pageId);
+          const label = sbPage ? pageLabel(sbPage) : item.pageId;
+          voiceErrors.push({
+            speakerName: item.block.speakerName,
+            pageLabel: label,
+            blockIndex: pageMap.get(item.pageId)?.blocks.length ?? 0,
+          });
+        }
+
+        if (!pageMap.has(item.pageId)) {
+          pageMap.set(item.pageId, { pageId: item.pageId, blocks: [] });
+        }
+        pageMap.get(item.pageId)!.blocks.push({
+          blockId: item.block.id,
+          text: item.block.text,
+          speakerSlug: item.block.speakerSlug,
+          speakerName: item.block.speakerName,
+          voiceId: resolvedVoiceId,
+          audioUrl: item.block.audioUrl,
+          regenerate: mode === "regenerate-all",
+        });
+      }
+
+      // Pre-validation: show voice ID errors before calling API
+      if (voiceErrors.length > 0) {
+        const errorLines = voiceErrors
+          .map((e) => `• ${e.speakerName} (${e.pageLabel}, block ${e.blockIndex + 1})`)
+          .join("\n");
+        setFullBookGenState({
+          phase: "error",
+          message: `Cannot generate: missing voice ID for:\n${errorLines}\nAdd voice IDs in the Speakers tab above.`,
+        });
+        return;
+      }
+
+      const pages = Array.from(pageMap.values());
+      setFullBookGenState({ phase: "generating", mode });
+
+      try {
+        const res = await fetch("/api/storybook-audio/generate-full-book", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, mode, pages }),
+        });
+
+        const data = (await res.json()) as {
+          ok: boolean;
+          generatedBlocks?: FullBookGeneratedBlockResult[];
+          fullBookAudioPreview?: StorybookFullBookAudioPreview;
+          message?: string;
+        };
+
+        if (!data.ok && !data.generatedBlocks) {
+          setFullBookGenState({
+            phase: "error",
+            message: data.message ?? "Full storybook audio generation failed.",
+          });
+          return;
+        }
+
+        const generatedBlocks = data.generatedBlocks ?? [];
+        const blockErrors = generatedBlocks
+          .filter((b) => b.error !== null)
+          .map((b) => ({ pageId: b.pageId, blockId: b.blockId, error: b.error! }));
+
+        // Apply generated audio back to script state
+        setScript((prev) => {
+          // Build result map keyed by blockId
+          const resultMap = new Map<string, FullBookGeneratedBlockResult>();
+          for (const gb of generatedBlocks) {
+            if (gb.audioUrl) resultMap.set(gb.blockId, gb);
+          }
+
+          const updatedScript: StorybookAudioScript = {
+            ...prev,
+            pages: prev.pages.map((p) => {
+              const updatedBlocks = p.scriptBlocks.map((b) => {
+                const result = resultMap.get(b.id);
+                if (!result) return b;
+                return {
+                  ...b,
+                  audioUrl: result.audioUrl ?? b.audioUrl,
+                  pathname: result.pathname ?? b.pathname,
+                  mimeType: result.mimeType ?? b.mimeType,
+                  sizeBytes: result.sizeBytes ?? b.sizeBytes,
+                  generatedAt: result.generatedAt ?? b.generatedAt,
+                  generationProvider: result.provider === "elevenlabs" ? ("elevenlabs" as const) : b.generationProvider,
+                  generationModelId: result.modelId ?? b.generationModelId,
+                  generationError: undefined,
+                  updatedAt: new Date().toISOString(),
+                };
+              });
+              const hadUpdates = updatedBlocks.some((b, i) => b !== p.scriptBlocks[i]);
+              return hadUpdates ? { ...p, scriptBlocks: updatedBlocks, updatedAt: new Date().toISOString() } : p;
+            }),
+            fullBookAudioPreview: data.fullBookAudioPreview ?? prev.fullBookAudioPreview,
+          };
+
+          // Auto-save to GitHub
+          saveScript(updatedScript).catch(() => undefined);
+          return updatedScript;
+        });
+
+        const successCount = generatedBlocks.filter((b) => b.audioUrl !== null && b.provider !== "existing").length;
+        const doneMessage = blockErrors.length > 0
+          ? `${successCount} of ${generatedBlocks.length} blocks generated. ${blockErrors.length} failed. Full storybook audio draft saved.`
+          : `Full storybook audio draft updated and saved. (${successCount} block${successCount !== 1 ? "s" : ""} generated)`;
+
+        setFullBookGenState({
+          phase: "done",
+          message: doneMessage,
+          blockErrors: blockErrors.length > 0 ? blockErrors : undefined,
+        });
+      } catch {
+        setFullBookGenState({
+          phase: "error",
+          message: "Network error during full storybook audio generation. Please try again.",
+        });
+      }
+    },
+    [script, storybookPages, slug, saveScript]
+  );
+
   const updateScriptStatus = (status: StorybookAudioScriptStatus) => {
     setScript((prev) => ({ ...prev, status }));
     setSaveState({ phase: "idle" });
@@ -1186,6 +1600,119 @@ export default function StorybookAudioScriptStudio({
           </div>
         </div>
       )}
+
+      {/* ── Full Storybook Audio Draft panel ── */}
+      {(() => {
+        const fullBookStats = getFullBookAudioStats(script, storybookPages);
+        const fullBookSequence = getFullBookAudioSequence(script, storybookPages);
+        const isGenerating = fullBookGenState.phase === "generating";
+        const hasAnyAudio = fullBookSequence.some((item) => !!item.block.audioUrl);
+        const allHaveAudio = fullBookStats.missingAudioBlocks === 0 && fullBookStats.totalBlocks > 0;
+
+        if (fullBookStats.totalBlocks === 0) return null;
+
+        const fullBookPlayerSequence: FullBookSequenceItem[] = fullBookSequence.map((item) => {
+          const sbPage = storybookPages.find((p) => p.id === item.pageId);
+          return {
+            ...item,
+            pageLabel: sbPage ? pageLabel(sbPage) : item.pageId,
+          };
+        });
+
+        return (
+          <details className="border-t border-tiki-brown/10">
+            <summary className="flex items-center gap-2 px-6 py-3 cursor-pointer select-none hover:bg-tiki-brown/3 transition-colors list-none">
+              <span className="text-sm font-black text-tiki-brown">Full Storybook Audio Draft</span>
+              <span className="text-[10px] text-tiki-brown/40 ml-auto">click to expand</span>
+            </summary>
+
+            <div className="px-6 pb-5 flex flex-col gap-3">
+              {/* Stats */}
+              <div className="flex flex-wrap gap-4 text-[11px] text-tiki-brown/60">
+                <span>Total pages with script: <strong className="text-tiki-brown/80">{fullBookStats.totalPages}</strong></span>
+                <span>Total blocks: <strong className="text-tiki-brown/80">{fullBookStats.totalBlocks}</strong></span>
+                <span>
+                  Missing audio:{" "}
+                  <strong className={fullBookStats.missingAudioBlocks > 0 ? "text-warm-coral" : "text-tropical-green"}>
+                    {fullBookStats.missingAudioBlocks}
+                  </strong>
+                </span>
+                {script.fullBookAudioPreview && (
+                  <>
+                    <span>Last generated: <strong className="text-tiki-brown/80">{formatGeneratedAt(script.fullBookAudioPreview.generatedAt)}</strong></span>
+                    <span>Status: <strong className="text-tiki-brown/80">{script.fullBookAudioPreview.status}</strong></span>
+                  </>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => handleGenerateFullBook("missing-only")}
+                  disabled={isGenerating || allHaveAudio || fullBookStats.totalBlocks === 0}
+                  className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/10 text-tropical-green hover:bg-tropical-green/20 border border-tropical-green/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isGenerating && fullBookGenState.phase === "generating" && fullBookGenState.mode === "missing-only"
+                    ? "Generating…"
+                    : "Generate Missing Audio for Full Storybook"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleGenerateFullBook("regenerate-all")}
+                  disabled={isGenerating || fullBookStats.totalBlocks === 0}
+                  className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isGenerating && fullBookGenState.phase === "generating" && fullBookGenState.mode === "regenerate-all"
+                    ? "Regenerating…"
+                    : "Regenerate Full Storybook Draft Audio"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowFullBookPlayer((prev) => !prev)}
+                  disabled={isGenerating || !hasAnyAudio}
+                  className="text-xs font-bold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/20 border border-ube-purple/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {showFullBookPlayer ? "Stop Preview" : "Preview Full Storybook Audio"}
+                </button>
+              </div>
+
+              {/* Generation status */}
+              {fullBookGenState.phase === "done" && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-tropical-green font-semibold">
+                    ✓ {fullBookGenState.message}
+                  </span>
+                  {fullBookGenState.blockErrors?.map((e) => (
+                    <span key={`${e.pageId}-${e.blockId}`} className="text-[10px] text-warm-coral">
+                      Page {e.pageId}, Block {e.blockId}: {e.error}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {fullBookGenState.phase === "error" && (
+                <span className="text-[10px] text-warm-coral font-semibold whitespace-pre-line">
+                  ✕ {fullBookGenState.message}
+                </span>
+              )}
+
+              {/* Full book player */}
+              {showFullBookPlayer && hasAnyAudio && (
+                <FullBookSequencePlayer
+                  sequence={fullBookPlayerSequence}
+                  speakerName={(speakerSlug) => {
+                    const found = script.speakers.find((s) => s.speakerSlug === speakerSlug);
+                    return found?.speakerName ?? speakerSlug;
+                  }}
+                  onClose={() => setShowFullBookPlayer(false)}
+                />
+              )}
+            </div>
+          </details>
+        );
+      })()}
 
       {/* ── Save bar ── */}
       <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-tiki-brown/10 bg-tiki-brown/2 flex-wrap">
