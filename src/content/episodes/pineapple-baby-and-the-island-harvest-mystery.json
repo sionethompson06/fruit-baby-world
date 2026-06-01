@@ -100,6 +100,24 @@
       "spreadNumber": 3,
       "displayMode": "spread",
       "originalFilename": "06_spread_4_thorned_strawberry_patches_heart_bloom.png"
+    },
+    {
+      "id": "storybook-page-1780290602690",
+      "pageNumber": 6,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290601651.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290601651.png",
+      "mimeType": "image/png",
+      "altText": "Spread 4",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:10:02.690Z",
+      "updatedAt": "2026-06-01T05:10:02.690Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 4,
+      "displayMode": "spread",
+      "originalFilename": "07_spread_5_fallen_coconut_grove_shell_shield.png"
     }
   ],
   "review": {
@@ -111,5 +129,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:09:58.958Z"
+  "updatedAt": "2026-06-01T05:10:02.690Z"
 }
