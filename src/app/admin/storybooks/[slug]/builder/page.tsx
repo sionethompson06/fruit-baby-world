@@ -335,7 +335,7 @@ export default async function StorybookBuilderPage({
               ) : undefined
             }
           />
-          <StorybookPagesManager episodeSlug={normalised.slug} initialPages={storybookPages} />
+          <StorybookPagesManager episodeSlug={normalised.slug} initialPages={storybookPages} isPublished={isAlreadyPublished} />
         </div>
 
         {/* ── Audio ── */}
@@ -444,6 +444,7 @@ export default async function StorybookBuilderPage({
               video={adminPreviewVideo}
               totalPageCount={adminPreviewTotalCount}
               publicPageCount={adminPreviewPublicCount}
+              isPublished={isAlreadyPublished}
             />
           </div>
 

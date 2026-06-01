@@ -19,6 +19,7 @@ export default function AdminStorybookPreview({
   video,
   totalPageCount,
   publicPageCount,
+  isPublished = false,
 }: {
   slug: string;
   episodeTitle: string;
@@ -27,6 +28,7 @@ export default function AdminStorybookPreview({
   video?: VideoPreviewProps;
   totalPageCount: number;
   publicPageCount: number;
+  isPublished?: boolean;
 }) {
   const [showDraftPreview, setShowDraftPreview] = useState(false);
   const draftOnlyCount = totalPageCount - publicPageCount;
@@ -124,15 +126,23 @@ export default function AdminStorybookPreview({
           <span aria-hidden>{showDraftPreview ? "🙈" : "👁️"}</span>
           {showDraftPreview ? "Hide Draft Preview" : "Preview Draft in Builder"}
         </button>
-        <a
-          href={`/stories/${slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-white border border-tiki-brown/15 text-tiki-brown/70 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
-        >
-          <span aria-hidden>🌐</span>
-          Open Public Preview
-        </a>
+        {isPublished ? (
+          <a
+            href={`/stories/${slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-white border border-tiki-brown/15 text-tiki-brown/70 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
+          >
+            <span aria-hidden>🌐</span>
+            Open Public Preview
+          </a>
+        ) : (
+          <div className="flex items-center justify-center gap-2 text-sm font-bold px-5 py-2.5 rounded-2xl bg-tiki-brown/4 border border-tiki-brown/10 text-tiki-brown/35 cursor-default select-none">
+            <span aria-hidden>🌐</span>
+            <span>Public Preview</span>
+            <span className="text-xs font-normal text-tiki-brown/30">(not published)</span>
+          </div>
+        )}
       </div>
 
       {/* Inline draft preview */}
@@ -168,9 +178,18 @@ export default function AdminStorybookPreview({
       <div className="flex items-start gap-2.5 bg-tiki-brown/3 border border-tiki-brown/8 rounded-xl px-4 py-3">
         <span className="text-sm flex-shrink-0" aria-hidden>🌐</span>
         <p className="text-xs text-tiki-brown/50 leading-relaxed">
-          <span className="font-semibold text-tiki-brown/70">Open Public Preview</span> opens{" "}
-          <span className="font-mono text-tiki-brown/55">/stories/{slug}</span> in a new tab.
-          Only <span className="font-semibold">approved + public</span> pages and media appear there.
+          {isPublished ? (
+            <>
+              <span className="font-semibold text-tiki-brown/70">Open Public Preview</span> opens{" "}
+              <span className="font-mono text-tiki-brown/55">/stories/{slug}</span> in a new tab.
+              Only <span className="font-semibold">approved + public</span> pages and media appear there.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-tiki-brown/70">Public Preview</span> is unavailable until the storybook is published.
+              Use <span className="font-semibold">Preview Draft in Builder</span> above to review draft pages, then publish below.
+            </>
+          )}
         </p>
       </div>
     </div>

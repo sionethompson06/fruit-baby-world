@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { StorybookPage, StorybookPageRole, StorybookLayoutType } from "@/lib/storybookPageTypes";
 
@@ -840,6 +841,7 @@ function PageList({
   episodeSlug: string;
   initialPages: StorybookPage[];
 }) {
+  const router = useRouter();
   // Exclude archived pages from the active order on init
   const [pages, setPages] = useState<StorybookPage[]>(
     [...initialPages]
@@ -923,6 +925,7 @@ function PageList({
       setReorderState("saved");
       setSavedCounts(counts);
       setRemovedIds(new Set()); // cleared — server has persisted the archived state
+      router.refresh();
     } catch {
       setReorderState("error");
       setErrorMsg("Network error while saving order.");
@@ -1002,10 +1005,13 @@ function PageList({
 export default function StorybookPagesManager({
   episodeSlug,
   initialPages,
+  isPublished = false,
 }: {
   episodeSlug: string;
   initialPages: StorybookPage[];
+  isPublished?: boolean;
 }) {
+  const router = useRouter();
   const [pages, setPages] = useState<StorybookPage[]>(initialPages);
 
   const publicPageCount = pages.filter((p) => p.status === "approved" && p.visibility === "public").length;
@@ -1029,10 +1035,12 @@ export default function StorybookPagesManager({
       }
       return [...prev, page];
     });
+    router.refresh();
   }
 
   function handlePagesSaved(newPages: StorybookPage[]) {
     setPages((prev) => [...prev, ...newPages]);
+    router.refresh();
   }
 
   return (
@@ -1057,9 +1065,14 @@ export default function StorybookPagesManager({
           <Link
             href={`/stories/${episodeSlug}`}
             target="_blank"
-            className="text-xs font-bold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/15 transition-colors text-center"
+            title={isPublished ? undefined : "Story not yet published — public page may not exist"}
+            className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors text-center ${
+              isPublished
+                ? "bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/15"
+                : "bg-tiki-brown/8 text-tiki-brown/40 hover:bg-tiki-brown/12"
+            }`}
           >
-            Preview Storybook →
+            {isPublished ? "Preview Storybook →" : "Public Page →"}
           </Link>
         </div>
       </div>
