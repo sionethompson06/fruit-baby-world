@@ -17,6 +17,7 @@ import StorybookAudioScriptStudio from "./StorybookAudioScriptStudio";
 import { normalizeStorybookAudioScript } from "@/lib/storybookAudioScript";
 import { normalizeStorybookStatus, getStorybookStatusLabel } from "@/lib/storybookStatus";
 import StorybookVisibilityControls from "@/components/admin/StorybookVisibilityControls";
+import { normalizeStorybookNarration, isStorybookNarrationPublic } from "@/lib/storybookAudio";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -114,23 +115,10 @@ export default async function StorybookBuilderPage({
     normalised.featuredCharacters
   );
 
-  // Load existing storybook narration audio
-  const rawNarration = isRec(raw.storybookNarration) ? raw.storybookNarration : null;
-  const initialNarration: StorybookNarrationAudio | null = rawNarration && typeof rawNarration.audioUrl === "string" ? {
-    id: typeof rawNarration.id === "string" ? rawNarration.id : `storybook-audio-${Date.now()}`,
-    title: typeof rawNarration.title === "string" ? rawNarration.title : undefined,
-    audioUrl: rawNarration.audioUrl,
-    pathname: typeof rawNarration.pathname === "string" ? rawNarration.pathname : undefined,
-    mimeType: typeof rawNarration.mimeType === "string" ? rawNarration.mimeType : "audio/mpeg",
-    sizeBytes: typeof rawNarration.sizeBytes === "number" ? rawNarration.sizeBytes : undefined,
-    durationSeconds: typeof rawNarration.durationSeconds === "number" ? rawNarration.durationSeconds : undefined,
-    sourceType: rawNarration.sourceType === "legacy-generated" ? "legacy-generated" : "admin-uploaded",
-    status: rawNarration.status === "approved" || rawNarration.status === "archived" ? rawNarration.status : "draft",
-    visibility: rawNarration.visibility === "public" ? "public" : "hidden",
-    createdAt: typeof rawNarration.createdAt === "string" ? rawNarration.createdAt : new Date().toISOString(),
-    updatedAt: typeof rawNarration.updatedAt === "string" ? rawNarration.updatedAt : undefined,
-  } : null;
-  const hasPublicAudio = initialNarration?.visibility === "public" && initialNarration?.status !== "archived";
+  // Load existing storybook narration audio — use normalizeStorybookNarration so
+  // both single-file and sequence-mode narrations are handled consistently.
+  const initialNarration: StorybookNarrationAudio | null = normalizeStorybookNarration(raw.storybookNarration);
+  const hasPublicAudio = isStorybookNarrationPublic(initialNarration);
 
   // Load existing storybook video
   const rawVideo = isRec(raw.storybookVideo) ? raw.storybookVideo : null;

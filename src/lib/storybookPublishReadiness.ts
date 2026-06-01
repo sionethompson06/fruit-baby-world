@@ -1,6 +1,11 @@
 // Pure helper — no async, no filesystem, no GitHub.
 // Pass the raw episode JSON object from loadEpisodeBySlug or GitHub.
 
+import {
+  isStorybookNarrationPublic,
+  normalizeStorybookNarration,
+} from "@/lib/storybookAudio";
+
 export type StorybookPublishReadiness = {
   ready: boolean;
   blockers: string[];
@@ -59,13 +64,10 @@ export function buildStorybookPublishReadiness(
     (p) => p.pageRole === "story-page" || p.pageRole === "story-spread"
   );
 
-  // Audio: storybookNarration with non-archived audioUrl
-  const sn = raw.storybookNarration;
-  const hasAudio =
-    isRecord(sn) &&
-    typeof sn.audioUrl === "string" &&
-    sn.audioUrl.startsWith("https://") &&
-    sn.status !== "archived";
+  // Audio: use normalizeStorybookNarration + isStorybookNarrationPublic to
+  // correctly handle both single-file and sequence-mode narrations.
+  const normalizedNarration = normalizeStorybookNarration(raw.storybookNarration);
+  const hasAudio = isStorybookNarrationPublic(normalizedNarration);
 
   // Video: storybookVideo with non-archived videoUrl
   const sv = raw.storybookVideo;

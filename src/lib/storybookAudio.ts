@@ -86,17 +86,40 @@ export function buildNarrationSequenceFromAudioScript(
 /**
  * Normalizes raw JSON into StorybookNarrationAudio, handling both modes.
  * Returns null if the data is invalid or missing required fields.
+ *
+ * For sequence mode, audioUrl may be a backward-compat fallback (first block's
+ * URL set by the publish route). We allow sequence narrations where audioUrl is
+ * absent by falling back to the first block URL so valid sequence narrations
+ * are not incorrectly rejected.
  */
 export function normalizeStorybookNarration(
   raw: unknown
 ): StorybookNarrationAudio | null {
   if (!isRecord(raw)) return null;
   if (typeof raw.id !== "string" || !raw.id) return null;
-  if (typeof raw.audioUrl !== "string" || !raw.audioUrl) return null;
   if (typeof raw.mimeType !== "string" || !raw.mimeType) return null;
 
+  // Determine mode early so we can compute audioUrl fallback for sequence mode
   const mode =
     raw.mode === "sequence" ? ("sequence" as const) : ("single-file" as const);
+
+  // For sequence mode, derive audioUrl from the first block if not present
+  let resolvedAudioUrl: string = typeof raw.audioUrl === "string" ? raw.audioUrl : "";
+  if (!resolvedAudioUrl && mode === "sequence" && isRecord(raw.sequence)) {
+    const rawSeq = raw.sequence;
+    const rawBlocks = Array.isArray(rawSeq.blocks) ? rawSeq.blocks : [];
+    const firstBlock = rawBlocks.find(
+      (b): b is Record<string, unknown> =>
+        isRecord(b) && typeof (b as Record<string, unknown>).audioUrl === "string"
+    );
+    if (firstBlock) {
+      resolvedAudioUrl = firstBlock.audioUrl as string;
+    }
+  }
+
+  // Reject if still no audioUrl (single-file always needs one; sequence needs
+  // at least one block URL, checked above)
+  if (!resolvedAudioUrl) return null;
 
   const status =
     raw.status === "approved" || raw.status === "archived"
@@ -154,7 +177,7 @@ export function normalizeStorybookNarration(
   return {
     id: raw.id,
     title: typeof raw.title === "string" ? raw.title : undefined,
-    audioUrl: raw.audioUrl,
+    audioUrl: resolvedAudioUrl,
     pathname: typeof raw.pathname === "string" ? raw.pathname : undefined,
     mimeType: raw.mimeType,
     sizeBytes: typeof raw.sizeBytes === "number" ? raw.sizeBytes : undefined,
@@ -170,4 +193,87 @@ export function normalizeStorybookNarration(
     sequence,
     approvedAt: typeof raw.approvedAt === "string" ? raw.approvedAt : undefined,
   };
+}
+
+// ─── isStorybookNarrationSingleFile ──────────────────────────────────────────
+
+/**
+ * Returns true when the narration is in single-file mode (mode === "single-file"
+ * or mode is absent but audioUrl is present — legacy records).
+ */
+export function isStorybookNarrationSingleFile(
+  narration: StorybookNarrationAudio | null | undefined
+): boolean {
+  if (!narration) return false;
+  const mode = narration.mode ?? "single-file";
+  if (mode === "single-file") {
+    return typeof narration.audioUrl === "string" && narration.audioUrl.length > 0;
+  }
+  return false;
+}
+
+// ─── isStorybookNarrationSequence ────────────────────────────────────────────
+
+/**
+ * Returns true when the narration is in sequence mode.
+ */
+export function isStorybookNarrationSequence(
+  narration: StorybookNarrationAudio | null | undefined
+): boolean {
+  if (!narration) return false;
+  return narration.mode === "sequence";
+}
+
+// ─── getStorybookNarrationPlayableBlockCount ──────────────────────────────────
+
+/**
+ * Returns the number of blocks that have an audioUrl.
+ * - sequence: blocks.filter(b => b.audioUrl).length
+ * - single-file: 1 if audioUrl present, else 0
+ * - null / missing: 0
+ */
+export function getStorybookNarrationPlayableBlockCount(
+  narration: StorybookNarrationAudio | null | undefined
+): number {
+  if (!narration) return 0;
+  const mode = narration.mode ?? "single-file";
+  if (mode === "sequence") {
+    if (!Array.isArray(narration.sequence?.blocks)) return 0;
+    return narration.sequence!.blocks.filter((b) => !!b.audioUrl).length;
+  }
+  // single-file
+  return typeof narration.audioUrl === "string" && narration.audioUrl.length > 0 ? 1 : 0;
+}
+
+// ─── getStorybookNarrationSummary ─────────────────────────────────────────────
+
+/**
+ * Returns a human-readable one-line summary of the narration state.
+ *
+ * Possible values:
+ * - "No public audio"          — null, missing, or not public
+ * - "Manual uploaded audio"    — single-file, public
+ * - "Generated audio sequence — {N} blocks" — sequence, public
+ * - "Draft audio (hidden)"     — has narration but not public
+ */
+export function getStorybookNarrationSummary(
+  narration: StorybookNarrationAudio | null | undefined
+): string {
+  if (!narration) return "No public audio";
+
+  const isPublic = isStorybookNarrationPublic(narration);
+
+  if (!isPublic) {
+    // Has a narration record but it's not publicly visible
+    if (narration.status === "archived") return "No public audio";
+    return "Draft audio (hidden)";
+  }
+
+  const mode = narration.mode ?? "single-file";
+  if (mode === "sequence") {
+    const n = getStorybookNarrationPlayableBlockCount(narration);
+    return `Generated audio sequence — ${n} block${n !== 1 ? "s" : ""}`;
+  }
+
+  return "Manual uploaded audio";
 }

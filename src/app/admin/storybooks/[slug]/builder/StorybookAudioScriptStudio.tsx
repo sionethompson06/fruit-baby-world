@@ -21,7 +21,12 @@ import {
 } from "@/lib/storybookAudioScript";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
 import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
-import { isStorybookNarrationPublic } from "@/lib/storybookAudio";
+import {
+  isStorybookNarrationPublic,
+  isStorybookNarrationSequence,
+  getStorybookNarrationPlayableBlockCount,
+  getStorybookNarrationSummary,
+} from "@/lib/storybookAudio";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1736,17 +1741,12 @@ export default function StorybookAudioScriptStudio({
         const isPublishing = publishState.phase === "publishing";
         const canPublish = missingAudioBlocks === 0 && totalBlocks > 0 && !isPublishing;
 
-        const narrationMode = currentNarration?.mode ?? "single-file";
-        let currentSourceLabel: string;
-        if (isStorybookNarrationPublic(currentNarration)) {
-          if (narrationMode === "sequence") {
-            currentSourceLabel = "Generated audio sequence is live";
-          } else {
-            currentSourceLabel = "Manual uploaded audio is live";
-          }
-        } else {
-          currentSourceLabel = "No public audio yet";
-        }
+        // Current public audio summary (from currentNarration)
+        const publicAudioSummary = getStorybookNarrationSummary(currentNarration);
+        const isCurrentlyPublic = isStorybookNarrationPublic(currentNarration);
+
+        // Draft full-book preview info (from script.fullBookAudioPreview)
+        const draftPreview = script.fullBookAudioPreview;
 
         const handlePublish = async () => {
           if (!canPublish) return;
@@ -1788,25 +1788,70 @@ export default function StorybookAudioScriptStudio({
               <span className="text-[10px] text-tiki-brown/40 ml-auto">click to expand</span>
             </summary>
 
-            <div className="px-6 pb-5 flex flex-col gap-3">
-              {/* Stats */}
-              <div className="flex flex-wrap gap-4 text-[11px] text-tiki-brown/60">
-                <span>
-                  Total sequence blocks:{" "}
-                  <strong className="text-tiki-brown/80">{totalBlocks}</strong>
+            <div className="px-6 pb-5 flex flex-col gap-4">
+
+              {/* ── Draft Full-Book Preview section ── */}
+              <div className="rounded-xl border border-tiki-brown/12 bg-tiki-brown/2 p-3 flex flex-col gap-1.5">
+                <span className="text-[10px] font-bold text-tiki-brown/50 uppercase tracking-wide">
+                  Draft Full-Book Preview
                 </span>
-                <span>
-                  Missing audio:{" "}
-                  <strong className={missingAudioBlocks > 0 ? "text-warm-coral" : "text-tropical-green"}>
-                    {missingAudioBlocks}
-                  </strong>
+                <div className="flex flex-wrap gap-4 text-[11px] text-tiki-brown/60">
+                  <span>
+                    Total sequence blocks:{" "}
+                    <strong className="text-tiki-brown/80">{totalBlocks}</strong>
+                  </span>
+                  <span>
+                    Missing audio:{" "}
+                    <strong className={missingAudioBlocks > 0 ? "text-warm-coral" : "text-tropical-green"}>
+                      {missingAudioBlocks}
+                    </strong>
+                  </span>
+                  {draftPreview && (
+                    <>
+                      <span>
+                        Generated:{" "}
+                        <strong className="text-tiki-brown/80">{formatGeneratedAt(draftPreview.generatedAt)}</strong>
+                      </span>
+                      <span>
+                        Status:{" "}
+                        <strong className="text-tiki-brown/80">{draftPreview.status}</strong>
+                      </span>
+                    </>
+                  )}
+                </div>
+                <p className="text-[10px] text-tiki-brown/40 leading-snug">
+                  This is the admin draft used in generation previews above. It is never shown publicly.
+                </p>
+              </div>
+
+              {/* ── Current Public Listen & Read Audio section ── */}
+              <div className={`rounded-xl border p-3 flex flex-col gap-1.5 ${
+                isCurrentlyPublic
+                  ? "border-tropical-green/25 bg-tropical-green/5"
+                  : "border-tiki-brown/12 bg-tiki-brown/2"
+              }`}>
+                <span className="text-[10px] font-bold text-tiki-brown/50 uppercase tracking-wide">
+                  Current Public Listen &amp; Read Audio
                 </span>
-                <span>
-                  Current public audio source:{" "}
-                  <strong className={isStorybookNarrationPublic(currentNarration) ? "text-tropical-green" : "text-tiki-brown/55"}>
-                    {currentSourceLabel}
-                  </strong>
-                </span>
+                <div className="text-[11px]">
+                  {isCurrentlyPublic ? (
+                    <>
+                      {isStorybookNarrationSequence(currentNarration) ? (
+                        <span className="text-tropical-green font-semibold">
+                          Generated sequence published for Listen &amp; Read
+                          {" · "}
+                          {getStorybookNarrationPlayableBlockCount(currentNarration)} block{getStorybookNarrationPlayableBlockCount(currentNarration) !== 1 ? "s" : ""}
+                        </span>
+                      ) : (
+                        <span className="text-tropical-green font-semibold">
+                          Manual uploaded audio is the public source
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-tiki-brown/50">{publicAudioSummary}</span>
+                  )}
+                </div>
               </div>
 
               {/* Publish button */}

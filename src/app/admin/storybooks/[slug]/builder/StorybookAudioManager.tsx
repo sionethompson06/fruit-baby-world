@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
+import { isStorybookNarrationSequence, getStorybookNarrationPlayableBlockCount } from "@/lib/storybookAudio";
 
 type UploadState =
   | { phase: "idle" }
@@ -134,6 +135,8 @@ export default function StorybookAudioManager({
 
   const isPublic = narration?.visibility === "public";
   const isArchived = narration?.status === "archived";
+  const isSequenceMode = isStorybookNarrationSequence(narration);
+  const isSingleFileMode = !isSequenceMode;
 
   return (
     <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-5">
@@ -163,8 +166,62 @@ export default function StorybookAudioManager({
         )}
       </div>
 
-      {/* Existing audio player */}
-      {narration && !isArchived && (
+      {/* Existing audio — sequence mode summary card */}
+      {narration && !isArchived && isSequenceMode && (
+        <div className="flex flex-col gap-3 bg-ube-purple/4 rounded-2xl border border-ube-purple/15 p-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-base">🎵</span>
+            <span className="text-xs font-bold text-ube-purple/80">Current public audio: Generated audio sequence</span>
+          </div>
+          <div className="flex flex-wrap gap-3 text-xs text-tiki-brown/60">
+            <span>
+              Playable blocks:{" "}
+              <strong className="text-tiki-brown/80">{getStorybookNarrationPlayableBlockCount(narration)}</strong>
+            </span>
+            <span>
+              Status:{" "}
+              <strong className={isPublic ? "text-tropical-green" : "text-tiki-brown/55"}>
+                {isPublic ? "Public" : "Hidden"}
+              </strong>
+            </span>
+          </div>
+          <p className="text-[10px] text-tiki-brown/45 leading-snug">
+            Published from Audio Script Studio. Use the Audio Reader Script Studio below to preview the sequence.
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {isPublic ? (
+              <button
+                type="button"
+                onClick={() => updateVisibility("hidden")}
+                disabled={busy}
+                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/12 disabled:opacity-40 transition-colors"
+              >
+                {busy ? "Saving…" : "Hide from Public"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => updateVisibility("public")}
+                disabled={busy}
+                className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tropical-green/15 text-tropical-green hover:bg-tropical-green/25 disabled:opacity-40 transition-colors"
+              >
+                {busy ? "Saving…" : "Make Public"}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={archiveNarration}
+              disabled={busy}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-warm-coral/10 text-warm-coral/70 hover:bg-warm-coral/20 disabled:opacity-40 transition-colors"
+            >
+              {busy ? "Saving…" : "Archive Audio"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Existing audio — single-file mode player */}
+      {narration && !isArchived && isSingleFileMode && (
         <div className="flex flex-col gap-3 bg-tiki-brown/3 rounded-2xl border border-tiki-brown/8 p-4">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Current Narration</span>
@@ -223,6 +280,11 @@ export default function StorybookAudioManager({
         <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
           {narration && !isArchived ? "Replace Narration" : "Upload Narration"}
         </p>
+        {isSequenceMode && narration && !isArchived && (
+          <p className="text-[10px] text-tiki-brown/45 leading-snug">
+            Uploading a new file will replace the generated audio sequence as the public audio source.
+          </p>
+        )}
         <p className="text-xs text-tiki-brown/40">Accepted: MP3, WAV, M4A / AAC — up to 45 MB</p>
         <label className={`flex items-center gap-3 rounded-xl border border-dashed p-4 cursor-pointer transition-all ${
           busy ? "opacity-50 pointer-events-none" : "hover:border-ube-purple/40 hover:bg-ube-purple/3"
