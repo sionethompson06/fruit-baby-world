@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import type {
   StorybookAudioScript,
   StorybookAudioScriptPage,
+  StorybookAudioScriptPageAudioPreview,
   StorybookAudioScriptBlock,
   StorybookAudioSpeaker,
   StorybookAudioScriptBlockType,
   StorybookAudioScriptStatus,
   StorybookAudioScriptBlockStatus,
 } from "@/lib/storybookAudioScriptTypes";
+import {
+  getPlayableBlocksForPage,
+  getMissingAudioBlocks,
+  hasMissingBlockAudio,
+} from "@/lib/storybookAudioScript";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,6 +31,24 @@ type BlockGenerateState =
   | { phase: "generating" }
   | { phase: "success"; message: string }
   | { phase: "error"; message: string };
+
+type PageGenState =
+  | { phase: "idle" }
+  | { phase: "generating"; mode: "missing" | "all" }
+  | { phase: "done"; message: string; blockErrors?: { blockId: string; error: string }[] }
+  | { phase: "error"; message: string };
+
+type GeneratedBlockResult = {
+  blockId: string;
+  audioUrl: string | null;
+  pathname: string | null;
+  mimeType: "audio/mpeg" | null;
+  sizeBytes: number | null;
+  generatedAt: string | null;
+  provider: "elevenlabs" | "existing" | null;
+  modelId: string | null;
+  error: string | null;
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -379,6 +403,178 @@ function BlockEditor({
   );
 }
 
+// ─── PageSequencePlayer ───────────────────────────────────────────────────────
+
+function PageSequencePlayer({
+  blocks,
+  speakerName,
+}: {
+  blocks: StorybookAudioScriptBlock[];
+  speakerName: (slug: string) => string;
+}) {
+  const playableBlocks = blocks.filter((b) => !!b.audioUrl);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const playerRef = useRef<HTMLAudioElement | null>(null);
+
+  // Reset player when blocks change
+  useEffect(() => {
+    setCurrentIndex(0);
+    setPlaying(false);
+    if (playerRef.current) {
+      playerRef.current.pause();
+      playerRef.current.src = "";
+    }
+  }, [blocks]);
+
+  // Attach ended listener whenever index changes
+  useEffect(() => {
+    const audio = playerRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => {
+      const nextIdx = currentIndex + 1;
+      if (nextIdx < playableBlocks.length) {
+        setCurrentIndex(nextIdx);
+        const nextUrl = playableBlocks[nextIdx]?.audioUrl;
+        if (nextUrl) {
+          audio.src = nextUrl;
+          audio.play().catch(() => setPlaying(false));
+        }
+      } else {
+        setPlaying(false);
+        setCurrentIndex(0);
+      }
+    };
+
+    audio.addEventListener("ended", handleEnded);
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [currentIndex, playableBlocks]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.pause();
+      }
+    };
+  }, []);
+
+  const handlePlay = () => {
+    const audio = playerRef.current;
+    if (!audio) return;
+    const block = playableBlocks[currentIndex];
+    if (!block?.audioUrl) return;
+
+    if (!playing) {
+      if (audio.src !== block.audioUrl) {
+        audio.src = block.audioUrl;
+      }
+      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
+    }
+  };
+
+  const handlePause = () => {
+    playerRef.current?.pause();
+    setPlaying(false);
+  };
+
+  const handleStop = () => {
+    const audio = playerRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+    }
+    setPlaying(false);
+    setCurrentIndex(0);
+  };
+
+  if (playableBlocks.length === 0) return null;
+
+  const currentBlock = playableBlocks[currentIndex];
+  const missingCount = blocks.filter(
+    (b) => b.status !== "archived" && b.text.trim().length > 0 && !b.audioUrl
+  ).length;
+
+  return (
+    <div className="rounded-xl border border-ube-purple/20 bg-ube-purple/4 p-3 flex flex-col gap-2">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio ref={playerRef} preload="none" />
+
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <span className="text-xs font-bold text-ube-purple/80">
+          Page Preview
+        </span>
+        {currentBlock && (
+          <span className="text-[10px] text-tiki-brown/55">
+            Now playing: {speakerName(currentBlock.speakerSlug)} (block {currentIndex + 1} of {playableBlocks.length})
+          </span>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handlePlay}
+          disabled={playing}
+          title="Play"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/20 border border-ube-purple/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ▶ Play
+        </button>
+        <button
+          type="button"
+          onClick={handlePause}
+          disabled={!playing}
+          title="Pause"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          ⏸ Pause
+        </button>
+        <button
+          type="button"
+          onClick={handleStop}
+          title="Stop"
+          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 transition-colors"
+        >
+          ⏹ Stop
+        </button>
+      </div>
+
+      {/* Block progress dots */}
+      <div className="flex items-center gap-1 flex-wrap">
+        {playableBlocks.map((b, i) => (
+          <button
+            key={b.id}
+            type="button"
+            onClick={() => {
+              handleStop();
+              setCurrentIndex(i);
+            }}
+            title={`Block ${i + 1}: ${speakerName(b.speakerSlug)}`}
+            className={`text-[10px] px-1.5 py-0.5 rounded transition-colors ${
+              i === currentIndex
+                ? "text-ube-purple font-bold"
+                : "text-tiki-brown/40"
+            }`}
+          >
+            {i === currentIndex ? "●" : "○"} {i + 1}
+          </button>
+        ))}
+      </div>
+
+      {missingCount > 0 && (
+        <p className="text-[10px] text-amber-600/80 bg-amber-50 border border-amber-200 rounded px-2 py-1 leading-snug">
+          {missingCount} block{missingCount !== 1 ? "s are" : " is"} missing audio. Generate Missing Audio to enable full page preview.
+        </p>
+      )}
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function StorybookAudioScriptStudio({
@@ -396,6 +592,8 @@ export default function StorybookAudioScriptStudio({
   );
   const [saveState, setSaveState] = useState<SaveState>({ phase: "idle" });
   const [activeTab, setActiveTab] = useState<"pages" | "speakers">("pages");
+  const [pageGenStates, setPageGenStates] = useState<Map<string, PageGenState>>(new Map());
+  const [showPagePlayer, setShowPagePlayer] = useState(false);
 
   const selectedPage = script.pages.find((p) => p.pageId === selectedPageId) ?? null;
   const selectedStorybookPage = storybookPages.find((p) => p.id === selectedPageId) ?? null;
@@ -569,6 +767,143 @@ export default function StorybookAudioScriptStudio({
     });
   }, [saveScript]);
 
+  // ── Page generation ───────────────────────────────────────────────────────
+
+  const setPageGenState = useCallback((pageId: string, state: PageGenState) => {
+    setPageGenStates((prev) => {
+      const next = new Map(prev);
+      next.set(pageId, state);
+      return next;
+    });
+  }, []);
+
+  const handleGeneratePage = useCallback(
+    async (page: StorybookAudioScriptPage, mode: "missing" | "all") => {
+      const pageId = page.pageId;
+      const playable = getPlayableBlocksForPage(page);
+
+      const blocksToProcess = mode === "missing"
+        ? getMissingAudioBlocks(page)
+        : playable;
+
+      if (blocksToProcess.length === 0) return;
+
+      if (mode === "all") {
+        const confirmed = window.confirm(
+          "Regenerate all audio drafts for this page? Existing draft audio links will be replaced."
+        );
+        if (!confirmed) return;
+      }
+
+      setPageGenState(pageId, { phase: "generating", mode });
+
+      // Build blocks payload with resolved voiceIds
+      const blocksPayload = blocksToProcess.map((block) => ({
+        blockId: block.id,
+        text: block.text,
+        speakerSlug: block.speakerSlug,
+        speakerName: block.speakerName,
+        voiceId: resolveVoiceId(block, script.speakers, script.defaultNarratorVoiceId),
+        audioUrl: block.audioUrl,
+        regenerate: mode === "all",
+      }));
+
+      try {
+        const res = await fetch("/api/storybook-audio/generate-page", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            slug,
+            pageId,
+            blocks: blocksPayload,
+          }),
+        });
+
+        const data = (await res.json()) as {
+          ok: boolean;
+          pageId?: string;
+          generatedBlocks?: GeneratedBlockResult[];
+          pageAudioPreview?: StorybookAudioScriptPageAudioPreview;
+          message?: string;
+        };
+
+        if (!data.ok && !data.generatedBlocks) {
+          setPageGenState(pageId, {
+            phase: "error",
+            message: data.message ?? "Page audio generation failed.",
+          });
+          return;
+        }
+
+        const generatedBlocks = data.generatedBlocks ?? [];
+        const blockErrors = generatedBlocks
+          .filter((b) => b.error !== null)
+          .map((b) => ({ blockId: b.blockId, error: b.error! }));
+
+        // Apply generated audio back to script state
+        setScript((prev) => {
+          const updatedScript: StorybookAudioScript = {
+            ...prev,
+            pages: prev.pages.map((p) => {
+              if (p.pageId !== pageId) return p;
+
+              // Build a map of results by blockId
+              const resultMap = new Map<string, GeneratedBlockResult>();
+              for (const gb of generatedBlocks) {
+                if (gb.audioUrl) resultMap.set(gb.blockId, gb);
+              }
+
+              const updatedBlocks = p.scriptBlocks.map((b) => {
+                const result = resultMap.get(b.id);
+                if (!result) return b;
+                return {
+                  ...b,
+                  audioUrl: result.audioUrl ?? b.audioUrl,
+                  pathname: result.pathname ?? b.pathname,
+                  mimeType: result.mimeType ?? b.mimeType,
+                  sizeBytes: result.sizeBytes ?? b.sizeBytes,
+                  generatedAt: result.generatedAt ?? b.generatedAt,
+                  generationProvider: result.provider === "elevenlabs" ? ("elevenlabs" as const) : b.generationProvider,
+                  generationModelId: result.modelId ?? b.generationModelId,
+                  generationError: undefined,
+                  updatedAt: new Date().toISOString(),
+                };
+              });
+
+              return {
+                ...p,
+                scriptBlocks: updatedBlocks,
+                pageAudioPreview: data.pageAudioPreview ?? p.pageAudioPreview,
+                updatedAt: new Date().toISOString(),
+              };
+            }),
+          };
+
+          // Auto-save to GitHub
+          saveScript(updatedScript).catch(() => undefined);
+          return updatedScript;
+        });
+
+        const successCount = generatedBlocks.filter((b) => b.audioUrl !== null).length;
+        const doneMessage = blockErrors.length > 0
+          ? `${successCount} of ${generatedBlocks.length} blocks generated. ${blockErrors.length} failed.`
+          : `Page audio generated and saved. (${successCount} block${successCount !== 1 ? "s" : ""})`;
+
+        setPageGenState(pageId, {
+          phase: "done",
+          message: doneMessage,
+          blockErrors: blockErrors.length > 0 ? blockErrors : undefined,
+        });
+      } catch {
+        setPageGenState(pageId, {
+          phase: "error",
+          message: "Network error during page audio generation. Please try again.",
+        });
+      }
+    },
+    [script, slug, saveScript, setPageGenState]
+  );
+
   const updateScriptStatus = (status: StorybookAudioScriptStatus) => {
     setScript((prev) => ({ ...prev, status }));
     setSaveState({ phase: "idle" });
@@ -722,6 +1057,91 @@ export default function StorybookAudioScriptStudio({
                     </span>
                   )}
                 </div>
+
+                {/* ── Page Audio Controls ── */}
+                {(() => {
+                  const pageId = selectedPage.pageId;
+                  const playable = getPlayableBlocksForPage(selectedPage);
+                  const missing = getMissingAudioBlocks(selectedPage);
+                  const hasAnyAudio = playable.some((b) => !!b.audioUrl);
+                  const allHaveAudio = playable.length > 0 && !hasMissingBlockAudio(selectedPage);
+                  const pageGenState = pageGenStates.get(pageId) ?? { phase: "idle" };
+                  const isGenerating = pageGenState.phase === "generating";
+
+                  if (playable.length === 0) return null;
+
+                  return (
+                    <div className="rounded-xl border border-tiki-brown/12 bg-tiki-brown/2 p-3 flex flex-col gap-2">
+                      <span className="text-[10px] font-bold text-tiki-brown/50 uppercase tracking-wide">
+                        Page Audio
+                      </span>
+
+                      {/* Generation buttons */}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => handleGeneratePage(selectedPage, "missing")}
+                          disabled={isGenerating || allHaveAudio || missing.length === 0}
+                          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/10 text-tropical-green hover:bg-tropical-green/20 border border-tropical-green/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isGenerating && pageGenState.mode === "missing"
+                            ? "Generating…"
+                            : "Generate Missing Audio"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleGeneratePage(selectedPage, "all")}
+                          disabled={isGenerating || playable.length === 0}
+                          className="text-xs font-bold px-3 py-1.5 rounded-full bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 border border-tiki-brown/15 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isGenerating && pageGenState.mode === "all"
+                            ? "Regenerating…"
+                            : "Regenerate All Drafts"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPagePlayer((prev) => !prev)}
+                          disabled={!hasAnyAudio}
+                          className="text-xs font-bold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/20 border border-ube-purple/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {showPagePlayer ? "▼ Hide Preview" : "▶ Preview Page Audio"}
+                        </button>
+                      </div>
+
+                      {/* Generation status */}
+                      {pageGenState.phase === "done" && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-[10px] text-tropical-green font-semibold">
+                            ✓ {pageGenState.message}
+                          </span>
+                          {pageGenState.blockErrors?.map((e) => (
+                            <span key={e.blockId} className="text-[10px] text-warm-coral">
+                              Block {e.blockId}: {e.error}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {pageGenState.phase === "error" && (
+                        <span className="text-[10px] text-warm-coral font-semibold">
+                          ✕ {pageGenState.message}
+                        </span>
+                      )}
+
+                      {/* Sequential player */}
+                      {showPagePlayer && hasAnyAudio && (
+                        <PageSequencePlayer
+                          blocks={playable}
+                          speakerName={(speakerSlug) => {
+                            const found = script.speakers.find((s) => s.speakerSlug === speakerSlug);
+                            return found?.speakerName ?? speakerSlug;
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Script blocks */}
                 {selectedPage.scriptBlocks.length === 0 ? (

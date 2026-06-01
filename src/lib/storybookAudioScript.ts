@@ -4,6 +4,7 @@
 import type {
   StorybookAudioScript,
   StorybookAudioScriptPage,
+  StorybookAudioScriptPageAudioPreview,
   StorybookAudioSpeaker,
   StorybookAudioScriptBlock,
   StorybookAudioScriptStatus,
@@ -135,6 +136,28 @@ function parseBlock(raw: unknown, fallbackOrder: number): StorybookAudioScriptBl
   };
 }
 
+const VALID_PAGE_AUDIO_PREVIEW_STATUSES = new Set<"draft" | "approved" | "archived">([
+  "draft", "approved", "archived",
+]);
+
+function parsePageAudioPreview(raw: unknown): StorybookAudioScriptPageAudioPreview | undefined {
+  if (!isRecord(raw)) return undefined;
+  if (typeof raw.generatedAt !== "string" || !raw.generatedAt) return undefined;
+  if (raw.generationProvider !== "storybook-page-sequence") return undefined;
+  const blockIds = Array.isArray(raw.blockIds)
+    ? raw.blockIds.filter((id): id is string => typeof id === "string")
+    : [];
+  const status = VALID_PAGE_AUDIO_PREVIEW_STATUSES.has(raw.status as "draft" | "approved" | "archived")
+    ? (raw.status as "draft" | "approved" | "archived")
+    : "draft";
+  return {
+    generatedAt: raw.generatedAt,
+    generationProvider: "storybook-page-sequence",
+    blockIds,
+    status,
+  };
+}
+
 function parsePage(raw: unknown, storybookPage?: StorybookPage): StorybookAudioScriptPage | null {
   if (!isRecord(raw)) return null;
   if (typeof raw.pageId !== "string" || !raw.pageId) return null;
@@ -149,6 +172,7 @@ function parsePage(raw: unknown, storybookPage?: StorybookPage): StorybookAudioS
     pageRole: typeof raw.pageRole === "string" ? raw.pageRole : storybookPage?.pageRole,
     originalFilename: typeof raw.originalFilename === "string" ? raw.originalFilename : storybookPage?.originalFilename,
     scriptBlocks,
+    pageAudioPreview: parsePageAudioPreview(raw.pageAudioPreview),
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : undefined,
   };
 }
@@ -244,6 +268,7 @@ export function normalizeStorybookAudioScript(
       pageRole: sbPage.pageRole,
       originalFilename: sbPage.originalFilename,
       scriptBlocks: existing?.scriptBlocks ?? [],
+      pageAudioPreview: existing?.pageAudioPreview,
       updatedAt: existing?.updatedAt,
     };
   });
@@ -264,4 +289,30 @@ export function normalizeStorybookAudioScript(
     pages,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
   };
+}
+
+// ─── Page audio helpers ───────────────────────────────────────────────────────
+
+/**
+ * Returns active (non-archived) blocks with non-empty text, sorted by sortOrder.
+ */
+export function getPlayableBlocksForPage(page: StorybookAudioScriptPage): StorybookAudioScriptBlock[] {
+  return page.scriptBlocks
+    .filter((b) => b.status !== "archived" && b.text.trim().length > 0)
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+/**
+ * Returns playable blocks that are missing audioUrl.
+ */
+export function getMissingAudioBlocks(page: StorybookAudioScriptPage): StorybookAudioScriptBlock[] {
+  return getPlayableBlocksForPage(page).filter((b) => !b.audioUrl);
+}
+
+/**
+ * Returns true if any playable block is missing audioUrl.
+ */
+export function hasMissingBlockAudio(page: StorybookAudioScriptPage): boolean {
+  return getMissingAudioBlocks(page).length > 0;
 }

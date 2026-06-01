@@ -82,5 +82,6 @@ export const config = {
     "/api/github/save-homepage-showcase",
     "/api/github/save-storybook-audio-script",
     "/api/storybook-audio/generate-block",
+    "/api/storybook-audio/generate-page",
   ],
 };

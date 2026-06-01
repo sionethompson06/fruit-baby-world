@@ -49,12 +49,20 @@ export type StorybookAudioScriptBlock = {
   updatedAt?: string;
 };
 
+export type StorybookAudioScriptPageAudioPreview = {
+  generatedAt: string;
+  generationProvider: "storybook-page-sequence";
+  blockIds: string[];
+  status: "draft" | "approved" | "archived";
+};
+
 export type StorybookAudioScriptPage = {
   pageId: string;
   pageNumber?: number;
   pageRole?: string;
   originalFilename?: string;
   scriptBlocks: StorybookAudioScriptBlock[];
+  pageAudioPreview?: StorybookAudioScriptPageAudioPreview;
   updatedAt?: string;
 };
 
