@@ -208,6 +208,23 @@
       "spreadNumber": 9,
       "displayMode": "spread",
       "originalFilename": "13_spread_11_a_better_way_to_belong.png"
+    },
+    {
+      "id": "storybook-page-1780290867655",
+      "pageNumber": 12,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290866066.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290866066.png",
+      "mimeType": "image/png",
+      "altText": "End Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:14:27.655Z",
+      "updatedAt": "2026-06-01T05:14:27.655Z",
+      "pageRole": "end-page",
+      "layoutType": "single-page",
+      "displayMode": "single",
+      "originalFilename": "14_end_page_what_we_learned_island_harvest_mystery.png"
     }
   ],
   "review": {
@@ -219,5 +236,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:10:22.211Z"
+  "updatedAt": "2026-06-01T05:14:27.655Z"
 }
