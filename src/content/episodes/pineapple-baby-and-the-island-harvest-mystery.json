@@ -64,6 +64,24 @@
       "spreadNumber": 1,
       "displayMode": "spread",
       "originalFilename": "03_spread_1_the_harvest_begins_to_fade.png"
+    },
+    {
+      "id": "storybook-page-1780290595676",
+      "pageNumber": 4,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290594603.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290594603.png",
+      "mimeType": "image/png",
+      "altText": "Spread 2",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:09:55.676Z",
+      "updatedAt": "2026-06-01T05:09:55.676Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 2,
+      "displayMode": "spread",
+      "originalFilename": "05_spread_3_hidden_clues_true_sight.png"
     }
   ],
   "review": {
@@ -75,5 +93,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:09:49.776Z"
+  "updatedAt": "2026-06-01T05:09:55.676Z"
 }
