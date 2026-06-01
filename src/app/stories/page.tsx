@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import fs from "fs";
 import path from "path";
+import Link from "next/link";
 import { getPublicEpisodes } from "@/lib/content";
 import { loadAllCharactersFromDisk } from "@/lib/characterContent";
 import { loadPublicSavedEpisodes, loadComingSoonSavedEpisodes } from "@/lib/savedEpisodes";
@@ -246,67 +247,82 @@ export default function StoriesPage() {
 
       {/* Coming Soon */}
       {comingSoonCards.length > 0 && (
-        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pb-12 flex flex-col gap-6">
-          <h2 className="text-2xl font-black text-tiki-brown">🌟 Coming Soon</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {comingSoonCards.map((card) => (
-              <div
-                key={card.slug}
-                className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-sm"
-              >
-                {/* Cover / placeholder image */}
-                <div className="relative flex items-center justify-center h-44 bg-gradient-to-br from-pineapple-yellow/20 via-sky-blue/10 to-tropical-green/10 overflow-hidden">
-                  {card.coverImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={card.coverImageUrl}
-                      alt={card.title}
-                      className="w-full h-full object-cover object-top"
-                    />
-                  ) : card.emoji ? (
-                    <span className="text-6xl select-none">{card.emoji}</span>
-                  ) : (
-                    <span className="text-6xl select-none opacity-30">📖</span>
-                  )}
-                  <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-pineapple-yellow/80 text-tiki-brown/80 shadow-sm">
-                    🌟 Coming Soon
-                  </span>
-                </div>
+        <section
+          className="w-full py-12"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255, 248, 230, 0.80), rgba(255, 244, 215, 0.88)), url("/backgrounds/mango-grove.png")`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex flex-col gap-6">
+            <h2 className="text-2xl font-black text-tiki-brown">🌟 Coming Soon</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {comingSoonCards.map((card) => {
+                const charDisplay =
+                  card.characters.length > 0
+                    ? card.characters.join(" • ")
+                    : "Pineapple Baby Friends";
 
-                <div className="p-5 flex flex-col gap-3 flex-1">
-                  <h3 className="text-lg font-black text-tiki-brown leading-tight">
-                    {card.title}
-                  </h3>
-                  {card.description && (
-                    <p className="text-sm text-tiki-brown/65 leading-relaxed">
-                      {card.description}
-                    </p>
-                  )}
-                  {card.lesson && (
-                    <div className="bg-pineapple-yellow/15 rounded-2xl px-3 py-2">
-                      <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide mb-0.5">
-                        Lesson
-                      </p>
-                      <p className="text-sm text-tiki-brown/70 leading-snug">
-                        {card.lesson}
+                const cardInner = (
+                  <>
+                    {/* Cover — book-cover aspect ratio, matching Available Stories cards */}
+                    <div className="relative w-full aspect-[3/4] overflow-hidden flex-shrink-0 bg-gradient-to-br from-pineapple-yellow/20 via-sky-blue/10 to-tropical-green/10">
+                      {card.coverImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={card.coverImageUrl}
+                          alt={card.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : card.emoji ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-7xl select-none">{card.emoji}</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-7xl select-none opacity-30">📖</span>
+                        </div>
+                      )}
+                      <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-pineapple-yellow/80 text-tiki-brown/80 shadow-sm">
+                        🌟 Coming Soon
+                      </span>
+                    </div>
+                    {/* Footer: title + characters only */}
+                    <div className="px-4 pt-3 pb-4 flex flex-col gap-1">
+                      <h3 className="text-sm font-black text-tiki-brown leading-tight line-clamp-2">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs text-tiki-brown/55 font-semibold truncate">
+                        {charDisplay}
                       </p>
                     </div>
-                  )}
-                  {card.characters.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {card.characters.map((name) => (
-                        <span
-                          key={name}
-                          className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/8 text-ube-purple/70"
-                        >
-                          {name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                  </>
+                );
+
+                if (card.isReal) {
+                  return (
+                    <Link
+                      key={card.slug}
+                      href={`/stories/${card.slug}`}
+                      className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
+                    >
+                      {cardInner}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div
+                    key={card.slug}
+                    className="rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-md"
+                  >
+                    {cardInner}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
       )}
