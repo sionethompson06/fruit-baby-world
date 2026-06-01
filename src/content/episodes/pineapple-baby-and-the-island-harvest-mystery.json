@@ -225,6 +225,23 @@
       "layoutType": "single-page",
       "displayMode": "single",
       "originalFilename": "14_end_page_what_we_learned_island_harvest_mystery.png"
+    },
+    {
+      "id": "storybook-page-1780290875528",
+      "pageNumber": 13,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290873997.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290873997.png",
+      "mimeType": "image/png",
+      "altText": "Back Cover",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:14:35.528Z",
+      "updatedAt": "2026-06-01T05:14:35.528Z",
+      "pageRole": "back-cover",
+      "layoutType": "back-cover",
+      "displayMode": "single",
+      "originalFilename": "15_back_cover_island_harvest_mystery.png"
     }
   ],
   "review": {
@@ -236,5 +253,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:14:27.655Z"
+  "updatedAt": "2026-06-01T05:14:35.528Z"
 }
