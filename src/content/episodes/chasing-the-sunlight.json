@@ -448,7 +448,7 @@
     "storebookPublishedAt": "2026-05-27T03:44:46.672Z"
   },
   "createdAt": "2026-05-26T09:45:26.706Z",
-  "updatedAt": "2026-06-01T02:34:20.285Z",
+  "updatedAt": "2026-06-01T02:48:36.165Z",
   "storybookNarration": {
     "id": "storybook-audio-1780278632507",
     "audioUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-audio/narration-1780278631227.mp3",
@@ -489,8 +489,20 @@
         "visibility": "public",
         "uploadedAt": "2026-06-01T02:33:50.901Z",
         "updatedAt": "2026-06-01T02:34:01.224Z"
+      },
+      {
+        "pageId": "storybook-page-1779828181652",
+        "audioUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/storybooks/page-audio/chasing-the-sunlight/storybook-page-1779828181652/1780282114815-glowstone_spread_1.mp3",
+        "pathname": "storybooks/page-audio/chasing-the-sunlight/storybook-page-1779828181652/1780282114815-glowstone_spread_1.mp3",
+        "originalAudioFilename": "Glowstone_Spread_1.mp3",
+        "mimeType": "audio/mpeg",
+        "sizeBytes": 369965,
+        "status": "draft",
+        "visibility": "hidden",
+        "uploadedAt": "2026-06-01T02:48:35.582Z",
+        "updatedAt": "2026-06-01T02:48:35.677Z"
       }
     ],
-    "updatedAt": "2026-06-01T02:34:01.733Z"
+    "updatedAt": "2026-06-01T02:48:36.165Z"
   }
 }
