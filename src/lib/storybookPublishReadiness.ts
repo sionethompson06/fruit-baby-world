@@ -64,10 +64,24 @@ export function buildStorybookPublishReadiness(
     (p) => p.pageRole === "story-page" || p.pageRole === "story-spread"
   );
 
-  // Audio: use normalizeStorybookNarration + isStorybookNarrationPublic to
-  // correctly handle both single-file and sequence-mode narrations.
+  // Audio: check both full-book narration and page-level audio.
   const normalizedNarration = normalizeStorybookNarration(raw.storybookNarration);
-  const hasAudio = isStorybookNarrationPublic(normalizedNarration);
+  const hasNarrationAudio = isStorybookNarrationPublic(normalizedNarration);
+
+  // Page-level audio: at least one item must be approved + public.
+  const rawPageAudio = raw.storybookPageAudio;
+  const hasPageAudio =
+    isRecord(rawPageAudio) &&
+    Array.isArray(rawPageAudio.pages) &&
+    (rawPageAudio.pages as unknown[]).some(
+      (p) =>
+        isRecord(p) &&
+        p.status === "approved" &&
+        p.visibility === "public" &&
+        typeof p.audioUrl === "string"
+    );
+
+  const hasAudio = hasNarrationAudio || hasPageAudio;
 
   // Video: storybookVideo with non-archived videoUrl
   const sv = raw.storybookVideo;

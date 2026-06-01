@@ -14,7 +14,9 @@ import SimplePublishAction from "./SimplePublishAction";
 import StorybookAudioManager from "./StorybookAudioManager";
 import StorybookVideoManager from "./StorybookVideoManager";
 import StorybookAudioScriptStudio from "./StorybookAudioScriptStudio";
+import StorybookPageAudioManager from "./StorybookPageAudioManager";
 import { normalizeStorybookAudioScript } from "@/lib/storybookAudioScript";
+import { normalizeStorybookPageAudio } from "@/lib/storybookPageAudio";
 import { normalizeStorybookStatus, getStorybookStatusLabel } from "@/lib/storybookStatus";
 import StorybookVisibilityControls from "@/components/admin/StorybookVisibilityControls";
 import { normalizeStorybookNarration, isStorybookNarrationPublic } from "@/lib/storybookAudio";
@@ -113,6 +115,12 @@ export default async function StorybookBuilderPage({
     raw.storybookAudioScript,
     storybookPages,
     normalised.featuredCharacters
+  );
+
+  // Load and normalize page-level audio config.
+  const initialPageAudioConfig = normalizeStorybookPageAudio(
+    raw.storybookPageAudio,
+    storybookPages
   );
 
   // Load existing storybook narration audio — use normalizeStorybookNarration so
@@ -353,16 +361,39 @@ export default async function StorybookBuilderPage({
               )
             }
           />
+          {/* Primary: per-page audio uploads */}
+          <StorybookPageAudioManager
+            episodeSlug={normalised.slug}
+            storybookPages={storybookPages}
+            initialPageAudioConfig={initialPageAudioConfig}
+          />
+
+          {/* Secondary: full-book narration upload */}
           <StorybookAudioManager
             episodeSlug={normalised.slug}
             initialNarration={initialNarration}
           />
-          <StorybookAudioScriptStudio
-            slug={normalised.slug}
-            storybookPages={storybookPages}
-            initialStorybookAudioScript={initialAudioScript}
-            initialNarration={initialNarration}
-          />
+
+          {/* Advanced: Audio Script Studio — collapsed by default */}
+          <details className="group rounded-2xl border border-tiki-brown/10 bg-tiki-brown/2 overflow-hidden">
+            <summary className="flex items-center gap-2.5 px-5 py-4 cursor-pointer list-none select-none hover:bg-tiki-brown/5 transition-colors">
+              <span className="text-base flex-shrink-0">🎛️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-tiki-brown/60 uppercase tracking-wide">Advanced: Audio Script Studio</p>
+                <p className="text-[11px] text-tiki-brown/40 mt-0.5">Page-by-page script editor with ElevenLabs voice generation</p>
+              </div>
+              <span className="text-xs font-bold text-tiki-brown/35 flex-shrink-0 group-open:hidden">▸ Show</span>
+              <span className="text-xs font-bold text-tiki-brown/35 flex-shrink-0 hidden group-open:inline">▾ Hide</span>
+            </summary>
+            <div className="border-t border-tiki-brown/8 px-1 py-3">
+              <StorybookAudioScriptStudio
+                slug={normalised.slug}
+                storybookPages={storybookPages}
+                initialStorybookAudioScript={initialAudioScript}
+                initialNarration={initialNarration}
+              />
+            </div>
+          </details>
         </div>
 
         {/* ── Video ── */}

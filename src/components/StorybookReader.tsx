@@ -388,6 +388,7 @@ function FocusModeReader({
   onPrev, onNext, onSelect, onExit, onReadAgain,
   backHref, touchHandlers, spreadPages,
   audioPlaying, audioDuration, audioCurrentTime, onAudioToggle, onAudioSeek,
+  currentPageAudioUrl, hasAnyPageAudio,
 }: {
   page: StorybookReaderPage; index: number; total: number;
   pages: StorybookReaderPage[]; episodeTitle: string;
@@ -402,6 +403,7 @@ function FocusModeReader({
   spreadPages: StorybookReaderPage[];
   audioPlaying?: boolean; audioDuration?: number; audioCurrentTime?: number;
   onAudioToggle?: () => void; onAudioSeek?: (t: number) => void;
+  currentPageAudioUrl?: string | null; hasAnyPageAudio?: boolean;
 }) {
   const thumbsRef   = useRef<HTMLDivElement>(null);
   const displayText = page.caption || page.readAloudText || null;
@@ -514,7 +516,30 @@ function FocusModeReader({
           <ThumbnailStrip pages={pages} activeIndex={index} onSelect={onSelect} stripRef={thumbsRef} />
         </div>
 
-        {onAudioToggle && (
+        {/* Page-level audio (priority) */}
+        {hasAnyPageAudio && (
+          <div className="max-w-xl mx-auto w-full">
+            {currentPageAudioUrl ? (
+              // key={index} unmounts/remounts on page turn, stopping any playing audio
+              // eslint-disable-next-line jsx-a11y/media-has-caption
+              <audio
+                key={index}
+                controls
+                preload="metadata"
+                src={currentPageAudioUrl}
+                className="w-full rounded-xl"
+                aria-label="Page audio"
+              />
+            ) : (
+              <p className="text-[11px] text-tiki-brown/35 text-center italic py-1">
+                No audio for this page yet
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Single-file narration audio (only when no page audio) */}
+        {!hasAnyPageAudio && onAudioToggle && (
           <div className="max-w-xl mx-auto w-full">
             <NarrationPlayerBar
               playing={audioPlaying ?? false}
@@ -599,6 +624,7 @@ export default function StorybookReader({
   narrationAudio,
   listenModeActive = false,
   immersiveOnly = false,
+  pageAudioMap,
 }: {
   pages: StorybookReaderPage[];
   episodeTitle: string;
@@ -606,6 +632,7 @@ export default function StorybookReader({
   narrationAudio?: StorybookNarrationAudioProp;
   listenModeActive?: boolean;
   immersiveOnly?: boolean;
+  pageAudioMap?: Record<string, string>;
 }) {
   const [index, setIndex]         = useState(0);
   const [focusMode, setFocusMode] = useState(false);
@@ -736,13 +763,17 @@ export default function StorybookReader({
     );
   }
 
+  // Page-level audio takes priority over full-book narration
+  const hasAnyPageAudio = !!pageAudioMap && Object.keys(pageAudioMap).length > 0;
+  const currentPageAudioUrl = pageAudioMap?.[page.id] ?? null;
+
   const isSequenceMode =
     narrationAudio?.mode === "sequence" &&
     Array.isArray(narrationAudio.sequence?.blocks) &&
     narrationAudio.sequence!.blocks.length > 0;
 
-  // For focus mode, only pass audio props for single-file mode (sequence has its own player)
-  const audioProps = narrationAudio && !isSequenceMode
+  // For focus mode, only pass audio props for single-file narration (no page audio, no sequence)
+  const audioProps = !hasAnyPageAudio && narrationAudio && !isSequenceMode
     ? { audioPlaying, audioDuration, audioCurrentTime, onAudioToggle: toggleAudio, onAudioSeek: seekAudio }
     : {};
 
@@ -752,8 +783,8 @@ export default function StorybookReader({
 
   return (
     <div>
-      {/* Hidden persistent audio — single-file mode only; stays mounted across page turns */}
-      {narrationAudio && !isSequenceMode && (
+      {/* Hidden persistent audio — single-file narration only; not used when page audio is active */}
+      {!hasAnyPageAudio && narrationAudio && !isSequenceMode && (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <audio
           ref={audioRef}
@@ -787,6 +818,8 @@ export default function StorybookReader({
           backHref={backHref}
           touchHandlers={{ onTouchStart, onTouchEnd }}
           spreadPages={spreadPages}
+          currentPageAudioUrl={hasAnyPageAudio ? currentPageAudioUrl : undefined}
+          hasAnyPageAudio={hasAnyPageAudio || undefined}
           {...audioProps}
         />
       )}
@@ -795,8 +828,8 @@ export default function StorybookReader({
       {!focusMode && !immersiveOnly && (
         <div className="flex flex-col gap-4">
 
-          {/* Prominent audio bar — listen mode (single-file only) */}
-          {narrationAudio && listenModeActive && !isSequenceMode && (
+          {/* Prominent audio bar — listen mode, single-file narration, no page audio */}
+          {!hasAnyPageAudio && narrationAudio && listenModeActive && !isSequenceMode && (
             <NarrationPlayerBar
               playing={audioPlaying}
               duration={audioDuration}
@@ -807,8 +840,8 @@ export default function StorybookReader({
             />
           )}
 
-          {/* Sequence player in listen mode */}
-          {narrationAudio && listenModeActive && isSequenceMode && (
+          {/* Sequence player in listen mode, no page audio */}
+          {!hasAnyPageAudio && narrationAudio && listenModeActive && isSequenceMode && (
             <div id="listen-story" className="rounded-2xl bg-ube-purple/12 border-2 border-ube-purple/25 shadow-sm px-4 py-3 flex flex-col gap-2">
               <span className="text-xs font-black text-ube-purple leading-none">🎧 Listen While You Read</span>
               <NarrationSequencePlayer blocks={narrationAudio.sequence!.blocks} />
@@ -1008,8 +1041,30 @@ export default function StorybookReader({
             stripRef={thumbsRef}
           />
 
-          {/* Audio bar (standard read mode) */}
-          {narrationAudio && !listenModeActive && !isSequenceMode && (
+          {/* Page-level audio player (priority over narration) */}
+          {hasAnyPageAudio && (
+            <div className="flex flex-col gap-1.5">
+              {currentPageAudioUrl ? (
+                // key={page.id} unmounts/remounts on page turn, stopping any playing audio
+                // eslint-disable-next-line jsx-a11y/media-has-caption
+                <audio
+                  key={page.id}
+                  controls
+                  preload="metadata"
+                  src={currentPageAudioUrl}
+                  className="w-full rounded-xl"
+                  aria-label="Page audio narration"
+                />
+              ) : (
+                <p className="text-xs text-tiki-brown/35 text-center italic py-1">
+                  No audio for this page yet
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Narration audio bar (standard read mode, no page audio) */}
+          {!hasAnyPageAudio && narrationAudio && !listenModeActive && !isSequenceMode && (
             <NarrationPlayerBar
               playing={audioPlaying}
               duration={audioDuration}
@@ -1019,8 +1074,8 @@ export default function StorybookReader({
             />
           )}
 
-          {/* Sequence player (read mode) */}
-          {narrationAudio && isSequenceMode && !listenModeActive && (
+          {/* Sequence player (read mode, no page audio) */}
+          {!hasAnyPageAudio && narrationAudio && isSequenceMode && !listenModeActive && (
             <div id="listen-story" className="rounded-2xl bg-ube-purple/6 border border-ube-purple/15 px-4 py-3 flex flex-col gap-2">
               <span className="text-xs font-black text-ube-purple leading-none">🎧 Listen While You Read</span>
               <NarrationSequencePlayer blocks={narrationAudio.sequence!.blocks} />

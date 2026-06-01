@@ -25,6 +25,7 @@ export default function StoryExperienceSwitcher({
   video,
   fallbackPosterUrl,
   immersiveOnly = false,
+  pageAudioMap,
 }: {
   pages: StorybookReaderPage[];
   episodeTitle: string;
@@ -33,23 +34,29 @@ export default function StoryExperienceSwitcher({
   video?: VideoProps;
   fallbackPosterUrl?: string;
   immersiveOnly?: boolean;
+  pageAudioMap?: Record<string, string>;
 }) {
   const [mode, setMode] = useState<Mode>("read");
+
+  // When page audio exists, there's no dedicated listen mode (audio is per-page in read mode)
+  const hasPageAudio = !!pageAudioMap && Object.keys(pageAudioMap).length > 0;
 
   // Hash-based deep linking: hero CTAs can link to #open-reader / #listen-story / #watch-story
   useEffect(() => {
     const check = () => {
       const h = window.location.hash;
       if (h === "#open-reader") setMode("read");
-      else if (h === "#listen-story" && narrationAudio) setMode("listen");
+      else if (h === "#listen-story" && narrationAudio && !hasPageAudio) setMode("listen");
       else if (h === "#watch-story" && video) setMode("watch");
     };
     check();
     window.addEventListener("hashchange", check);
     return () => window.removeEventListener("hashchange", check);
-  }, [narrationAudio, video]);
+  }, [narrationAudio, video, hasPageAudio]);
 
-  const hasTabs = narrationAudio || video;
+  // Listen tab only makes sense for full-book narration without page-level audio
+  const showListenTab = narrationAudio && !hasPageAudio;
+  const hasTabs = showListenTab || video;
 
   return (
     <div className="flex flex-col gap-5">
@@ -75,7 +82,7 @@ export default function StoryExperienceSwitcher({
             <span className="hidden sm:inline">Read Storybook</span>
             <span className="sm:hidden">Read</span>
           </button>
-          {narrationAudio && (
+          {showListenTab && (
             <button
               type="button"
               onClick={() => setMode("listen")}
@@ -118,11 +125,12 @@ export default function StoryExperienceSwitcher({
           backHref={backHref}
           narrationAudio={narrationAudio}
           immersiveOnly={immersiveOnly}
+          pageAudioMap={pageAudioMap}
         />
       )}
 
       {/* Listen & Read mode — prominent audio bar is handled inside StorybookReader */}
-      {mode === "listen" && narrationAudio && (
+      {mode === "listen" && narrationAudio && !hasPageAudio && (
         <StorybookReader
           pages={pages}
           episodeTitle={episodeTitle}
@@ -130,6 +138,7 @@ export default function StoryExperienceSwitcher({
           narrationAudio={narrationAudio}
           listenModeActive={true}
           immersiveOnly={immersiveOnly}
+          pageAudioMap={pageAudioMap}
         />
       )}
 

@@ -738,6 +738,24 @@ export default async function StoryDetailPage({
     };
   })();
 
+  // Page-level audio — map of pageId → audioUrl for approved+public items
+  const publicPageAudioMap: Record<string, string> = (() => {
+    const spa = raw.storybookPageAudio;
+    if (typeof spa !== "object" || spa === null || Array.isArray(spa)) return {};
+    const config = spa as Record<string, unknown>;
+    if (!Array.isArray(config.pages)) return {};
+    const map: Record<string, string> = {};
+    for (const item of config.pages as unknown[]) {
+      if (typeof item !== "object" || item === null) continue;
+      const p = item as Record<string, unknown>;
+      if (typeof p.pageId !== "string" || typeof p.audioUrl !== "string") continue;
+      if (p.status !== "approved" || p.visibility !== "public") continue;
+      map[p.pageId] = p.audioUrl;
+    }
+    return map;
+  })();
+  const hasAnyPageAudio = Object.keys(publicPageAudioMap).length > 0;
+
   // Public storybook video/cartoon — shown when visibility is "public" and not archived
   const publicVideo: { videoUrl: string; title?: string; description?: string; posterImageUrl?: string; mimeType?: string } | null = (() => {
     const sv = raw.storybookVideo;
@@ -824,7 +842,7 @@ export default async function StoryDetailPage({
                       📖 Storybook
                     </span>
                   )}
-                  {narrationAudio && (
+                  {(narrationAudio || hasAnyPageAudio) && (
                     <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/10 border border-ube-purple/15 text-ube-purple/80">
                       🎧 Audio Available
                     </span>
@@ -843,7 +861,7 @@ export default async function StoryDetailPage({
                   >
                     <span aria-hidden>📖</span> Read Storybook
                   </a>
-                  {narrationAudio && (
+                  {narrationAudio && !hasAnyPageAudio && (
                     <a
                       href="#listen-story"
                       className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/30 text-ube-purple hover:bg-ube-purple/8 transition-colors"
@@ -1064,6 +1082,7 @@ export default async function StoryDetailPage({
               narrationAudio={narrationAudio ?? undefined}
               fallbackPosterUrl={frontCoverUrl}
               immersiveOnly={true}
+              pageAudioMap={hasAnyPageAudio ? publicPageAudioMap : undefined}
             />
           </div>
         )}
@@ -1078,7 +1097,7 @@ export default async function StoryDetailPage({
               <p className="text-base font-black text-tiki-brown">Ready to read?</p>
               <p className="text-sm text-tiki-brown/60 leading-relaxed">
                 Open the storybook and read one page at a time.
-                {narrationAudio ? " Listen along with narration too." : ""}
+                {(narrationAudio || hasAnyPageAudio) ? " Audio is available for this storybook." : ""}
               </p>
             </div>
             <div className="flex flex-wrap gap-3 justify-center sm:justify-end flex-shrink-0">
@@ -1088,7 +1107,7 @@ export default async function StoryDetailPage({
               >
                 <span aria-hidden>📖</span> Read Storybook
               </a>
-              {narrationAudio && (
+              {narrationAudio && !hasAnyPageAudio && (
                 <a
                   href="#listen-story"
                   className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/25 text-ube-purple hover:bg-ube-purple/8 transition-colors"
