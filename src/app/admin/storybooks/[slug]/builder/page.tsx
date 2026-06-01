@@ -373,6 +373,7 @@ export default async function StorybookBuilderPage({
             slug={normalised.slug}
             storybookPages={storybookPages}
             initialStorybookAudioScript={initialAudioScript}
+            initialNarration={initialNarration}
           />
         </div>
 

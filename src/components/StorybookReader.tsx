@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import type { StorybookNarrationSequenceBlock } from "@/lib/storybookAudioTypes";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,10 @@ export type StorybookNarrationAudioProp = {
   audioUrl: string;
   title?: string;
   mimeType?: string;
+  mode?: "single-file" | "sequence";
+  sequence?: {
+    blocks: StorybookNarrationSequenceBlock[];
+  };
 };
 
 // ─── Layout helpers ───────────────────────────────────────────────────────────
@@ -151,6 +156,80 @@ function formatTime(secs: number): string {
   const m = Math.floor(secs / 60);
   const s = Math.floor(secs % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+// ─── NarrationSequencePlayer ──────────────────────────────────────────────────
+
+function NarrationSequencePlayer({
+  blocks,
+  onEnded,
+}: {
+  blocks: StorybookNarrationSequenceBlock[];
+  onEnded?: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // When index changes, update the audio src and play
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const block = blocks[currentIndex];
+    if (!block) return;
+
+    const handleEnded = () => {
+      const nextIdx = currentIndex + 1;
+      if (nextIdx < blocks.length) {
+        setCurrentIndex(nextIdx);
+      } else {
+        onEnded?.();
+      }
+    };
+
+    audio.addEventListener("ended", handleEnded);
+    // Only update src if it differs from current
+    if (audio.src !== block.audioUrl) {
+      audio.src = block.audioUrl;
+    }
+
+    return () => {
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [currentIndex, blocks, onEnded]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  if (blocks.length === 0) return null;
+
+  const currentBlock = blocks[currentIndex];
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+      <audio
+        ref={audioRef}
+        controls
+        preload="metadata"
+        src={blocks[0]?.audioUrl}
+        className="w-full rounded-xl"
+        aria-label="Storybook audio narration"
+      />
+      {currentBlock && (
+        <p className="text-[10px] text-tiki-brown/50 text-center leading-snug">
+          Now playing: {currentBlock.speakerName}
+          {blocks.length > 1 && ` (${currentIndex + 1} of ${blocks.length})`}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ─── Narration player bar ─────────────────────────────────────────────────────
@@ -657,7 +736,13 @@ export default function StorybookReader({
     );
   }
 
-  const audioProps = narrationAudio
+  const isSequenceMode =
+    narrationAudio?.mode === "sequence" &&
+    Array.isArray(narrationAudio.sequence?.blocks) &&
+    narrationAudio.sequence!.blocks.length > 0;
+
+  // For focus mode, only pass audio props for single-file mode (sequence has its own player)
+  const audioProps = narrationAudio && !isSequenceMode
     ? { audioPlaying, audioDuration, audioCurrentTime, onAudioToggle: toggleAudio, onAudioSeek: seekAudio }
     : {};
 
@@ -667,8 +752,8 @@ export default function StorybookReader({
 
   return (
     <div>
-      {/* Hidden persistent audio — stays mounted across page turns */}
-      {narrationAudio && (
+      {/* Hidden persistent audio — single-file mode only; stays mounted across page turns */}
+      {narrationAudio && !isSequenceMode && (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <audio
           ref={audioRef}
@@ -710,8 +795,8 @@ export default function StorybookReader({
       {!focusMode && !immersiveOnly && (
         <div className="flex flex-col gap-4">
 
-          {/* Prominent audio bar — listen mode */}
-          {narrationAudio && listenModeActive && (
+          {/* Prominent audio bar — listen mode (single-file only) */}
+          {narrationAudio && listenModeActive && !isSequenceMode && (
             <NarrationPlayerBar
               playing={audioPlaying}
               duration={audioDuration}
@@ -720,6 +805,14 @@ export default function StorybookReader({
               onSeek={seekAudio}
               prominent
             />
+          )}
+
+          {/* Sequence player in listen mode */}
+          {narrationAudio && listenModeActive && isSequenceMode && (
+            <div id="listen-story" className="rounded-2xl bg-ube-purple/12 border-2 border-ube-purple/25 shadow-sm px-4 py-3 flex flex-col gap-2">
+              <span className="text-xs font-black text-ube-purple leading-none">🎧 Listen While You Read</span>
+              <NarrationSequencePlayer blocks={narrationAudio.sequence!.blocks} />
+            </div>
           )}
 
           {/* Front-matter chip */}
@@ -916,7 +1009,7 @@ export default function StorybookReader({
           />
 
           {/* Audio bar (standard read mode) */}
-          {narrationAudio && !listenModeActive && (
+          {narrationAudio && !listenModeActive && !isSequenceMode && (
             <NarrationPlayerBar
               playing={audioPlaying}
               duration={audioDuration}
@@ -924,6 +1017,14 @@ export default function StorybookReader({
               onToggle={toggleAudio}
               onSeek={seekAudio}
             />
+          )}
+
+          {/* Sequence player (read mode) */}
+          {narrationAudio && isSequenceMode && !listenModeActive && (
+            <div id="listen-story" className="rounded-2xl bg-ube-purple/6 border border-ube-purple/15 px-4 py-3 flex flex-col gap-2">
+              <span className="text-xs font-black text-ube-purple leading-none">🎧 Listen While You Read</span>
+              <NarrationSequencePlayer blocks={narrationAudio.sequence!.blocks} />
+            </div>
           )}
 
           {/* End-of-book actions */}

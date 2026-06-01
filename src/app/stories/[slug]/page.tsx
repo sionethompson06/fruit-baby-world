@@ -679,13 +679,62 @@ export default async function StoryDetailPage({
     const sn = raw.storybookNarration;
     if (typeof sn !== "object" || sn === null || Array.isArray(sn)) return null;
     const n = sn as Record<string, unknown>;
-    if (typeof n.audioUrl !== "string" || !n.audioUrl.startsWith("https://")) return null;
     if (n.visibility !== "public") return null;
     if (n.status === "archived") return null;
+
+    const mode = n.mode === "sequence" ? ("sequence" as const) : ("single-file" as const);
+
+    // For sequence mode: must have blocks
+    if (mode === "sequence") {
+      const rawSeq = n.sequence;
+      if (typeof rawSeq !== "object" || rawSeq === null || Array.isArray(rawSeq)) return null;
+      const seqObj = rawSeq as Record<string, unknown>;
+      if (!Array.isArray(seqObj.blocks) || seqObj.blocks.length === 0) return null;
+
+      // Build typed blocks — only include entries with required string fields
+      const blocks = (seqObj.blocks as unknown[])
+        .filter(
+          (b): b is Record<string, unknown> =>
+            typeof b === "object" && b !== null && !Array.isArray(b)
+        )
+        .filter(
+          (b) =>
+            typeof b.pageId === "string" &&
+            typeof b.blockId === "string" &&
+            typeof b.audioUrl === "string"
+        )
+        .map((b, i) => ({
+          pageId: b.pageId as string,
+          blockId: b.blockId as string,
+          speakerSlug: typeof b.speakerSlug === "string" ? b.speakerSlug : "narrator",
+          speakerName: typeof b.speakerName === "string" ? b.speakerName : "Narrator",
+          audioUrl: b.audioUrl as string,
+          pathname: typeof b.pathname === "string" ? b.pathname : undefined,
+          sortOrder: typeof b.sortOrder === "number" ? b.sortOrder : i,
+        }));
+
+      if (blocks.length === 0) return null;
+
+      // Use first block URL as the audioUrl fallback
+      const firstBlockUrl = blocks[0].audioUrl;
+      if (!firstBlockUrl.startsWith("https://")) return null;
+
+      return {
+        audioUrl: firstBlockUrl,
+        title: typeof n.title === "string" ? n.title : undefined,
+        mimeType: typeof n.mimeType === "string" ? n.mimeType : "audio/mpeg",
+        mode: "sequence" as const,
+        sequence: { blocks },
+      };
+    }
+
+    // single-file mode: must have audioUrl
+    if (typeof n.audioUrl !== "string" || !n.audioUrl.startsWith("https://")) return null;
     return {
       audioUrl: n.audioUrl,
       title: typeof n.title === "string" ? n.title : undefined,
       mimeType: typeof n.mimeType === "string" ? n.mimeType : undefined,
+      mode: "single-file" as const,
     };
   })();
 

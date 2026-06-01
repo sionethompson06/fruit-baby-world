@@ -114,13 +114,25 @@ function buildEpisodeMediaMap(): Record<string, EpisodeMediaInfo> {
         (p) => p.status === "approved" && p.visibility === "public"
       );
       const sn = raw.storybookNarration;
-      const hasStorybookAudio =
-        typeof sn === "object" &&
-        sn !== null &&
-        !Array.isArray(sn) &&
-        typeof (sn as Record<string, unknown>).audioUrl === "string" &&
-        (sn as Record<string, unknown>).visibility === "public" &&
-        (sn as Record<string, unknown>).status !== "archived";
+      const hasStorybookAudio = (() => {
+        if (typeof sn !== "object" || sn === null || Array.isArray(sn)) return false;
+        const n = sn as Record<string, unknown>;
+        if (n.visibility !== "public") return false;
+        if (n.status === "archived") return false;
+        // Sequence mode: has at least one block
+        if (n.mode === "sequence") {
+          const seq = n.sequence;
+          return (
+            typeof seq === "object" &&
+            seq !== null &&
+            !Array.isArray(seq) &&
+            Array.isArray((seq as Record<string, unknown>).blocks) &&
+            ((seq as Record<string, unknown>).blocks as unknown[]).length > 0
+          );
+        }
+        // Single-file mode (or no mode): has audioUrl
+        return typeof n.audioUrl === "string";
+      })();
       const sv = raw.storybookVideo;
       const hasStorybookVideo =
         typeof sv === "object" &&

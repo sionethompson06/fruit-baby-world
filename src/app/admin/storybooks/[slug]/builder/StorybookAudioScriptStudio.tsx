@@ -20,6 +20,8 @@ import {
   getFullBookAudioStats,
 } from "@/lib/storybookAudioScript";
 import type { StorybookPage } from "@/lib/storybookPageTypes";
+import type { StorybookNarrationAudio } from "@/lib/storybookAudioTypes";
+import { isStorybookNarrationPublic } from "@/lib/storybookAudio";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -828,14 +830,22 @@ function FullBookSequencePlayer({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+type PublishState =
+  | { phase: "idle" }
+  | { phase: "publishing" }
+  | { phase: "done"; message: string }
+  | { phase: "error"; message: string };
+
 export default function StorybookAudioScriptStudio({
   slug,
   storybookPages,
   initialStorybookAudioScript,
+  initialNarration,
 }: {
   slug: string;
   storybookPages: StorybookPage[];
   initialStorybookAudioScript: StorybookAudioScript;
+  initialNarration?: StorybookNarrationAudio | null;
 }) {
   const [script, setScript] = useState<StorybookAudioScript>(initialStorybookAudioScript);
   const [selectedPageId, setSelectedPageId] = useState<string | null>(
@@ -847,6 +857,8 @@ export default function StorybookAudioScriptStudio({
   const [showPagePlayer, setShowPagePlayer] = useState(false);
   const [fullBookGenState, setFullBookGenState] = useState<FullBookGenState>({ phase: "idle" });
   const [showFullBookPlayer, setShowFullBookPlayer] = useState(false);
+  const [currentNarration, setCurrentNarration] = useState<StorybookNarrationAudio | null>(initialNarration ?? null);
+  const [publishState, setPublishState] = useState<PublishState>({ phase: "idle" });
 
   const selectedPage = script.pages.find((p) => p.pageId === selectedPageId) ?? null;
   const selectedStorybookPage = storybookPages.find((p) => p.id === selectedPageId) ?? null;
@@ -1709,6 +1721,122 @@ export default function StorybookAudioScriptStudio({
                   onClose={() => setShowFullBookPlayer(false)}
                 />
               )}
+            </div>
+          </details>
+        );
+      })()}
+
+      {/* ── Publish Listen & Read Audio panel ── */}
+      {(() => {
+        const fullBookStats = getFullBookAudioStats(script, storybookPages);
+        const { totalBlocks, missingAudioBlocks } = fullBookStats;
+
+        if (totalBlocks === 0) return null;
+
+        const isPublishing = publishState.phase === "publishing";
+        const canPublish = missingAudioBlocks === 0 && totalBlocks > 0 && !isPublishing;
+
+        const narrationMode = currentNarration?.mode ?? "single-file";
+        let currentSourceLabel: string;
+        if (isStorybookNarrationPublic(currentNarration)) {
+          if (narrationMode === "sequence") {
+            currentSourceLabel = "Generated audio sequence is live";
+          } else {
+            currentSourceLabel = "Manual uploaded audio is live";
+          }
+        } else {
+          currentSourceLabel = "No public audio yet";
+        }
+
+        const handlePublish = async () => {
+          if (!canPublish) return;
+          const confirmed = window.confirm(
+            "Publish the generated audio reader sequence as the public Listen & Read audio? This will replace any existing public audio source."
+          );
+          if (!confirmed) return;
+
+          setPublishState({ phase: "publishing" });
+          try {
+            const res = await fetch("/api/github/publish-storybook-audio-sequence", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug }),
+            });
+            const data = (await res.json()) as {
+              ok: boolean;
+              storybookNarration?: StorybookNarrationAudio;
+              sequenceBlockCount?: number;
+              message?: string;
+            };
+            if (!data.ok) {
+              setPublishState({ phase: "error", message: data.message ?? "Failed to publish." });
+              return;
+            }
+            if (data.storybookNarration) {
+              setCurrentNarration(data.storybookNarration);
+            }
+            setPublishState({ phase: "done", message: "Generated audio reader is now public for Listen & Read." });
+          } catch {
+            setPublishState({ phase: "error", message: "Network error. Please try again." });
+          }
+        };
+
+        return (
+          <details className="border-t border-tiki-brown/10">
+            <summary className="flex items-center gap-2 px-6 py-3 cursor-pointer select-none hover:bg-tiki-brown/3 transition-colors list-none">
+              <span className="text-sm font-black text-tiki-brown">Publish Listen &amp; Read Audio</span>
+              <span className="text-[10px] text-tiki-brown/40 ml-auto">click to expand</span>
+            </summary>
+
+            <div className="px-6 pb-5 flex flex-col gap-3">
+              {/* Stats */}
+              <div className="flex flex-wrap gap-4 text-[11px] text-tiki-brown/60">
+                <span>
+                  Total sequence blocks:{" "}
+                  <strong className="text-tiki-brown/80">{totalBlocks}</strong>
+                </span>
+                <span>
+                  Missing audio:{" "}
+                  <strong className={missingAudioBlocks > 0 ? "text-warm-coral" : "text-tropical-green"}>
+                    {missingAudioBlocks}
+                  </strong>
+                </span>
+                <span>
+                  Current public audio source:{" "}
+                  <strong className={isStorybookNarrationPublic(currentNarration) ? "text-tropical-green" : "text-tiki-brown/55"}>
+                    {currentSourceLabel}
+                  </strong>
+                </span>
+              </div>
+
+              {/* Publish button */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handlePublish}
+                  disabled={!canPublish}
+                  className="text-xs font-bold px-4 py-2 rounded-full bg-ube-purple/15 text-ube-purple hover:bg-ube-purple/25 border border-ube-purple/25 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isPublishing ? "Publishing…" : "Publish Generated Audio Reader"}
+                </button>
+              </div>
+
+              {/* Status feedback */}
+              {publishState.phase === "done" && (
+                <span className="text-[10px] text-tropical-green font-semibold">
+                  ✓ {publishState.message}
+                </span>
+              )}
+              {publishState.phase === "error" && (
+                <span className="text-[10px] text-warm-coral font-semibold">
+                  ✕ {(publishState as { phase: "error"; message: string }).message}
+                </span>
+              )}
+
+              {/* Info text */}
+              <p className="text-[10px] text-tiki-brown/45 leading-relaxed">
+                Manual uploaded audio and generated audio reader are two ways to power Listen &amp; Read. Publishing one will set it as the public audio source.
+              </p>
             </div>
           </details>
         );
