@@ -172,6 +172,24 @@
       "spreadNumber": 7,
       "displayMode": "spread",
       "originalFilename": "11_spread_9_helping_tiki_make_it_right.png"
+    },
+    {
+      "id": "storybook-page-1780290619017",
+      "pageNumber": 10,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290617961.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290617961.png",
+      "mimeType": "image/png",
+      "altText": "Spread 8",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:10:19.017Z",
+      "updatedAt": "2026-06-01T05:10:19.017Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 8,
+      "displayMode": "spread",
+      "originalFilename": "12_spread_10_diamond_light_restores_the_harvest.png"
     }
   ],
   "review": {
@@ -183,5 +201,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:10:15.818Z"
+  "updatedAt": "2026-06-01T05:10:19.017Z"
 }
