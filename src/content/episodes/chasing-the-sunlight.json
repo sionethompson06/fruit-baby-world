@@ -448,7 +448,7 @@
     "storebookPublishedAt": "2026-05-27T03:44:46.672Z"
   },
   "createdAt": "2026-05-26T09:45:26.706Z",
-  "updatedAt": "2026-06-01T02:34:01.733Z",
+  "updatedAt": "2026-06-01T02:34:20.285Z",
   "storybookNarration": {
     "id": "storybook-audio-1780278632507",
     "audioUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/chasing-the-sunlight/storybook-audio/narration-1780278631227.mp3",
@@ -456,10 +456,10 @@
     "mimeType": "audio/mpeg",
     "sizeBytes": 570586,
     "sourceType": "admin-uploaded",
-    "status": "approved",
+    "status": "archived",
     "visibility": "hidden",
     "createdAt": "2026-06-01T01:50:32.135Z",
-    "updatedAt": "2026-06-01T01:50:32.507Z"
+    "updatedAt": "2026-06-01T02:34:20.285Z"
   },
   "storybookPageAudio": {
     "version": 1,
