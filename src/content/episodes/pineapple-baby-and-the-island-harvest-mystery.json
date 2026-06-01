@@ -136,6 +136,24 @@
       "spreadNumber": 5,
       "displayMode": "spread",
       "originalFilename": "08_spread_6_tangled_kiwi_vineyard_true_sight.png"
+    },
+    {
+      "id": "storybook-page-1780290612364",
+      "pageNumber": 8,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290611287.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290611287.png",
+      "mimeType": "image/png",
+      "altText": "Spread 6",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:10:12.364Z",
+      "updatedAt": "2026-06-01T05:10:12.364Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 6,
+      "displayMode": "spread",
+      "originalFilename": "10_spread_8_why_tiki_did_it.png"
     }
   ],
   "review": {
@@ -147,5 +165,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:10:06.430Z"
+  "updatedAt": "2026-06-01T05:10:12.364Z"
 }
