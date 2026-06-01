@@ -9,7 +9,7 @@
     "Kiwi Baby",
     "Tiki Trouble"
   ],
-  "status": "draft",
+  "status": "coming-soon",
   "productionStatus": "storybook-draft",
   "sourceType": "admin-created-storybook",
   "storybookPages": [
@@ -249,9 +249,10 @@
     "approvedForSave": false
   },
   "publishing": {
-    "publicStatus": "not-published",
-    "readyForPublicSite": false
+    "publicStatus": "coming-soon",
+    "readyForPublicSite": false,
+    "comingSoonAt": "2026-06-01T05:55:59.062Z"
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:15:37.913Z"
+  "updatedAt": "2026-06-01T05:55:59.062Z"
 }
