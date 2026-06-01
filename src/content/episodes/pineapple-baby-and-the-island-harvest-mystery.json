@@ -190,6 +190,24 @@
       "spreadNumber": 8,
       "displayMode": "spread",
       "originalFilename": "12_spread_10_diamond_light_restores_the_harvest.png"
+    },
+    {
+      "id": "storybook-page-1780290622211",
+      "pageNumber": 11,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290621048.png",
+      "pathname": "episodes/pineapple-baby-and-the-island-harvest-mystery/storybook-pages/page-1780290621048.png",
+      "mimeType": "image/png",
+      "altText": "Spread 9",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-01T05:10:22.211Z",
+      "updatedAt": "2026-06-01T05:10:22.211Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 9,
+      "displayMode": "spread",
+      "originalFilename": "13_spread_11_a_better_way_to_belong.png"
     }
   ],
   "review": {
@@ -201,5 +219,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-01T05:02:30.406Z",
-  "updatedAt": "2026-06-01T05:10:19.017Z"
+  "updatedAt": "2026-06-01T05:10:22.211Z"
 }
