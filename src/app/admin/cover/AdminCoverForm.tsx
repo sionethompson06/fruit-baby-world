@@ -602,7 +602,7 @@ export default function AdminCoverForm({
                 Autoplay (muted)
               </p>
               <p className="text-xs text-tiki-brown/45">
-                Videos start playing silently. Visitors can unmute.
+                Videos start playing silently. A large &ldquo;Turn Sound On&rdquo; button appears so visitors can opt in to audio — browsers require muted autoplay.
               </p>
             </div>
             <button

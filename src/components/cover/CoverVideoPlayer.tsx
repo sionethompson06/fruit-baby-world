@@ -16,15 +16,32 @@ export default function CoverVideoPlayer({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [soundFailed, setSoundFailed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Ref mirrors soundEnabled so the video-change effect can read the latest
+  // value without adding soundEnabled to its dependency array (which would
+  // retrigger the effect and restart the video on every sound-state change).
+  const soundEnabledRef = useRef(false);
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
 
   const safeIndex = Math.min(currentIndex, videos.length - 1);
   const current = videos[safeIndex];
 
+  // Runs when the current video changes: apply current mute state and autoplay.
   useEffect(() => {
     setHasError(false);
-    if (!autoplayMuted || !videoRef.current) return;
-    videoRef.current.play().catch(() => {});
+    setSoundFailed(false);
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !soundEnabledRef.current;
+    if (autoplayMuted || soundEnabledRef.current) {
+      video.play().catch(() => {});
+    }
   }, [current?.id, autoplayMuted]);
 
   const handleEnded = useCallback(() => {
@@ -37,6 +54,7 @@ export default function CoverVideoPlayer({
 
   function handleNext() {
     setHasError(false);
+    setSoundFailed(false);
     setCurrentIndex((i) => {
       if (i < videos.length - 1) return i + 1;
       if (videoLoop) return 0;
@@ -46,6 +64,7 @@ export default function CoverVideoPlayer({
 
   function handlePrev() {
     setHasError(false);
+    setSoundFailed(false);
     setCurrentIndex((i) => {
       if (i > 0) return i - 1;
       if (videoLoop) return videos.length - 1;
@@ -55,7 +74,24 @@ export default function CoverVideoPlayer({
 
   function handleDotClick(i: number) {
     setHasError(false);
+    setSoundFailed(false);
     setCurrentIndex(i);
+  }
+
+  function handleEnableSound() {
+    const video = videoRef.current;
+    if (!video) return;
+    setSoundFailed(false);
+    // Restart from beginning so visitors hear the teaser from the start
+    if (video.currentTime > 2) {
+      video.currentTime = 0;
+    }
+    video.muted = false;
+    soundEnabledRef.current = true;
+    setSoundEnabled(true);
+    video.play().catch(() => {
+      setSoundFailed(true);
+    });
   }
 
   const atStart = safeIndex === 0;
@@ -63,6 +99,7 @@ export default function CoverVideoPlayer({
   const canPrev = !atStart || videoLoop;
   const canNext = !atEnd || videoLoop;
   const isMulti = videos.length > 1;
+  const soundButtonText = isPlaying ? "Turn Sound On" : "Play With Sound";
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -97,20 +134,59 @@ export default function CoverVideoPlayer({
             </button>
           </div>
         ) : (
-          // key forces re-mount when video changes, triggering fresh load
-          <video
-            key={current.id}
-            ref={videoRef}
-            src={current.videoUrl}
-            className="w-full h-full object-contain"
-            controls
-            playsInline
-            autoPlay={autoplayMuted}
-            muted={autoplayMuted}
-            onEnded={handleEnded}
-            onError={() => setHasError(true)}
-            aria-label={current.title || `Sneak peek video ${safeIndex + 1}`}
-          />
+          <>
+            {/* key forces re-mount when video changes, triggering fresh load */}
+            <video
+              key={current.id}
+              ref={videoRef}
+              src={current.videoUrl}
+              className="w-full h-full object-contain"
+              controls
+              playsInline
+              autoPlay={autoplayMuted}
+              muted
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={handleEnded}
+              onError={() => setHasError(true)}
+              aria-label={current.title || `Sneak peek video ${safeIndex + 1}`}
+            />
+
+            {/* Sound prompt overlay — pointer-events-none on the positioner so
+                native video controls remain fully reachable; only the button
+                itself captures clicks. */}
+            {!soundEnabled && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pb-12 pointer-events-none">
+                <div className="pointer-events-auto flex flex-col items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleEnableSound}
+                    aria-label="Turn video sound on"
+                    className="flex items-center gap-3 px-7 py-4 rounded-full font-black text-base sm:text-xl text-tiki-brown transition-transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-pineapple-yellow/60"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #ffd84d 0%, #ffb8c8 100%)",
+                      boxShadow:
+                        "0 6px 28px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.35) inset",
+                    }}
+                  >
+                    <span aria-hidden="true" className="text-2xl leading-none">
+                      🔊
+                    </span>
+                    {soundButtonText}
+                  </button>
+                  <p className="text-white/75 text-xs sm:text-sm font-semibold drop-shadow">
+                    Tap to hear the sneak peek
+                  </p>
+                  {soundFailed && (
+                    <p className="text-pineapple-yellow text-xs font-semibold drop-shadow mt-0.5">
+                      Tap play on the video controls to start sound.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
