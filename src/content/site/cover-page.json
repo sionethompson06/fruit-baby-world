@@ -12,6 +12,72 @@
   "videoPlaceholderText": "Sneak peeks are growing behind the leaves.",
   "videoLoop": true,
   "autoplayMuted": false,
-  "videos": [],
-  "updatedAt": "2026-06-02T05:35:56.645Z"
+  "videos": [
+    {
+      "id": "1780387684763-zgp9n3",
+      "title": "Generated Video June 01, 2026 - 11_30PM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780387681963-generated-video-june-01-2026-11-30pm.mp4",
+      "pathname": "cover-page/videos/1780387681963-generated-video-june-01-2026-11-30pm.mp4",
+      "originalFilename": "Generated Video June 01, 2026 - 11_30PM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 4971089,
+      "isActive": true,
+      "sortOrder": 0,
+      "uploadedAt": "2026-06-02T08:08:04.763Z",
+      "updatedAt": "2026-06-02T08:08:04.763Z"
+    },
+    {
+      "id": "1780387712097-4xw5o0",
+      "title": "Generated Video June 01, 2026 - 11_31PM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780387709439-generated-video-june-01-2026-11-31pm.mp4",
+      "pathname": "cover-page/videos/1780387709439-generated-video-june-01-2026-11-31pm.mp4",
+      "originalFilename": "Generated Video June 01, 2026 - 11_31PM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 4955878,
+      "isActive": true,
+      "sortOrder": 1,
+      "uploadedAt": "2026-06-02T08:08:32.097Z",
+      "updatedAt": "2026-06-02T08:08:32.097Z"
+    },
+    {
+      "id": "1780387724796-bj26pp",
+      "title": "Generated Video June 01, 2026 - 11_51PM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780387722063-generated-video-june-01-2026-11-51pm.mp4",
+      "pathname": "cover-page/videos/1780387722063-generated-video-june-01-2026-11-51pm.mp4",
+      "originalFilename": "Generated Video June 01, 2026 - 11_51PM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 5875473,
+      "isActive": true,
+      "sortOrder": 2,
+      "uploadedAt": "2026-06-02T08:08:44.796Z",
+      "updatedAt": "2026-06-02T08:08:44.796Z"
+    },
+    {
+      "id": "1780388072151-updrs5",
+      "title": "Generated Video June 02, 2026 - 1_09AM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780388069014-generated-video-june-02-2026-1-09am.mp4",
+      "pathname": "cover-page/videos/1780388069014-generated-video-june-02-2026-1-09am.mp4",
+      "originalFilename": "Generated Video June 02, 2026 - 1_09AM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 6352289,
+      "isActive": true,
+      "sortOrder": 3,
+      "uploadedAt": "2026-06-02T08:14:32.151Z",
+      "updatedAt": "2026-06-02T08:14:32.151Z"
+    },
+    {
+      "id": "1780388457074-9oirx3",
+      "title": "Generated Video June 02, 2026 - 1_20AM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780388453999-generated-video-june-02-2026-1-20am.mp4",
+      "pathname": "cover-page/videos/1780388453999-generated-video-june-02-2026-1-20am.mp4",
+      "originalFilename": "Generated Video June 02, 2026 - 1_20AM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 7800892,
+      "isActive": true,
+      "sortOrder": 4,
+      "uploadedAt": "2026-06-02T08:20:57.074Z",
+      "updatedAt": "2026-06-02T08:20:57.074Z"
+    }
+  ],
+  "updatedAt": "2026-06-02T08:21:02.791Z"
 }
