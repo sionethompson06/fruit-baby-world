@@ -14,6 +14,7 @@ import {
 } from "@vercel/blob";
 import type { CoverPageVideo } from "@/lib/coverPageTypes";
 
+export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const ALLOWED_MIME_TYPES = [

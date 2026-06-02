@@ -8,7 +8,22 @@ export async function proxy(request: NextRequest) {
   if (pathname === "/admin/login") return NextResponse.next();
 
   const token = request.cookies.get(ADMIN_COOKIE)?.value;
-  const valid = await isValidAdminToken(token);
+
+  let valid = false;
+  try {
+    valid = await isValidAdminToken(token);
+  } catch {
+    // Crypto error — treat as unauthenticated rather than crashing with HTML 500.
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { ok: false, status: "auth_error", message: "Authentication check failed. Please try again." },
+        { status: 500 }
+      );
+    }
+    const loginUrl = new URL("/admin/login", request.url);
+    loginUrl.searchParams.set("next", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (!valid) {
     // Write-capable API routes return 401 JSON.
