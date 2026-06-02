@@ -19,6 +19,8 @@ import {
 } from "@/lib/publicVideoClips";
 import { getPublicReadyFinalVideo } from "@/lib/publicFinalVideo";
 import PublicFinalVideoPlayer from "./components/PublicFinalVideoPlayer";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
+import CoverPage from "@/components/cover/CoverPage";
 
 // ─── Public eligibility ───────────────────────────────────────────────────────
 
@@ -529,6 +531,9 @@ export default async function StoryDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const coverSettings = getCoverPageSettings();
+  if (isCoverPageEnabled(coverSettings)) return <CoverPage settings={coverSettings} />;
+
   const { slug } = await params;
   const result = loadEpisodeBySlug(slug);
 

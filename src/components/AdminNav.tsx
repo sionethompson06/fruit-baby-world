@@ -10,6 +10,7 @@ const primaryLinks = [
   { href: "/admin/characters", label: "Characters", emoji: "🍍" },
   { href: "/admin/media", label: "Media", emoji: "🎞️" },
   { href: "/admin/publishing", label: "Publish", emoji: "📤" },
+  { href: "/admin/cover", label: "Cover", emoji: "🎭" },
 ];
 
 const legacyLinks = [

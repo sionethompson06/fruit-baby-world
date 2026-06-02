@@ -9,6 +9,8 @@ import {
 import { getNormalizedCharacterBySlug } from "@/lib/characterRegistry";
 import CharacterImage from "@/components/CharacterImage";
 import ProfileSheetImage from "@/components/ProfileSheetImage";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
+import CoverPage from "@/components/cover/CoverPage";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +95,9 @@ export default async function CharacterPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const coverSettings = getCoverPageSettings();
+  if (isCoverPageEnabled(coverSettings)) return <CoverPage settings={coverSettings} />;
+
   const { slug } = await params;
   const character = getPublicCharacterBySlugFromDisk(slug);
   if (!character) notFound();

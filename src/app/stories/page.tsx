@@ -9,6 +9,8 @@ import { getPublicCharacterProfiles } from "@/lib/characterRegistry";
 import StoriesPageClient, {
   type EpisodeMediaInfo,
 } from "@/components/stories/StoriesPageClient";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
+import CoverPage from "@/components/cover/CoverPage";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -164,6 +166,9 @@ function buildEpisodeMediaMap(): Record<string, EpisodeMediaInfo> {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StoriesPage() {
+  const coverSettings = getCoverPageSettings();
+  if (isCoverPageEnabled(coverSettings)) return <CoverPage settings={coverSettings} />;
+
   const staticEpisodes = getPublicEpisodes();
   const savedEpisodes = loadPublicSavedEpisodes();
   const staticSlugs = new Set(staticEpisodes.map((e) => e.slug));

@@ -13,6 +13,8 @@ import {
   getEnabledSupportingCast,
 } from "@/lib/homepageShowcase";
 import PineappleBabyHeroModelLoader from "@/components/PineappleBabyHeroModelLoader";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
+import CoverPage from "@/components/cover/CoverPage";
 
 export const metadata: Metadata = {
   title: "Pineapple Baby and the Fruit Baby Universe",
@@ -37,6 +39,9 @@ const DEFAULT_FRIEND_PALETTE = {
 };
 
 export default function HomePage() {
+  const coverSettings = getCoverPageSettings();
+  if (isCoverPageEnabled(coverSettings)) return <CoverPage settings={coverSettings} />;
+
   const showcase = getHomepageShowcaseConfig();
   const pb = getPineappleBabyHeroAsset();
   const friends = getSupportingFruitFriendAssets();

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { getPublicShopCollectableSections } from "@/lib/shopCollectables";
 import ShopCollectablesClient from "@/components/shop/ShopCollectablesClient";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
+import CoverPage from "@/components/cover/CoverPage";
 
 export const metadata: Metadata = {
   title: "Pineapple Baby Collectibles & Story Goods | Pineapple Baby",
@@ -12,6 +14,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default function ShopPage() {
+  const coverSettings = getCoverPageSettings();
+  if (isCoverPageEnabled(coverSettings)) return <CoverPage settings={coverSettings} />;
+
   const sections = getPublicShopCollectableSections();
 
   return (

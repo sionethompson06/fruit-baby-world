@@ -1,9 +1,14 @@
 import { getPublicNormalizedCharacterProfiles } from "@/lib/characterRegistry";
 import CharacterCard from "@/components/CharacterCard";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
+import CoverPage from "@/components/cover/CoverPage";
 
 export const dynamic = "force-dynamic";
 
 export default function CharactersPage() {
+  const coverSettings = getCoverPageSettings();
+  if (isCoverPageEnabled(coverSettings)) return <CoverPage settings={coverSettings} />;
+
   const allCharacters = getPublicNormalizedCharacterProfiles();
   const fruitBabies = allCharacters
     .filter((c) => c.type === "fruit-baby")
