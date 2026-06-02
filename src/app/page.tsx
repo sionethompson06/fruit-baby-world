@@ -310,6 +310,130 @@ export default function HomePage() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════════
+          D. PINEAPPLE BABY SPOTLIGHT
+      ══════════════════════════════════════════════════════════════════════ */}
+      {pb && (
+        <section className="homepage-pineapple-playground-section relative overflow-hidden border-b border-pineapple-yellow/25 py-16 px-4">
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+            <span className="absolute top-4 left-10 text-4xl opacity-[0.13] rotate-[-15deg]">⭐</span>
+            <span className="absolute top-10 right-14 text-3xl opacity-[0.10] rotate-[10deg]">✨</span>
+            <span className="absolute bottom-6 right-1/4 text-3xl opacity-[0.09]">🌟</span>
+          </div>
+
+          <div className="relative max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-10 sm:gap-14">
+            {/* PB art display — tall, portrait, object-contain */}
+            <div className="flex-shrink-0 relative animate-float-slow">
+              <div className="absolute inset-0 -m-6 rounded-[2rem] bg-pineapple-yellow/30 blur-3xl" aria-hidden="true" />
+              <div className="relative w-44 h-56 sm:w-52 sm:h-68 rounded-[2rem] overflow-hidden bg-pineapple-yellow/20 border-2 border-pineapple-yellow/50 shadow-2xl">
+                {pbHeroImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={pbHeroImage} alt="Pineapple Baby" className="w-full h-full object-contain object-bottom" />
+                ) : (
+                  <div className="w-full h-full flex items-end justify-center pb-4">
+                    <span className="text-8xl select-none" aria-hidden="true">🍍</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-5 text-center sm:text-left">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-pineapple-yellow/40 text-tiki-brown text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-pineapple-yellow/60">
+                  ⭐ The Star of the Show
+                </div>
+                <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
+                  <span className="title-charm title-charm-star" aria-hidden="true">★</span>
+                  <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
+                    Meet{" "}<span className="brand-word-pineapple">Pineapple Baby</span>
+                  </h2>
+                  <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
+                </div>
+              </div>
+              <p className="text-base text-tiki-brown/72 leading-relaxed max-w-lg">
+                Pineapple Baby is the bright-hearted hero of the Fruit Baby Universe — curious, kind, brave, and always ready for a sweet adventure.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                {["Kind", "Brave", "Curious", "Big-Hearted"].map((trait) => (
+                  <span key={trait} className="text-sm font-bold px-4 py-1.5 rounded-full bg-white/75 border border-pineapple-yellow/55 text-tiki-brown shadow-sm">
+                    {trait}
+                  </span>
+                ))}
+              </div>
+              {pb.tagline && (
+                <blockquote className="text-lg font-black text-tiki-brown/80 italic border-l-4 border-pineapple-yellow pl-4">
+                  &ldquo;{pb.tagline}&rdquo;
+                </blockquote>
+              )}
+              <Link
+                href="/characters/pineapple-baby"
+                className="self-center sm:self-start inline-flex items-center gap-2 bg-pineapple-yellow text-tiki-brown font-black px-7 py-3.5 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.04] transition-all text-sm"
+              >
+                🍍 Meet Pineapple Baby →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
+          E. TIKI TROUBLE — villain feature block
+      ══════════════════════════════════════════════════════════════════════ */}
+      {showcase.tikiTrouble.enabled && tiki && (
+        <section className="homepage-trouble-island-section relative overflow-hidden border-y border-warm-coral/20 py-16 px-4">
+          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+            <span className="absolute top-5 right-6 text-5xl opacity-[0.09] rotate-[18deg]">💥</span>
+            <span className="absolute bottom-5 left-8 text-4xl opacity-[0.07] rotate-[-14deg]">⚡</span>
+          </div>
+
+          <div className="relative max-w-5xl mx-auto flex flex-col sm:flex-row-reverse items-center gap-10 sm:gap-14">
+            {/* Tiki art display — tall portrait */}
+            <div className="flex-shrink-0 animate-float-slow" style={{ animationDelay: "1s" }}>
+              <div className="relative w-40 h-52 sm:w-48 sm:h-64 rounded-[2rem] overflow-hidden bg-warm-coral/20 border-2 border-warm-coral/45 shadow-2xl">
+                {tikiImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={tikiImage} alt="Tiki Trouble" className="w-full h-full object-contain object-bottom" />
+                ) : (
+                  <div className="w-full h-full flex items-end justify-center pb-4">
+                    <span className="text-7xl select-none" aria-hidden="true">🌴</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 text-center sm:text-left flex-1">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-warm-coral/18 text-warm-coral/90 text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-warm-coral/30">
+                  ⚡ The Mischief-Maker
+                </div>
+                <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
+                  <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
+                  <h2 className="brand-title-universe-logo text-3xl sm:text-4xl font-black leading-tight">
+                    {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
+                  </h2>
+                  <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
+                </div>
+              </div>
+              <p className="text-base text-tiki-brown/68 leading-relaxed max-w-lg">
+                {showcase.tikiTrouble.description ||
+                  "Tiki Trouble brings mischief, surprises, and silly problems for Pineapple Baby and friends to solve."}
+              </p>
+              {tiki.catchphrase && (
+                <blockquote className="text-lg font-black text-warm-coral/80 italic border-l-4 border-warm-coral/40 pl-4">
+                  &ldquo;{tiki.catchphrase}&rdquo;
+                </blockquote>
+              )}
+              <Link
+                href="/characters/tiki"
+                className="self-center sm:self-start inline-flex items-center gap-2 bg-warm-coral/85 text-white font-black px-7 py-3.5 rounded-2xl shadow-lg hover:bg-warm-coral hover:shadow-xl hover:scale-[1.04] transition-all text-sm"
+              >
+                Meet Tiki Trouble →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════
           B. SUPPORTING CAST — art-forward character showcase
       ══════════════════════════════════════════════════════════════════════ */}
       {friends.length > 0 && (
@@ -475,130 +599,6 @@ export default function HomePage() {
           )}
         </div>
       </section>
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          D. PINEAPPLE BABY SPOTLIGHT
-      ══════════════════════════════════════════════════════════════════════ */}
-      {pb && (
-        <section className="homepage-pineapple-playground-section relative overflow-hidden border-b border-pineapple-yellow/25 py-16 px-4">
-          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
-            <span className="absolute top-4 left-10 text-4xl opacity-[0.13] rotate-[-15deg]">⭐</span>
-            <span className="absolute top-10 right-14 text-3xl opacity-[0.10] rotate-[10deg]">✨</span>
-            <span className="absolute bottom-6 right-1/4 text-3xl opacity-[0.09]">🌟</span>
-          </div>
-
-          <div className="relative max-w-5xl mx-auto flex flex-col sm:flex-row items-center gap-10 sm:gap-14">
-            {/* PB art display — tall, portrait, object-contain */}
-            <div className="flex-shrink-0 relative animate-float-slow">
-              <div className="absolute inset-0 -m-6 rounded-[2rem] bg-pineapple-yellow/30 blur-3xl" aria-hidden="true" />
-              <div className="relative w-44 h-56 sm:w-52 sm:h-68 rounded-[2rem] overflow-hidden bg-pineapple-yellow/20 border-2 border-pineapple-yellow/50 shadow-2xl">
-                {pbHeroImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={pbHeroImage} alt="Pineapple Baby" className="w-full h-full object-contain object-bottom" />
-                ) : (
-                  <div className="w-full h-full flex items-end justify-center pb-4">
-                    <span className="text-8xl select-none" aria-hidden="true">🍍</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-5 text-center sm:text-left">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-pineapple-yellow/40 text-tiki-brown text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-pineapple-yellow/60">
-                  ⭐ The Star of the Show
-                </div>
-                <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
-                  <span className="title-charm title-charm-star" aria-hidden="true">★</span>
-                  <h2 className="brand-bubblegum-title brand-bubblegum-title--section text-3xl sm:text-4xl leading-tight">
-                    Meet{" "}<span className="brand-word-pineapple">Pineapple Baby</span>
-                  </h2>
-                  <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
-                </div>
-              </div>
-              <p className="text-base text-tiki-brown/72 leading-relaxed max-w-lg">
-                Pineapple Baby is the bright-hearted hero of the Fruit Baby Universe — curious, kind, brave, and always ready for a sweet adventure.
-              </p>
-              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                {["Kind", "Brave", "Curious", "Big-Hearted"].map((trait) => (
-                  <span key={trait} className="text-sm font-bold px-4 py-1.5 rounded-full bg-white/75 border border-pineapple-yellow/55 text-tiki-brown shadow-sm">
-                    {trait}
-                  </span>
-                ))}
-              </div>
-              {pb.tagline && (
-                <blockquote className="text-lg font-black text-tiki-brown/80 italic border-l-4 border-pineapple-yellow pl-4">
-                  &ldquo;{pb.tagline}&rdquo;
-                </blockquote>
-              )}
-              <Link
-                href="/characters/pineapple-baby"
-                className="self-center sm:self-start inline-flex items-center gap-2 bg-pineapple-yellow text-tiki-brown font-black px-7 py-3.5 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.04] transition-all text-sm"
-              >
-                🍍 Meet Pineapple Baby →
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════════════════
-          E. TIKI TROUBLE — villain feature block
-      ══════════════════════════════════════════════════════════════════════ */}
-      {showcase.tikiTrouble.enabled && tiki && (
-        <section className="homepage-trouble-island-section relative overflow-hidden border-y border-warm-coral/20 py-16 px-4">
-          <div className="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
-            <span className="absolute top-5 right-6 text-5xl opacity-[0.09] rotate-[18deg]">💥</span>
-            <span className="absolute bottom-5 left-8 text-4xl opacity-[0.07] rotate-[-14deg]">⚡</span>
-          </div>
-
-          <div className="relative max-w-5xl mx-auto flex flex-col sm:flex-row-reverse items-center gap-10 sm:gap-14">
-            {/* Tiki art display — tall portrait */}
-            <div className="flex-shrink-0 animate-float-slow" style={{ animationDelay: "1s" }}>
-              <div className="relative w-40 h-52 sm:w-48 sm:h-64 rounded-[2rem] overflow-hidden bg-warm-coral/20 border-2 border-warm-coral/45 shadow-2xl">
-                {tikiImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={tikiImage} alt="Tiki Trouble" className="w-full h-full object-contain object-bottom" />
-                ) : (
-                  <div className="w-full h-full flex items-end justify-center pb-4">
-                    <span className="text-7xl select-none" aria-hidden="true">🌴</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4 text-center sm:text-left flex-1">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-warm-coral/18 text-warm-coral/90 text-xs font-black px-4 py-1.5 rounded-full mb-3 uppercase tracking-widest border border-warm-coral/30">
-                  ⚡ The Mischief-Maker
-                </div>
-                <div className="flex items-center gap-3 justify-center sm:justify-start flex-wrap">
-                  <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
-                  <h2 className="brand-title-universe-logo text-3xl sm:text-4xl font-black leading-tight">
-                    {showcase.tikiTrouble.headline || "Watch out for Tiki Trouble!"}
-                  </h2>
-                  <span className="title-charm" style={{color: '#FF8A7A'}} aria-hidden="true">✦</span>
-                </div>
-              </div>
-              <p className="text-base text-tiki-brown/68 leading-relaxed max-w-lg">
-                {showcase.tikiTrouble.description ||
-                  "Tiki Trouble brings mischief, surprises, and silly problems for Pineapple Baby and friends to solve."}
-              </p>
-              {tiki.catchphrase && (
-                <blockquote className="text-lg font-black text-warm-coral/80 italic border-l-4 border-warm-coral/40 pl-4">
-                  &ldquo;{tiki.catchphrase}&rdquo;
-                </blockquote>
-              )}
-              <Link
-                href="/characters/tiki"
-                className="self-center sm:self-start inline-flex items-center gap-2 bg-warm-coral/85 text-white font-black px-7 py-3.5 rounded-2xl shadow-lg hover:bg-warm-coral hover:shadow-xl hover:scale-[1.04] transition-all text-sm"
-              >
-                Meet Tiki Trouble →
-              </Link>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           F. EXPLORE THE WORLD
