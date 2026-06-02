@@ -207,15 +207,10 @@ export default function CoverVideoPlayer({
           <div className="w-10 flex-shrink-0" />
         )}
 
-        {/* Title + counter */}
+        {/* Counter only — title intentionally hidden on public page */}
         <div className="flex-1 text-center min-w-0">
-          {current.title && (
-            <p className="text-sm sm:text-base font-bold text-tiki-brown truncate">
-              {current.title}
-            </p>
-          )}
           {isMulti && (
-            <p className="text-xs text-tiki-brown/40 mt-0.5">
+            <p className="text-xs text-tiki-brown/40">
               {safeIndex + 1} of {videos.length}
             </p>
           )}

@@ -92,7 +92,7 @@ export default function CoverPage({ settings }: { settings: CoverPageSettings })
       <CoverDecorations />
 
       {/* Page content — above decorations */}
-      <div className="relative z-10 flex flex-col items-center w-full px-4 py-12 sm:py-16 text-center">
+      <div className="relative z-10 flex flex-col items-center w-full px-4 py-6 sm:py-10 text-center">
 
         {/* Eyebrow */}
         <p
@@ -103,7 +103,7 @@ export default function CoverPage({ settings }: { settings: CoverPageSettings })
         </p>
 
         {/* Brand title — h1 for accessibility */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-5 max-w-4xl">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-8 max-w-4xl">
           <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
           <h1 className="brand-bubblegum-title brand-bubblegum-title--hero text-4xl sm:text-6xl leading-tight">
             <span className="brand-word-pineapple">Pineapple </span>
@@ -115,13 +115,8 @@ export default function CoverPage({ settings }: { settings: CoverPageSettings })
           <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
         </div>
 
-        {/* Subtitle */}
-        <p className="text-tiki-brown/65 text-base sm:text-xl leading-relaxed max-w-xl mb-12">
-          {settings.subtitle}
-        </p>
-
         {/* Countdown */}
-        <div className="mb-14 w-full max-w-xl">
+        <div className="mb-8 w-full max-w-xl">
           <CoverCountdown
             unveilingAt={settings.unveilingAt}
             countdownLabel={settings.countdownLabel}
