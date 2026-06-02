@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { put } from "@vercel/blob/client";
 import type { CoverPageSettings, CoverPageVideo } from "@/lib/coverPageTypes";
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -286,56 +287,70 @@ export default function AdminCoverForm({
     setUploading(true);
     setUploadResult(null);
 
-    let res: Response;
+    // Step 1: Get a short-lived client token from the server.
+    // This small JSON request goes through the proxy (auth check) but carries no file body.
+    let tokenData: { token: string; pathname: string };
     try {
-      const fd = new FormData();
-      fd.append("file", uploadFile);
-      if (uploadTitle.trim()) fd.append("title", uploadTitle.trim());
-      res = await fetch("/api/media/upload-cover-video", {
-        method: "POST",
-        body: fd,
+      const params = new URLSearchParams({
+        filename: uploadFile.name,
+        contentType: uploadFile.type,
       });
+      const tokenRes = await fetch(`/api/media/cover-video-upload-token?${params}`);
+      const json = await tokenRes.json();
+      if (!json.ok) {
+        setUploadResult({ ok: false, message: json.message ?? "Could not get upload token." });
+        setUploading(false);
+        return;
+      }
+      tokenData = json;
     } catch {
       setUploadResult({ ok: false, message: "Network error — could not reach the server." });
       setUploading(false);
       return;
     }
 
-    let data: { ok: boolean; video?: CoverPageVideo; message?: string } | null = null;
+    // Step 2: Upload the file directly from the browser to Vercel Blob.
+    // This bypasses the serverless function entirely, so there is no body size limit.
+    let blob: Awaited<ReturnType<typeof put>>;
     try {
-      data = await res.json();
-    } catch {
-      if (res.status === 413) {
-        setUploadResult({ ok: false, message: "File too large. Try a shorter or more compressed video clip." });
-      } else {
-        setUploadResult({ ok: false, message: `Server error (HTTP ${res.status}). Check that BLOB_READ_WRITE_TOKEN is configured in your Vercel environment.` });
-      }
+      blob = await put(tokenData.pathname, uploadFile, {
+        access: "public",
+        token: tokenData.token,
+        contentType: uploadFile.type,
+        multipart: true,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      setUploadResult({ ok: false, message: `Upload failed: ${msg}` });
       setUploading(false);
       return;
     }
 
-    if (data?.ok && data.video) {
-      const nonArchived = getNonArchived(settings.videos);
-      const newVideo: CoverPageVideo = {
-        ...data.video,
-        sortOrder: nonArchived.length,
-      };
-      setSettings((prev) => ({
-        ...prev,
-        videos: [...prev.videos, newVideo],
-      }));
-      setUnsaved(true);
-      setSaveResult(null);
-      setUploadFile(null);
-      setUploadTitle("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setUploadResult({ ok: true, message: "Video uploaded. Save settings to persist." });
-    } else {
-      setUploadResult({
-        ok: false,
-        message: data?.message ?? "Upload failed.",
-      });
-    }
+    // Step 3: Build the video record locally and add it to settings state.
+    const now = new Date().toISOString();
+    const title = uploadTitle.trim() || uploadFile.name.replace(/\.[^.]+$/, "");
+    const nonArchived = getNonArchived(settings.videos);
+    const newVideo: CoverPageVideo = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      videoUrl: blob.url,
+      pathname: blob.pathname,
+      originalFilename: uploadFile.name,
+      mimeType: uploadFile.type,
+      sizeBytes: uploadFile.size,
+      isActive: true,
+      sortOrder: nonArchived.length,
+      uploadedAt: now,
+      updatedAt: now,
+    };
+
+    setSettings((prev) => ({ ...prev, videos: [...prev.videos, newVideo] }));
+    setUnsaved(true);
+    setSaveResult(null);
+    setUploadFile(null);
+    setUploadTitle("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setUploadResult({ ok: true, message: "Video uploaded. Save settings to persist." });
     setUploading(false);
   }
 

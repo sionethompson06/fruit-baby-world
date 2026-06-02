@@ -104,5 +104,6 @@ export const config = {
     "/api/github/save-storybook-page-audio",
     "/api/github/save-cover-page-settings",
     "/api/media/upload-cover-video",
+    "/api/media/cover-video-upload-token",
   ],
 };
