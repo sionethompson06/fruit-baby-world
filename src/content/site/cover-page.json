@@ -34,10 +34,11 @@
       "originalFilename": "Generated Video June 01, 2026 - 11_31PM.mp4",
       "mimeType": "video/mp4",
       "sizeBytes": 4955878,
-      "isActive": true,
+      "isActive": false,
       "sortOrder": 1,
       "uploadedAt": "2026-06-02T08:08:32.097Z",
-      "updatedAt": "2026-06-02T08:08:32.097Z"
+      "updatedAt": "2026-06-02T08:08:32.097Z",
+      "archivedAt": "2026-06-02T09:43:00.113Z"
     },
     {
       "id": "1780387724796-bj26pp",
@@ -131,5 +132,5 @@
       "updatedAt": "2026-06-02T09:37:37.723Z"
     }
   ],
-  "updatedAt": "2026-06-02T09:37:42.014Z"
+  "updatedAt": "2026-06-02T09:43:13.978Z"
 }
