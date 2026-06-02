@@ -285,48 +285,58 @@ export default function AdminCoverForm({
     if (!uploadFile) return;
     setUploading(true);
     setUploadResult(null);
+
+    let res: Response;
     try {
       const fd = new FormData();
       fd.append("file", uploadFile);
       if (uploadTitle.trim()) fd.append("title", uploadTitle.trim());
-
-      const res = await fetch("/api/media/upload-cover-video", {
+      res = await fetch("/api/media/upload-cover-video", {
         method: "POST",
         body: fd,
       });
-      const data = (await res.json()) as {
-        ok: boolean;
-        video?: CoverPageVideo;
-        message?: string;
-      };
-
-      if (data.ok && data.video) {
-        const nonArchived = getNonArchived(settings.videos);
-        const newVideo: CoverPageVideo = {
-          ...data.video,
-          sortOrder: nonArchived.length,
-        };
-        setSettings((prev) => ({
-          ...prev,
-          videos: [...prev.videos, newVideo],
-        }));
-        setUnsaved(true);
-        setSaveResult(null);
-        setUploadFile(null);
-        setUploadTitle("");
-        if (fileInputRef.current) fileInputRef.current.value = "";
-        setUploadResult({ ok: true, message: "Video uploaded. Save settings to persist." });
-      } else {
-        setUploadResult({
-          ok: false,
-          message: data.message ?? "Upload failed.",
-        });
-      }
     } catch {
-      setUploadResult({ ok: false, message: "Network error during upload." });
-    } finally {
+      setUploadResult({ ok: false, message: "Network error — could not reach the server." });
       setUploading(false);
+      return;
     }
+
+    let data: { ok: boolean; video?: CoverPageVideo; message?: string } | null = null;
+    try {
+      data = await res.json();
+    } catch {
+      if (res.status === 413) {
+        setUploadResult({ ok: false, message: "File too large. Try a shorter or more compressed video clip." });
+      } else {
+        setUploadResult({ ok: false, message: `Server error (HTTP ${res.status}). Check that BLOB_READ_WRITE_TOKEN is configured in your Vercel environment.` });
+      }
+      setUploading(false);
+      return;
+    }
+
+    if (data?.ok && data.video) {
+      const nonArchived = getNonArchived(settings.videos);
+      const newVideo: CoverPageVideo = {
+        ...data.video,
+        sortOrder: nonArchived.length,
+      };
+      setSettings((prev) => ({
+        ...prev,
+        videos: [...prev.videos, newVideo],
+      }));
+      setUnsaved(true);
+      setSaveResult(null);
+      setUploadFile(null);
+      setUploadTitle("");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setUploadResult({ ok: true, message: "Video uploaded. Save settings to persist." });
+    } else {
+      setUploadResult({
+        ok: false,
+        message: data?.message ?? "Upload failed.",
+      });
+    }
+    setUploading(false);
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────
