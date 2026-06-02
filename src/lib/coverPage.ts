@@ -7,9 +7,10 @@ export function getDefaultCoverPageSettings(): CoverPageSettings {
     enabled: false,
     unveilingAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     title: "Pineapple Baby and the Fruit Baby Universe",
-    eyebrow: "A bright new world is growing...",
+    eyebrow: "Something sunny is growing...",
     subtitle:
-      "Storybooks, characters, songs, surprises, and collectible friends are almost ready.",
+      "A bright new world of storybooks, characters, songs, surprises, and collectible friends is almost ready.",
+    footerTeaser: "Watch closely. Tiny clues are hidden in every sneak peek.",
     countdownLabel: "Unveiling in",
     completeMessage: "The Adventure Begins Now!",
     completeSubtext:
@@ -71,6 +72,8 @@ export function normalizeCoverPageSettings(raw: unknown): CoverPageSettings {
     title: typeof r.title === "string" ? r.title : d.title,
     eyebrow: typeof r.eyebrow === "string" ? r.eyebrow : d.eyebrow,
     subtitle: typeof r.subtitle === "string" ? r.subtitle : d.subtitle,
+    footerTeaser:
+      typeof r.footerTeaser === "string" ? r.footerTeaser : d.footerTeaser,
     countdownLabel:
       typeof r.countdownLabel === "string" ? r.countdownLabel : d.countdownLabel,
     completeMessage:

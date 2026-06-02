@@ -371,29 +371,49 @@ export default function AdminCoverForm({
   return (
     <div className="flex flex-col gap-8 max-w-2xl">
 
-      {/* ON / OFF toggle */}
-      <div className="flex items-center justify-between rounded-2xl border border-tiki-brown/10 bg-white p-5 shadow-sm">
-        <div>
-          <p className="font-black text-tiki-brown text-base">Cover Page</p>
-          <p className="text-xs text-tiki-brown/50 mt-0.5">
-            {settings.enabled
-              ? "Public website is hidden — cover page is active."
-              : "Cover page is off — public website is visible."}
-          </p>
+      {/* ON / OFF toggle — clear action button labels */}
+      <div className="rounded-2xl border border-tiki-brown/10 bg-white p-5 shadow-sm flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-black text-tiki-brown text-base">
+              {settings.enabled ? "Cover Page: ON" : "Cover Page: OFF"}
+            </p>
+            <p className="text-xs text-tiki-brown/50 mt-0.5">
+              {settings.enabled
+                ? "Public visitors see the cover page only."
+                : "The full website is publicly visible."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => set("enabled", !settings.enabled)}
+            aria-label={
+              settings.enabled
+                ? "Show Full Website (turn cover page off)"
+                : "Display Cover Page Publicly (turn cover page on)"
+            }
+            className={`relative flex-shrink-0 inline-flex h-7 w-14 items-center rounded-full transition-colors ${
+              settings.enabled ? "bg-warm-coral" : "bg-tiki-brown/20"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                settings.enabled ? "translate-x-8" : "translate-x-1"
+              }`}
+            />
+          </button>
         </div>
+        {/* Action label under toggle for clarity */}
         <button
           type="button"
           onClick={() => set("enabled", !settings.enabled)}
-          aria-label={settings.enabled ? "Disable cover page" : "Enable cover page"}
-          className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${
-            settings.enabled ? "bg-warm-coral" : "bg-tiki-brown/20"
+          className={`w-full rounded-xl py-2 text-xs font-black tracking-wide transition-colors ${
+            settings.enabled
+              ? "bg-tropical-green/10 text-tropical-green hover:bg-tropical-green/18 border border-tropical-green/20"
+              : "bg-warm-coral/10 text-warm-coral hover:bg-warm-coral/18 border border-warm-coral/20"
           }`}
         >
-          <span
-            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-              settings.enabled ? "translate-x-8" : "translate-x-1"
-            }`}
-          />
+          {settings.enabled ? "→ Show Full Website" : "→ Display Cover Page Publicly"}
         </button>
       </div>
 
@@ -470,6 +490,16 @@ export default function AdminCoverForm({
             rows={2}
             value={settings.subtitle}
             onChange={(e) => set("subtitle", e.target.value)}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Footer teaser (optional — shown below video)</label>
+          <input
+            type="text"
+            className={inputClass}
+            placeholder="Watch closely. Tiny clues are hidden in every sneak peek."
+            value={settings.footerTeaser}
+            onChange={(e) => set("footerTeaser", e.target.value)}
           />
         </div>
       </div>

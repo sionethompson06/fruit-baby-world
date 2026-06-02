@@ -43,6 +43,24 @@ body {
   animation: float-slow 6s ease-in-out infinite;
 }
 
+@keyframes cover-pulse-glow {
+  0%, 100% { opacity: 0.12; transform: scale(1); }
+  50% { opacity: 0.18; transform: scale(1.04); }
+}
+
+.cover-glow-orb {
+  animation: cover-pulse-glow 6s ease-in-out infinite;
+}
+
+/* Respect user's motion preference — stop all cover animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-gentle,
+  .animate-float-slow,
+  .cover-glow-orb {
+    animation: none !important;
+  }
+}
+
 /* Brand title color variables */
 :root {
   --pb-brown: #5a3518;

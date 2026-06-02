@@ -19,6 +19,7 @@ export type CoverPageSettings = {
   title: string;
   eyebrow: string;
   subtitle: string;
+  footerTeaser: string;
   countdownLabel: string;
   completeMessage: string;
   completeSubtext: string;

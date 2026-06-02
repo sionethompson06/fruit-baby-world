@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Bubblegum_Sans, Margarine } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import BubblegumSvgFilters from "@/components/BubblegumSvgFilters";
+import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +38,9 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const coverSettings = getCoverPageSettings();
+  const coverActive = isCoverPageEnabled(coverSettings);
+
   return (
     <html
       lang="en"
@@ -44,11 +48,14 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col antialiased">
         <BubblegumSvgFilters />
-        <Nav />
+        {/* Hide public nav and footer while cover page is active */}
+        {!coverActive && <Nav />}
         <main className="flex-1">{children}</main>
-        <footer className="bg-coconut-cream border-t border-pineapple-yellow/30 py-6 text-center text-sm text-tiki-brown/70">
-          © {new Date().getFullYear()} Pineapple Baby™. All rights reserved.
-        </footer>
+        {!coverActive && (
+          <footer className="bg-coconut-cream border-t border-pineapple-yellow/30 py-6 text-center text-sm text-tiki-brown/70">
+            © {new Date().getFullYear()} Pineapple Baby™. All rights reserved.
+          </footer>
+        )}
       </body>
     </html>
   );
