@@ -116,7 +116,20 @@
       "sortOrder": 7,
       "uploadedAt": "2026-06-02T09:19:51.299Z",
       "updatedAt": "2026-06-02T09:19:51.299Z"
+    },
+    {
+      "id": "1780393057723-4ije9v",
+      "title": "Generated Video June 02, 2026 - 2_37AM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780393054830-generated-video-june-02-2026-2-37am.mp4",
+      "pathname": "cover-page/videos/1780393054830-generated-video-june-02-2026-2-37am.mp4",
+      "originalFilename": "Generated Video June 02, 2026 - 2_37AM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 3406376,
+      "isActive": true,
+      "sortOrder": 8,
+      "uploadedAt": "2026-06-02T09:37:37.723Z",
+      "updatedAt": "2026-06-02T09:37:37.723Z"
     }
   ],
-  "updatedAt": "2026-06-02T09:20:05.994Z"
+  "updatedAt": "2026-06-02T09:37:42.014Z"
 }
