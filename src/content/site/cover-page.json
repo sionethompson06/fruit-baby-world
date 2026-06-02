@@ -1,16 +1,17 @@
 {
   "enabled": false,
-  "unveilingAt": "2026-07-01T12:00:00-07:00",
+  "unveilingAt": "2026-08-12T19:00:00.000Z",
   "title": "Pineapple Baby and the Fruit Baby Universe",
   "eyebrow": "A bright new world is growing...",
   "subtitle": "Storybooks, characters, songs, surprises, and collectible friends are almost ready.",
+  "footerTeaser": "Watch closely. Tiny clues are hidden in every sneak peek.",
   "countdownLabel": "Unveiling in",
   "completeMessage": "The Adventure Begins Now!",
-  "completeSubtext": "The Fruit Baby Universe is ready to bloom. The grand opening is almost here.",
+  "completeSubtext": "The Fruit Baby Universe is ready to bloom. The unveiling is almost here.",
   "videoSectionTitle": "Sneak Peek Theater",
   "videoPlaceholderText": "Sneak peeks are growing behind the leaves.",
   "videoLoop": true,
   "autoplayMuted": false,
   "videos": [],
-  "updatedAt": ""
+  "updatedAt": "2026-06-02T05:29:01.918Z"
 }
