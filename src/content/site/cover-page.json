@@ -77,7 +77,46 @@
       "sortOrder": 4,
       "uploadedAt": "2026-06-02T08:20:57.074Z",
       "updatedAt": "2026-06-02T08:20:57.074Z"
+    },
+    {
+      "id": "1780391901892-al0fcx",
+      "title": "Generated Video June 02, 2026 - 2_01AM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780391899070-generated-video-june-02-2026-2-01am.mp4",
+      "pathname": "cover-page/videos/1780391899070-generated-video-june-02-2026-2-01am.mp4",
+      "originalFilename": "Generated Video June 02, 2026 - 2_01AM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 6162452,
+      "isActive": true,
+      "sortOrder": 5,
+      "uploadedAt": "2026-06-02T09:18:21.891Z",
+      "updatedAt": "2026-06-02T09:18:21.891Z"
+    },
+    {
+      "id": "1780391957263-kxu8xk",
+      "title": "Generated Video June 02, 2026 - 2_14AM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780391954703-generated-video-june-02-2026-2-14am.mp4",
+      "pathname": "cover-page/videos/1780391954703-generated-video-june-02-2026-2-14am.mp4",
+      "originalFilename": "Generated Video June 02, 2026 - 2_14AM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 8058762,
+      "isActive": true,
+      "sortOrder": 6,
+      "uploadedAt": "2026-06-02T09:19:17.263Z",
+      "updatedAt": "2026-06-02T09:19:17.263Z"
+    },
+    {
+      "id": "1780391991299-voz1la",
+      "title": "Generated Video June 02, 2026 - 2_15AM",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1780391988412-generated-video-june-02-2026-2-15am.mp4",
+      "pathname": "cover-page/videos/1780391988412-generated-video-june-02-2026-2-15am.mp4",
+      "originalFilename": "Generated Video June 02, 2026 - 2_15AM.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 10010597,
+      "isActive": true,
+      "sortOrder": 7,
+      "uploadedAt": "2026-06-02T09:19:51.299Z",
+      "updatedAt": "2026-06-02T09:19:51.299Z"
     }
   ],
-  "updatedAt": "2026-06-02T08:21:02.791Z"
+  "updatedAt": "2026-06-02T09:20:05.994Z"
 }
