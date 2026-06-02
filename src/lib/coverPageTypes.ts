@@ -4,9 +4,13 @@ export type CoverPageVideo = {
   videoUrl: string;
   pathname?: string;
   originalFilename?: string;
+  mimeType?: string;
+  sizeBytes?: number;
   isActive: boolean;
   sortOrder: number;
-  uploadedAt: string;
+  uploadedAt?: string;
+  updatedAt?: string;
+  archivedAt?: string;
 };
 
 export type CoverPageSettings = {

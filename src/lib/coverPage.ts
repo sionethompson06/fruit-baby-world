@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { CoverPageSettings } from "./coverPageTypes";
+import type { CoverPageSettings, CoverPageVideo } from "./coverPageTypes";
 
 export function getDefaultCoverPageSettings(): CoverPageSettings {
   return {
@@ -23,10 +23,48 @@ export function getDefaultCoverPageSettings(): CoverPageSettings {
   };
 }
 
+export function normalizeCoverVideo(raw: unknown): CoverPageVideo | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+  const v = raw as Record<string, unknown>;
+  if (typeof v.id !== "string" || !v.id) return null;
+  if (typeof v.videoUrl !== "string" || !v.videoUrl) return null;
+  return {
+    id: v.id,
+    title: typeof v.title === "string" ? v.title : "",
+    videoUrl: v.videoUrl,
+    pathname: typeof v.pathname === "string" ? v.pathname : undefined,
+    originalFilename:
+      typeof v.originalFilename === "string" ? v.originalFilename : undefined,
+    mimeType: typeof v.mimeType === "string" ? v.mimeType : undefined,
+    sizeBytes: typeof v.sizeBytes === "number" ? v.sizeBytes : undefined,
+    isActive: typeof v.isActive === "boolean" ? v.isActive : true,
+    sortOrder: typeof v.sortOrder === "number" ? v.sortOrder : 0,
+    uploadedAt: typeof v.uploadedAt === "string" ? v.uploadedAt : undefined,
+    updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : undefined,
+    archivedAt: typeof v.archivedAt === "string" ? v.archivedAt : undefined,
+  };
+}
+
+export function sortCoverVideos(videos: CoverPageVideo[]): CoverPageVideo[] {
+  return [...videos].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+export function getActiveCoverVideos(settings: CoverPageSettings): CoverPageVideo[] {
+  return sortCoverVideos(
+    settings.videos.filter((v) => v.isActive && !v.archivedAt)
+  );
+}
+
 export function normalizeCoverPageSettings(raw: unknown): CoverPageSettings {
   const d = getDefaultCoverPageSettings();
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return d;
   const r = raw as Record<string, unknown>;
+
+  const rawVideos = Array.isArray(r.videos) ? r.videos : [];
+  const videos: CoverPageVideo[] = rawVideos
+    .map(normalizeCoverVideo)
+    .filter((v): v is CoverPageVideo => v !== null);
+
   return {
     enabled: typeof r.enabled === "boolean" ? r.enabled : d.enabled,
     unveilingAt: typeof r.unveilingAt === "string" ? r.unveilingAt : d.unveilingAt,
@@ -48,7 +86,7 @@ export function normalizeCoverPageSettings(raw: unknown): CoverPageSettings {
     videoLoop: typeof r.videoLoop === "boolean" ? r.videoLoop : d.videoLoop,
     autoplayMuted:
       typeof r.autoplayMuted === "boolean" ? r.autoplayMuted : d.autoplayMuted,
-    videos: Array.isArray(r.videos) ? r.videos : d.videos,
+    videos,
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : d.updatedAt,
   };
 }
