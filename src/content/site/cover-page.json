@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "unveilingAt": "2026-08-12T19:00:00.000Z",
   "title": "Pineapple Baby and the Fruit Baby Universe",
   "eyebrow": "A bright new world is growing...",
@@ -13,5 +13,5 @@
   "videoLoop": true,
   "autoplayMuted": false,
   "videos": [],
-  "updatedAt": "2026-06-02T05:31:51.147Z"
+  "updatedAt": "2026-06-02T05:32:20.055Z"
 }
