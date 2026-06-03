@@ -83,6 +83,12 @@ body {
   65%       { transform: translateY(-5px) scale(1.003); }
 }
 
+/* Ambient shimmer: gentle infinite pulse for always-on background sparkles */
+@keyframes cover-ambient-twinkle {
+  0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  45%, 55%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+
 /* Respect user's motion preference — stop all cover animations */
 @media (prefers-reduced-motion: reduce) {
   .animate-float-gentle,
@@ -94,7 +100,8 @@ body {
      but include CSS override as a secondary safety net */
   [style*="cover-sparkle-sweep"],
   [style*="cover-silhouette-float"],
-  [style*="cover-particle-twinkle"] {
+  [style*="cover-particle-twinkle"],
+  [style*="cover-ambient-twinkle"] {
     animation: none !important;
   }
 }

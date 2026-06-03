@@ -20,20 +20,109 @@ function useReducedMotion(): boolean {
 function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
 function randFloat(min: number, max: number): number {
   return Math.random() * (max - min) + min;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Effect 1 — Stardust Trail
+// Effect 0 — Ambient Shimmer (always on)
+//
+// 25 fixed particles scattered across the page pulsing on infinite loops with
+// staggered delays. Provides a continuous "enchanted" atmosphere between sweeps.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TRAIL_COUNT = 30;
-const SWEEP_MS    = 2600;
-const ORBIT_MS    = 3000;
+interface AmbientParticle {
+  x: number;    // % across page
+  y: number;    // % down page
+  size: number; // px
+  delay: number;
+  dur: number;
+  isStar: boolean;
+  color: string;
+}
 
-type ParticleKind = "dot" | "star" | "glow";
+const AMBIENT_COLORS = ["#ffd84d", "#ffecaa", "#fff8d0", "#ffc8e0", "#c8e8ff"];
+
+function CoverAmbientShimmer() {
+  // Stable on mount, regenerates only when component mounts
+  const particles = useMemo<AmbientParticle[]>(() => {
+    return Array.from({ length: 25 }, (_, i) => ({
+      x:      randFloat(4, 96),
+      y:      randFloat(2, 85),
+      size:   i % 5 === 0 ? randFloat(2.5, 4.5) : randFloat(1, 2.5),
+      delay:  randFloat(0, 6000),
+      dur:    randFloat(2800, 5500),
+      isStar: i % 4 === 0,
+      color:  AMBIENT_COLORS[i % AMBIENT_COLORS.length],
+    }));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute inset-0 pointer-events-none select-none overflow-hidden"
+      style={{ zIndex: 5 }}
+    >
+      {particles.map((p, i) => {
+        const glow = `drop-shadow(0 0 ${p.size * 2}px ${p.color}cc)`;
+        const anim = `cover-ambient-twinkle ${p.dur}ms ease-in-out ${p.delay}ms infinite both`;
+        return (
+          <div
+            key={i}
+            style={{ position: "absolute", left: `${p.x}%`, top: `${p.y}%` }}
+          >
+            {p.isStar ? (
+              <span
+                style={{
+                  position: "absolute",
+                  fontSize: p.size * 3.5,
+                  lineHeight: 1,
+                  color: p.color,
+                  filter: glow,
+                  userSelect: "none",
+                  opacity: 0,
+                  animation: anim,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                ✦
+              </span>
+            ) : (
+              <div
+                style={{
+                  position: "absolute",
+                  width: p.size,
+                  height: p.size,
+                  borderRadius: "50%",
+                  background: p.color,
+                  boxShadow: `0 0 ${p.size * 3}px ${p.color}cc`,
+                  opacity: 0,
+                  animation: anim,
+                  transform: "translate(-50%, -50%)",
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Effect 1 — Stardust Trail (CSS-generated particle bursts)
+//
+// Five particle kinds: glitter (1-2px), dot (3-6px), large-dot (7-10px),
+// star (✦ char), glow (12-18px soft blob).
+// Modes: sweep-right, sweep-left, orbit, double-right, double-left.
+// "double" fires two parallel horizontal bands in a single burst.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TRAIL_COUNT = 50;
+const SWEEP_MS    = 2800;
+const ORBIT_MS    = 3200;
+
+type ParticleKind = "glitter" | "dot" | "large-dot" | "star" | "glow";
 
 interface StarParticle {
   xPct:  number;
@@ -43,114 +132,158 @@ interface StarParticle {
   size:  number;
   delay: number;
   dur:   number;
-  opk:   number;
   kind:  ParticleKind;
 }
 
-function buildSweep(dir: "right" | "left"): StarParticle[] {
+function pickKind(i: number): ParticleKind {
+  if (i % 7 === 0) return "glow";
+  if (i % 4 === 0) return "star";
+  if (i % 6 === 0) return "large-dot";
+  if (i % 3 === 0) return "glitter";
+  return "dot";
+}
+
+function sizeFor(kind: ParticleKind): number {
+  switch (kind) {
+    case "glitter":   return randFloat(1, 2.2);
+    case "dot":       return rand(3, 6);
+    case "large-dot": return rand(7, 10);
+    case "star":      return rand(4, 8);
+    case "glow":      return rand(13, 18);
+  }
+}
+
+function buildSweep(dir: "right" | "left", delayOffset = 0): StarParticle[] {
   return Array.from({ length: TRAIL_COUNT }, (_, i) => {
     const t    = i / (TRAIL_COUNT - 1);
     const xPct = dir === "right" ? t * 100 : (1 - t) * 100;
-    const kind: ParticleKind = i % 5 === 0 ? "star" : i % 7 === 0 ? "glow" : "dot";
+    const kind = pickKind(i);
     return {
       xPct, xPx: 0, yPx: 0,
-      y:     rand(-28, 28),
-      size:  kind === "glow" ? rand(8, 14) : rand(3, 8),
-      delay: t * SWEEP_MS + rand(-80, 80),
-      dur:   rand(600, 1100),
-      opk:   randFloat(0.80, 1.0),
+      y:     rand(-32, 32),
+      size:  sizeFor(kind),
+      delay: delayOffset + t * SWEEP_MS + rand(-60, 60),
+      dur:   rand(550, 1100),
       kind,
     };
   });
 }
 
 function buildOrbit(): StarParticle[] {
-  const N = 20, rx = 220, ry = 80;
+  const N = 24, rx = 230, ry = 88;
   return Array.from({ length: N }, (_, i) => {
     const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
-    const kind: ParticleKind = i % 4 === 0 ? "star" : i % 6 === 0 ? "glow" : "dot";
+    const kind = pickKind(i);
     return {
       xPct: 50,
       xPx: rx * Math.cos(angle),
       yPx: ry * Math.sin(angle),
       y: 0,
-      size:  kind === "glow" ? rand(8, 12) : rand(3, 7),
+      size:  sizeFor(kind),
       delay: (i / N) * ORBIT_MS + rand(-40, 40),
-      dur:   rand(700, 1100),
-      opk:   randFloat(0.85, 1.0),
+      dur:   rand(650, 1050),
       kind,
     };
   });
 }
 
-const SWEEP_TOPS = ["5%", "9%", "15%", "22%", "3%"];
+const SWEEP_TOPS = ["4%", "8%", "14%", "20%", "6%", "11%"];
 
 function StarParticleEl({ p }: { p: StarParticle }) {
   const anim = `cover-particle-twinkle ${p.dur}ms ease-in-out ${p.delay}ms both`;
 
-  if (p.kind === "glow") {
-    return (
-      <div
-        style={{
-          position: "absolute",
-          width:  p.size,
-          height: p.size,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255,253,224,0.95) 0%, rgba(255,220,79,0.65) 35%, rgba(255,160,0,0) 100%)",
-          boxShadow: `0 0 ${p.size}px ${Math.round(p.size * 0.6)}px rgba(255,214,79,0.85), 0 0 ${p.size * 3}px rgba(255,240,130,0.55)`,
-          opacity: 0,
-          animation: anim,
-          transform: "translate(-50%, -50%)",
-        }}
-      />
-    );
+  switch (p.kind) {
+    case "glitter":
+      return (
+        <div
+          style={{
+            position: "absolute",
+            width: p.size, height: p.size,
+            borderRadius: "50%",
+            background: "#fffde8",
+            boxShadow: `0 0 ${p.size * 3}px rgba(255,220,80,1), 0 0 ${p.size * 6}px rgba(255,200,50,0.7)`,
+            opacity: 0,
+            animation: anim,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      );
+    case "dot":
+      return (
+        <div
+          style={{
+            position: "absolute",
+            width: p.size, height: p.size,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, #fffde0 0%, #ffd84d 55%, rgba(255,160,0,0.1) 100%)",
+            boxShadow: `0 0 ${p.size * 2}px rgba(255,214,79,1), 0 0 ${p.size * 4.5}px rgba(255,240,150,0.7)`,
+            opacity: 0,
+            animation: anim,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      );
+    case "large-dot":
+      return (
+        <div
+          style={{
+            position: "absolute",
+            width: p.size, height: p.size,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, #ffffff 0%, #fffde0 30%, #ffd84d 65%, rgba(255,140,0,0.08) 100%)",
+            boxShadow: `0 0 ${p.size}px rgba(255,253,224,0.9), 0 0 ${p.size * 2.5}px rgba(255,214,79,0.95), 0 0 ${p.size * 5}px rgba(255,200,50,0.6)`,
+            opacity: 0,
+            animation: anim,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      );
+    case "star": {
+      const glow = `drop-shadow(0 0 ${p.size}px rgba(255,220,80,1)) drop-shadow(0 0 ${p.size * 2.5}px rgba(255,240,150,0.8))`;
+      const STAR_CHARS = ["✦", "✧", "⋆", "✦", "✦"];
+      return (
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            fontSize: p.size * 2.8,
+            lineHeight: 1,
+            color: "#ffd84d",
+            filter: glow,
+            userSelect: "none",
+            opacity: 0,
+            animation: anim,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          {STAR_CHARS[rand(0, STAR_CHARS.length - 1)]}
+        </span>
+      );
+    }
+    case "glow":
+      return (
+        <div
+          style={{
+            position: "absolute",
+            width: p.size, height: p.size,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(255,255,230,0.98) 0%, rgba(255,228,80,0.75) 35%, rgba(255,170,0,0) 100%)",
+            boxShadow: `0 0 ${p.size}px ${Math.round(p.size * 0.7)}px rgba(255,214,79,0.9), 0 0 ${p.size * 3.5}px rgba(255,240,130,0.6), 0 0 ${p.size * 6}px rgba(255,200,50,0.3)`,
+            opacity: 0,
+            animation: anim,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      );
   }
-
-  if (p.kind === "star") {
-    const glow = `drop-shadow(0 0 ${p.size}px rgba(255,214,79,0.95)) drop-shadow(0 0 ${p.size * 2.5}px rgba(255,240,150,0.70))`;
-    return (
-      <span
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          fontSize: p.size * 2.8,
-          lineHeight: 1,
-          color: "#ffd84d",
-          filter: glow,
-          userSelect: "none",
-          opacity: 0,
-          animation: anim,
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        ✦
-      </span>
-    );
-  }
-
-  // dot
-  return (
-    <div
-      style={{
-        position: "absolute",
-        width:  p.size,
-        height: p.size,
-        borderRadius: "50%",
-        background: "radial-gradient(circle, #fffde0 0%, #ffd84d 55%, rgba(255,160,0,0.12) 100%)",
-        boxShadow: `0 0 ${p.size * 2}px rgba(255,214,79,0.95), 0 0 ${p.size * 4}px rgba(255,240,150,0.65)`,
-        opacity: 0,
-        animation: anim,
-        transform: "translate(-50%, -50%)",
-      }}
-    />
-  );
 }
 
-type TrailMode = "sweep-right" | "sweep-left" | "orbit";
+type TrailMode = "sweep-right" | "sweep-left" | "orbit" | "double-right" | "double-left";
 const TRAIL_MODES: TrailMode[] = [
-  "sweep-right", "sweep-right",
-  "sweep-left",  "sweep-left",
+  "sweep-right",  "sweep-right",  "sweep-right",
+  "sweep-left",   "sweep-left",
   "orbit",
+  "double-right", "double-left",
 ];
 
 function CoverStardustTrail() {
@@ -175,15 +308,15 @@ function CoverStardustTrail() {
         setActive(true);
 
         const visFor = nextMode === "orbit"
-          ? ORBIT_MS + 1200
-          : SWEEP_MS  + 1400;
+          ? ORBIT_MS + 1400
+          : SWEEP_MS  + 1600;
 
         t2 = setTimeout(() => {
           if (!mountedRef.current) return;
           setActive(false);
           schedule();
         }, visFor);
-      }, rand(4000, 8000));
+      }, rand(3500, 7000));
     }
 
     schedule();
@@ -195,9 +328,11 @@ function CoverStardustTrail() {
   }, []);
 
   const particles = useMemo(() => {
-    if (mode === "orbit")      return buildOrbit();
-    if (mode === "sweep-left") return buildSweep("left");
-    return buildSweep("right");
+    if (mode === "orbit")        return { a: buildOrbit(),          b: null };
+    if (mode === "sweep-left")   return { a: buildSweep("left"),    b: null };
+    if (mode === "double-right") return { a: buildSweep("right", 0), b: buildSweep("right", rand(120, 280)) };
+    if (mode === "double-left")  return { a: buildSweep("left", 0),  b: buildSweep("left",  rand(120, 280)) };
+    return { a: buildSweep("right"), b: null };
   }, [runKey, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!active) return null;
@@ -209,7 +344,7 @@ function CoverStardustTrail() {
         className="absolute pointer-events-none select-none"
         style={{ top: "34%", left: "50%", width: 0, height: 0, zIndex: 8 }}
       >
-        {particles.map((p, i) => (
+        {particles.a.map((p, i) => (
           <div key={i} style={{ position: "absolute", left: p.xPx, top: p.yPx }}>
             <StarParticleEl p={p} />
           </div>
@@ -218,25 +353,35 @@ function CoverStardustTrail() {
     );
   }
 
+  const top2 = SWEEP_TOPS[(topIdx + 3) % SWEEP_TOPS.length];
+
   return (
-    <div
-      aria-hidden="true"
-      className="absolute pointer-events-none select-none"
-      style={{
-        top:    SWEEP_TOPS[topIdx],
-        left:   0,
-        right:  0,
-        height: "80px",
-        zIndex: 8,
-        overflow: "visible",
-      }}
-    >
-      {particles.map((p, i) => (
-        <div key={i} style={{ position: "absolute", left: `${p.xPct}%`, top: `calc(50% + ${p.y}px)` }}>
-          <StarParticleEl p={p} />
+    <>
+      <div
+        aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{ top: SWEEP_TOPS[topIdx], left: 0, right: 0, height: "90px", zIndex: 8, overflow: "visible" }}
+      >
+        {particles.a.map((p, i) => (
+          <div key={i} style={{ position: "absolute", left: `${p.xPct}%`, top: `calc(50% + ${p.y}px)` }}>
+            <StarParticleEl p={p} />
+          </div>
+        ))}
+      </div>
+      {particles.b && (
+        <div
+          aria-hidden="true"
+          className="absolute pointer-events-none select-none"
+          style={{ top: top2, left: 0, right: 0, height: "90px", zIndex: 8, overflow: "visible" }}
+        >
+          {particles.b.map((p, i) => (
+            <div key={i} style={{ position: "absolute", left: `${p.xPct}%`, top: `calc(50% + ${p.y}px)` }}>
+              <StarParticleEl p={p} />
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }
 
@@ -245,14 +390,14 @@ function CoverStardustTrail() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SILHOUETTE_ZONES = [
-  { top: "3%",  left: "0%",       right: undefined  },
-  { top: "3%",  left: undefined,  right: "0%"       },
-  { top: "20%", left: "0%",       right: undefined  },
-  { top: "20%", left: undefined,  right: "0%"       },
-  { top: "38%", left: "0%",       right: undefined  },
-  { top: "38%", left: undefined,  right: "0%"       },
-  { top: "55%", left: "0%",       right: undefined  },
-  { top: "55%", left: undefined,  right: "0%"       },
+  { top: "3%",  left: "0%",      right: undefined  },
+  { top: "3%",  left: undefined, right: "0%"       },
+  { top: "20%", left: "0%",      right: undefined  },
+  { top: "20%", left: undefined, right: "0%"       },
+  { top: "38%", left: "0%",      right: undefined  },
+  { top: "38%", left: undefined, right: "0%"       },
+  { top: "55%", left: "0%",      right: undefined  },
+  { top: "55%", left: undefined, right: "0%"       },
 ] as const;
 
 type SilhouettePhase = "hidden" | "showing" | "hiding";
@@ -285,8 +430,8 @@ function CoverSilhouettePeek() {
             setPhase("hidden");
             schedule();
           }, 3500);
-        }, rand(5000, 8000));
-      }, rand(8000, 16000));
+        }, rand(4500, 7500));
+      }, rand(6000, 12000));
     }
 
     schedule();
@@ -298,11 +443,11 @@ function CoverSilhouettePeek() {
     };
   }, []);
 
-  const zone         = SILHOUETTE_ZONES[zoneIdx];
-  const imgSrc       = useShadow
+  const zone        = SILHOUETTE_ZONES[zoneIdx];
+  const imgSrc      = useShadow
     ? "/cover-effects/pineapple-baby-soft-shadow.png"
     : "/cover-effects/pineapple-baby-silhouette.png";
-  const peakOpacity  = useShadow ? 0.22 : 0.18;
+  const peakOpacity = useShadow ? 0.23 : 0.19;
 
   return (
     <div
@@ -338,16 +483,14 @@ function CoverSilhouettePeek() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Effect 3 — Page Crease + Eyes Peek
 //
-// IMPORTANT: opacity must NOT be set on the container element.
-// Any opacity < 1 on a parent creates a compositing isolation layer —
-// child mix-blend-mode then blends against the isolated transparent layer
-// instead of the actual page, producing a visible rectangular artifact.
-// Individual image opacities are used instead for entry/exit fades.
+// All crease PNGs have near-white (#ffffff) backgrounds after pre-processing.
+// mix-blend-mode: multiply makes white areas fully transparent: white × page = page.
+// Content (amber crease lines, black eyes) composites naturally via multiply.
 //
-// Blend mode strategy (based on pixel sampling of source PNGs):
-//   page-crease-small.png             — white background → multiply
-//   page-crease-small-with-eyes.png   — white background → multiply
-//   page-crease-open-with-eyes.png    — black background → screen
+// CRITICAL: no opacity on the container element. opacity < 1 creates a CSS
+// compositing isolation layer — child blend modes then blend against the
+// isolated transparent layer instead of the real page background, producing
+// a visible rectangular artifact. Individual image opacities drive entry/exit fades.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type CreasePhase = "hidden" | "small" | "small-eyes" | "open-eyes" | "fading";
@@ -398,7 +541,7 @@ function CoverCreasePeek() {
             }, rand(2500, 3500));
           }, rand(1400, 2000));
         }, rand(1200, 1800));
-      }, rand(25000, 42000));
+      }, rand(20000, 35000));
     }
 
     schedule();
@@ -415,9 +558,9 @@ function CoverCreasePeek() {
   const pos       = CREASE_POS[posIdx];
   const objectPos = pos.side === "right" ? "top right" : "top left";
 
-  const smallOpacity     = phase === "small"     ? 1 : 0;
-  const smallEyesOpacity = phase === "small-eyes" ? 1 : 0;
-  const openEyesOpacity  = phase === "open-eyes"  ? 1 : 0;
+  const smallOpacity     = phase === "small"      ? 1 : 0;
+  const smallEyesOpacity = phase === "small-eyes"  ? 1 : 0;
+  const openEyesOpacity  = phase === "open-eyes"   ? 1 : 0;
 
   return (
     <div
@@ -429,10 +572,12 @@ function CoverCreasePeek() {
         right:  pos.side === "right" ? 0 : undefined,
         zIndex: 20,
         width:  "clamp(220px, 30vw, 340px)",
-        // No opacity property — see comment above
+        // No opacity on container — see comment above
       }}
     >
       <div style={{ position: "relative" }}>
+        {/* All crease PNGs now have pure-white backgrounds after pre-processing.
+            multiply blend: white × page = page (transparent). Content composites naturally. */}
         <img
           src="/cover-effects/page-crease-small.png"
           alt=""
@@ -465,7 +610,7 @@ function CoverCreasePeek() {
             position: "absolute", top: 0, left: 0,
             width: "100%", height: "100%",
             objectFit: "contain", objectPosition: objectPos,
-            mixBlendMode: "screen",
+            mixBlendMode: "multiply",
             opacity:    openEyesOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
@@ -483,6 +628,7 @@ export default function CoverMagicEffects() {
 
   return (
     <>
+      <CoverAmbientShimmer />
       <CoverStardustTrail />
       <CoverSilhouettePeek />
       <CoverCreasePeek />
