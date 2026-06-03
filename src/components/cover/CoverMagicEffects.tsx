@@ -26,80 +26,94 @@ function randFloat(min: number, max: number): number {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Effect 1 — Stardust Trail (CSS-generated particles)
-//
-// Each burst generates TRAIL_COUNT small particle elements. Staggered
-// animation delays create the sweep illusion without moving a container.
-// Mode "sweep-right/left": particles spread across a horizontal band,
-// delays increase left→right (or right→left) so the active glow travels.
-// Mode "orbit": particles on an ellipse around the countdown area, delays
-// increase around the arc so a sparkle appears to orbit the cards.
+// Effect 1 — Stardust Trail
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TRAIL_COUNT = 20;
-const SWEEP_MS    = 2600; // how long the leading edge takes to cross the page
-const ORBIT_MS    = 3000; // one orbit sweep duration
+const TRAIL_COUNT = 30;
+const SWEEP_MS    = 2600;
+const ORBIT_MS    = 3000;
+
+type ParticleKind = "dot" | "star" | "glow";
 
 interface StarParticle {
-  // sweep: xPct (0-100 % across container), orbit: xPx/yPx from center
-  xPct: number;
-  xPx:  number;
-  yPx:  number;
-  y:    number;   // cross-trail scatter px
-  size: number;
+  xPct:  number;
+  xPx:   number;
+  yPx:   number;
+  y:     number;
+  size:  number;
   delay: number;
   dur:   number;
-  opk:   number;  // peak opacity
-  isStar: boolean;
+  opk:   number;
+  kind:  ParticleKind;
 }
 
 function buildSweep(dir: "right" | "left"): StarParticle[] {
   return Array.from({ length: TRAIL_COUNT }, (_, i) => {
-    const t   = i / (TRAIL_COUNT - 1);
+    const t    = i / (TRAIL_COUNT - 1);
     const xPct = dir === "right" ? t * 100 : (1 - t) * 100;
+    const kind: ParticleKind = i % 5 === 0 ? "star" : i % 7 === 0 ? "glow" : "dot";
     return {
       xPct, xPx: 0, yPx: 0,
-      y:      rand(-24, 24),
-      size:   rand(3, 7),
-      delay:  t * SWEEP_MS + rand(-100, 100),
-      dur:    rand(700, 1100),
-      opk:    randFloat(0.75, 1.0),
-      isStar: i % 5 === 0,
+      y:     rand(-28, 28),
+      size:  kind === "glow" ? rand(8, 14) : rand(3, 8),
+      delay: t * SWEEP_MS + rand(-80, 80),
+      dur:   rand(600, 1100),
+      opk:   randFloat(0.80, 1.0),
+      kind,
     };
   });
 }
 
 function buildOrbit(): StarParticle[] {
-  const N = 16, rx = 220, ry = 80;
+  const N = 20, rx = 220, ry = 80;
   return Array.from({ length: N }, (_, i) => {
     const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const kind: ParticleKind = i % 4 === 0 ? "star" : i % 6 === 0 ? "glow" : "dot";
     return {
       xPct: 50,
       xPx: rx * Math.cos(angle),
       yPx: ry * Math.sin(angle),
       y: 0,
-      size:  rand(3, 6),
-      delay: (i / N) * ORBIT_MS + rand(-50, 50),
-      dur:   rand(700, 1000),
-      opk:   randFloat(0.80, 1.0),
-      isStar: i % 4 === 0,
+      size:  kind === "glow" ? rand(8, 12) : rand(3, 7),
+      delay: (i / N) * ORBIT_MS + rand(-40, 40),
+      dur:   rand(700, 1100),
+      opk:   randFloat(0.85, 1.0),
+      kind,
     };
   });
 }
 
-const SWEEP_TOPS = ["7%", "13%", "22%", "5%"];
+const SWEEP_TOPS = ["5%", "9%", "15%", "22%", "3%"];
 
 function StarParticleEl({ p }: { p: StarParticle }) {
-  const glow = `drop-shadow(0 0 ${p.size}px rgba(255,214,79,0.95)) drop-shadow(0 0 ${p.size * 2}px rgba(255,240,150,0.65))`;
   const anim = `cover-particle-twinkle ${p.dur}ms ease-in-out ${p.delay}ms both`;
 
-  if (p.isStar) {
+  if (p.kind === "glow") {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          width:  p.size,
+          height: p.size,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(255,253,224,0.95) 0%, rgba(255,220,79,0.65) 35%, rgba(255,160,0,0) 100%)",
+          boxShadow: `0 0 ${p.size}px ${Math.round(p.size * 0.6)}px rgba(255,214,79,0.85), 0 0 ${p.size * 3}px rgba(255,240,130,0.55)`,
+          opacity: 0,
+          animation: anim,
+          transform: "translate(-50%, -50%)",
+        }}
+      />
+    );
+  }
+
+  if (p.kind === "star") {
+    const glow = `drop-shadow(0 0 ${p.size}px rgba(255,214,79,0.95)) drop-shadow(0 0 ${p.size * 2.5}px rgba(255,240,150,0.70))`;
     return (
       <span
         aria-hidden="true"
         style={{
           position: "absolute",
-          fontSize: p.size * 2.5,
+          fontSize: p.size * 2.8,
           lineHeight: 1,
           color: "#ffd84d",
           filter: glow,
@@ -113,6 +127,8 @@ function StarParticleEl({ p }: { p: StarParticle }) {
       </span>
     );
   }
+
+  // dot
   return (
     <div
       style={{
@@ -120,8 +136,8 @@ function StarParticleEl({ p }: { p: StarParticle }) {
         width:  p.size,
         height: p.size,
         borderRadius: "50%",
-        background: "radial-gradient(circle, #fffde0 0%, #ffd84d 55%, rgba(255,160,0,0.15) 100%)",
-        boxShadow: `0 0 ${p.size * 2}px rgba(255,214,79,0.95), 0 0 ${p.size * 4}px rgba(255,240,150,0.6)`,
+        background: "radial-gradient(circle, #fffde0 0%, #ffd84d 55%, rgba(255,160,0,0.12) 100%)",
+        boxShadow: `0 0 ${p.size * 2}px rgba(255,214,79,0.95), 0 0 ${p.size * 4}px rgba(255,240,150,0.65)`,
         opacity: 0,
         animation: anim,
         transform: "translate(-50%, -50%)",
@@ -167,7 +183,7 @@ function CoverStardustTrail() {
           setActive(false);
           schedule();
         }, visFor);
-      }, rand(7000, 12000));
+      }, rand(4000, 8000));
     }
 
     schedule();
@@ -178,17 +194,14 @@ function CoverStardustTrail() {
     };
   }, []);
 
-  // Particles are rebuilt only when a new burst fires (runKey change).
-  // mode is included so the memo sees the correct latest value.
   const particles = useMemo(() => {
-    if (mode === "orbit")       return buildOrbit();
-    if (mode === "sweep-left")  return buildSweep("left");
+    if (mode === "orbit")      return buildOrbit();
+    if (mode === "sweep-left") return buildSweep("left");
     return buildSweep("right");
   }, [runKey, mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!active) return null;
 
-  // Orbit: container is a zero-size point at the countdown center
   if (mode === "orbit") {
     return (
       <div
@@ -197,14 +210,7 @@ function CoverStardustTrail() {
         style={{ top: "34%", left: "50%", width: 0, height: 0, zIndex: 8 }}
       >
         {particles.map((p, i) => (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              left: p.xPx,
-              top:  p.yPx,
-            }}
-          >
+          <div key={i} style={{ position: "absolute", left: p.xPx, top: p.yPx }}>
             <StarParticleEl p={p} />
           </div>
         ))}
@@ -212,7 +218,6 @@ function CoverStardustTrail() {
     );
   }
 
-  // Sweep: full-width band, particles spread left→right or right→left
   return (
     <div
       aria-hidden="true"
@@ -221,20 +226,13 @@ function CoverStardustTrail() {
         top:    SWEEP_TOPS[topIdx],
         left:   0,
         right:  0,
-        height: "70px",
+        height: "80px",
         zIndex: 8,
         overflow: "visible",
       }}
     >
       {particles.map((p, i) => (
-        <div
-          key={i}
-          style={{
-            position:  "absolute",
-            left:      `${p.xPct}%`,
-            top:       `calc(50% + ${p.y}px)`,
-          }}
-        >
+        <div key={i} style={{ position: "absolute", left: `${p.xPct}%`, top: `calc(50% + ${p.y}px)` }}>
           <StarParticleEl p={p} />
         </div>
       ))}
@@ -244,28 +242,25 @@ function CoverStardustTrail() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Effect 2 — Silhouette Peek
-//
-// Six safe zones around the page edges (upper-left, upper-right, mid-left,
-// mid-right, lower-left, lower-right). A zone is randomly selected each
-// appearance so the silhouette is never in the same place twice in a row.
-// Zones avoid the title text center and the video player area.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SILHOUETTE_ZONES = [
-  { top: "4%",  left: "0%",       right: undefined  }, // upper-left
-  { top: "4%",  left: undefined,  right: "0%"       }, // upper-right
-  { top: "28%", left: "0%",       right: undefined  }, // mid-left (near countdown)
-  { top: "28%", left: undefined,  right: "0%"       }, // mid-right (near countdown)
-  { top: "50%", left: "0%",       right: undefined  }, // lower-left (above video)
-  { top: "50%", left: undefined,  right: "0%"       }, // lower-right (above video)
+  { top: "3%",  left: "0%",       right: undefined  },
+  { top: "3%",  left: undefined,  right: "0%"       },
+  { top: "20%", left: "0%",       right: undefined  },
+  { top: "20%", left: undefined,  right: "0%"       },
+  { top: "38%", left: "0%",       right: undefined  },
+  { top: "38%", left: undefined,  right: "0%"       },
+  { top: "55%", left: "0%",       right: undefined  },
+  { top: "55%", left: undefined,  right: "0%"       },
 ] as const;
 
 type SilhouettePhase = "hidden" | "showing" | "hiding";
 
 function CoverSilhouettePeek() {
-  const [phase,      setPhase]     = useState<SilhouettePhase>("hidden");
-  const [useShadow,  setUseShadow] = useState(true);
-  const [zoneIdx,    setZoneIdx]   = useState(0);
+  const [phase,     setPhase]     = useState<SilhouettePhase>("hidden");
+  const [useShadow, setUseShadow] = useState(true);
+  const [zoneIdx,   setZoneIdx]   = useState(0);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -290,8 +285,8 @@ function CoverSilhouettePeek() {
             setPhase("hidden");
             schedule();
           }, 3500);
-        }, rand(6000, 9000));
-      }, rand(15000, 28000));
+        }, rand(5000, 8000));
+      }, rand(8000, 16000));
     }
 
     schedule();
@@ -303,13 +298,12 @@ function CoverSilhouettePeek() {
     };
   }, []);
 
-  const zone      = SILHOUETTE_ZONES[zoneIdx];
-  const imgSrc    = useShadow
+  const zone         = SILHOUETTE_ZONES[zoneIdx];
+  const imgSrc       = useShadow
     ? "/cover-effects/pineapple-baby-soft-shadow.png"
     : "/cover-effects/pineapple-baby-silhouette.png";
-  const peakOpacity = useShadow ? 0.18 : 0.15;
+  const peakOpacity  = useShadow ? 0.22 : 0.18;
 
-  // Always rendered so the CSS opacity transition has a prior value to interpolate from
   return (
     <div
       aria-hidden="true"
@@ -319,7 +313,7 @@ function CoverSilhouettePeek() {
         left:  zone.left,
         right: zone.right,
         zIndex: 2,
-        width: "clamp(100px, 18vw, 220px)",
+        width: "clamp(120px, 22vw, 260px)",
       }}
     >
       <img
@@ -344,15 +338,16 @@ function CoverSilhouettePeek() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Effect 3 — Page Crease + Eyes Peek
 //
-// Previous version was broken for two reasons:
-//   1. bottom:0 on a min-height:100dvh container = well below the fold.
-//   2. zIndex:3 is below the z-10 content layer so it was invisible.
-// Fixed: top-anchored positions in the hero/countdown band, zIndex:20.
+// IMPORTANT: opacity must NOT be set on the container element.
+// Any opacity < 1 on a parent creates a compositing isolation layer —
+// child mix-blend-mode then blends against the isolated transparent layer
+// instead of the actual page, producing a visible rectangular artifact.
+// Individual image opacities are used instead for entry/exit fades.
 //
-// Sequence: hidden → small crease → small crease + eyes → open crease + eyes
-//           → fade out → hidden.  All three images stay in the DOM so
-//           crossfade transitions work without flicker.
-// Fires every 25–42 s; alternates left/right side.
+// Blend mode strategy (based on pixel sampling of source PNGs):
+//   page-crease-small.png             — white background → multiply
+//   page-crease-small-with-eyes.png   — white background → multiply
+//   page-crease-open-with-eyes.png    — black background → screen
 // ─────────────────────────────────────────────────────────────────────────────
 
 type CreasePhase = "hidden" | "small" | "small-eyes" | "open-eyes" | "fading";
@@ -417,21 +412,12 @@ function CoverCreasePeek() {
     };
   }, []);
 
-  const pos = CREASE_POS[posIdx];
-
-  // Container manages the entry/exit fade; inner images crossfade individually
-  const containerOpacity =
-    phase === "fading" ? 0 : phase === "hidden" ? 0 : 1;
-  const containerTransition =
-    phase === "fading"
-      ? "opacity 1.5s ease-in-out"
-      : "opacity 0.5s ease-in-out";
-
-  const showSmall     = phase === "small";
-  const showSmallEyes = phase === "small-eyes";
-  const showOpenEyes  = phase === "open-eyes" || phase === "fading";
-
+  const pos       = CREASE_POS[posIdx];
   const objectPos = pos.side === "right" ? "top right" : "top left";
+
+  const smallOpacity     = phase === "small"     ? 1 : 0;
+  const smallEyesOpacity = phase === "small-eyes" ? 1 : 0;
+  const openEyesOpacity  = phase === "open-eyes"  ? 1 : 0;
 
   return (
     <div
@@ -441,22 +427,20 @@ function CoverCreasePeek() {
         top:    pos.top,
         left:   pos.side === "left"  ? 0 : undefined,
         right:  pos.side === "right" ? 0 : undefined,
-        // zIndex 20 — above content layer (z-10) so the crease is clearly visible
         zIndex: 20,
         width:  "clamp(220px, 30vw, 340px)",
-        opacity:    containerOpacity,
-        transition: containerTransition,
+        // No opacity property — see comment above
       }}
     >
       <div style={{ position: "relative" }}>
-        {/* Base image defines the container height */}
         <img
           src="/cover-effects/page-crease-small.png"
           alt=""
           loading="lazy"
           style={{
             width: "100%", height: "auto", display: "block",
-            opacity:    showSmall ? 1 : 0,
+            mixBlendMode: "multiply",
+            opacity:    smallOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
@@ -468,7 +452,8 @@ function CoverCreasePeek() {
             position: "absolute", top: 0, left: 0,
             width: "100%", height: "100%",
             objectFit: "contain", objectPosition: objectPos,
-            opacity:    showSmallEyes ? 1 : 0,
+            mixBlendMode: "multiply",
+            opacity:    smallEyesOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
@@ -480,7 +465,8 @@ function CoverCreasePeek() {
             position: "absolute", top: 0, left: 0,
             width: "100%", height: "100%",
             objectFit: "contain", objectPosition: objectPos,
-            opacity:    showOpenEyes ? 1 : 0,
+            mixBlendMode: "screen",
+            opacity:    openEyesOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
@@ -489,8 +475,6 @@ function CoverCreasePeek() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Root export
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CoverMagicEffects() {
