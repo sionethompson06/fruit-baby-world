@@ -52,6 +52,14 @@ body {
   animation: cover-pulse-glow 6s ease-in-out infinite;
 }
 
+/* Each stardust particle: scales up, glows, then fades out */
+@keyframes cover-particle-twinkle {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+  25%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  65%  { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0); }
+}
+
 /* Sparkle trail: sweeps in from the left edge, arcs slightly, fades out */
 @keyframes cover-sparkle-sweep-right {
   0%   { opacity: 0; transform: translateX(-30px) rotate(-6deg) scale(0.88); }
@@ -85,7 +93,8 @@ body {
   /* Cover magic effects — also halted via the useReducedMotion React hook,
      but include CSS override as a secondary safety net */
   [style*="cover-sparkle-sweep"],
-  [style*="cover-silhouette-float"] {
+  [style*="cover-silhouette-float"],
+  [style*="cover-particle-twinkle"] {
     animation: none !important;
   }
 }

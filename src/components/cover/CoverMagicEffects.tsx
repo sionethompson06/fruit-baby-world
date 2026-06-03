@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -21,36 +21,127 @@ function rand(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function randFloat(min: number, max: number): number {
+  return Math.random() * (max - min) + min;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Effect 1 — Sparkle Orbit
-// Picks one of the three sparkle-trail images, positions it near the top of
-// the page, and plays a CSS keyframe sweep (left→right or right→left).
-// Fires every 7–13 s; each burst lasts ~4.2 s (the animation duration).
+// Effect 1 — Stardust Trail (CSS-generated particles)
+//
+// Each burst generates TRAIL_COUNT small particle elements. Staggered
+// animation delays create the sweep illusion without moving a container.
+// Mode "sweep-right/left": particles spread across a horizontal band,
+// delays increase left→right (or right→left) so the active glow travels.
+// Mode "orbit": particles on an ellipse around the countdown area, delays
+// increase around the arc so a sparkle appears to orbit the cards.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SPARKLE_IMGS = [
-  "/cover-effects/magic-sparkle-trail-1.png",
-  "/cover-effects/magic-sparkle-trail-2.png",
-  "/cover-effects/magic-sparkle-trail-3.png",
-] as const;
+const TRAIL_COUNT = 20;
+const SWEEP_MS    = 2600; // how long the leading edge takes to cross the page
+const ORBIT_MS    = 3000; // one orbit sweep duration
 
-const SPARKLE_CONFIGS: Array<{
-  direction: "right" | "left";
-  top: string;
-  left?: string;
-  right?: string;
-}> = [
-  { direction: "right", top: "5%",  left: "-6%"  },
-  { direction: "left",  top: "9%",  right: "-6%" },
-  { direction: "right", top: "20%", left: "0%"   },
-  { direction: "left",  top: "3%",  right: "0%"  },
+interface StarParticle {
+  // sweep: xPct (0-100 % across container), orbit: xPx/yPx from center
+  xPct: number;
+  xPx:  number;
+  yPx:  number;
+  y:    number;   // cross-trail scatter px
+  size: number;
+  delay: number;
+  dur:   number;
+  opk:   number;  // peak opacity
+  isStar: boolean;
+}
+
+function buildSweep(dir: "right" | "left"): StarParticle[] {
+  return Array.from({ length: TRAIL_COUNT }, (_, i) => {
+    const t   = i / (TRAIL_COUNT - 1);
+    const xPct = dir === "right" ? t * 100 : (1 - t) * 100;
+    return {
+      xPct, xPx: 0, yPx: 0,
+      y:      rand(-24, 24),
+      size:   rand(3, 7),
+      delay:  t * SWEEP_MS + rand(-100, 100),
+      dur:    rand(700, 1100),
+      opk:    randFloat(0.75, 1.0),
+      isStar: i % 5 === 0,
+    };
+  });
+}
+
+function buildOrbit(): StarParticle[] {
+  const N = 16, rx = 220, ry = 80;
+  return Array.from({ length: N }, (_, i) => {
+    const angle = (i / N) * Math.PI * 2 - Math.PI / 2;
+    return {
+      xPct: 50,
+      xPx: rx * Math.cos(angle),
+      yPx: ry * Math.sin(angle),
+      y: 0,
+      size:  rand(3, 6),
+      delay: (i / N) * ORBIT_MS + rand(-50, 50),
+      dur:   rand(700, 1000),
+      opk:   randFloat(0.80, 1.0),
+      isStar: i % 4 === 0,
+    };
+  });
+}
+
+const SWEEP_TOPS = ["7%", "13%", "22%", "5%"];
+
+function StarParticleEl({ p }: { p: StarParticle }) {
+  const glow = `drop-shadow(0 0 ${p.size}px rgba(255,214,79,0.95)) drop-shadow(0 0 ${p.size * 2}px rgba(255,240,150,0.65))`;
+  const anim = `cover-particle-twinkle ${p.dur}ms ease-in-out ${p.delay}ms both`;
+
+  if (p.isStar) {
+    return (
+      <span
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          fontSize: p.size * 2.5,
+          lineHeight: 1,
+          color: "#ffd84d",
+          filter: glow,
+          userSelect: "none",
+          opacity: 0,
+          animation: anim,
+          transform: "translate(-50%, -50%)",
+        }}
+      >
+        ✦
+      </span>
+    );
+  }
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width:  p.size,
+        height: p.size,
+        borderRadius: "50%",
+        background: "radial-gradient(circle, #fffde0 0%, #ffd84d 55%, rgba(255,160,0,0.15) 100%)",
+        boxShadow: `0 0 ${p.size * 2}px rgba(255,214,79,0.95), 0 0 ${p.size * 4}px rgba(255,240,150,0.6)`,
+        opacity: 0,
+        animation: anim,
+        transform: "translate(-50%, -50%)",
+      }}
+    />
+  );
+}
+
+type TrailMode = "sweep-right" | "sweep-left" | "orbit";
+const TRAIL_MODES: TrailMode[] = [
+  "sweep-right", "sweep-right",
+  "sweep-left",  "sweep-left",
+  "orbit",
 ];
 
-function CoverSparkleOrbit() {
-  const [active, setActive] = useState(false);
-  const [runKey, setRunKey] = useState(0);
-  const [imgIdx, setImgIdx] = useState(0);
-  const [cfgIdx, setCfgIdx] = useState(0);
+function CoverStardustTrail() {
+  const [active,  setActive]  = useState(false);
+  const [runKey,  setRunKey]  = useState(0);
+  const [mode,    setMode]    = useState<TrailMode>("sweep-right");
+  const [topIdx,  setTopIdx]  = useState(0);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -61,17 +152,22 @@ function CoverSparkleOrbit() {
     function schedule() {
       t1 = setTimeout(() => {
         if (!mountedRef.current) return;
-        setImgIdx(rand(0, SPARKLE_IMGS.length - 1));
-        setCfgIdx(rand(0, SPARKLE_CONFIGS.length - 1));
-        setRunKey((k) => k + 1); // changing key remounts → CSS animation restarts
+        const nextMode = TRAIL_MODES[rand(0, TRAIL_MODES.length - 1)];
+        setMode(nextMode);
+        setTopIdx(rand(0, SWEEP_TOPS.length - 1));
+        setRunKey(k => k + 1);
         setActive(true);
+
+        const visFor = nextMode === "orbit"
+          ? ORBIT_MS + 1200
+          : SWEEP_MS  + 1400;
 
         t2 = setTimeout(() => {
           if (!mountedRef.current) return;
           setActive(false);
           schedule();
-        }, 4200);
-      }, rand(7000, 13000));
+        }, visFor);
+      }, rand(7000, 12000));
     }
 
     schedule();
@@ -82,53 +178,94 @@ function CoverSparkleOrbit() {
     };
   }, []);
 
+  // Particles are rebuilt only when a new burst fires (runKey change).
+  // mode is included so the memo sees the correct latest value.
+  const particles = useMemo(() => {
+    if (mode === "orbit")       return buildOrbit();
+    if (mode === "sweep-left")  return buildSweep("left");
+    return buildSweep("right");
+  }, [runKey, mode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!active) return null;
 
-  const cfg = SPARKLE_CONFIGS[cfgIdx];
+  // Orbit: container is a zero-size point at the countdown center
+  if (mode === "orbit") {
+    return (
+      <div
+        aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{ top: "34%", left: "50%", width: 0, height: 0, zIndex: 8 }}
+      >
+        {particles.map((p, i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: p.xPx,
+              top:  p.yPx,
+            }}
+          >
+            <StarParticleEl p={p} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
+  // Sweep: full-width band, particles spread left→right or right→left
   return (
     <div
       aria-hidden="true"
       className="absolute pointer-events-none select-none"
       style={{
-        top: cfg.top,
-        left: cfg.left,
-        right: cfg.right,
-        zIndex: 6,
-        width: "clamp(130px, 17vw, 230px)",
+        top:    SWEEP_TOPS[topIdx],
+        left:   0,
+        right:  0,
+        height: "70px",
+        zIndex: 8,
+        overflow: "visible",
       }}
     >
-      {/* key change forces React to remount this img, restarting the CSS animation */}
-      <img
-        key={runKey}
-        src={SPARKLE_IMGS[imgIdx]}
-        alt=""
-        loading="lazy"
-        style={{
-          width: "100%",
-          height: "auto",
-          display: "block",
-          animation: `cover-sparkle-sweep-${cfg.direction} 4.2s ease-in-out forwards`,
-          filter:
-            "drop-shadow(0 0 10px rgba(255,214,79,0.80)) drop-shadow(0 0 22px rgba(255,240,150,0.55))",
-        }}
-      />
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          style={{
+            position:  "absolute",
+            left:      `${p.xPct}%`,
+            top:       `calc(50% + ${p.y}px)`,
+          }}
+        >
+          <StarParticleEl p={p} />
+        </div>
+      ))}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Effect 2 — Pineapple Baby Silhouette
-// Alternates between the soft-shadow and the crisper silhouette asset.
-// Fades in very slowly (4 s), floats gently while visible, fades out (4 s).
-// Fires every 12–22 s and stays visible for 9–13 s.
+// Effect 2 — Silhouette Peek
+//
+// Six safe zones around the page edges (upper-left, upper-right, mid-left,
+// mid-right, lower-left, lower-right). A zone is randomly selected each
+// appearance so the silhouette is never in the same place twice in a row.
+// Zones avoid the title text center and the video player area.
 // ─────────────────────────────────────────────────────────────────────────────
+
+const SILHOUETTE_ZONES = [
+  { top: "4%",  left: "0%",       right: undefined  }, // upper-left
+  { top: "4%",  left: undefined,  right: "0%"       }, // upper-right
+  { top: "28%", left: "0%",       right: undefined  }, // mid-left (near countdown)
+  { top: "28%", left: undefined,  right: "0%"       }, // mid-right (near countdown)
+  { top: "50%", left: "0%",       right: undefined  }, // lower-left (above video)
+  { top: "50%", left: undefined,  right: "0%"       }, // lower-right (above video)
+] as const;
 
 type SilhouettePhase = "hidden" | "showing" | "hiding";
 
-function CoverSilhouetteEffect() {
-  const [phase, setPhase] = useState<SilhouettePhase>("hidden");
-  const [useShadow, setUseShadow] = useState(true);
+function CoverSilhouettePeek() {
+  const [phase,      setPhase]     = useState<SilhouettePhase>("hidden");
+  const [useShadow,  setUseShadow] = useState(true);
+  const [zoneIdx,    setZoneIdx]   = useState(0);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -140,7 +277,8 @@ function CoverSilhouetteEffect() {
     function schedule() {
       t1 = setTimeout(() => {
         if (!mountedRef.current) return;
-        setUseShadow((v) => !v);
+        setUseShadow(v => !v);
+        setZoneIdx(rand(0, SILHOUETTE_ZONES.length - 1));
         setPhase("showing");
 
         t2 = setTimeout(() => {
@@ -151,9 +289,9 @@ function CoverSilhouetteEffect() {
             if (!mountedRef.current) return;
             setPhase("hidden");
             schedule();
-          }, 4000);
-        }, rand(9000, 13000));
-      }, rand(12000, 22000));
+          }, 3500);
+        }, rand(6000, 9000));
+      }, rand(15000, 28000));
     }
 
     schedule();
@@ -165,28 +303,34 @@ function CoverSilhouetteEffect() {
     };
   }, []);
 
-  // Always render so the CSS transition has a previous opacity value to animate from
-  const imgSrc = useShadow
+  const zone      = SILHOUETTE_ZONES[zoneIdx];
+  const imgSrc    = useShadow
     ? "/cover-effects/pineapple-baby-soft-shadow.png"
     : "/cover-effects/pineapple-baby-silhouette.png";
-  const peakOpacity = useShadow ? 0.13 : 0.10;
-  const imgOpacity = phase === "showing" ? peakOpacity : 0;
+  const peakOpacity = useShadow ? 0.18 : 0.15;
 
+  // Always rendered so the CSS opacity transition has a prior value to interpolate from
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-0 pointer-events-none select-none flex items-center justify-center"
-      style={{ zIndex: 1 }}
+      className="absolute pointer-events-none select-none"
+      style={{
+        top:   zone.top,
+        left:  zone.left,
+        right: zone.right,
+        zIndex: 2,
+        width: "clamp(100px, 18vw, 220px)",
+      }}
     >
       <img
         src={imgSrc}
         alt=""
         loading="lazy"
         style={{
-          width: "min(65vw, 400px)",
-          height: "auto",
-          opacity: imgOpacity,
-          transition: "opacity 4s ease-in-out",
+          width:      "100%",
+          height:     "auto",
+          opacity:    phase === "showing" ? peakOpacity : 0,
+          transition: "opacity 3s ease-in-out",
           animation:
             phase === "showing"
               ? "cover-silhouette-float 9s ease-in-out infinite"
@@ -199,17 +343,30 @@ function CoverSilhouetteEffect() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Effect 3 — Page Crease + Eyes Peek
-// Sequence: small crease → small crease with eyes → open crease with eyes → fade out.
-// All three images are always in the DOM and crossfade via opacity transitions,
-// which prevents flicker on image swaps (images preload in the background).
-// Fires every 22–38 s; the full sequence takes ~7–10 s.
-// Positioned at the bottom-right corner to mimic a page being peeked behind.
+//
+// Previous version was broken for two reasons:
+//   1. bottom:0 on a min-height:100dvh container = well below the fold.
+//   2. zIndex:3 is below the z-10 content layer so it was invisible.
+// Fixed: top-anchored positions in the hero/countdown band, zIndex:20.
+//
+// Sequence: hidden → small crease → small crease + eyes → open crease + eyes
+//           → fade out → hidden.  All three images stay in the DOM so
+//           crossfade transitions work without flicker.
+// Fires every 25–42 s; alternates left/right side.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type CreasePhase = "hidden" | "small" | "small-eyes" | "open-eyes" | "fading";
 
+const CREASE_POS = [
+  { top: "13%", side: "right" as const },
+  { top: "20%", side: "left"  as const },
+  { top: "17%", side: "right" as const },
+  { top: "10%", side: "left"  as const },
+];
+
 function CoverCreasePeek() {
-  const [phase, setPhase] = useState<CreasePhase>("hidden");
+  const [phase,  setPhase]  = useState<CreasePhase>("hidden");
+  const [posIdx, setPosIdx] = useState(0);
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -223,6 +380,7 @@ function CoverCreasePeek() {
     function schedule() {
       t1 = setTimeout(() => {
         if (!mountedRef.current) return;
+        setPosIdx(rand(0, CREASE_POS.length - 1));
         setPhase("small");
 
         t2 = setTimeout(() => {
@@ -242,10 +400,10 @@ function CoverCreasePeek() {
                 setPhase("hidden");
                 schedule();
               }, 1500);
-            }, rand(2200, 3400));
+            }, rand(2500, 3500));
           }, rand(1400, 2000));
         }, rand(1200, 1800));
-      }, rand(22000, 38000));
+      }, rand(25000, 42000));
     }
 
     schedule();
@@ -259,74 +417,70 @@ function CoverCreasePeek() {
     };
   }, []);
 
-  // Container fades in fast on entry, fades out slowly on exit
-  const containerOpacity = phase === "fading" ? 0 : phase === "hidden" ? 0 : 1;
+  const pos = CREASE_POS[posIdx];
+
+  // Container manages the entry/exit fade; inner images crossfade individually
+  const containerOpacity =
+    phase === "fading" ? 0 : phase === "hidden" ? 0 : 1;
   const containerTransition =
-    phase === "fading" ? "opacity 1.5s ease-in-out" : "opacity 0.5s ease-in-out";
+    phase === "fading"
+      ? "opacity 1.5s ease-in-out"
+      : "opacity 0.5s ease-in-out";
 
   const showSmall     = phase === "small";
   const showSmallEyes = phase === "small-eyes";
   const showOpenEyes  = phase === "open-eyes" || phase === "fading";
+
+  const objectPos = pos.side === "right" ? "top right" : "top left";
 
   return (
     <div
       aria-hidden="true"
       className="absolute pointer-events-none select-none"
       style={{
-        bottom: 0,
-        right: 0,
-        zIndex: 3,
-        width: "clamp(150px, 26vw, 270px)",
-        opacity: containerOpacity,
+        top:    pos.top,
+        left:   pos.side === "left"  ? 0 : undefined,
+        right:  pos.side === "right" ? 0 : undefined,
+        // zIndex 20 — above content layer (z-10) so the crease is clearly visible
+        zIndex: 20,
+        width:  "clamp(220px, 30vw, 340px)",
+        opacity:    containerOpacity,
         transition: containerTransition,
       }}
     >
-      {/* Stack all three crease images so they can crossfade cleanly */}
       <div style={{ position: "relative" }}>
-        {/* Base image — sits in normal flow and defines the container height */}
+        {/* Base image defines the container height */}
         <img
           src="/cover-effects/page-crease-small.png"
           alt=""
           loading="lazy"
           style={{
-            width: "100%",
-            height: "auto",
-            display: "block",
-            opacity: showSmall ? 1 : 0,
+            width: "100%", height: "auto", display: "block",
+            opacity:    showSmall ? 1 : 0,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
-        {/* Overlay 1 — small crease with eyes */}
         <img
           src="/cover-effects/page-crease-small-with-eyes.png"
           alt=""
           loading="lazy"
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            objectPosition: "bottom right",
-            opacity: showSmallEyes ? 1 : 0,
+            position: "absolute", top: 0, left: 0,
+            width: "100%", height: "100%",
+            objectFit: "contain", objectPosition: objectPos,
+            opacity:    showSmallEyes ? 1 : 0,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
-        {/* Overlay 2 — open crease with eyes */}
         <img
           src="/cover-effects/page-crease-open-with-eyes.png"
           alt=""
           loading="lazy"
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            objectPosition: "bottom right",
-            opacity: showOpenEyes ? 1 : 0,
+            position: "absolute", top: 0, left: 0,
+            width: "100%", height: "100%",
+            objectFit: "contain", objectPosition: objectPos,
+            opacity:    showOpenEyes ? 1 : 0,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
@@ -336,7 +490,7 @@ function CoverCreasePeek() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Root export — mounts all three effects; returns nothing if reduced motion
+// Root export
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function CoverMagicEffects() {
@@ -345,8 +499,8 @@ export default function CoverMagicEffects() {
 
   return (
     <>
-      <CoverSparkleOrbit />
-      <CoverSilhouetteEffect />
+      <CoverStardustTrail />
+      <CoverSilhouettePeek />
       <CoverCreasePeek />
     </>
   );
