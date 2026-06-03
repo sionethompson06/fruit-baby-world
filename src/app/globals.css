@@ -52,11 +52,40 @@ body {
   animation: cover-pulse-glow 6s ease-in-out infinite;
 }
 
+/* Sparkle trail: sweeps in from the left edge, arcs slightly, fades out */
+@keyframes cover-sparkle-sweep-right {
+  0%   { opacity: 0; transform: translateX(-30px) rotate(-6deg) scale(0.88); }
+  12%  { opacity: 0.92; }
+  72%  { opacity: 0.80; transform: translateX(60px) rotate(1deg) scale(1.02); }
+  100% { opacity: 0; transform: translateX(130px) rotate(4deg) scale(1.06); }
+}
+
+/* Sparkle trail: sweeps in from the right edge */
+@keyframes cover-sparkle-sweep-left {
+  0%   { opacity: 0; transform: translateX(30px) rotate(6deg) scale(0.88); }
+  12%  { opacity: 0.92; }
+  72%  { opacity: 0.80; transform: translateX(-60px) rotate(-1deg) scale(1.02); }
+  100% { opacity: 0; transform: translateX(-130px) rotate(-4deg) scale(1.06); }
+}
+
+/* Silhouette: slow ghostly float while visible */
+@keyframes cover-silhouette-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  35%       { transform: translateY(-10px) scale(1.008); }
+  65%       { transform: translateY(-5px) scale(1.003); }
+}
+
 /* Respect user's motion preference — stop all cover animations */
 @media (prefers-reduced-motion: reduce) {
   .animate-float-gentle,
   .animate-float-slow,
   .cover-glow-orb {
+    animation: none !important;
+  }
+  /* Cover magic effects — also halted via the useReducedMotion React hook,
+     but include CSS override as a secondary safety net */
+  [style*="cover-sparkle-sweep"],
+  [style*="cover-silhouette-float"] {
     animation: none !important;
   }
 }

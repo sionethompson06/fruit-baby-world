@@ -2,6 +2,7 @@ import type { CoverPageSettings } from "@/lib/coverPageTypes";
 import { getActiveCoverVideos } from "@/lib/coverPage";
 import CoverCountdown from "./CoverCountdown";
 import CoverVideoPlayer from "./CoverVideoPlayer";
+import CoverMagicEffects from "./CoverMagicEffects";
 
 // Decorative floaters — pure CSS/emoji, aria-hidden, pointer-events: none
 function CoverDecorations() {
@@ -88,8 +89,11 @@ export default function CoverPage({ settings }: { settings: CoverPageSettings })
         minHeight: "100dvh",
       }}
     >
-      {/* Decorative background layer */}
+      {/* Static decorative background layer */}
       <CoverDecorations />
+
+      {/* Animated magic effects — client-only, pointer-events:none, reduced-motion aware */}
+      <CoverMagicEffects />
 
       {/* Page content — above decorations */}
       <div className="relative z-10 flex flex-col items-center w-full px-4 py-6 sm:py-10 text-center">
