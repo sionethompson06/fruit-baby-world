@@ -8,6 +8,7 @@ const primaryLinks = [
   { href: "/admin/homepage", label: "Homepage", emoji: "🌟" },
   { href: "/admin/storybooks", label: "Storybooks", emoji: "📚" },
   { href: "/admin/characters", label: "Characters", emoji: "🍍" },
+  { href: "/admin/products", label: "Products", emoji: "🛍️" },
   { href: "/admin/media", label: "Media", emoji: "🎞️" },
   { href: "/admin/publishing", label: "Publish", emoji: "📤" },
   { href: "/admin/cover", label: "Cover", emoji: "🎭" },
@@ -18,7 +19,6 @@ const legacyLinks = [
   { href: "/admin/variations", label: "Variations", emoji: "🎨" },
   { href: "/admin/canon", label: "Canon", emoji: "🔒" },
   { href: "/admin/media-health", label: "Media Health", emoji: "🩺" },
-  { href: "/admin/products", label: "Products", emoji: "🛍️" },
 ];
 
 export default function AdminNav() {

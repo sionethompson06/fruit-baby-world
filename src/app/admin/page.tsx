@@ -56,6 +56,15 @@ const primaryCards = [
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/publishing",
   },
+  {
+    emoji: "🛍️",
+    title: "Products",
+    description:
+      "Manage product lines, collectables, product images, and shop details.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/products",
+  },
 ];
 
 // ─── Recommended publishing workflow ──────────────────────────────────────────
@@ -94,6 +103,12 @@ const quickStart = [
     text: "Go to Publish to review stories and manage which ones are public.",
     href: "/admin/publishing",
     label: "Publish",
+  },
+  {
+    icon: "🛍️",
+    text: "Go to Products to manage shop collectables, upload product images, assign image roles, and edit product details.",
+    href: "/admin/products",
+    label: "Products",
   },
 ];
 
@@ -135,15 +150,6 @@ const developerTools = [
     status: "Legacy",
     statusColor: "bg-tiki-brown/10 text-tiki-brown/60",
     href: "/admin/canon",
-  },
-  {
-    emoji: "🛍️",
-    title: "Products",
-    description:
-      "Manage product mockups and shop previews.",
-    status: "Legacy",
-    statusColor: "bg-tiki-brown/10 text-tiki-brown/60",
-    href: "/admin/products",
   },
 ];
 
