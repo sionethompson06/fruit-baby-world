@@ -182,158 +182,151 @@ function ProductModal({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-gradient-to-br from-pineapple-yellow/20 via-bg-cream/85 to-ube-purple/15 backdrop-blur-sm" />
 
-      {/* Panel */}
-      <div className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-3xl w-full max-h-[92vh] overflow-y-auto flex flex-col">
+      {/* Panel — vertical stack: image → thumbnails → details */}
+      <div className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-xl w-full max-h-[95vh] overflow-y-auto flex flex-col">
 
-        {/* Sticky close strip */}
-        <div className="sticky top-0 z-10 flex justify-end px-4 pt-3 pb-1 bg-white/95 backdrop-blur-sm rounded-t-3xl flex-shrink-0">
+        {/* ─ Image area — full width, dominant ─────────────────────── */}
+        <div className="relative w-full bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl overflow-hidden flex items-center justify-center">
+          {/* Close button — always accessible in top-right corner */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close product preview"
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-tiki-brown/6 text-tiki-brown/55 hover:bg-tiki-brown/14 transition-colors text-sm font-bold"
+            className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/18 text-white hover:bg-black/32 transition-colors text-sm font-bold"
           >
             ✕
           </button>
+
+          {displayImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={displayImage.id}
+              src={displayImage.imageUrl}
+              alt={displayImage.altText ?? `${title} ${productLabel}`}
+              className="w-full h-auto max-h-[70vh] object-contain p-4"
+            />
+          ) : (
+            <div className="py-20 flex flex-col items-center gap-3">
+              <span className="text-7xl opacity-20">🛍️</span>
+            </div>
+          )}
         </div>
 
-        {/* Two-column body */}
-        <div className="flex flex-col sm:flex-row">
-
-          {/* ─ Left: image + thumbnails ──────────────────────────────── */}
-          <div className="sm:w-[44%] sm:flex-shrink-0 px-4 pt-1 pb-4 flex flex-col gap-3">
-            {/* Large image */}
-            <div className="aspect-square rounded-2xl overflow-hidden bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 relative flex items-center justify-center">
-              {displayImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={displayImage.id}
-                  src={displayImage.imageUrl}
-                  alt={displayImage.altText ?? `${title} ${productLabel}`}
-                  className="absolute inset-0 w-full h-full object-contain p-4"
-                />
-              ) : (
-                <span className="text-6xl opacity-20">🛍️</span>
-              )}
-            </div>
-
-            {/* Thumbnail strip */}
-            {galleryImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {galleryImages.map((img) => {
-                  const isSelected = img.id === displayImage?.id;
-                  return (
-                    <button
-                      key={img.id}
-                      type="button"
-                      onClick={() => setSelectedImage(img)}
-                      aria-label={img.altText ?? `Image ${img.sortOrder + 1}`}
-                      aria-pressed={isSelected}
-                      className={[
-                        "flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-150",
-                        isSelected
-                          ? "border-ube-purple/55 ring-2 ring-ube-purple/20 shadow-sm scale-105"
-                          : "border-tiki-brown/10 opacity-55 hover:opacity-90 hover:border-tiki-brown/25",
-                      ].join(" ")}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={img.imageUrl}
-                        alt=""
-                        aria-hidden="true"
-                        className="w-full h-full object-contain p-1 bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8"
-                        loading="lazy"
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+        {/* ─ Thumbnail strip — below image, only when multiple ──────── */}
+        {galleryImages.length > 1 && (
+          <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-tiki-brown/8">
+            {galleryImages.map((img) => {
+              const isSelected = img.id === displayImage?.id;
+              return (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setSelectedImage(img)}
+                  aria-label={img.altText ?? `Image ${img.sortOrder + 1}`}
+                  aria-pressed={isSelected}
+                  className={[
+                    "flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-150",
+                    isSelected
+                      ? "border-ube-purple/55 ring-2 ring-ube-purple/20 shadow-sm scale-105"
+                      : "border-tiki-brown/10 opacity-55 hover:opacity-90 hover:border-tiki-brown/25",
+                  ].join(" ")}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.imageUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-contain p-1 bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8"
+                    loading="lazy"
+                  />
+                </button>
+              );
+            })}
           </div>
+        )}
 
-          {/* ─ Right: product details ────────────────────────────────── */}
-          <div className="flex-1 px-5 sm:px-6 pt-0 sm:pt-4 pb-7 flex flex-col gap-4 sm:border-l sm:border-tiki-brown/8">
+        {/* ─ Product details — below image/thumbnails ───────────────── */}
+        <div className="px-6 py-5 flex flex-col gap-4 pb-8">
 
-            {/* Badges + title */}
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap gap-1.5">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
-                  {productLabel}
-                </span>
-                {item.collectionName && (
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/10 text-ube-purple/70">
-                    {item.collectionName}
-                  </span>
-                )}
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-tiki-brown leading-tight">{title}</h2>
-              {showSubtitle && (
-                <p className="text-sm text-tiki-brown/45 font-semibold -mt-1">{item.characterName}</p>
-              )}
-            </div>
-
-            {/* Status + price badges */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown">
-                {item.statusLabel || "Harvest Coming Soon"}
+          {/* Title + badges */}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
+                {productLabel}
               </span>
-              {item.priceLabel && (
-                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/15 text-tropical-green/80">
-                  {item.priceLabel}
+              {item.collectionName && (
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/10 text-ube-purple/70">
+                  {item.collectionName}
                 </span>
               )}
             </div>
-
-            {/* Descriptions */}
-            <div className="flex flex-col gap-2">
-              {item.shortDescription && (
-                <p className="text-sm font-semibold text-tiki-brown/80 leading-snug">{item.shortDescription}</p>
-              )}
-              {item.productDescription ? (
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">{item.productDescription}</p>
-              ) : !item.shortDescription ? (
-                <p className="text-sm text-tiki-brown/40 leading-relaxed italic">
-                  A collectible Fruit Baby character product preview. More details are growing soon.
-                </p>
-              ) : null}
-            </div>
-
-            {/* Detail bullets */}
-            {item.detailBullets && item.detailBullets.length > 0 && (
-              <ul className="flex flex-col gap-1.5">
-                {item.detailBullets.map((bullet, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-tiki-brown/65">
-                    <span className="flex-shrink-0 mt-0.5 text-pineapple-yellow/80 text-xs font-black">✦</span>
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
+            <h2 className="text-xl font-black text-tiki-brown leading-tight">{title}</h2>
+            {showSubtitle && (
+              <p className="text-sm text-tiki-brown/45 font-semibold -mt-1">{item.characterName}</p>
             )}
-
-            {/* Product details grid */}
-            {hasDetails && (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-tiki-brown/3 rounded-2xl px-4 py-3.5">
-                {(
-                  [
-                    item.material && { label: "Material", value: item.material },
-                    item.size && { label: "Size", value: item.size },
-                    item.ageGuidance && { label: "Age Guide", value: item.ageGuidance },
-                    item.careInstructions && { label: "Care", value: item.careInstructions },
-                  ] as (false | { label: string; value: string })[]
-                )
-                  .filter((d): d is { label: string; value: string } => !!d)
-                  .map((d) => (
-                    <div key={d.label} className="flex flex-col gap-0.5">
-                      <p className="text-[10px] font-black text-tiki-brown/35 uppercase tracking-wide">{d.label}</p>
-                      <p className="text-xs font-semibold text-tiki-brown/65">{d.value}</p>
-                    </div>
-                  ))}
-              </div>
-            )}
-
-            {/* CTA */}
-            <ProductCta item={item} />
           </div>
+
+          {/* Status + price */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown">
+              {item.statusLabel || "Harvest Coming Soon"}
+            </span>
+            {item.priceLabel && (
+              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/15 text-tropical-green/80">
+                {item.priceLabel}
+              </span>
+            )}
+          </div>
+
+          {/* Descriptions */}
+          <div className="flex flex-col gap-2">
+            {item.shortDescription && (
+              <p className="text-sm font-semibold text-tiki-brown/80 leading-snug">{item.shortDescription}</p>
+            )}
+            {item.productDescription ? (
+              <p className="text-sm text-tiki-brown/60 leading-relaxed">{item.productDescription}</p>
+            ) : !item.shortDescription ? (
+              <p className="text-sm text-tiki-brown/40 leading-relaxed italic">
+                A collectible Fruit Baby character product preview. More details are growing soon.
+              </p>
+            ) : null}
+          </div>
+
+          {/* Detail bullets */}
+          {item.detailBullets && item.detailBullets.length > 0 && (
+            <ul className="flex flex-col gap-1.5">
+              {item.detailBullets.map((bullet, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-tiki-brown/65">
+                  <span className="flex-shrink-0 mt-0.5 text-pineapple-yellow/80 text-xs font-black">✦</span>
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Product details grid */}
+          {hasDetails && (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-tiki-brown/3 rounded-2xl px-4 py-3.5">
+              {(
+                [
+                  item.material && { label: "Material", value: item.material },
+                  item.size && { label: "Size", value: item.size },
+                  item.ageGuidance && { label: "Age Guide", value: item.ageGuidance },
+                  item.careInstructions && { label: "Care", value: item.careInstructions },
+                ] as (false | { label: string; value: string })[]
+              )
+                .filter((d): d is { label: string; value: string } => !!d)
+                .map((d) => (
+                  <div key={d.label} className="flex flex-col gap-0.5">
+                    <p className="text-[10px] font-black text-tiki-brown/35 uppercase tracking-wide">{d.label}</p>
+                    <p className="text-xs font-semibold text-tiki-brown/65">{d.value}</p>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {/* CTA */}
+          <ProductCta item={item} />
         </div>
       </div>
     </div>
