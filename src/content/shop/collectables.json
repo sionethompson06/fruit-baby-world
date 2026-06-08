@@ -191,7 +191,369 @@
           "enabled": true
         }
       ]
+    },
+    {
+      "id": "squishmallows",
+      "title": "Squishmallow's",
+      "description": "Fruit Baby and Friends, highly collectible, ultra-soft plush toys known for their marshmallow-like texture and squishy feel.",
+      "productType": "squishmallows",
+      "productLineName": "Squishmallow'",
+      "conceptId": "product-concept-squish-toy-1780955048027",
+      "items": [
+        {
+          "id": "pineapple-baby-squishmallows",
+          "characterSlug": "pineapple-baby",
+          "characterName": "Pineapple Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/pineapple-baby-1780958672278.png",
+          "imagePathname": "shop/collectables/squishmallows/pineapple-baby-1780958672278.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 0,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958672278-4tj6vf",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/pineapple-baby-1780958672278.png",
+              "imagePathname": "shop/collectables/squishmallows/pineapple-baby-1780958672278.png",
+              "originalFilename": "Pineapple-Baby-hugmallow1.png",
+              "altText": "Pineapple Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:44:33.345Z",
+              "updatedAt": "2026-06-08T22:44:33.345Z"
+            },
+            {
+              "id": "img-1780958694885-jpdcco",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/pineapple-baby-1780958694885.png",
+              "imagePathname": "shop/collectables/squishmallows/pineapple-baby-1780958694885.png",
+              "originalFilename": "Pineapple-Baby-hugmallow2.png",
+              "altText": "Pineapple Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:44:56.152Z",
+              "updatedAt": "2026-06-08T22:44:56.152Z"
+            }
+          ],
+          "primaryImageId": "img-1780958672278-4tj6vf",
+          "hoverImageId": "img-1780958694885-jpdcco",
+          "clickImageId": "img-1780958694885-jpdcco",
+          "displayTitle": "Pineapple Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "ube-baby-squishmallows",
+          "characterSlug": "ube-baby",
+          "characterName": "Ube Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/ube-baby-1780958717606.png",
+          "imagePathname": "shop/collectables/squishmallows/ube-baby-1780958717606.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 1,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958717606-2p379n",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/ube-baby-1780958717606.png",
+              "imagePathname": "shop/collectables/squishmallows/ube-baby-1780958717606.png",
+              "originalFilename": "Ube-hugmallow1.png",
+              "altText": "Ube Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:45:18.651Z",
+              "updatedAt": "2026-06-08T22:45:18.651Z"
+            },
+            {
+              "id": "img-1780958723394-lyiog4",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/ube-baby-1780958723394.png",
+              "imagePathname": "shop/collectables/squishmallows/ube-baby-1780958723394.png",
+              "originalFilename": "ube-hugmallow2.png",
+              "altText": "Ube Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:45:24.374Z",
+              "updatedAt": "2026-06-08T22:45:24.374Z"
+            }
+          ],
+          "primaryImageId": "img-1780958717606-2p379n",
+          "hoverImageId": "img-1780958723394-lyiog4",
+          "clickImageId": "img-1780958723394-lyiog4",
+          "displayTitle": "Ube Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "mango-baby-squishmallows",
+          "characterSlug": "mango-baby",
+          "characterName": "Mango Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/mango-baby-1780958733193.png",
+          "imagePathname": "shop/collectables/squishmallows/mango-baby-1780958733193.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 2,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958733193-8xqobe",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/mango-baby-1780958733193.png",
+              "imagePathname": "shop/collectables/squishmallows/mango-baby-1780958733193.png",
+              "originalFilename": "mango-hugmallow1.png",
+              "altText": "Mango Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:45:34.136Z",
+              "updatedAt": "2026-06-08T22:45:34.136Z"
+            },
+            {
+              "id": "img-1780958738719-4lxolo",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/mango-baby-1780958738719.png",
+              "imagePathname": "shop/collectables/squishmallows/mango-baby-1780958738719.png",
+              "originalFilename": "mango-hugmallow2.png",
+              "altText": "Mango Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:45:39.954Z",
+              "updatedAt": "2026-06-08T22:45:39.954Z"
+            }
+          ],
+          "primaryImageId": "img-1780958733193-8xqobe",
+          "hoverImageId": "img-1780958738719-4lxolo",
+          "clickImageId": "img-1780958738719-4lxolo",
+          "displayTitle": "Mango Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "kiwi-baby-squishmallows",
+          "characterSlug": "kiwi-baby",
+          "characterName": "Kiwi Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/kiwi-baby-1780958761547.png",
+          "imagePathname": "shop/collectables/squishmallows/kiwi-baby-1780958761547.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 3,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958761547-8zckjl",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/kiwi-baby-1780958761547.png",
+              "imagePathname": "shop/collectables/squishmallows/kiwi-baby-1780958761547.png",
+              "originalFilename": "kiwi-hugmallow1.png",
+              "altText": "Kiwi Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:02.484Z",
+              "updatedAt": "2026-06-08T22:46:02.484Z"
+            },
+            {
+              "id": "img-1780958767176-27n3lb",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/kiwi-baby-1780958767176.png",
+              "imagePathname": "shop/collectables/squishmallows/kiwi-baby-1780958767176.png",
+              "originalFilename": "kiwi-hugmallow2.png",
+              "altText": "Kiwi Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:08.256Z",
+              "updatedAt": "2026-06-08T22:46:08.256Z"
+            }
+          ],
+          "primaryImageId": "img-1780958761547-8zckjl",
+          "hoverImageId": "img-1780958767176-27n3lb",
+          "clickImageId": "img-1780958767176-27n3lb",
+          "displayTitle": "Kiwi Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "coconut-baby-squishmallows",
+          "characterSlug": "coconut-baby",
+          "characterName": "Coconut Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/coconut-baby-1780958775666.png",
+          "imagePathname": "shop/collectables/squishmallows/coconut-baby-1780958775666.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 4,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958775666-vwozbd",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/coconut-baby-1780958775666.png",
+              "imagePathname": "shop/collectables/squishmallows/coconut-baby-1780958775666.png",
+              "originalFilename": "coconut-hugmallow1.png",
+              "altText": "Coconut Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:16.624Z",
+              "updatedAt": "2026-06-08T22:46:16.624Z"
+            },
+            {
+              "id": "img-1780958780668-evwa4m",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/coconut-baby-1780958780668.png",
+              "imagePathname": "shop/collectables/squishmallows/coconut-baby-1780958780668.png",
+              "originalFilename": "coconut-hugmallow2.png",
+              "altText": "Coconut Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:21.479Z",
+              "updatedAt": "2026-06-08T22:46:21.479Z"
+            }
+          ],
+          "primaryImageId": "img-1780958775666-vwozbd",
+          "hoverImageId": "img-1780958780668-evwa4m",
+          "clickImageId": "img-1780958780668-evwa4m",
+          "displayTitle": "Coconut Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "strawberry-baby-squishmallows",
+          "characterSlug": "strawberry-baby",
+          "characterName": "Strawberry Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/strawberry-baby-1780958788137.png",
+          "imagePathname": "shop/collectables/squishmallows/strawberry-baby-1780958788137.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 5,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958788137-iomo54",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/strawberry-baby-1780958788137.png",
+              "imagePathname": "shop/collectables/squishmallows/strawberry-baby-1780958788137.png",
+              "originalFilename": "strawberry-hugmallow1.png",
+              "altText": "Strawberry Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:29.146Z",
+              "updatedAt": "2026-06-08T22:46:29.146Z"
+            },
+            {
+              "id": "img-1780958793433-5ig6s3",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/strawberry-baby-1780958793433.png",
+              "imagePathname": "shop/collectables/squishmallows/strawberry-baby-1780958793433.png",
+              "originalFilename": "strawbery-hugmallow2.png",
+              "altText": "Strawberry Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:34.309Z",
+              "updatedAt": "2026-06-08T22:46:34.309Z"
+            }
+          ],
+          "primaryImageId": "img-1780958788137-iomo54",
+          "hoverImageId": "img-1780958793433-5ig6s3",
+          "clickImageId": "img-1780958793433-5ig6s3",
+          "displayTitle": "Strawberry Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "dragonfruit-baby-squishmallows",
+          "characterSlug": "dragonfruit-baby",
+          "characterName": "Dragon Fruit Baby",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/dragonfruit-baby-1780958800530.png",
+          "imagePathname": "shop/collectables/squishmallows/dragonfruit-baby-1780958800530.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 6,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958800530-smwzhs",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/dragonfruit-baby-1780958800530.png",
+              "imagePathname": "shop/collectables/squishmallows/dragonfruit-baby-1780958800530.png",
+              "originalFilename": "Dragonfruit-hugmallow1.png",
+              "altText": "Dragon Fruit Baby squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:41.804Z",
+              "updatedAt": "2026-06-08T22:46:41.804Z"
+            },
+            {
+              "id": "img-1780958805627-qtf6sd",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/dragonfruit-baby-1780958805627.png",
+              "imagePathname": "shop/collectables/squishmallows/dragonfruit-baby-1780958805627.png",
+              "originalFilename": "dragonfruit-hugmallow2.png",
+              "altText": "Dragon Fruit Baby squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:46.551Z",
+              "updatedAt": "2026-06-08T22:46:46.551Z"
+            }
+          ],
+          "primaryImageId": "img-1780958800530-smwzhs",
+          "hoverImageId": "img-1780958805627-qtf6sd",
+          "clickImageId": "img-1780958805627-qtf6sd",
+          "displayTitle": "Dragon Fruit Baby Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "tiki-squishmallows",
+          "characterSlug": "tiki",
+          "characterName": "Tiki Trouble",
+          "productType": "squishmallows",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/tiki-1780958812934.png",
+          "imagePathname": "shop/collectables/squishmallows/tiki-1780958812934.png",
+          "statusLabel": "Harvest Coming Soon",
+          "sortOrder": 7,
+          "enabled": false,
+          "updatedAt": "2026-06-08T22:35:36.686Z",
+          "images": [
+            {
+              "id": "img-1780958812934-vw4lv9",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/tiki-1780958812934.png",
+              "imagePathname": "shop/collectables/squishmallows/tiki-1780958812934.png",
+              "originalFilename": "tiki-hugmallow1.png",
+              "altText": "Tiki Trouble squishmallows product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:54.319Z",
+              "updatedAt": "2026-06-08T22:46:54.319Z"
+            },
+            {
+              "id": "img-1780958818014-0uwzlj",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/squishmallows/tiki-1780958818014.png",
+              "imagePathname": "shop/collectables/squishmallows/tiki-1780958818014.png",
+              "originalFilename": "tiki-hugmallow2.png",
+              "altText": "Tiki Trouble squishmallows product image",
+              "sortOrder": 1,
+              "isArchived": false,
+              "uploadedAt": "2026-06-08T22:46:58.791Z",
+              "updatedAt": "2026-06-08T22:46:58.791Z"
+            }
+          ],
+          "primaryImageId": "img-1780958812934-vw4lv9",
+          "hoverImageId": "img-1780958818014-0uwzlj",
+          "clickImageId": "img-1780958818014-0uwzlj",
+          "displayTitle": "Tiki Trouble Squishmallow'",
+          "collectionName": "Squishmallow's",
+          "priceLabel": "Coming Soon",
+          "ctaLabel": "Harvest Coming Soon",
+          "ctaMode": "coming-soon"
+        }
+      ]
     }
   ],
-  "updatedAt": "2026-06-08T21:51:01.509Z"
+  "updatedAt": "2026-06-08T22:47:28.641Z"
 }
