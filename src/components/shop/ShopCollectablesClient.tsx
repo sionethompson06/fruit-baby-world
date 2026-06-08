@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { ShopCollectablesSection, ShopCollectableItem } from "@/lib/shopCollectablesTypes";
+import type { ShopCollectablesSection, ShopCollectableItem, ShopCollectableImage } from "@/lib/shopCollectablesTypes";
+import {
+  getCardImageUrl,
+  getCardHoverImageUrl,
+  getCollectableGalleryImages,
+  getModalDefaultImage,
+} from "@/lib/shopCollectablesUtils";
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
@@ -13,6 +19,9 @@ function CollectableCard({
   onClick: () => void;
 }) {
   const productLabel = item.productType === "plushy" ? "Plushy Collectable" : "Squishy Collectable";
+  const cardImageUrl = getCardImageUrl(item);
+  const hoverImageUrl = getCardHoverImageUrl(item);
+
   return (
     <button
       type="button"
@@ -22,21 +31,40 @@ function CollectableCard({
     >
       {/* Image */}
       <div className="relative aspect-square bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center overflow-hidden">
-        {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={item.imageUrl}
-            alt={`${item.characterName} ${productLabel}`}
-            className="absolute inset-0 w-full h-full object-contain p-3 transition-transform duration-300 ease-out group-hover/card:scale-[1.06]"
-            loading="lazy"
-          />
+        {cardImageUrl ? (
+          <>
+            {/* Primary — fades out on card hover when a hover image is assigned */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cardImageUrl}
+              alt={`${item.characterName} ${productLabel}`}
+              className={[
+                "absolute inset-0 w-full h-full object-contain p-3 transition-all duration-300 ease-out",
+                "motion-safe:group-hover/card:scale-[1.06]",
+                hoverImageUrl ? "group-hover/card:opacity-0" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              loading="lazy"
+            />
+            {/* Hover / Flip image — fades in on card hover */}
+            {hoverImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={hoverImageUrl}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-contain p-3 opacity-0 transition-opacity duration-300 ease-out group-hover/card:opacity-100"
+                loading="lazy"
+              />
+            )}
+          </>
         ) : (
           <div className="flex flex-col items-center gap-2 py-8">
             <span className="text-4xl opacity-20">🛍️</span>
             <p className="text-xs text-tiki-brown/30 font-semibold text-center px-2">Image coming soon</p>
           </div>
         )}
-
       </div>
 
       {/* Body */}
@@ -53,13 +81,21 @@ function CollectableCard({
 
 function ProductModal({
   item,
+  initialImage,
   onClose,
 }: {
   item: ShopCollectableItem;
+  initialImage: ShopCollectableImage | null;
   onClose: () => void;
 }) {
   const productLabel = item.productType === "plushy" ? "Plushy Collectable" : "Squishy Collectable";
   const backdropRef = useRef<HTMLDivElement>(null);
+  const galleryImages = getCollectableGalleryImages(item);
+  const [selectedImage, setSelectedImage] = useState<ShopCollectableImage | null>(
+    initialImage ?? galleryImages[0] ?? null
+  );
+
+  const displayImage = selectedImage ?? galleryImages[0] ?? null;
 
   // Escape key
   useEffect(() => {
@@ -109,17 +145,51 @@ function ProductModal({
 
         {/* Large image */}
         <div className="relative aspect-square mx-4 rounded-2xl overflow-hidden bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center">
-          {item.imageUrl ? (
+          {displayImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={item.imageUrl}
-              alt={`${item.characterName} ${productLabel}`}
+              key={displayImage.id}
+              src={displayImage.imageUrl}
+              alt={displayImage.altText ?? `${item.characterName} ${productLabel}`}
               className="absolute inset-0 w-full h-full object-contain p-4"
             />
           ) : (
             <span className="text-6xl opacity-20">🛍️</span>
           )}
         </div>
+
+        {/* Thumbnail strip — only when more than one image */}
+        {galleryImages.length > 1 && (
+          <div className="flex gap-2 px-4 pt-3 pb-1 overflow-x-auto">
+            {galleryImages.map((img) => {
+              const isSelected = img.id === displayImage?.id;
+              return (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setSelectedImage(img)}
+                  aria-label={img.altText ?? `Image ${img.sortOrder + 1}`}
+                  aria-pressed={isSelected}
+                  className={[
+                    "flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-150",
+                    isSelected
+                      ? "border-tiki-brown/50 shadow-md scale-105"
+                      : "border-tiki-brown/10 opacity-55 hover:opacity-90 hover:border-tiki-brown/25",
+                  ].join(" ")}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.imageUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-contain p-1 bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8"
+                    loading="lazy"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Info */}
         <div className="px-6 py-5 flex flex-col gap-1.5">
@@ -143,8 +213,11 @@ export default function ShopCollectablesClient({
 }: {
   sections: ShopCollectablesSection[];
 }) {
-  const [selectedItem, setSelectedItem] = useState<ShopCollectableItem | null>(null);
-  const handleClose = useCallback(() => setSelectedItem(null), []);
+  const [modalState, setModalState] = useState<{
+    item: ShopCollectableItem;
+    initialImage: ShopCollectableImage | null;
+  } | null>(null);
+  const handleClose = useCallback(() => setModalState(null), []);
 
   return (
     <>
@@ -169,7 +242,9 @@ export default function ShopCollectablesClient({
                 <CollectableCard
                   key={item.id}
                   item={item}
-                  onClick={() => setSelectedItem(item)}
+                  onClick={() =>
+                    setModalState({ item, initialImage: getModalDefaultImage(item) })
+                  }
                 />
               ))}
             </div>
@@ -177,8 +252,13 @@ export default function ShopCollectablesClient({
         ))}
       </div>
 
-      {selectedItem && (
-        <ProductModal item={selectedItem} onClose={handleClose} />
+      {modalState && (
+        <ProductModal
+          key={modalState.item.id}
+          item={modalState.item}
+          initialImage={modalState.initialImage}
+          onClose={handleClose}
+        />
       )}
     </>
   );
