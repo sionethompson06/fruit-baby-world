@@ -540,6 +540,83 @@ function CollectableItemRow({
   );
 }
 
+// ─── Bulk edit helpers ────────────────────────────────────────────────────────
+
+type BulkEditForm = {
+  statusLabel: string;
+  collectionName: string;
+  material: string;
+  size: string;
+  ageGuidance: string;
+  careInstructions: string;
+  priceLabel: string;
+  ctaLabel: string;
+  applyCtaMode: boolean;
+  ctaMode: ShopCollectableCtaMode;
+  externalUrl: string;
+  notifyMessage: string;
+  shortDescription: string;
+  productDescription: string;
+  detailBullets: string;
+};
+
+function emptyBulkForm(): BulkEditForm {
+  return {
+    statusLabel: "",
+    collectionName: "",
+    material: "",
+    size: "",
+    ageGuidance: "",
+    careInstructions: "",
+    priceLabel: "",
+    ctaLabel: "",
+    applyCtaMode: false,
+    ctaMode: "coming-soon",
+    externalUrl: "",
+    notifyMessage: "",
+    shortDescription: "",
+    productDescription: "",
+    detailBullets: "",
+  };
+}
+
+function bulkFormToPatch(form: BulkEditForm): Partial<ShopCollectableItem> {
+  const patch: Partial<ShopCollectableItem> = {};
+  if (form.statusLabel.trim()) patch.statusLabel = form.statusLabel.trim();
+  if (form.collectionName.trim()) patch.collectionName = form.collectionName.trim();
+  if (form.material.trim()) patch.material = form.material.trim();
+  if (form.size.trim()) patch.size = form.size.trim();
+  if (form.ageGuidance.trim()) patch.ageGuidance = form.ageGuidance.trim();
+  if (form.careInstructions.trim()) patch.careInstructions = form.careInstructions.trim();
+  if (form.priceLabel.trim()) patch.priceLabel = form.priceLabel.trim();
+  if (form.ctaLabel.trim()) patch.ctaLabel = form.ctaLabel.trim();
+  if (form.applyCtaMode) patch.ctaMode = form.ctaMode;
+  if (form.externalUrl.trim()) patch.externalUrl = form.externalUrl.trim();
+  if (form.notifyMessage.trim()) patch.notifyMessage = form.notifyMessage.trim();
+  if (form.shortDescription.trim()) patch.shortDescription = form.shortDescription.trim();
+  if (form.productDescription.trim()) patch.productDescription = form.productDescription.trim();
+  const bullets = form.detailBullets.split("\n").map((b) => b.trim()).filter(Boolean);
+  if (bullets.length > 0) patch.detailBullets = bullets;
+  return patch;
+}
+
+const BULK_FIELD_LABELS: Partial<Record<keyof ShopCollectableItem, string>> = {
+  statusLabel: "Status Label",
+  collectionName: "Collection Name",
+  material: "Material",
+  size: "Size",
+  ageGuidance: "Age Guidance",
+  careInstructions: "Care Instructions",
+  priceLabel: "Price Label",
+  ctaLabel: "CTA Label",
+  ctaMode: "CTA Mode",
+  externalUrl: "External URL",
+  notifyMessage: "Notify Message",
+  shortDescription: "Short Description",
+  productDescription: "Product Description",
+  detailBullets: "Detail Bullets",
+};
+
 // ─── Section panel ────────────────────────────────────────────────────────────
 
 function sectionEmoji(productType: string): string {
@@ -558,6 +635,7 @@ function CollectableSectionPanel({
   onUpdateAltText,
   onUpdateItem,
   onToggleEnabled,
+  onUpdateSection,
 }: {
   section: ShopCollectablesSection;
   uploadStates: Record<string, ItemUploadState>;
@@ -568,15 +646,252 @@ function CollectableSectionPanel({
   onUpdateAltText: (itemId: string, imageId: string, altText: string) => void;
   onUpdateItem: (itemId: string, patch: Partial<ShopCollectableItem>) => void;
   onToggleEnabled: (itemId: string) => void;
+  onUpdateSection: (patch: { title?: string; description?: string }) => void;
 }) {
   const emoji = sectionEmoji(section.productType);
+
+  // ── Section name editing ───────────────────────────────────────────────────
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameTitle, setNameTitle] = useState(section.title);
+  const [nameDescription, setNameDescription] = useState(section.description);
+
+  function openEditName() {
+    setNameTitle(section.title);
+    setNameDescription(section.description);
+    setIsEditingName(true);
+  }
+  function saveEditName() {
+    const t = nameTitle.trim();
+    if (t) onUpdateSection({ title: t, description: nameDescription });
+    setIsEditingName(false);
+  }
+
+  // ── Bulk edit ──────────────────────────────────────────────────────────────
+  const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const [bulkForm, setBulkForm] = useState<BulkEditForm>(emptyBulkForm);
+  const [bulkConfirming, setBulkConfirming] = useState(false);
+
+  function setBulk<K extends keyof BulkEditForm>(key: K, value: BulkEditForm[K]) {
+    setBulkForm((prev) => ({ ...prev, [key]: value }));
+    setBulkConfirming(false);
+  }
+
+  const bulkPatch = bulkFormToPatch(bulkForm);
+  const bulkFieldNames = (Object.keys(bulkPatch) as Array<keyof ShopCollectableItem>)
+    .map((k) => BULK_FIELD_LABELS[k] ?? k)
+    .join(", ");
+  const hasBulkChanges = Object.keys(bulkPatch).length > 0;
+
+  function applyBulk() {
+    if (!hasBulkChanges) return;
+    section.items.forEach((item) => onUpdateItem(item.id, bulkPatch));
+    setBulkForm(emptyBulkForm());
+    setBulkConfirming(false);
+    setIsBulkOpen(false);
+  }
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <span className="text-xl">{emoji}</span>
-        <h3 className="text-base font-black text-tiki-brown">{section.title}</h3>
-        <span className="text-xs text-tiki-brown/45 ml-1">{section.description}</span>
+    <div className="flex flex-col gap-4">
+
+      {/* ── Section header ─────────────────────────────────────────────── */}
+      {isEditingName ? (
+        <div className="bg-ube-purple/5 border border-ube-purple/20 rounded-2xl px-4 py-4 flex flex-col gap-3">
+          <p className="text-xs font-black text-ube-purple/70 uppercase tracking-wide">✏️ Edit Section Name</p>
+
+          <label className="flex flex-col gap-0.5">
+            <span className="text-[9px] font-black text-tiki-brown/45 uppercase tracking-wide">Display Name</span>
+            <input
+              type="text"
+              value={nameTitle}
+              onChange={(e) => setNameTitle(e.target.value)}
+              placeholder="e.g. Soft Plush Mellows"
+              className="text-sm border border-tiki-brown/20 rounded-xl px-3 py-2 text-tiki-brown bg-white focus:outline-none focus:border-ube-purple/40"
+            />
+          </label>
+
+          <label className="flex flex-col gap-0.5">
+            <span className="text-[9px] font-black text-tiki-brown/45 uppercase tracking-wide">Public Description</span>
+            <input
+              type="text"
+              value={nameDescription}
+              onChange={(e) => setNameDescription(e.target.value)}
+              placeholder="Short section description shown on /shop"
+              className="text-sm border border-tiki-brown/20 rounded-xl px-3 py-2 text-tiki-brown bg-white focus:outline-none focus:border-ube-purple/40"
+            />
+          </label>
+
+          <div className="flex items-center gap-1.5 text-[10px] text-tiki-brown/40 bg-tiki-brown/3 rounded-xl px-3 py-2">
+            <span className="font-black">Product type ID (permanent):</span>
+            <code className="font-mono text-tiki-brown/55">{section.productType}</code>
+            <span className="ml-1">— Display name can be changed anytime. The internal ID stays the same so images and product data remain connected.</span>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={saveEditName}
+              disabled={!nameTitle.trim()}
+              className="text-xs font-bold px-4 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40"
+            >
+              Save Name
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsEditingName(false)}
+              className="text-xs font-semibold px-4 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 flex-wrap">
+          <span className="text-xl flex-shrink-0 mt-0.5">{emoji}</span>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base font-black text-tiki-brown">{section.title}</h3>
+            {section.description && (
+              <p className="text-xs text-tiki-brown/45">{section.description}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={openEditName}
+            className="flex-shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full border border-tiki-brown/15 bg-tiki-brown/4 text-tiki-brown/55 hover:bg-ube-purple/10 hover:text-ube-purple hover:border-ube-purple/20 transition-colors"
+          >
+            ✏️ Edit Name
+          </button>
+        </div>
+      )}
+
+      {/* ── Bulk edit panel ────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-tiki-brown/10 bg-tiki-brown/2 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => { setIsBulkOpen((p) => !p); setBulkConfirming(false); }}
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-tiki-brown/4 transition-colors"
+        >
+          <span className="flex items-center gap-2 text-[11px] font-black text-tiki-brown/60 uppercase tracking-wide">
+            <span>🔧</span>
+            <span>Apply to All Products in This Section</span>
+            <span className="text-[10px] font-semibold normal-case text-tiki-brown/40">
+              ({section.items.length} product{section.items.length !== 1 ? "s" : ""})
+            </span>
+          </span>
+          <span className="text-[10px] text-tiki-brown/35">{isBulkOpen ? "▲ Close" : "▼ Open"}</span>
+        </button>
+
+        {isBulkOpen && (
+          <div className="px-4 pb-4 flex flex-col gap-3 border-t border-tiki-brown/8">
+            <p className="text-[10px] text-tiki-brown/50 pt-3 leading-snug">
+              Set shared product details for every character in this section.
+              Only non-empty fields will be applied.{" "}
+              <span className="font-bold text-tiki-brown/60">Images and image role selections will not be changed.</span>
+            </p>
+
+            {/* Text fields grid */}
+            <div className="grid grid-cols-2 gap-2">
+              <AdminInput label="Status Label"   value={bulkForm.statusLabel}   placeholder="Harvest Coming Soon" onChange={(v) => setBulk("statusLabel", v)} />
+              <AdminInput label="Collection Name" value={bulkForm.collectionName} placeholder="e.g. Harvest Series"  onChange={(v) => setBulk("collectionName", v)} />
+              <AdminInput label="Material"        value={bulkForm.material}        placeholder="e.g. Ultra-soft plush" onChange={(v) => setBulk("material", v)} />
+              <AdminInput label="Size"            value={bulkForm.size}            placeholder="e.g. Approx. 10 in"   onChange={(v) => setBulk("size", v)} />
+              <AdminInput label="Age Guidance"    value={bulkForm.ageGuidance}     placeholder="e.g. Ages 3+"         onChange={(v) => setBulk("ageGuidance", v)} />
+              <AdminInput label="Care Instructions" value={bulkForm.careInstructions} placeholder="e.g. Surface wash" onChange={(v) => setBulk("careInstructions", v)} />
+              <AdminInput label="Price Label"     value={bulkForm.priceLabel}      placeholder="Coming Soon"          onChange={(v) => setBulk("priceLabel", v)} />
+              <AdminInput label="CTA Label"       value={bulkForm.ctaLabel}        placeholder="Harvest Coming Soon"  onChange={(v) => setBulk("ctaLabel", v)} />
+            </div>
+
+            {/* CTA mode — select always has a value so needs explicit "apply" checkbox */}
+            <div className="rounded-xl border border-tiki-brown/10 bg-white px-3 py-2.5 flex flex-col gap-1.5">
+              <p className="text-[9px] font-black text-tiki-brown/40 uppercase tracking-wide">CTA Mode</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={bulkForm.applyCtaMode}
+                    onChange={(e) => setBulk("applyCtaMode", e.target.checked)}
+                    className="rounded accent-ube-purple"
+                  />
+                  <span className="text-[11px] font-semibold text-tiki-brown/65">Apply CTA Mode:</span>
+                </label>
+                <select
+                  value={bulkForm.ctaMode}
+                  onChange={(e) => { setBulk("ctaMode", e.target.value as ShopCollectableCtaMode); setBulk("applyCtaMode", true); }}
+                  className="text-[11px] border border-tiki-brown/15 rounded-lg px-2 py-1 text-tiki-brown/75 bg-white focus:outline-none focus:border-ube-purple/40"
+                >
+                  <option value="coming-soon">Coming Soon</option>
+                  <option value="notify">Notify Me</option>
+                  <option value="external-link">External Link</option>
+                  <option value="disabled">Disabled</option>
+                </select>
+              </div>
+              {bulkForm.applyCtaMode && bulkForm.ctaMode === "external-link" && (
+                <AdminInput label="External URL" value={bulkForm.externalUrl} placeholder="https://…" type="url" onChange={(v) => setBulk("externalUrl", v)} />
+              )}
+              {bulkForm.applyCtaMode && bulkForm.ctaMode === "notify" && (
+                <AdminInput label="Notify Message" value={bulkForm.notifyMessage} placeholder="You'll be first to know!" onChange={(v) => setBulk("notifyMessage", v)} />
+              )}
+            </div>
+
+            {/* Description fields */}
+            <AdminInput label="Short Description" value={bulkForm.shortDescription} placeholder="One-line product blurb" onChange={(v) => setBulk("shortDescription", v)} />
+            <AdminTextarea label="Product Description" value={bulkForm.productDescription} placeholder="Full product description…" rows={2} onChange={(v) => setBulk("productDescription", v)} />
+            <AdminTextarea
+              label="Detail Bullets (one per line)"
+              value={bulkForm.detailBullets}
+              placeholder={"Soft premium plush material\nApprox. 10 inches tall\nLimited harvest edition"}
+              rows={3}
+              onChange={(v) => setBulk("detailBullets", v)}
+            />
+
+            {/* Confirm / Apply area */}
+            {bulkConfirming ? (
+              <div className="rounded-xl border border-pineapple-yellow/40 bg-pineapple-yellow/15 px-3 py-3 flex flex-col gap-2">
+                <p className="text-[11px] font-black text-tiki-brown">
+                  Apply to all {section.items.length} products in &ldquo;{section.title}&rdquo;?
+                </p>
+                {hasBulkChanges && (
+                  <p className="text-[10px] text-tiki-brown/65">
+                    Fields to update: {bulkFieldNames}
+                  </p>
+                )}
+                <p className="text-[10px] text-tiki-brown/50">
+                  Images and image role selections will not be changed.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={applyBulk}
+                    disabled={!hasBulkChanges}
+                    className="text-xs font-bold px-4 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40"
+                  >
+                    Confirm Apply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBulkConfirming(false)}
+                    className="text-xs font-semibold px-4 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => { if (hasBulkChanges) setBulkConfirming(true); }}
+                disabled={!hasBulkChanges}
+                className="w-full text-xs font-bold py-2.5 px-4 rounded-xl bg-ube-purple/10 border border-ube-purple/20 text-ube-purple hover:bg-ube-purple/18 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+              >
+                {hasBulkChanges
+                  ? `Apply Non-Empty Fields to All ${section.items.length} Products →`
+                  : "Fill in fields above to bulk apply"}
+              </button>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* ── Item rows ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         {section.items.map((item) => (
           <CollectableItemRow
@@ -851,6 +1166,16 @@ export default function ShopCollectablesManager({
     setSaveStatus("idle");
   }
 
+  function handleUpdateSection(sectionId: string, patch: { title?: string; description?: string }) {
+    setConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) =>
+        s.id === sectionId ? { ...s, ...patch } : s
+      ),
+    }));
+    setSaveStatus("idle");
+  }
+
   function handleUpdateItem(itemId: string, patch: Partial<ShopCollectableItem>) {
     const found = findItem(itemId);
     if (!found) return;
@@ -1000,6 +1325,7 @@ export default function ShopCollectablesManager({
           onUpdateAltText={handleUpdateAltText}
           onUpdateItem={handleUpdateItem}
           onToggleEnabled={handleToggleEnabled}
+          onUpdateSection={(patch) => handleUpdateSection(section.id, patch)}
         />
       ))}
 
