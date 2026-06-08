@@ -9,6 +9,8 @@ import {
 import { getNormalizedCharacterBySlug } from "@/lib/characterRegistry";
 import CharacterImage from "@/components/CharacterImage";
 import ProfileSheetImage from "@/components/ProfileSheetImage";
+import PowerProfileImage from "@/components/PowerProfileImage";
+import { getCharacterPowerData } from "@/lib/characterPowerData";
 import { getCoverPageSettings, isCoverPageEnabled } from "@/lib/coverPage";
 import CoverPage from "@/components/cover/CoverPage";
 
@@ -103,6 +105,7 @@ export default async function CharacterPage({
   if (!character) notFound();
 
   const _profile = getNormalizedCharacterBySlug(character.slug);
+  const powerData = getCharacterPowerData(character.slug);
   const palette = character.visualIdentity?.palette ?? [];
   const mainImageUrl = character.image?.main ?? "";
   const profileSheetUrl = character.image?.profileSheet ?? "";
@@ -214,6 +217,26 @@ export default async function CharacterPage({
           </div>
         </div>
       </div>
+
+      {/* Character Power Profile */}
+      {powerData && (
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-2">
+          <div className="bg-white rounded-3xl shadow-sm border border-tiki-brown/10 overflow-hidden">
+            <div className="px-5 py-3" style={{ backgroundColor: `${accentColor}22` }}>
+              <h2 className="text-xs font-black text-tiki-brown uppercase tracking-widest">
+                Character Power Profile
+              </h2>
+            </div>
+            <div className="p-5 sm:p-8">
+              <PowerProfileImage
+                src={powerData.powerProfileImage}
+                alt={`${character.name} power profile`}
+                accentColor={accentColor}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">

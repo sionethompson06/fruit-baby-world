@@ -2,6 +2,7 @@ import type React from "react";
 import Link from "next/link";
 import type { Character } from "@/lib/content";
 import CharacterImage from "./CharacterImage";
+import { getCharacterPowerData } from "@/lib/characterPowerData";
 
 const GLOW_COLORS: Record<string, string> = {
   "pineapple-baby":    "rgba(255, 216, 77,  0.52)",
@@ -41,6 +42,8 @@ export default function CharacterCard({ character }: { character: Character }) {
   const cleanTraits = (character.personality ?? [])
     .filter((t) => !t.includes("\t"))
     .slice(0, 3);
+
+  const powerData = getCharacterPowerData(character.slug);
 
   return (
     <Link
@@ -107,6 +110,26 @@ export default function CharacterCard({ character }: { character: Character }) {
             <p className="text-sm text-tiki-brown/70 leading-relaxed line-clamp-3">
               {character.shortDescription}
             </p>
+          )}
+
+          {powerData && (
+            <div
+              className="rounded-xl px-3 py-2.5 border"
+              style={{
+                background: `${headerColor}20`,
+                borderColor: `${headerColor}66`,
+              }}
+            >
+              <p className="text-[10px] font-bold text-tiki-brown/40 uppercase tracking-widest mb-0.5">
+                ⚡ Power
+              </p>
+              <p className="font-black text-tiki-brown text-sm leading-tight">
+                {powerData.powerName}
+              </p>
+              <p className="text-xs text-tiki-brown/65 leading-snug mt-0.5">
+                {powerData.powerDescription}
+              </p>
+            </div>
           )}
 
           {cleanTraits.length > 0 && (
