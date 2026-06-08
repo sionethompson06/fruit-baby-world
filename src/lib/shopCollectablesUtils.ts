@@ -5,10 +5,16 @@ import type { ShopCollectableItem, ShopCollectableImage } from "@/lib/shopCollec
 
 // ─── Active images ────────────────────────────────────────────────────────────
 
-/** Non-archived gallery images with valid URLs, sorted by sortOrder. */
+/** Non-archived gallery images with valid URLs, sorted by sortOrder. Deduplicates by id. */
 export function getActiveCollectableImages(item: ShopCollectableItem): ShopCollectableImage[] {
+  const seen = new Set<string>();
   return (item.images ?? [])
-    .filter((img) => !img.isArchived && !!img.imageUrl)
+    .filter((img) => {
+      if (img.isArchived || !img.imageUrl) return false;
+      if (seen.has(img.id)) return false;
+      seen.add(img.id);
+      return true;
+    })
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 

@@ -28,8 +28,16 @@ function fileToBase64(file: File): Promise<string> {
 
 function getActiveImages(item: ShopCollectableItem): ShopCollectableImage[] {
   return (item.images ?? [])
-    .filter((img) => !img.isArchived)
+    .filter((img) => !img.isArchived && !!img.imageUrl)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function shortName(img: ShopCollectableImage): string {
+  if (img.originalFilename) {
+    const base = img.originalFilename.replace(/\.[^.]+$/, "");
+    return base.length > 18 ? base.slice(0, 16) + "…" : base;
+  }
+  return "Uploaded image";
 }
 
 // ─── Gallery image tile ───────────────────────────────────────────────────────
@@ -43,6 +51,7 @@ function GalleryImageTile({
   onSetHover,
   onSetClick,
   onArchive,
+  onAltTextChange,
 }: {
   image: ShopCollectableImage;
   isPrimary: boolean;
@@ -52,7 +61,9 @@ function GalleryImageTile({
   onSetHover: () => void;
   onSetClick: () => void;
   onArchive: () => void;
+  onAltTextChange: (text: string) => void;
 }) {
+  const hasRole = isPrimary || isHover || isClick;
   const borderColor = isPrimary
     ? "#FFD84D"
     : isHover
@@ -62,11 +73,11 @@ function GalleryImageTile({
     : "rgba(92,58,30,0.12)";
 
   return (
-    <div className="flex flex-col gap-1 flex-shrink-0 w-20">
+    <div className="flex flex-col gap-1 flex-shrink-0 w-[84px]">
       {/* Thumbnail */}
       <div
-        className="w-20 h-20 rounded-xl overflow-hidden bg-tiki-brown/5 relative"
-        style={{ border: `2px solid ${borderColor}` }}
+        className="w-[84px] h-[72px] rounded-xl overflow-hidden bg-tiki-brown/5 relative"
+        style={{ border: `2px solid ${borderColor}`, boxShadow: hasRole ? `0 0 0 1px ${borderColor}44` : undefined }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -95,14 +106,12 @@ function GalleryImageTile({
       </div>
 
       {/* Filename */}
-      {image.originalFilename && (
-        <p
-          className="text-[9px] text-tiki-brown/35 truncate leading-none"
-          title={image.originalFilename}
-        >
-          {image.originalFilename}
-        </p>
-      )}
+      <p
+        className="text-[9px] text-tiki-brown/40 truncate leading-none"
+        title={image.originalFilename ?? image.id}
+      >
+        {image.originalFilename ?? "—"}
+      </p>
 
       {/* Role + archive buttons */}
       <div className="flex gap-px">
@@ -145,11 +154,86 @@ function GalleryImageTile({
         <button
           type="button"
           onClick={onArchive}
-          title="Archive (remove from gallery)"
+          title="Archive — removes from gallery without deleting the file"
           className="flex-1 text-[9px] font-black py-0.5 rounded bg-tiki-brown/5 text-warm-coral/70 hover:bg-warm-coral/15 transition-colors"
         >
           ✕
         </button>
+      </div>
+
+      {/* Alt text — editable inline */}
+      <input
+        type="text"
+        value={image.altText ?? ""}
+        onChange={(e) => onAltTextChange(e.target.value)}
+        placeholder="Alt text…"
+        title="Image alt text for accessibility"
+        className="w-full text-[8px] border border-tiki-brown/15 rounded px-1 py-0.5 text-tiki-brown/55 bg-white leading-tight focus:outline-none focus:border-ube-purple/40 placeholder:text-tiki-brown/20 truncate"
+      />
+    </div>
+  );
+}
+
+// ─── Role summary strip ────────────────────────────────────────────────────────
+
+function RoleSummary({
+  item,
+  activeImages,
+  onClearRole,
+}: {
+  item: ShopCollectableItem;
+  activeImages: ShopCollectableImage[];
+  onClearRole: (role: "hover" | "click") => void;
+}) {
+  const primaryImage = activeImages.find((img) => img.id === item.primaryImageId);
+  const hoverImage = activeImages.find((img) => img.id === item.hoverImageId);
+  const clickImage = activeImages.find((img) => img.id === item.clickImageId);
+
+  const notSet = <span className="text-tiki-brown/25 italic">Not selected</span>;
+
+  return (
+    <div className="bg-tiki-brown/3 rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-[10px]">
+      <p className="text-[9px] font-black text-tiki-brown/40 uppercase tracking-wide mb-0.5">
+        Assigned Roles
+      </p>
+      {/* Primary */}
+      <div className="flex items-center gap-1.5">
+        <span className="font-black text-pineapple-yellow/90 w-12 flex-shrink-0">Primary</span>
+        <span className="truncate flex-1 text-tiki-brown/65">
+          {primaryImage ? shortName(primaryImage) : notSet}
+        </span>
+      </div>
+      {/* Hover */}
+      <div className="flex items-center gap-1.5">
+        <span className="font-black text-ube-purple/70 w-12 flex-shrink-0">Hover</span>
+        <span className="truncate flex-1 text-tiki-brown/65">
+          {hoverImage ? shortName(hoverImage) : notSet}
+        </span>
+        {hoverImage && (
+          <button
+            type="button"
+            onClick={() => onClearRole("hover")}
+            className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-tiki-brown/8 text-tiki-brown/45 hover:bg-warm-coral/15 hover:text-warm-coral/70 transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {/* Click */}
+      <div className="flex items-center gap-1.5">
+        <span className="font-black text-tropical-green/70 w-12 flex-shrink-0">Click</span>
+        <span className="truncate flex-1 text-tiki-brown/65">
+          {clickImage ? shortName(clickImage) : notSet}
+        </span>
+        {clickImage && (
+          <button
+            type="button"
+            onClick={() => onClearRole("click")}
+            className="flex-shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-tiki-brown/8 text-tiki-brown/45 hover:bg-warm-coral/15 hover:text-warm-coral/70 transition-colors"
+          >
+            Clear
+          </button>
+        )}
       </div>
     </div>
   );
@@ -162,14 +246,18 @@ function CollectableItemRow({
   uploadState,
   onGalleryUpload,
   onSetRole,
+  onClearRole,
   onArchiveImage,
+  onUpdateAltText,
   onToggleEnabled,
 }: {
   item: ShopCollectableItem;
   uploadState: ItemUploadState;
   onGalleryUpload: (file: File) => void;
   onSetRole: (imageId: string, role: "primary" | "hover" | "click") => void;
+  onClearRole: (role: "hover" | "click") => void;
   onArchiveImage: (imageId: string) => void;
+  onUpdateAltText: (imageId: string, altText: string) => void;
   onToggleEnabled: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -181,7 +269,7 @@ function CollectableItemRow({
     <div className="bg-white rounded-2xl border border-tiki-brown/10 p-4 flex flex-col gap-3">
       {/* ── Row header ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Legacy image preview */}
+        {/* Legacy / current primary image preview */}
         <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -220,7 +308,7 @@ function CollectableItemRow({
       </div>
 
       {/* ── Product Image Gallery ─────────────────────────────────────── */}
-      <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
+      <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2.5">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] font-black text-tiki-brown/60 uppercase tracking-wide">
             Product Image Gallery
@@ -230,13 +318,18 @@ function CollectableItemRow({
           </span>
         </div>
 
-        <p className="text-[10px] text-tiki-brown/40 leading-snug">
-          Upload up to 4 images.{" "}
-          <span className="font-bold text-pineapple-yellow/90">P</span> = Primary Card Image &nbsp;
-          <span className="font-bold text-ube-purple/70">H</span> = Hover / Flip &nbsp;
-          <span className="font-bold text-tropical-green/70">C</span> = Click / Large View
+        {/* Helper text */}
+        <p className="text-[10px] text-tiki-brown/45 leading-snug">
+          <span className="font-bold text-pineapple-yellow/90">Primary</span> shows on the product
+          card.{" "}
+          <span className="font-bold text-ube-purple/70">Hover</span> appears when the visitor
+          hovers on desktop.{" "}
+          <span className="font-bold text-tropical-green/70">Click</span> opens first in the product
+          modal. Use{" "}
+          <span className="font-bold text-warm-coral/70">✕</span> to archive without deleting.
         </p>
 
+        {/* Thumbnail grid */}
         <div className="flex flex-wrap gap-2 items-start">
           {activeImages.map((img) => (
             <GalleryImageTile
@@ -249,6 +342,7 @@ function CollectableItemRow({
               onSetHover={() => onSetRole(img.id, "hover")}
               onSetClick={() => onSetRole(img.id, "click")}
               onArchive={() => onArchiveImage(img.id)}
+              onAltTextChange={(text) => onUpdateAltText(img.id, text)}
             />
           ))}
 
@@ -259,7 +353,7 @@ function CollectableItemRow({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
-                className="w-20 h-20 rounded-xl border-2 border-dashed border-tiki-brown/20 flex items-center justify-center hover:bg-tiki-brown/4 hover:border-tiki-brown/35 transition-colors disabled:opacity-50"
+                className="w-[84px] h-[72px] rounded-xl border-2 border-dashed border-tiki-brown/20 flex items-center justify-center hover:bg-tiki-brown/4 hover:border-tiki-brown/35 transition-colors disabled:opacity-50"
               >
                 {isUploading ? (
                   <span className="text-lg text-tiki-brown/30 animate-pulse">⟳</span>
@@ -268,25 +362,26 @@ function CollectableItemRow({
                 )}
               </button>
               <p className="text-[9px] text-tiki-brown/35 text-center leading-none">
-                {isUploading ? "Uploading…" : "Add Image"}
+                {isUploading ? "Uploading…" : "Add image"}
               </p>
             </div>
           )}
-
-          {atMax && (
-            <p className="text-[10px] text-tiki-brown/40 italic self-end pb-1">
-              Maximum of 4 product images reached.
-            </p>
-          )}
         </div>
+
+        {atMax && (
+          <p className="text-[10px] text-tiki-brown/40 italic">
+            Maximum of 4 active product images reached.
+          </p>
+        )}
 
         {uploadState.status === "error" && (
           <p className="text-xs text-warm-coral font-semibold">{uploadState.message ?? "Upload failed."}</p>
         )}
 
-        <p className="text-[10px] text-tiki-brown/30 leading-snug">
-          Phase 1 saves image roles. Hover &amp; Click behavior activates in the next shop gallery phase.
-        </p>
+        {/* Role summary */}
+        {activeImages.length > 0 && (
+          <RoleSummary item={item} activeImages={activeImages} onClearRole={onClearRole} />
+        )}
       </div>
 
       {/* Hidden file input */}
@@ -312,14 +407,18 @@ function CollectableSectionPanel({
   uploadStates,
   onGalleryUpload,
   onSetRole,
+  onClearRole,
   onArchiveImage,
+  onUpdateAltText,
   onToggleEnabled,
 }: {
   section: ShopCollectablesSection;
   uploadStates: Record<string, ItemUploadState>;
   onGalleryUpload: (itemId: string, file: File) => void;
   onSetRole: (itemId: string, imageId: string, role: "primary" | "hover" | "click") => void;
+  onClearRole: (itemId: string, role: "hover" | "click") => void;
   onArchiveImage: (itemId: string, imageId: string) => void;
+  onUpdateAltText: (itemId: string, imageId: string, altText: string) => void;
   onToggleEnabled: (itemId: string) => void;
 }) {
   const emoji = section.productType === "plushy" ? "🧸" : "🫶";
@@ -338,7 +437,9 @@ function CollectableSectionPanel({
             uploadState={uploadStates[item.id] ?? { status: "idle" }}
             onGalleryUpload={(file) => onGalleryUpload(item.id, file)}
             onSetRole={(imageId, role) => onSetRole(item.id, imageId, role)}
+            onClearRole={(role) => onClearRole(item.id, role)}
             onArchiveImage={(imageId) => onArchiveImage(item.id, imageId)}
+            onUpdateAltText={(imageId, altText) => onUpdateAltText(item.id, imageId, altText)}
             onToggleEnabled={() => onToggleEnabled(item.id)}
           />
         ))}
@@ -393,7 +494,6 @@ export default function ShopCollectablesManager({
     const found = findItem(itemId);
     if (!found) return;
 
-    // Guard: max 4 active images
     if (getActiveImages(found.item).length >= 4) return;
 
     setItemUploadState(itemId, { status: "uploading", message: undefined });
@@ -424,8 +524,6 @@ export default function ShopCollectablesManager({
           uploadedAt: string;
           updatedAt: string;
         };
-        imageUrl?: string;
-        pathname?: string;
         message?: string;
       };
 
@@ -434,18 +532,19 @@ export default function ShopCollectablesManager({
         return;
       }
 
-      // Re-fetch the current item (state may have changed during upload)
+      // Re-fetch current item state (may have changed while upload was in flight)
       const latest = findItem(itemId);
       const currentItem = latest?.item ?? found.item;
       const currentImages = currentItem.images ?? [];
 
-      const nextSortOrder = currentImages.length;
       const newImage: ShopCollectableImage = {
         id: data.image.id,
         imageUrl: data.image.imageUrl,
         imagePathname: data.image.imagePathname,
         originalFilename: data.image.originalFilename,
-        sortOrder: nextSortOrder,
+        // Default alt text so public image rendering has a safe fallback immediately
+        altText: `${currentItem.characterName} ${currentItem.productType} product image`,
+        sortOrder: currentImages.length,
         isArchived: false,
         uploadedAt: data.image.uploadedAt,
         updatedAt: data.image.updatedAt,
@@ -459,12 +558,11 @@ export default function ShopCollectablesManager({
       const patch: Partial<ShopCollectableItem> = { images: updatedImages };
 
       if (!alreadyHasPrimary) {
+        // Auto-assign as primary and keep legacy imageUrl in sync
         patch.primaryImageId = newImage.id;
-        // Keep legacy imageUrl in sync with primary for public shop compatibility
         patch.imageUrl = newImage.imageUrl;
         patch.imagePathname = newImage.imagePathname ?? "";
       } else if (!currentItem.imageUrl) {
-        // Legacy imageUrl was empty — populate it from first upload
         patch.imageUrl = newImage.imageUrl;
         patch.imagePathname = newImage.imagePathname ?? "";
       }
@@ -504,6 +602,15 @@ export default function ShopCollectablesManager({
     setSaveStatus("idle");
   }
 
+  function handleClearRole(itemId: string, role: "hover" | "click") {
+    const found = findItem(itemId);
+    if (!found) return;
+    const patch: Partial<ShopCollectableItem> =
+      role === "hover" ? { hoverImageId: undefined } : { clickImageId: undefined };
+    updateItemInConfig(found.section.id, itemId, patch);
+    setSaveStatus("idle");
+  }
+
   function handleArchiveImage(itemId: string, imageId: string) {
     const found = findItem(itemId);
     if (!found) return;
@@ -514,7 +621,6 @@ export default function ShopCollectablesManager({
 
     const patch: Partial<ShopCollectableItem> = { images: updatedImages };
 
-    // If archived image held primary, promote next active image
     if (found.item.primaryImageId === imageId) {
       const nextActive = updatedImages
         .filter((img) => !img.isArchived && img.id !== imageId)
@@ -528,6 +634,16 @@ export default function ShopCollectablesManager({
     if (found.item.clickImageId === imageId) patch.clickImageId = undefined;
 
     updateItemInConfig(found.section.id, itemId, patch);
+    setSaveStatus("idle");
+  }
+
+  function handleUpdateAltText(itemId: string, imageId: string, altText: string) {
+    const found = findItem(itemId);
+    if (!found) return;
+    const updatedImages = (found.item.images ?? []).map((img) =>
+      img.id === imageId ? { ...img, altText: altText || undefined } : img
+    );
+    updateItemInConfig(found.section.id, itemId, { images: updatedImages });
     setSaveStatus("idle");
   }
 
@@ -568,7 +684,6 @@ export default function ShopCollectablesManager({
   }
 
   const hasUnsaved = saveStatus === "idle" && config !== initialConfig;
-  const showUnsavedBadge = hasUnsaved;
 
   return (
     <div className="flex flex-col gap-6 bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6">
@@ -587,7 +702,7 @@ export default function ShopCollectablesManager({
           {saveStatus === "error" && (
             <p className="text-xs text-warm-coral font-semibold">{saveMessage}</p>
           )}
-          {showUnsavedBadge && (
+          {hasUnsaved && (
             <p className="text-xs text-pineapple-yellow/90 font-semibold">Unsaved changes</p>
           )}
           <button
@@ -602,22 +717,22 @@ export default function ShopCollectablesManager({
       </div>
 
       {/* Role legend */}
-      <div className="flex flex-wrap gap-3 text-[11px] text-tiki-brown/55 bg-tiki-brown/3 rounded-xl px-4 py-3 border border-tiki-brown/8">
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-[11px] text-tiki-brown/55 bg-tiki-brown/3 rounded-xl px-4 py-3 border border-tiki-brown/8">
         <span>
           <span className="font-black text-pineapple-yellow/90">P</span>{" "}
-          <span className="font-semibold">Primary Card Image</span> — shown on the product card
+          <span className="font-semibold">Primary</span> — shown on the product card
         </span>
         <span>
           <span className="font-black text-ube-purple/70">H</span>{" "}
-          <span className="font-semibold">Hover / Flip Image</span> — appears on hover (Phase 2)
+          <span className="font-semibold">Hover</span> — crossfades in on desktop hover
         </span>
         <span>
           <span className="font-black text-tropical-green/70">C</span>{" "}
-          <span className="font-semibold">Click / Large View</span> — opens first in modal (Phase 2)
+          <span className="font-semibold">Click</span> — shown first when the modal opens
         </span>
         <span>
           <span className="font-black text-warm-coral/70">✕</span>{" "}
-          <span className="font-semibold">Archive</span> — removes from gallery without deleting the file
+          <span className="font-semibold">Archive</span> — hides without deleting the file
         </span>
       </div>
 
@@ -631,7 +746,9 @@ export default function ShopCollectablesManager({
           uploadStates={uploadStates}
           onGalleryUpload={handleGalleryUpload}
           onSetRole={handleSetRole}
+          onClearRole={handleClearRole}
           onArchiveImage={handleArchiveImage}
+          onUpdateAltText={handleUpdateAltText}
           onToggleEnabled={handleToggleEnabled}
         />
       ))}

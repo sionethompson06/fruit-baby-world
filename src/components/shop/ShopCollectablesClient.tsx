@@ -47,14 +47,14 @@ function CollectableCard({
                 .join(" ")}
               loading="lazy"
             />
-            {/* Hover / Flip image — fades in on card hover */}
+            {/* Hover / Flip image — fades in with a gentle scale reveal on card hover */}
             {hoverImageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={hoverImageUrl}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-contain p-3 opacity-0 transition-opacity duration-300 ease-out group-hover/card:opacity-100"
+                className="absolute inset-0 w-full h-full object-contain p-3 opacity-0 transition-all duration-300 ease-out group-hover/card:opacity-100 motion-safe:scale-[0.97] motion-safe:group-hover/card:scale-100"
                 loading="lazy"
               />
             )}
@@ -173,7 +173,7 @@ function ProductModal({
                   className={[
                     "flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-150",
                     isSelected
-                      ? "border-tiki-brown/50 shadow-md scale-105"
+                      ? "border-ube-purple/55 ring-2 ring-ube-purple/20 shadow-sm scale-105"
                       : "border-tiki-brown/10 opacity-55 hover:opacity-90 hover:border-tiki-brown/25",
                   ].join(" ")}
                 >
