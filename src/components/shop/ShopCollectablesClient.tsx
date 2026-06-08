@@ -192,6 +192,7 @@ function ProductModal({
   productLabel: string;
 }) {
   const backdropRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const galleryImages = getCollectableGalleryImages(item);
   const [selectedImage, setSelectedImage] = useState<ShopCollectableImage | null>(
     initialImage ?? galleryImages[0] ?? null
@@ -211,10 +212,11 @@ function ProductModal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  // Scroll lock
+  // Scroll lock + ensure panel starts at top
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    if (panelRef.current) panelRef.current.scrollTop = 0;
     return () => { document.body.style.overflow = prev; };
   }, []);
 
@@ -230,17 +232,20 @@ function ProductModal({
       {/* Backdrop */}
       <div className="absolute inset-0 bg-gradient-to-br from-pineapple-yellow/20 via-bg-cream/85 to-ube-purple/15 backdrop-blur-sm" />
 
-      {/* Panel — vertical stack: image → thumbnails → details */}
-      <div className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-xl w-full max-h-[95vh] overflow-y-auto flex flex-col">
+      {/* Panel — wider; scrolls as a unit so image hero stays on first view */}
+      <div
+        ref={panelRef}
+        className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-3xl w-full max-h-[95vh] overflow-y-auto flex flex-col"
+      >
 
-        {/* ─ Image area — full width, dominant ─────────────────────── */}
-        <div className="relative w-full bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl overflow-hidden flex items-center justify-center">
-          {/* Close button — always accessible in top-right corner */}
+        {/* ─ Image hero — dominates the initial viewport ──────────────── */}
+        <div className="relative w-full min-h-[52vh] sm:min-h-[62vh] bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl overflow-hidden flex items-center justify-center">
+          {/* Close button — always in top-right corner */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close product preview"
-            className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-black/18 text-white hover:bg-black/32 transition-colors text-sm font-bold"
+            className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/18 text-white hover:bg-black/32 transition-colors text-sm font-bold"
           >
             ✕
           </button>
@@ -251,16 +256,16 @@ function ProductModal({
               key={displayImage.id}
               src={displayImage.imageUrl}
               alt={displayImage.altText ?? `${title} ${productLabel}`}
-              className="w-full h-auto max-h-[70vh] object-contain p-4"
+              className="w-full h-auto max-h-[70vh] object-contain p-4 sm:p-6"
             />
           ) : (
-            <div className="py-20 flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-3">
               <span className="text-7xl opacity-20">🛍️</span>
             </div>
           )}
         </div>
 
-        {/* ─ Thumbnail strip — below image, only when multiple ──────── */}
+        {/* ─ Thumbnail strip — below hero, only when multiple images ──── */}
         {galleryImages.length > 1 && (
           <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-tiki-brown/8">
             {galleryImages.map((img) => {
@@ -293,8 +298,15 @@ function ProductModal({
           </div>
         )}
 
-        {/* ─ Product details — below image/thumbnails ───────────────── */}
-        <div className="px-6 py-5 flex flex-col gap-4 pb-8">
+        {/* ─ Product details — scroll down from image hero ─────────────── */}
+        <div className="px-6 py-6 flex flex-col gap-4 pb-10">
+
+          {/* Divider label separating image from info */}
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-tiki-brown/10" />
+            <span className="text-[10px] font-black text-tiki-brown/30 uppercase tracking-widest">Product Details</span>
+            <div className="h-px flex-1 bg-tiki-brown/10" />
+          </div>
 
           {/* Title + badges */}
           <div className="flex flex-col gap-2">
