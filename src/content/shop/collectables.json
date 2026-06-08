@@ -194,7 +194,7 @@
     },
     {
       "id": "squishmallows",
-      "title": "Squishmallow's",
+      "title": "Hugmallow's",
       "description": "Fruit Baby and Friends, highly collectible, ultra-soft plush toys known for their marshmallow-like texture and squishy feel.",
       "productType": "squishmallows",
       "productLineName": "Squishmallow'",
@@ -209,7 +209,7 @@
           "imagePathname": "shop/collectables/squishmallows/pineapple-baby-1780958672278.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 0,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -239,8 +239,9 @@
           "hoverImageId": "img-1780958694885-jpdcco",
           "clickImageId": "img-1780958694885-jpdcco",
           "displayTitle": "Pineapple Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -253,7 +254,7 @@
           "imagePathname": "shop/collectables/squishmallows/ube-baby-1780958717606.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 1,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -283,8 +284,9 @@
           "hoverImageId": "img-1780958723394-lyiog4",
           "clickImageId": "img-1780958723394-lyiog4",
           "displayTitle": "Ube Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -297,7 +299,7 @@
           "imagePathname": "shop/collectables/squishmallows/mango-baby-1780958733193.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 2,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -327,8 +329,9 @@
           "hoverImageId": "img-1780958738719-4lxolo",
           "clickImageId": "img-1780958738719-4lxolo",
           "displayTitle": "Mango Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -341,7 +344,7 @@
           "imagePathname": "shop/collectables/squishmallows/kiwi-baby-1780958761547.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 3,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -371,8 +374,9 @@
           "hoverImageId": "img-1780958767176-27n3lb",
           "clickImageId": "img-1780958767176-27n3lb",
           "displayTitle": "Kiwi Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -385,7 +389,7 @@
           "imagePathname": "shop/collectables/squishmallows/coconut-baby-1780958775666.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 4,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -415,8 +419,9 @@
           "hoverImageId": "img-1780958780668-evwa4m",
           "clickImageId": "img-1780958780668-evwa4m",
           "displayTitle": "Coconut Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -429,7 +434,7 @@
           "imagePathname": "shop/collectables/squishmallows/strawberry-baby-1780958788137.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 5,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -459,8 +464,9 @@
           "hoverImageId": "img-1780958793433-5ig6s3",
           "clickImageId": "img-1780958793433-5ig6s3",
           "displayTitle": "Strawberry Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -473,7 +479,7 @@
           "imagePathname": "shop/collectables/squishmallows/dragonfruit-baby-1780958800530.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 6,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -503,8 +509,9 @@
           "hoverImageId": "img-1780958805627-qtf6sd",
           "clickImageId": "img-1780958805627-qtf6sd",
           "displayTitle": "Dragon Fruit Baby Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         },
@@ -517,7 +524,7 @@
           "imagePathname": "shop/collectables/squishmallows/tiki-1780958812934.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 7,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-08T22:35:36.686Z",
           "images": [
             {
@@ -547,13 +554,14 @@
           "hoverImageId": "img-1780958818014-0uwzlj",
           "clickImageId": "img-1780958818014-0uwzlj",
           "displayTitle": "Tiki Trouble Squishmallow'",
-          "collectionName": "Squishmallow's",
-          "priceLabel": "Coming Soon",
+          "collectionName": "Hugmallow",
+          "size": "12\"-14\"",
+          "priceLabel": "coming soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
         }
       ]
     }
   ],
-  "updatedAt": "2026-06-08T22:57:22.876Z"
+  "updatedAt": "2026-06-08T23:17:25.490Z"
 }
