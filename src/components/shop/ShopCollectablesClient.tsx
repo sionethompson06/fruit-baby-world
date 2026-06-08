@@ -9,16 +9,45 @@ import {
   getModalDefaultImage,
 } from "@/lib/shopCollectablesUtils";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Derives a singular product label from a section for individual product cards/modals. */
+function sectionToProductLabel(section: ShopCollectablesSection): string {
+  if (section.productType === "plushy") return "Plushy Collectable";
+  if (section.productType === "squishy") return "Squishy Collectable";
+  if (section.productLineName) return section.productLineName;
+  // Make section title singular ("Mellow Collectables" → "Mellow Collectable")
+  const t = section.title;
+  return t.endsWith("s") && t.length > 1 ? t.slice(0, -1) : t;
+}
+
+function sectionEmoji(section: ShopCollectablesSection): string {
+  if (section.productType === "plushy") return "🧸";
+  if (section.productType === "squishy") return "🫶";
+  return "🛍️";
+}
+
+function sectionClassName(section: ShopCollectablesSection): string {
+  if (section.productType === "plushy") {
+    return "rounded-3xl shadow-sm border border-pineapple-yellow/25 p-8 sm:p-10 bg-gradient-to-br from-pineapple-yellow/15 via-warm-coral/8 to-bg-cream flex flex-col gap-6";
+  }
+  if (section.productType === "squishy") {
+    return "rounded-3xl shadow-sm border border-sky-blue/25 p-8 sm:p-10 bg-gradient-to-br from-sky-blue/15 via-ube-purple/8 to-bg-cream flex flex-col gap-6";
+  }
+  return "rounded-3xl shadow-sm border border-tropical-green/25 p-8 sm:p-10 bg-gradient-to-br from-tropical-green/10 via-bg-cream to-pineapple-yellow/8 flex flex-col gap-6";
+}
+
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 function CollectableCard({
   item,
   onClick,
+  productLabel,
 }: {
   item: ShopCollectableItem;
   onClick: () => void;
+  productLabel: string;
 }) {
-  const productLabel = item.productType === "plushy" ? "Plushy Collectable" : "Squishy Collectable";
   const cardImageUrl = getCardImageUrl(item);
   const hoverImageUrl = getCardHoverImageUrl(item);
   const displayTitle = item.displayTitle || item.characterName;
@@ -137,12 +166,13 @@ function ProductModal({
   item,
   initialImage,
   onClose,
+  productLabel,
 }: {
   item: ShopCollectableItem;
   initialImage: ShopCollectableImage | null;
   onClose: () => void;
+  productLabel: string;
 }) {
-  const productLabel = item.productType === "plushy" ? "Plushy Collectable" : "Squishy Collectable";
   const backdropRef = useRef<HTMLDivElement>(null);
   const galleryImages = getCollectableGalleryImages(item);
   const [selectedImage, setSelectedImage] = useState<ShopCollectableImage | null>(
@@ -343,38 +373,42 @@ export default function ShopCollectablesClient({
   const [modalState, setModalState] = useState<{
     item: ShopCollectableItem;
     initialImage: ShopCollectableImage | null;
+    productLabel: string;
   } | null>(null);
   const handleClose = useCallback(() => setModalState(null), []);
 
   return (
     <>
       <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex flex-col gap-10 py-12 pb-20">
-        {sections.map((section) => (
-          <section
-            key={section.id}
-            className={
-              section.productType === "plushy"
-                ? "rounded-3xl shadow-sm border border-pineapple-yellow/25 p-8 sm:p-10 bg-gradient-to-br from-pineapple-yellow/15 via-warm-coral/8 to-bg-cream flex flex-col gap-6"
-                : "rounded-3xl shadow-sm border border-sky-blue/25 p-8 sm:p-10 bg-gradient-to-br from-sky-blue/15 via-ube-purple/8 to-bg-cream flex flex-col gap-6"
-            }
-          >
-            <div>
-              <h2 className="brand-title-section-logo text-2xl font-black mb-1">
-                {section.productType === "plushy" ? "🧸" : "🫶"} {section.title}
-              </h2>
-              <p className="text-sm text-tiki-brown/55">{section.description}</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {section.items.map((item) => (
-                <CollectableCard
-                  key={item.id}
-                  item={item}
-                  onClick={() => setModalState({ item, initialImage: getModalDefaultImage(item) })}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+        {sections.map((section) => {
+          const label = sectionToProductLabel(section);
+          return (
+            <section key={section.id} className={sectionClassName(section)}>
+              <div>
+                <h2 className="brand-title-section-logo text-2xl font-black mb-1">
+                  {sectionEmoji(section)} {section.title}
+                </h2>
+                <p className="text-sm text-tiki-brown/55">{section.description}</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {section.items.map((item) => (
+                  <CollectableCard
+                    key={item.id}
+                    item={item}
+                    productLabel={label}
+                    onClick={() =>
+                      setModalState({
+                        item,
+                        initialImage: getModalDefaultImage(item),
+                        productLabel: label,
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       {modalState && (
@@ -383,6 +417,7 @@ export default function ShopCollectablesClient({
           item={modalState.item}
           initialImage={modalState.initialImage}
           onClose={handleClose}
+          productLabel={modalState.productLabel}
         />
       )}
     </>

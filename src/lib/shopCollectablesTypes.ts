@@ -1,7 +1,8 @@
 // Types for the Shop Collectables system.
 // Planning/display only — no commerce, no pricing, no inventory.
 
-export type ShopCollectableProductType = "plushy" | "squishy";
+// Formerly "plushy" | "squishy" — now any valid slug so dynamic product lines work.
+export type ShopCollectableProductType = string;
 
 export type ShopCollectableCtaMode = "coming-soon" | "notify" | "external-link" | "disabled";
 
@@ -55,6 +56,10 @@ export type ShopCollectablesSection = {
   title: string;
   description: string;
   productType: ShopCollectableProductType;
+  /** Human-readable singular label for individual product cards (e.g. "Mellow Collectable"). */
+  productLineName?: string;
+  /** ID of the ProductConcept that generated this section, if any. */
+  conceptId?: string;
   items: ShopCollectableItem[];
 };
 

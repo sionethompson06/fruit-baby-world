@@ -21,9 +21,6 @@ const MIME_EXTENSIONS: Record<AllowedMime, string> = {
   "image/webp": "webp",
 };
 
-const ALLOWED_PRODUCT_TYPES = ["plushy", "squishy"] as const;
-type AllowedProductType = (typeof ALLOWED_PRODUCT_TYPES)[number];
-
 const MAX_BASE64_BYTES = 20 * 1024 * 1024; // 20 MB
 
 type ImageMetadata = {
@@ -45,7 +42,7 @@ type UploadResult =
       pathname: string;
       image: ImageMetadata;
       characterSlug: string;
-      productType: AllowedProductType;
+      productType: string;
       mimeType: string;
       sizeBytes: number;
       uploadedAt: string;
@@ -67,10 +64,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function isAllowedMime(v: unknown): v is AllowedMime {
   return typeof v === "string" && (ALLOWED_MIME_TYPES as readonly string[]).includes(v);
-}
-
-function isAllowedProductType(v: unknown): v is AllowedProductType {
-  return typeof v === "string" && (ALLOWED_PRODUCT_TYPES as readonly string[]).includes(v);
 }
 
 const SAFE_SLUG = /^[a-z0-9][a-z0-9-]*$/;
@@ -120,13 +113,13 @@ export async function POST(request: Request): Promise<Response> {
   }
   const characterSlug = body.characterSlug as string;
 
-  if (!isAllowedProductType(body.productType)) {
+  if (!validateSlug(body.productType)) {
     return Response.json(
-      { ok: false, status: "validation_error", message: "productType must be 'plushy' or 'squishy'." } satisfies UploadResult,
+      { ok: false, status: "validation_error", message: "productType must be a valid slug (lowercase letters, digits, hyphens)." } satisfies UploadResult,
       { status: 400 }
     );
   }
-  const productType = body.productType;
+  const productType = body.productType as string;
 
   const rawBase64Input = typeof body.file === "string" ? body.file : "";
   if (!rawBase64Input) {

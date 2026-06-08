@@ -128,7 +128,8 @@ function normalizeItem(raw: unknown, fallback: ShopCollectableItem): ShopCollect
     id:            typeof r.id === "string" ? r.id : fallback.id,
     characterSlug: typeof r.characterSlug === "string" ? r.characterSlug : fallback.characterSlug,
     characterName: typeof r.characterName === "string" ? r.characterName : fallback.characterName,
-    productType:   r.productType === "plushy" || r.productType === "squishy" ? r.productType : fallback.productType,
+    // Accept any non-empty string slug so dynamic product lines are preserved
+    productType:   typeof r.productType === "string" && r.productType.trim() ? r.productType.trim() : fallback.productType,
     imageUrl:      typeof r.imageUrl === "string" ? r.imageUrl : "",
     imagePathname: typeof r.imagePathname === "string" ? r.imagePathname : "",
     statusLabel:   typeof r.statusLabel === "string" && r.statusLabel.trim() ? r.statusLabel.trim() : "Harvest Coming Soon",
@@ -165,7 +166,7 @@ function normalizeSection(raw: unknown, fallback: ShopCollectablesSection): Shop
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return fallback;
   const r = raw as Record<string, unknown>;
   const productType: ShopCollectableProductType =
-    r.productType === "plushy" || r.productType === "squishy" ? r.productType : fallback.productType;
+    typeof r.productType === "string" && r.productType.trim() ? r.productType.trim() : fallback.productType;
   const rawItems = Array.isArray(r.items) ? r.items : [];
   const items = fallback.items.map((fb) => {
     const match = rawItems.find(
@@ -174,26 +175,77 @@ function normalizeSection(raw: unknown, fallback: ShopCollectablesSection): Shop
     return normalizeItem(match ?? {}, fb);
   });
   return {
-    id:          typeof r.id === "string" ? r.id : fallback.id,
-    title:       typeof r.title === "string" && r.title.trim() ? r.title.trim() : fallback.title,
-    description: typeof r.description === "string" ? r.description : fallback.description,
+    id:              typeof r.id === "string" ? r.id : fallback.id,
+    title:           typeof r.title === "string" && r.title.trim() ? r.title.trim() : fallback.title,
+    description:     typeof r.description === "string" ? r.description : fallback.description,
     productType,
+    productLineName: typeof r.productLineName === "string" && r.productLineName.trim() ? r.productLineName.trim() : fallback.productLineName,
+    conceptId:       typeof r.conceptId === "string" && r.conceptId ? r.conceptId : fallback.conceptId,
     items,
   };
+}
+
+// Normalize a dynamic product-line section (not one of the two built-in plushy/squishy sections).
+// Items are taken directly from raw data rather than merged with a canonical character list.
+function normalizeExtraSection(raw: unknown): ShopCollectablesSection | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  const id = typeof r.id === "string" && r.id.trim() ? r.id.trim() : null;
+  const productType = typeof r.productType === "string" && r.productType.trim() ? r.productType.trim() : null;
+  if (!id || !productType) return null;
+
+  const title =
+    typeof r.title === "string" && r.title.trim()
+      ? r.title.trim()
+      : productType.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") + " Collectables";
+  const description = typeof r.description === "string" ? r.description : "";
+  const productLineName =
+    typeof r.productLineName === "string" && r.productLineName.trim() ? r.productLineName.trim() : undefined;
+  const conceptId = typeof r.conceptId === "string" && r.conceptId ? r.conceptId : undefined;
+
+  const rawItems = Array.isArray(r.items) ? r.items : [];
+  const items: ShopCollectableItem[] = rawItems
+    .map((rawItem: unknown, idx: number) => {
+      if (typeof rawItem !== "object" || rawItem === null) return null;
+      const ri = rawItem as Record<string, unknown>;
+      const itemId = typeof ri.id === "string" && ri.id ? ri.id : null;
+      const charSlug = typeof ri.characterSlug === "string" && ri.characterSlug ? ri.characterSlug : null;
+      if (!itemId || !charSlug) return null;
+      const charName = typeof ri.characterName === "string" && ri.characterName ? ri.characterName : charSlug;
+      const fb = defaultItem(itemId, charSlug, charName, productType, idx);
+      return normalizeItem(rawItem, fb);
+    })
+    .filter((it): it is ShopCollectableItem => it !== null);
+
+  return { id, title, description, productType, productLineName, conceptId, items };
 }
 
 export function normalizeShopCollectablesConfig(raw: unknown): ShopCollectablesConfig {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return DEFAULT_CONFIG;
   const r = raw as Record<string, unknown>;
   const rawSections = Array.isArray(r.sections) ? r.sections : [];
-  const sections = DEFAULT_CONFIG.sections.map((fb) => {
+
+  // Built-in sections: merge with canonical character fallbacks
+  const defaultSectionIds = new Set(DEFAULT_CONFIG.sections.map((s) => s.id));
+  const builtInSections = DEFAULT_CONFIG.sections.map((fb) => {
     const match = rawSections.find(
       (rs) => typeof rs === "object" && rs !== null && (rs as Record<string, unknown>).id === fb.id
     );
     return normalizeSection(match ?? {}, fb);
   });
+
+  // Extra (dynamic) sections: preserve as-is with safe normalization
+  const extraSections = rawSections
+    .filter((rs) => {
+      if (typeof rs !== "object" || rs === null) return false;
+      const id = (rs as Record<string, unknown>).id;
+      return typeof id === "string" && !defaultSectionIds.has(id);
+    })
+    .map((rs) => normalizeExtraSection(rs))
+    .filter((s): s is ShopCollectablesSection => s !== null);
+
   return {
-    sections,
+    sections: [...builtInSections, ...extraSections],
     updatedAt: typeof r.updatedAt === "string" ? r.updatedAt : "",
   };
 }

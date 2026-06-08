@@ -8,6 +8,7 @@ import type {
   ShopCollectableImage,
   ShopCollectableCtaMode,
 } from "@/lib/shopCollectablesTypes";
+import type { ProductConcept } from "@/lib/productConceptTypes";
 
 type UploadStatus = "idle" | "uploading" | "error";
 
@@ -541,6 +542,12 @@ function CollectableItemRow({
 
 // ─── Section panel ────────────────────────────────────────────────────────────
 
+function sectionEmoji(productType: string): string {
+  if (productType === "plushy") return "🧸";
+  if (productType === "squishy") return "🫶";
+  return "🛍️";
+}
+
 function CollectableSectionPanel({
   section,
   uploadStates,
@@ -562,7 +569,7 @@ function CollectableSectionPanel({
   onUpdateItem: (itemId: string, patch: Partial<ShopCollectableItem>) => void;
   onToggleEnabled: (itemId: string) => void;
 }) {
-  const emoji = section.productType === "plushy" ? "🧸" : "🫶";
+  const emoji = sectionEmoji(section.productType);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
@@ -590,17 +597,45 @@ function CollectableSectionPanel({
   );
 }
 
+// ─── Canonical characters for generated rows ─────────────────────────────────
+
+const CANONICAL_CHARACTERS: Array<{ slug: string; name: string }> = [
+  { slug: "pineapple-baby",   name: "Pineapple Baby" },
+  { slug: "ube-baby",         name: "Ube Baby" },
+  { slug: "mango-baby",       name: "Mango Baby" },
+  { slug: "kiwi-baby",        name: "Kiwi Baby" },
+  { slug: "coconut-baby",     name: "Coconut Baby" },
+  { slug: "strawberry-baby",  name: "Strawberry Baby" },
+  { slug: "dragonfruit-baby", name: "Dragon Fruit Baby" },
+  { slug: "tiki",             name: "Tiki Trouble" },
+];
+
+// Convert a display title to a stable URL/file-safe slug.
+function titleToProductSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 48);
+}
+
 // ─── Main manager ─────────────────────────────────────────────────────────────
 
 export default function ShopCollectablesManager({
   initialConfig,
+  productConcepts = [],
 }: {
   initialConfig: ShopCollectablesConfig;
+  productConcepts?: ProductConcept[];
 }) {
   const [config, setConfig] = useState<ShopCollectablesConfig>(initialConfig);
   const [uploadStates, setUploadStates] = useState<Record<string, ItemUploadState>>({});
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveMessage, setSaveMessage] = useState("");
+  const [creatingRowsFor, setCreatingRowsFor] = useState<string | null>(null);
+  const [createRowsSuccess, setCreateRowsSuccess] = useState<string>("");
 
   function setItemUploadState(itemId: string, patch: Partial<ItemUploadState>) {
     setUploadStates((prev) => ({
@@ -626,6 +661,59 @@ export default function ShopCollectablesManager({
       if (item) return { section, item };
     }
     return null;
+  }
+
+  // Concepts that are not archived and don't yet have a matching section in config.
+  const activeConcepts = productConcepts.filter((c) => c.status !== "archived");
+  const pendingConcepts = activeConcepts.filter(
+    (c) =>
+      !config.sections.some(
+        (s) => s.conceptId === c.id || s.id === titleToProductSlug(c.title)
+      )
+  );
+
+  function handleCreateProductRows(concept: ProductConcept) {
+    const slug = titleToProductSlug(concept.title);
+    if (config.sections.some((s) => s.id === slug || s.conceptId === concept.id)) return;
+
+    setCreatingRowsFor(concept.id);
+    setCreateRowsSuccess("");
+
+    const now = new Date().toISOString();
+    const productLineName = concept.title.replace(/s$/, ""); // "Mellow Collectables" → "Mellow Collectable"
+    const newSection: ShopCollectablesSection = {
+      id: slug,
+      title: concept.title,
+      description: concept.shortDescription ?? "",
+      productType: slug,
+      productLineName,
+      conceptId: concept.id,
+      items: CANONICAL_CHARACTERS.map((char, idx) => ({
+        id: `${char.slug}-${slug}`,
+        characterSlug: char.slug,
+        characterName: char.name,
+        productType: slug,
+        imageUrl: "",
+        imagePathname: "",
+        statusLabel: "Harvest Coming Soon",
+        sortOrder: idx,
+        enabled: false,
+        images: [],
+        displayTitle: `${char.name} ${productLineName}`,
+        collectionName: concept.title,
+        priceLabel: "Coming Soon",
+        ctaLabel: "Harvest Coming Soon",
+        ctaMode: "coming-soon",
+        updatedAt: now,
+      })),
+    };
+
+    setConfig((prev) => ({ ...prev, sections: [...prev.sections, newSection] }));
+    setSaveStatus("idle");
+    setCreatingRowsFor(null);
+    setCreateRowsSuccess(
+      `"${concept.title}" product rows created. Upload images in the new section below, then click Save Collectables.`
+    );
   }
 
   async function handleGalleryUpload(itemId: string, file: File) {
@@ -815,7 +903,10 @@ export default function ShopCollectablesManager({
         <div>
           <h2 className="text-lg font-black text-tiki-brown">🛍️ Shop Collectables</h2>
           <p className="text-xs text-tiki-brown/55 mt-0.5">
-            Manage product images and details for plushy and squishy collectables. Click Save after changes.
+            Manage product images and details for all shop collectables. Click Save after changes.
+          </p>
+          <p className="text-xs text-tiki-brown/40 mt-1">
+            To add a new product line: create a Product Concept below, then click &ldquo;Create Product Rows&rdquo; here to get upload-ready character slots.
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -841,6 +932,60 @@ export default function ShopCollectablesManager({
         <span><span className="font-black text-warm-coral/70">✕</span> <span className="font-semibold">Archive</span> — hides without deleting the file</span>
       </div>
 
+      {/* ── New product line setup — concepts without rows ──────────────────── */}
+      {pendingConcepts.length > 0 && (
+        <div className="rounded-2xl border border-ube-purple/25 bg-ube-purple/5 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-base">✨</span>
+            <h3 className="text-sm font-black text-tiki-brown">New Product Lines Ready to Build</h3>
+          </div>
+          <p className="text-xs text-tiki-brown/60 leading-snug">
+            These product concepts don&apos;t have upload rows yet. Click &ldquo;Create Product Rows&rdquo; to generate
+            upload-ready character slots for that product line.
+          </p>
+          <div className="flex flex-col gap-2">
+            {pendingConcepts.map((concept) => (
+              <div
+                key={concept.id}
+                className="bg-white rounded-xl border border-tiki-brown/10 px-4 py-3 flex items-center gap-3 flex-wrap"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-tiki-brown truncate">{concept.title}</p>
+                  {concept.shortDescription && (
+                    <p className="text-xs text-tiki-brown/50 truncate leading-snug mt-0.5">
+                      {concept.shortDescription}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleCreateProductRows(concept)}
+                  disabled={creatingRowsFor === concept.id}
+                  className="flex-shrink-0 text-xs font-bold px-4 py-2 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {creatingRowsFor === concept.id ? "Creating…" : "Create Product Rows"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Success banner after row creation */}
+      {createRowsSuccess && (
+        <div className="rounded-2xl border border-tropical-green/30 bg-tropical-green/10 px-4 py-3 flex items-start gap-3">
+          <span className="text-tropical-green text-base flex-shrink-0">✓</span>
+          <p className="text-sm font-semibold text-tropical-green/90 leading-snug">{createRowsSuccess}</p>
+          <button
+            type="button"
+            onClick={() => setCreateRowsSuccess("")}
+            className="ml-auto flex-shrink-0 text-xs text-tropical-green/60 hover:text-tropical-green transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <hr className="border-tiki-brown/8" />
 
       {config.sections.map((section) => (
@@ -857,6 +1002,14 @@ export default function ShopCollectablesManager({
           onToggleEnabled={handleToggleEnabled}
         />
       ))}
+
+      {config.sections.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-tiki-brown/15 px-6 py-10 text-center">
+          <p className="text-sm text-tiki-brown/40">
+            No product sections yet. Create a Product Concept below and use &ldquo;Create Product Rows&rdquo; above.
+          </p>
+        </div>
+      )}
 
       <p className="text-xs text-tiki-brown/35 leading-relaxed">
         Images upload to Vercel Blob. Saving commits collectables.json to GitHub.

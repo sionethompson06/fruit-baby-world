@@ -33,7 +33,7 @@ export default function AdminProductsPage() {
           </p>
         </div>
 
-        <ShopCollectablesManager initialConfig={collectablesConfig} />
+        <ShopCollectablesManager initialConfig={collectablesConfig} productConcepts={concepts} />
         <ProductConceptManagerSection characters={[]} initialConcepts={concepts} />
         <ProductPromptBuilderSection />
       </div>
