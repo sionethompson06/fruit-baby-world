@@ -3,6 +3,8 @@
 
 export type ShopCollectableProductType = "plushy" | "squishy";
 
+export type ShopCollectableCtaMode = "coming-soon" | "notify" | "external-link" | "disabled";
+
 export type ShopCollectableImage = {
   id: string;
   imageUrl: string;
@@ -31,6 +33,21 @@ export type ShopCollectableItem = {
   primaryImageId?: string;
   hoverImageId?: string;
   clickImageId?: string;
+  // Product detail / showcase fields (all optional — legacy products without them still work)
+  displayTitle?: string;
+  shortDescription?: string;
+  productDescription?: string;
+  detailBullets?: string[];
+  collectionName?: string;
+  material?: string;
+  size?: string;
+  ageGuidance?: string;
+  careInstructions?: string;
+  priceLabel?: string;
+  ctaLabel?: string;
+  ctaMode?: ShopCollectableCtaMode;
+  externalUrl?: string;
+  notifyMessage?: string;
 };
 
 export type ShopCollectablesSection = {

@@ -9,6 +9,7 @@ import type {
   ShopCollectableItem,
   ShopCollectableImage,
   ShopCollectableProductType,
+  ShopCollectableCtaMode,
 } from "@/lib/shopCollectablesTypes";
 
 export type {
@@ -138,6 +139,25 @@ function normalizeItem(raw: unknown, fallback: ShopCollectableItem): ShopCollect
     primaryImageId,
     hoverImageId,
     clickImageId,
+    // Product detail / showcase fields
+    displayTitle:       typeof r.displayTitle === "string" && r.displayTitle.trim() ? r.displayTitle.trim() : undefined,
+    shortDescription:   typeof r.shortDescription === "string" && r.shortDescription.trim() ? r.shortDescription.trim() : undefined,
+    productDescription: typeof r.productDescription === "string" && r.productDescription.trim() ? r.productDescription.trim() : undefined,
+    detailBullets:      Array.isArray(r.detailBullets)
+      ? (r.detailBullets as unknown[]).filter((b): b is string => typeof b === "string" && !!b.trim()).map((b) => b.trim())
+      : undefined,
+    collectionName:     typeof r.collectionName === "string" && r.collectionName.trim() ? r.collectionName.trim() : undefined,
+    material:           typeof r.material === "string" && r.material.trim() ? r.material.trim() : undefined,
+    size:               typeof r.size === "string" && r.size.trim() ? r.size.trim() : undefined,
+    ageGuidance:        typeof r.ageGuidance === "string" && r.ageGuidance.trim() ? r.ageGuidance.trim() : undefined,
+    careInstructions:   typeof r.careInstructions === "string" && r.careInstructions.trim() ? r.careInstructions.trim() : undefined,
+    priceLabel:         typeof r.priceLabel === "string" && r.priceLabel.trim() ? r.priceLabel.trim() : undefined,
+    ctaLabel:           typeof r.ctaLabel === "string" && r.ctaLabel.trim() ? r.ctaLabel.trim() : undefined,
+    ctaMode:            (["coming-soon", "notify", "external-link", "disabled"] as readonly string[]).includes(r.ctaMode as string)
+      ? r.ctaMode as ShopCollectableCtaMode
+      : undefined,
+    externalUrl:        typeof r.externalUrl === "string" && r.externalUrl.trim() ? r.externalUrl.trim() : undefined,
+    notifyMessage:      typeof r.notifyMessage === "string" && r.notifyMessage.trim() ? r.notifyMessage.trim() : undefined,
   };
 }
 
