@@ -31,17 +31,22 @@ export default function CoverCountdown({
   completeMessage: string;
   completeSubtext: string;
 }) {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() =>
-    computeTimeLeft(unveilingAt)
-  );
+  // null = not yet mounted (SSR / first hydration pass — no live time)
+  // TimeLeft | false = mounted (false means expired)
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null | false>(null);
 
   useEffect(() => {
-    const id = setInterval(() => setTimeLeft(computeTimeLeft(unveilingAt)), 1000);
+    // Compute once immediately so the display updates on the first frame
+    setTimeLeft(computeTimeLeft(unveilingAt) ?? false);
+
+    const id = setInterval(() => {
+      setTimeLeft(computeTimeLeft(unveilingAt) ?? false);
+    }, 1000);
     return () => clearInterval(id);
   }, [unveilingAt]);
 
-  // Countdown expired — show completion message, NOT the website
-  if (timeLeft === null) {
+  // ── Countdown expired ────────────────────────────────────────────────────
+  if (timeLeft === false) {
     return (
       <section aria-label="Unveiling status" className="flex flex-col items-center gap-3 text-center px-4">
         <p
@@ -57,11 +62,12 @@ export default function CoverCountdown({
     );
   }
 
+  // ── Units: stable "--" before mount, live values after ──────────────────
   const units = [
-    { label: "Days", value: timeLeft.days },
-    { label: "Hours", value: timeLeft.hours },
-    { label: "Minutes", value: timeLeft.minutes },
-    { label: "Seconds", value: timeLeft.seconds },
+    { label: "Days",    value: timeLeft ? String(timeLeft.days).padStart(2, "0")    : "--" },
+    { label: "Hours",   value: timeLeft ? String(timeLeft.hours).padStart(2, "0")   : "--" },
+    { label: "Minutes", value: timeLeft ? String(timeLeft.minutes).padStart(2, "0") : "--" },
+    { label: "Seconds", value: timeLeft ? String(timeLeft.seconds).padStart(2, "0") : "--" },
   ];
 
   return (
@@ -100,9 +106,9 @@ export default function CoverCountdown({
               <span
                 className="text-4xl sm:text-6xl font-black tabular-nums leading-none text-tiki-brown"
                 style={{ fontFamily: "var(--font-bubblegum-sans)" }}
-                aria-label={`${value} ${label}`}
+                aria-label={timeLeft ? `${timeLeft[label.toLowerCase() as keyof TimeLeft]} ${label}` : label}
               >
-                {String(value).padStart(2, "0")}
+                {value}
               </span>
             </div>
             <span className="text-[10px] sm:text-xs font-bold text-tiki-brown/50 uppercase tracking-widest">
@@ -114,3 +120,4 @@ export default function CoverCountdown({
     </section>
   );
 }
+
