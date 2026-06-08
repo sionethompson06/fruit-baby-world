@@ -37,6 +37,23 @@ function sectionClassName(section: ShopCollectablesSection): string {
   return "rounded-3xl shadow-sm border border-tropical-green/25 p-8 sm:p-10 bg-gradient-to-br from-tropical-green/10 via-bg-cream to-pineapple-yellow/8 flex flex-col gap-6";
 }
 
+// Character-matched glow colors for hover effect.
+const CHARACTER_GLOW: Record<string, string> = {
+  "pineapple-baby":   "rgba(255,216,77,0.55)",
+  "kiwi-baby":        "rgba(155,229,100,0.5)",
+  "coconut-baby":     "rgba(189,235,255,0.6)",
+  "mango-baby":       "rgba(255,179,71,0.5)",
+  "ube-baby":         "rgba(142,92,247,0.4)",
+  "strawberry-baby":  "rgba(255,184,200,0.55)",
+  "dragonfruit-baby": "rgba(255,138,122,0.5)",
+  "tiki":             "rgba(255,179,71,0.45)",
+};
+const FALLBACK_GLOW = "rgba(255,216,77,0.45)";
+
+function getCardGlow(characterSlug: string): string {
+  return CHARACTER_GLOW[characterSlug] ?? FALLBACK_GLOW;
+}
+
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 function CollectableCard({
@@ -51,13 +68,15 @@ function CollectableCard({
   const cardImageUrl = getCardImageUrl(item);
   const hoverImageUrl = getCardHoverImageUrl(item);
   const displayTitle = item.displayTitle || item.characterName;
+  const glowColor = getCardGlow(item.characterSlug);
 
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={`View ${displayTitle} ${productLabel}`}
-      className="group/card bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden flex flex-col text-left w-full cursor-pointer hover:shadow-md transition-shadow"
+      className="collectable-card group/card bg-white rounded-3xl border border-tiki-brown/10 shadow-sm overflow-hidden flex flex-col text-left w-full cursor-pointer"
+      style={{ "--card-glow": glowColor } as React.CSSProperties}
     >
       {/* Image */}
       <div className="relative aspect-square bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 flex items-center justify-center overflow-hidden">
@@ -69,7 +88,7 @@ function CollectableCard({
               src={cardImageUrl}
               alt={`${displayTitle} ${productLabel}`}
               className={[
-                "absolute inset-0 w-full h-full object-contain p-3 transition-all duration-300 ease-out",
+                "absolute inset-0 w-full h-full object-contain p-2 transition-all duration-300 ease-out",
                 "motion-safe:group-hover/card:scale-[1.06]",
                 hoverImageUrl ? "group-hover/card:opacity-0" : "",
               ].filter(Boolean).join(" ")}
@@ -82,7 +101,7 @@ function CollectableCard({
                 src={hoverImageUrl}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-contain p-3 opacity-0 transition-all duration-300 ease-out group-hover/card:opacity-100 motion-safe:scale-[0.97] motion-safe:group-hover/card:scale-100"
+                className="absolute inset-0 w-full h-full object-contain p-2 opacity-0 transition-all duration-300 ease-out group-hover/card:opacity-100 motion-safe:scale-[0.97] motion-safe:group-hover/card:scale-100"
                 loading="lazy"
               />
             )}
@@ -96,10 +115,9 @@ function CollectableCard({
       </div>
 
       {/* Body */}
-      <div className="p-4 flex flex-col gap-1.5 flex-1">
+      <div className="p-3 flex flex-col gap-1 flex-1">
         <p className="text-sm font-black text-tiki-brown leading-tight">{displayTitle}</p>
-        <p className="text-xs font-semibold text-tiki-brown/50">{productLabel}</p>
-        <p className="text-xs font-bold text-ube-purple/70 mt-auto pt-2">
+        <p className="text-xs font-bold text-ube-purple/70 mt-auto pt-1.5">
           {item.priceLabel ?? item.statusLabel}
         </p>
       </div>
@@ -390,7 +408,7 @@ export default function ShopCollectablesClient({
                 </h2>
                 <p className="text-sm text-tiki-brown/55">{section.description}</p>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
                 {section.items.map((item) => (
                   <CollectableCard
                     key={item.id}

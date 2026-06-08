@@ -706,3 +706,18 @@ a:focus-visible {
     opacity: 0.5;
   }
 }
+
+/* Shop product card glow */
+.collectable-card {
+  transition: box-shadow 0.22s ease;
+}
+.collectable-card:hover,
+.collectable-card:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--card-glow, rgba(255,216,77,0.3)),
+    0 8px 28px var(--card-glow, rgba(255,216,77,0.35)),
+    0 2px 8px rgba(0,0,0,0.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .collectable-card { transition: none; }
+}
