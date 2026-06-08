@@ -483,14 +483,9 @@ function CoverSilhouettePeek() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Effect 3 — Page Crease + Eyes Peek
 //
-// All crease PNGs have near-white (#ffffff) backgrounds after pre-processing.
-// mix-blend-mode: multiply makes white areas fully transparent: white × page = page.
-// Content (amber crease lines, black eyes) composites naturally via multiply.
-//
-// CRITICAL: no opacity on the container element. opacity < 1 creates a CSS
-// compositing isolation layer — child blend modes then blend against the
-// isolated transparent layer instead of the real page background, producing
-// a visible rectangular artifact. Individual image opacities drive entry/exit fades.
+// Uses RGBA-transparent PNG assets created by border-connected floodfill:
+// border-white background → alpha=0, pineapple face / crease / eyes → alpha=255.
+// No mix-blend-mode needed — the browser uses alpha directly.
 // ─────────────────────────────────────────────────────────────────────────────
 
 type CreasePhase = "hidden" | "small" | "small-eyes" | "open-eyes" | "fading";
@@ -555,8 +550,7 @@ function CoverCreasePeek() {
     };
   }, []);
 
-  const pos       = CREASE_POS[posIdx];
-  const objectPos = pos.side === "right" ? "top right" : "top left";
+  const pos = CREASE_POS[posIdx];
 
   const smallOpacity     = phase === "small"      ? 1 : 0;
   const smallEyesOpacity = phase === "small-eyes"  ? 1 : 0;
@@ -576,41 +570,35 @@ function CoverCreasePeek() {
       }}
     >
       <div style={{ position: "relative" }}>
-        {/* All crease PNGs now have pure-white backgrounds after pre-processing.
-            multiply blend: white × page = page (transparent). Content composites naturally. */}
+        {/* Transparent RGBA PNGs — alpha channel handles compositing, no blend-mode needed */}
         <img
-          src="/cover-effects/page-crease-small.png"
+          src="/cover-effects/page-crease-small-transparent.png"
           alt=""
           loading="lazy"
           style={{
             width: "100%", height: "auto", display: "block",
-            mixBlendMode: "multiply",
             opacity:    smallOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
         <img
-          src="/cover-effects/page-crease-small-with-eyes.png"
+          src="/cover-effects/page-crease-small-with-eyes-transparent.png"
           alt=""
           loading="lazy"
           style={{
             position: "absolute", top: 0, left: 0,
             width: "100%", height: "100%",
-            objectFit: "contain", objectPosition: objectPos,
-            mixBlendMode: "multiply",
             opacity:    smallEyesOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
         />
         <img
-          src="/cover-effects/page-crease-open-with-eyes.png"
+          src="/cover-effects/page-crease-open-with-eyes-transparent.png"
           alt=""
           loading="lazy"
           style={{
             position: "absolute", top: 0, left: 0,
             width: "100%", height: "100%",
-            objectFit: "contain", objectPosition: objectPos,
-            mixBlendMode: "multiply",
             opacity:    openEyesOpacity,
             transition: "opacity 0.6s ease-in-out",
           }}
