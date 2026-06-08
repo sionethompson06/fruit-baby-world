@@ -3,6 +3,18 @@
 
 export type ShopCollectableProductType = "plushy" | "squishy";
 
+export type ShopCollectableImage = {
+  id: string;
+  imageUrl: string;
+  imagePathname?: string;
+  originalFilename?: string;
+  altText?: string;
+  sortOrder: number;
+  isArchived?: boolean;
+  uploadedAt?: string;
+  updatedAt?: string;
+};
+
 export type ShopCollectableItem = {
   id: string;
   characterSlug: string;
@@ -14,6 +26,11 @@ export type ShopCollectableItem = {
   sortOrder: number;
   enabled: boolean;
   updatedAt?: string;
+  // Gallery — up to 4 uploaded images with role assignments
+  images?: ShopCollectableImage[];
+  primaryImageId?: string;
+  hoverImageId?: string;
+  clickImageId?: string;
 };
 
 export type ShopCollectablesSection = {

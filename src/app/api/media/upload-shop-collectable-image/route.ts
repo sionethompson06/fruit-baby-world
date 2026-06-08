@@ -26,12 +26,24 @@ type AllowedProductType = (typeof ALLOWED_PRODUCT_TYPES)[number];
 
 const MAX_BASE64_BYTES = 20 * 1024 * 1024; // 20 MB
 
+type ImageMetadata = {
+  id: string;
+  imageUrl: string;
+  imagePathname: string;
+  originalFilename?: string;
+  sortOrder: 0;
+  isArchived: false;
+  uploadedAt: string;
+  updatedAt: string;
+};
+
 type UploadResult =
   | {
       ok: true;
       status: "uploaded";
       imageUrl: string;
       pathname: string;
+      image: ImageMetadata;
       characterSlug: string;
       productType: AllowedProductType;
       mimeType: string;
@@ -154,6 +166,10 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const timestamp = Date.now();
+  const originalFilename =
+    typeof body.originalFilename === "string" && body.originalFilename
+      ? body.originalFilename
+      : undefined;
   const storagePath = `shop/collectables/${productType}/${characterSlug}-${timestamp}.${ext}`;
 
   try {
@@ -164,12 +180,23 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     const uploadedAt = new Date().toISOString();
+    const imageId = `img-${timestamp}-${Math.random().toString(36).slice(2, 8)}`;
     return Response.json(
       {
         ok: true,
         status: "uploaded",
         imageUrl: blob.url,
         pathname: blob.pathname,
+        image: {
+          id: imageId,
+          imageUrl: blob.url,
+          imagePathname: blob.pathname,
+          originalFilename,
+          sortOrder: 0,
+          isArchived: false,
+          uploadedAt,
+          updatedAt: uploadedAt,
+        } satisfies ImageMetadata,
         characterSlug,
         productType,
         mimeType: mime,

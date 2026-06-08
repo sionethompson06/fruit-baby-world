@@ -5,15 +5,14 @@ import type {
   ShopCollectablesConfig,
   ShopCollectablesSection,
   ShopCollectableItem,
-  ShopCollectableProductType,
+  ShopCollectableImage,
 } from "@/lib/shopCollectablesTypes";
 
-type UploadStatus = "idle" | "uploading" | "done" | "error";
+type UploadStatus = "idle" | "uploading" | "error";
 
 type ItemUploadState = {
   status: UploadStatus;
   message?: string;
-  previewUrl?: string; // local blob URL for instant preview before save
 };
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -27,96 +26,281 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+function getActiveImages(item: ShopCollectableItem): ShopCollectableImage[] {
+  return (item.images ?? [])
+    .filter((img) => !img.isArchived)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+// ─── Gallery image tile ───────────────────────────────────────────────────────
+
+function GalleryImageTile({
+  image,
+  isPrimary,
+  isHover,
+  isClick,
+  onSetPrimary,
+  onSetHover,
+  onSetClick,
+  onArchive,
+}: {
+  image: ShopCollectableImage;
+  isPrimary: boolean;
+  isHover: boolean;
+  isClick: boolean;
+  onSetPrimary: () => void;
+  onSetHover: () => void;
+  onSetClick: () => void;
+  onArchive: () => void;
+}) {
+  const borderColor = isPrimary
+    ? "#FFD84D"
+    : isHover
+    ? "#8E5CF7"
+    : isClick
+    ? "#4CAF50"
+    : "rgba(92,58,30,0.12)";
+
+  return (
+    <div className="flex flex-col gap-1 flex-shrink-0 w-20">
+      {/* Thumbnail */}
+      <div
+        className="w-20 h-20 rounded-xl overflow-hidden bg-tiki-brown/5 relative"
+        style={{ border: `2px solid ${borderColor}` }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image.imageUrl}
+          alt={image.altText ?? "Product image"}
+          className="w-full h-full object-contain p-1"
+        />
+        {/* Role badge overlay */}
+        <div className="absolute top-0.5 right-0.5 flex flex-col gap-0.5 items-end">
+          {isPrimary && (
+            <span className="text-[7px] font-black px-1 py-px rounded bg-pineapple-yellow text-tiki-brown leading-none">
+              P
+            </span>
+          )}
+          {isHover && (
+            <span className="text-[7px] font-black px-1 py-px rounded bg-ube-purple text-white leading-none">
+              H
+            </span>
+          )}
+          {isClick && (
+            <span className="text-[7px] font-black px-1 py-px rounded bg-tropical-green text-white leading-none">
+              C
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Filename */}
+      {image.originalFilename && (
+        <p
+          className="text-[9px] text-tiki-brown/35 truncate leading-none"
+          title={image.originalFilename}
+        >
+          {image.originalFilename}
+        </p>
+      )}
+
+      {/* Role + archive buttons */}
+      <div className="flex gap-px">
+        <button
+          type="button"
+          onClick={onSetPrimary}
+          title="Set as Primary Card Image"
+          className={`flex-1 text-[9px] font-black py-0.5 rounded transition-colors ${
+            isPrimary
+              ? "bg-pineapple-yellow/60 text-tiki-brown"
+              : "bg-tiki-brown/6 text-tiki-brown/45 hover:bg-pineapple-yellow/30"
+          }`}
+        >
+          P
+        </button>
+        <button
+          type="button"
+          onClick={onSetHover}
+          title="Set as Hover / Flip Image"
+          className={`flex-1 text-[9px] font-black py-0.5 rounded transition-colors ${
+            isHover
+              ? "bg-ube-purple/35 text-ube-purple"
+              : "bg-tiki-brown/6 text-tiki-brown/45 hover:bg-ube-purple/20"
+          }`}
+        >
+          H
+        </button>
+        <button
+          type="button"
+          onClick={onSetClick}
+          title="Set as Click / Large View Image"
+          className={`flex-1 text-[9px] font-black py-0.5 rounded transition-colors ${
+            isClick
+              ? "bg-tropical-green/30 text-tropical-green"
+              : "bg-tiki-brown/6 text-tiki-brown/45 hover:bg-tropical-green/20"
+          }`}
+        >
+          C
+        </button>
+        <button
+          type="button"
+          onClick={onArchive}
+          title="Archive (remove from gallery)"
+          className="flex-1 text-[9px] font-black py-0.5 rounded bg-tiki-brown/5 text-warm-coral/70 hover:bg-warm-coral/15 transition-colors"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Single item row ─────────────────────────────────────────────────────────
 
 function CollectableItemRow({
   item,
   uploadState,
-  onUpload,
+  onGalleryUpload,
+  onSetRole,
+  onArchiveImage,
   onToggleEnabled,
 }: {
   item: ShopCollectableItem;
   uploadState: ItemUploadState;
-  onUpload: (file: File) => void;
+  onGalleryUpload: (file: File) => void;
+  onSetRole: (imageId: string, role: "primary" | "hover" | "click") => void;
+  onArchiveImage: (imageId: string) => void;
   onToggleEnabled: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const displayImage = uploadState.previewUrl || (item.imageUrl || null);
+  const activeImages = getActiveImages(item);
+  const atMax = activeImages.length >= 4;
+  const isUploading = uploadState.status === "uploading";
 
   return (
-    <div className="flex items-start gap-4 bg-white rounded-2xl border border-tiki-brown/10 p-4">
-      {/* Image preview / placeholder */}
-      <div className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
-        {displayImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={displayImage}
-            alt={`${item.characterName} ${item.productType}`}
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <span className="text-3xl opacity-25">🛍️</span>
-        )}
-      </div>
-
-      {/* Info + upload */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-black text-tiki-brown">{item.characterName}</p>
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
-            {item.productType}
-          </span>
-          {!item.enabled && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45">
-              Hidden
-            </span>
+    <div className="bg-white rounded-2xl border border-tiki-brown/10 p-4 flex flex-col gap-3">
+      {/* ── Row header ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Legacy image preview */}
+        <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
+          {item.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.imageUrl}
+              alt={`${item.characterName} ${item.productType}`}
+              className="w-full h-full object-contain"
+            />
+          ) : (
+            <span className="text-2xl opacity-20">🛍️</span>
           )}
         </div>
 
-        <p className="text-xs text-tiki-brown/45 font-semibold">{item.statusLabel}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-black text-tiki-brown">{item.characterName}</p>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
+              {item.productType}
+            </span>
+            {!item.enabled && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45">
+                Hidden
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-tiki-brown/45 font-semibold mt-0.5">{item.statusLabel}</p>
+        </div>
 
-        {item.imageUrl && !uploadState.previewUrl && (
-          <p className="text-xs text-tropical-green/70 font-medium truncate max-w-xs">
-            ✓ Image saved
+        <button
+          type="button"
+          onClick={onToggleEnabled}
+          className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/6 text-tiki-brown/55 hover:bg-tiki-brown/12 transition-colors flex-shrink-0"
+        >
+          {item.enabled ? "Hide" : "Show"}
+        </button>
+      </div>
+
+      {/* ── Product Image Gallery ─────────────────────────────────────── */}
+      <div className="border-t border-tiki-brown/8 pt-3 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-black text-tiki-brown/60 uppercase tracking-wide">
+            Product Image Gallery
           </p>
-        )}
+          <span className="text-[10px] text-tiki-brown/35 font-semibold">
+            {activeImages.length}/4
+          </span>
+        </div>
+
+        <p className="text-[10px] text-tiki-brown/40 leading-snug">
+          Upload up to 4 images.{" "}
+          <span className="font-bold text-pineapple-yellow/90">P</span> = Primary Card Image &nbsp;
+          <span className="font-bold text-ube-purple/70">H</span> = Hover / Flip &nbsp;
+          <span className="font-bold text-tropical-green/70">C</span> = Click / Large View
+        </p>
+
+        <div className="flex flex-wrap gap-2 items-start">
+          {activeImages.map((img) => (
+            <GalleryImageTile
+              key={img.id}
+              image={img}
+              isPrimary={item.primaryImageId === img.id}
+              isHover={item.hoverImageId === img.id}
+              isClick={item.clickImageId === img.id}
+              onSetPrimary={() => onSetRole(img.id, "primary")}
+              onSetHover={() => onSetRole(img.id, "hover")}
+              onSetClick={() => onSetRole(img.id, "click")}
+              onArchive={() => onArchiveImage(img.id)}
+            />
+          ))}
+
+          {/* Add Image button */}
+          {!atMax && (
+            <div className="flex flex-col gap-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="w-20 h-20 rounded-xl border-2 border-dashed border-tiki-brown/20 flex items-center justify-center hover:bg-tiki-brown/4 hover:border-tiki-brown/35 transition-colors disabled:opacity-50"
+              >
+                {isUploading ? (
+                  <span className="text-lg text-tiki-brown/30 animate-pulse">⟳</span>
+                ) : (
+                  <span className="text-2xl text-tiki-brown/25">+</span>
+                )}
+              </button>
+              <p className="text-[9px] text-tiki-brown/35 text-center leading-none">
+                {isUploading ? "Uploading…" : "Add Image"}
+              </p>
+            </div>
+          )}
+
+          {atMax && (
+            <p className="text-[10px] text-tiki-brown/40 italic self-end pb-1">
+              Maximum of 4 product images reached.
+            </p>
+          )}
+        </div>
 
         {uploadState.status === "error" && (
           <p className="text-xs text-warm-coral font-semibold">{uploadState.message ?? "Upload failed."}</p>
         )}
-        {uploadState.status === "done" && (
-          <p className="text-xs text-tropical-green font-semibold">✓ Uploaded — click Save to commit.</p>
-        )}
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onUpload(file);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploadState.status === "uploading"}
-            className="text-xs font-bold px-3 py-1.5 rounded-xl bg-ube-purple/10 text-ube-purple hover:bg-ube-purple/18 transition-colors disabled:opacity-50"
-          >
-            {uploadState.status === "uploading" ? "Uploading…" : displayImage ? "Replace Image" : "Upload Image"}
-          </button>
-          <button
-            type="button"
-            onClick={onToggleEnabled}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/6 text-tiki-brown/55 hover:bg-tiki-brown/12 transition-colors"
-          >
-            {item.enabled ? "Hide" : "Show"}
-          </button>
-        </div>
+        <p className="text-[10px] text-tiki-brown/30 leading-snug">
+          Phase 1 saves image roles. Hover &amp; Click behavior activates in the next shop gallery phase.
+        </p>
       </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onGalleryUpload(file);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 }
@@ -126,12 +310,16 @@ function CollectableItemRow({
 function CollectableSectionPanel({
   section,
   uploadStates,
-  onUpload,
+  onGalleryUpload,
+  onSetRole,
+  onArchiveImage,
   onToggleEnabled,
 }: {
   section: ShopCollectablesSection;
   uploadStates: Record<string, ItemUploadState>;
-  onUpload: (itemId: string, file: File) => void;
+  onGalleryUpload: (itemId: string, file: File) => void;
+  onSetRole: (itemId: string, imageId: string, role: "primary" | "hover" | "click") => void;
+  onArchiveImage: (itemId: string, imageId: string) => void;
   onToggleEnabled: (itemId: string) => void;
 }) {
   const emoji = section.productType === "plushy" ? "🧸" : "🫶";
@@ -148,7 +336,9 @@ function CollectableSectionPanel({
             key={item.id}
             item={item}
             uploadState={uploadStates[item.id] ?? { status: "idle" }}
-            onUpload={(file) => onUpload(item.id, file)}
+            onGalleryUpload={(file) => onGalleryUpload(item.id, file)}
+            onSetRole={(imageId, role) => onSetRole(item.id, imageId, role)}
+            onArchiveImage={(imageId) => onArchiveImage(item.id, imageId)}
             onToggleEnabled={() => onToggleEnabled(item.id)}
           />
         ))}
@@ -199,12 +389,14 @@ export default function ShopCollectablesManager({
     return null;
   }
 
-  async function handleUpload(itemId: string, file: File) {
+  async function handleGalleryUpload(itemId: string, file: File) {
     const found = findItem(itemId);
     if (!found) return;
 
-    const localPreview = URL.createObjectURL(file);
-    setItemUploadState(itemId, { status: "uploading", previewUrl: localPreview, message: undefined });
+    // Guard: max 4 active images
+    if (getActiveImages(found.item).length >= 4) return;
+
+    setItemUploadState(itemId, { status: "uploading", message: undefined });
 
     try {
       const base64 = await fileToBase64(file);
@@ -214,24 +406,129 @@ export default function ShopCollectablesManager({
         body: JSON.stringify({
           file: base64,
           mimeType: file.type,
+          originalFilename: file.name,
           characterSlug: found.item.characterSlug,
           productType: found.item.productType,
         }),
       });
-      const data = await res.json() as { ok: boolean; imageUrl?: string; pathname?: string; message?: string };
-      if (!data.ok || !data.imageUrl) {
+
+      const data = (await res.json()) as {
+        ok: boolean;
+        image?: {
+          id: string;
+          imageUrl: string;
+          imagePathname?: string;
+          originalFilename?: string;
+          sortOrder: number;
+          isArchived: boolean;
+          uploadedAt: string;
+          updatedAt: string;
+        };
+        imageUrl?: string;
+        pathname?: string;
+        message?: string;
+      };
+
+      if (!data.ok || !data.image) {
         setItemUploadState(itemId, { status: "error", message: data.message ?? "Upload failed." });
         return;
       }
-      updateItemInConfig(found.section.id, itemId, {
-        imageUrl: data.imageUrl,
-        imagePathname: data.pathname ?? "",
-      });
-      setItemUploadState(itemId, { status: "done", previewUrl: undefined });
+
+      // Re-fetch the current item (state may have changed during upload)
+      const latest = findItem(itemId);
+      const currentItem = latest?.item ?? found.item;
+      const currentImages = currentItem.images ?? [];
+
+      const nextSortOrder = currentImages.length;
+      const newImage: ShopCollectableImage = {
+        id: data.image.id,
+        imageUrl: data.image.imageUrl,
+        imagePathname: data.image.imagePathname,
+        originalFilename: data.image.originalFilename,
+        sortOrder: nextSortOrder,
+        isArchived: false,
+        uploadedAt: data.image.uploadedAt,
+        updatedAt: data.image.updatedAt,
+      };
+
+      const updatedImages = [...currentImages, newImage];
+      const alreadyHasPrimary =
+        !!currentItem.primaryImageId &&
+        updatedImages.some((img) => img.id === currentItem.primaryImageId && !img.isArchived);
+
+      const patch: Partial<ShopCollectableItem> = { images: updatedImages };
+
+      if (!alreadyHasPrimary) {
+        patch.primaryImageId = newImage.id;
+        // Keep legacy imageUrl in sync with primary for public shop compatibility
+        patch.imageUrl = newImage.imageUrl;
+        patch.imagePathname = newImage.imagePathname ?? "";
+      } else if (!currentItem.imageUrl) {
+        // Legacy imageUrl was empty — populate it from first upload
+        patch.imageUrl = newImage.imageUrl;
+        patch.imagePathname = newImage.imagePathname ?? "";
+      }
+
+      updateItemInConfig(found.section.id, itemId, patch);
+      setItemUploadState(itemId, { status: "idle" });
       setSaveStatus("idle");
     } catch {
       setItemUploadState(itemId, { status: "error", message: "Network error during upload." });
     }
+  }
+
+  function handleSetRole(
+    itemId: string,
+    imageId: string,
+    role: "primary" | "hover" | "click"
+  ) {
+    const found = findItem(itemId);
+    if (!found) return;
+
+    const patch: Partial<ShopCollectableItem> = {};
+    if (role === "primary") {
+      patch.primaryImageId = imageId;
+      // Keep legacy imageUrl in sync with the new primary
+      const img = (found.item.images ?? []).find((i) => i.id === imageId);
+      if (img) {
+        patch.imageUrl = img.imageUrl;
+        patch.imagePathname = img.imagePathname ?? "";
+      }
+    } else if (role === "hover") {
+      patch.hoverImageId = imageId;
+    } else if (role === "click") {
+      patch.clickImageId = imageId;
+    }
+
+    updateItemInConfig(found.section.id, itemId, patch);
+    setSaveStatus("idle");
+  }
+
+  function handleArchiveImage(itemId: string, imageId: string) {
+    const found = findItem(itemId);
+    if (!found) return;
+
+    const updatedImages = (found.item.images ?? []).map((img) =>
+      img.id === imageId ? { ...img, isArchived: true } : img
+    );
+
+    const patch: Partial<ShopCollectableItem> = { images: updatedImages };
+
+    // If archived image held primary, promote next active image
+    if (found.item.primaryImageId === imageId) {
+      const nextActive = updatedImages
+        .filter((img) => !img.isArchived && img.id !== imageId)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      const next = nextActive[0];
+      patch.primaryImageId = next?.id;
+      patch.imageUrl = next?.imageUrl ?? found.item.imageUrl;
+      patch.imagePathname = next?.imagePathname ?? found.item.imagePathname;
+    }
+    if (found.item.hoverImageId === imageId) patch.hoverImageId = undefined;
+    if (found.item.clickImageId === imageId) patch.clickImageId = undefined;
+
+    updateItemInConfig(found.section.id, itemId, patch);
+    setSaveStatus("idle");
   }
 
   function handleToggleEnabled(itemId: string) {
@@ -250,7 +547,11 @@ export default function ShopCollectablesManager({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ config }),
       });
-      const data = await res.json() as { ok: boolean; config?: ShopCollectablesConfig; message?: string };
+      const data = (await res.json()) as {
+        ok: boolean;
+        config?: ShopCollectablesConfig;
+        message?: string;
+      };
       if (!data.ok) {
         setSaveStatus("error");
         setSaveMessage(data.message ?? "Save failed.");
@@ -259,7 +560,6 @@ export default function ShopCollectablesManager({
       if (data.config) setConfig(data.config);
       setSaveStatus("saved");
       setSaveMessage("Saved to GitHub.");
-      // Clear all upload states after successful save
       setUploadStates({});
     } catch {
       setSaveStatus("error");
@@ -267,7 +567,8 @@ export default function ShopCollectablesManager({
     }
   }
 
-  const hasUnsavedUploads = Object.values(uploadStates).some((s) => s.status === "done");
+  const hasUnsaved = saveStatus === "idle" && config !== initialConfig;
+  const showUnsavedBadge = hasUnsaved;
 
   return (
     <div className="flex flex-col gap-6 bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6">
@@ -276,18 +577,18 @@ export default function ShopCollectablesManager({
         <div>
           <h2 className="text-lg font-black text-tiki-brown">🛍️ Shop Collectables</h2>
           <p className="text-xs text-tiki-brown/55 mt-0.5">
-            Upload product images for plushy and squishy collectables. Click Save after uploading.
+            Manage product images for plushy and squishy collectables. Click Save after changes.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           {saveStatus === "saved" && (
             <p className="text-xs text-tropical-green font-semibold">{saveMessage}</p>
           )}
           {saveStatus === "error" && (
             <p className="text-xs text-warm-coral font-semibold">{saveMessage}</p>
           )}
-          {hasUnsavedUploads && saveStatus !== "saving" && (
-            <p className="text-xs text-pineapple-yellow/90 font-semibold">Unsaved uploads</p>
+          {showUnsavedBadge && (
+            <p className="text-xs text-pineapple-yellow/90 font-semibold">Unsaved changes</p>
           )}
           <button
             type="button"
@@ -300,6 +601,26 @@ export default function ShopCollectablesManager({
         </div>
       </div>
 
+      {/* Role legend */}
+      <div className="flex flex-wrap gap-3 text-[11px] text-tiki-brown/55 bg-tiki-brown/3 rounded-xl px-4 py-3 border border-tiki-brown/8">
+        <span>
+          <span className="font-black text-pineapple-yellow/90">P</span>{" "}
+          <span className="font-semibold">Primary Card Image</span> — shown on the product card
+        </span>
+        <span>
+          <span className="font-black text-ube-purple/70">H</span>{" "}
+          <span className="font-semibold">Hover / Flip Image</span> — appears on hover (Phase 2)
+        </span>
+        <span>
+          <span className="font-black text-tropical-green/70">C</span>{" "}
+          <span className="font-semibold">Click / Large View</span> — opens first in modal (Phase 2)
+        </span>
+        <span>
+          <span className="font-black text-warm-coral/70">✕</span>{" "}
+          <span className="font-semibold">Archive</span> — removes from gallery without deleting the file
+        </span>
+      </div>
+
       <hr className="border-tiki-brown/8" />
 
       {/* Sections */}
@@ -308,7 +629,9 @@ export default function ShopCollectablesManager({
           key={section.id}
           section={section}
           uploadStates={uploadStates}
-          onUpload={handleUpload}
+          onGalleryUpload={handleGalleryUpload}
+          onSetRole={handleSetRole}
+          onArchiveImage={handleArchiveImage}
           onToggleEnabled={handleToggleEnabled}
         />
       ))}
