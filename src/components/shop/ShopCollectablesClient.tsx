@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { ShopCollectablesSection, ShopCollectableItem, ShopCollectableImage } from "@/lib/shopCollectablesTypes";
 import {
   getCardImageUrl,
@@ -191,8 +191,6 @@ function ProductModal({
   onClose: () => void;
   productLabel: string;
 }) {
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const galleryImages = getCollectableGalleryImages(item);
   const [selectedImage, setSelectedImage] = useState<ShopCollectableImage | null>(
     initialImage ?? galleryImages[0] ?? null
@@ -212,181 +210,183 @@ function ProductModal({
     return () => document.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  // Scroll lock + ensure panel starts at top
+  // Body scroll lock
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    if (panelRef.current) panelRef.current.scrollTop = 0;
     return () => { document.body.style.overflow = prev; };
   }, []);
 
   return (
-    <div
-      ref={backdropRef}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${title} ${productLabel} preview`}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
-      onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
-    >
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-gradient-to-br from-pineapple-yellow/20 via-bg-cream/85 to-ube-purple/15 backdrop-blur-sm" />
+    // Outer: fixed full-viewport scroll container + blurred backdrop.
+    // overflow-y-auto here (not on panel) keeps the image at the very top
+    // of the panel and lets the backdrop scroll if needed on short viewports.
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-br from-pineapple-yellow/20 via-bg-cream/85 to-ube-purple/15 backdrop-blur-sm">
 
-      {/* Panel — wider; scrolls as a unit so image hero stays on first view */}
+      {/* Inner flex wrapper — click-outside closes; panel centered on desktop */}
       <div
-        ref={panelRef}
-        className="relative z-10 bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 max-w-3xl w-full max-h-[95vh] overflow-y-auto flex flex-col"
+        className="flex min-h-full items-start sm:items-center justify-center p-3 sm:p-6"
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
 
-        {/* ─ Image hero — dominates the initial viewport ──────────────── */}
-        <div className="relative w-full min-h-[52vh] sm:min-h-[62vh] bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl overflow-hidden flex items-center justify-center">
-          {/* Close button — always in top-right corner */}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close product preview"
-            className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/18 text-white hover:bg-black/32 transition-colors text-sm font-bold"
-          >
-            ✕
-          </button>
+        {/* Dialog panel — natural height, no overflow clipping */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${title} ${productLabel} preview`}
+          className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-tiki-brown/10 flex flex-col"
+        >
 
-          {displayImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={displayImage.id}
-              src={displayImage.imageUrl}
-              alt={displayImage.altText ?? `${title} ${productLabel}`}
-              className="w-full h-auto max-h-[70vh] object-contain p-4 sm:p-6"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-3">
-              <span className="text-7xl opacity-20">🛍️</span>
+          {/* ─ Image hero — no overflow-hidden so image is never clipped ── */}
+          <div className="relative w-full min-h-[52vh] sm:min-h-[62vh] bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl flex items-center justify-center px-4 sm:px-6">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close product preview"
+              className="absolute top-3 right-3 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-black/18 text-white hover:bg-black/32 transition-colors text-sm font-bold"
+            >
+              ✕
+            </button>
+
+            {displayImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={displayImage.id}
+                src={displayImage.imageUrl}
+                alt={displayImage.altText ?? `${title} ${productLabel}`}
+                className="w-auto max-w-full max-h-[48vh] sm:max-h-[58vh] h-auto object-contain py-8 sm:py-10"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-3 py-10 sm:py-14">
+                <span className="text-7xl opacity-20">🛍️</span>
+              </div>
+            )}
+          </div>
+
+          {/* ─ Thumbnail strip — own row, never inside clipping container ─ */}
+          {galleryImages.length > 1 && (
+            <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-tiki-brown/8">
+              {galleryImages.map((img) => {
+                const isSelected = img.id === displayImage?.id;
+                return (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => setSelectedImage(img)}
+                    aria-label={img.altText ?? `Image ${img.sortOrder + 1}`}
+                    aria-pressed={isSelected}
+                    className={[
+                      "flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-150",
+                      isSelected
+                        ? "border-ube-purple/55 ring-2 ring-ube-purple/20 shadow-sm scale-105"
+                        : "border-tiki-brown/10 opacity-55 hover:opacity-90 hover:border-tiki-brown/25",
+                    ].join(" ")}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.imageUrl}
+                      alt=""
+                      aria-hidden="true"
+                      className="w-full h-full object-contain p-1 bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8"
+                      loading="lazy"
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
-        </div>
 
-        {/* ─ Thumbnail strip — below hero, only when multiple images ──── */}
-        {galleryImages.length > 1 && (
-          <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-tiki-brown/8">
-            {galleryImages.map((img) => {
-              const isSelected = img.id === displayImage?.id;
-              return (
-                <button
-                  key={img.id}
-                  type="button"
-                  onClick={() => setSelectedImage(img)}
-                  aria-label={img.altText ?? `Image ${img.sortOrder + 1}`}
-                  aria-pressed={isSelected}
-                  className={[
-                    "flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-150",
-                    isSelected
-                      ? "border-ube-purple/55 ring-2 ring-ube-purple/20 shadow-sm scale-105"
-                      : "border-tiki-brown/10 opacity-55 hover:opacity-90 hover:border-tiki-brown/25",
-                  ].join(" ")}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img.imageUrl}
-                    alt=""
-                    aria-hidden="true"
-                    className="w-full h-full object-contain p-1 bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8"
-                    loading="lazy"
-                  />
-                </button>
-              );
-            })}
-          </div>
-        )}
+          {/* ─ Product details — scroll down from image + thumbnails ─────── */}
+          <div className="px-6 py-6 flex flex-col gap-4 pb-10">
 
-        {/* ─ Product details — scroll down from image hero ─────────────── */}
-        <div className="px-6 py-6 flex flex-col gap-4 pb-10">
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-tiki-brown/10" />
+              <span className="text-[10px] font-black text-tiki-brown/30 uppercase tracking-widest">Product Details</span>
+              <div className="h-px flex-1 bg-tiki-brown/10" />
+            </div>
 
-          {/* Divider label separating image from info */}
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-tiki-brown/10" />
-            <span className="text-[10px] font-black text-tiki-brown/30 uppercase tracking-widest">Product Details</span>
-            <div className="h-px flex-1 bg-tiki-brown/10" />
-          </div>
+            {/* Title + badges */}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-1.5">
+                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
+                  {productLabel}
+                </span>
+                {item.collectionName && (
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/10 text-ube-purple/70">
+                    {item.collectionName}
+                  </span>
+                )}
+              </div>
+              <h2 className="text-xl font-black text-tiki-brown leading-tight">{title}</h2>
+              {showSubtitle && (
+                <p className="text-sm text-tiki-brown/45 font-semibold -mt-1">{item.characterName}</p>
+              )}
+            </div>
 
-          {/* Title + badges */}
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap gap-1.5">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
-                {productLabel}
+            {/* Status + price */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown">
+                {item.statusLabel || "Harvest Coming Soon"}
               </span>
-              {item.collectionName && (
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-ube-purple/10 text-ube-purple/70">
-                  {item.collectionName}
+              {item.priceLabel && (
+                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/15 text-tropical-green/80">
+                  {item.priceLabel}
                 </span>
               )}
             </div>
-            <h2 className="text-xl font-black text-tiki-brown leading-tight">{title}</h2>
-            {showSubtitle && (
-              <p className="text-sm text-tiki-brown/45 font-semibold -mt-1">{item.characterName}</p>
-            )}
-          </div>
 
-          {/* Status + price */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-pineapple-yellow/30 text-tiki-brown">
-              {item.statusLabel || "Harvest Coming Soon"}
-            </span>
-            {item.priceLabel && (
-              <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-tropical-green/15 text-tropical-green/80">
-                {item.priceLabel}
-              </span>
-            )}
-          </div>
-
-          {/* Descriptions */}
-          <div className="flex flex-col gap-2">
-            {item.shortDescription && (
-              <p className="text-sm font-semibold text-tiki-brown/80 leading-snug">{item.shortDescription}</p>
-            )}
-            {item.productDescription ? (
-              <p className="text-sm text-tiki-brown/60 leading-relaxed">{item.productDescription}</p>
-            ) : !item.shortDescription ? (
-              <p className="text-sm text-tiki-brown/40 leading-relaxed italic">
-                A collectible Fruit Baby character product preview. More details are growing soon.
-              </p>
-            ) : null}
-          </div>
-
-          {/* Detail bullets */}
-          {item.detailBullets && item.detailBullets.length > 0 && (
-            <ul className="flex flex-col gap-1.5">
-              {item.detailBullets.map((bullet, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-tiki-brown/65">
-                  <span className="flex-shrink-0 mt-0.5 text-pineapple-yellow/80 text-xs font-black">✦</span>
-                  <span>{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {/* Product details grid */}
-          {hasDetails && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-tiki-brown/3 rounded-2xl px-4 py-3.5">
-              {(
-                [
-                  item.material && { label: "Material", value: item.material },
-                  item.size && { label: "Size", value: item.size },
-                  item.ageGuidance && { label: "Age Guide", value: item.ageGuidance },
-                  item.careInstructions && { label: "Care", value: item.careInstructions },
-                ] as (false | { label: string; value: string })[]
-              )
-                .filter((d): d is { label: string; value: string } => !!d)
-                .map((d) => (
-                  <div key={d.label} className="flex flex-col gap-0.5">
-                    <p className="text-[10px] font-black text-tiki-brown/35 uppercase tracking-wide">{d.label}</p>
-                    <p className="text-xs font-semibold text-tiki-brown/65">{d.value}</p>
-                  </div>
-                ))}
+            {/* Descriptions */}
+            <div className="flex flex-col gap-2">
+              {item.shortDescription && (
+                <p className="text-sm font-semibold text-tiki-brown/80 leading-snug">{item.shortDescription}</p>
+              )}
+              {item.productDescription ? (
+                <p className="text-sm text-tiki-brown/60 leading-relaxed">{item.productDescription}</p>
+              ) : !item.shortDescription ? (
+                <p className="text-sm text-tiki-brown/40 leading-relaxed italic">
+                  A collectible Fruit Baby character product preview. More details are growing soon.
+                </p>
+              ) : null}
             </div>
-          )}
 
-          {/* CTA */}
-          <ProductCta item={item} />
+            {/* Detail bullets */}
+            {item.detailBullets && item.detailBullets.length > 0 && (
+              <ul className="flex flex-col gap-1.5">
+                {item.detailBullets.map((bullet, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-tiki-brown/65">
+                    <span className="flex-shrink-0 mt-0.5 text-pineapple-yellow/80 text-xs font-black">✦</span>
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Product details grid */}
+            {hasDetails && (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 bg-tiki-brown/3 rounded-2xl px-4 py-3.5">
+                {(
+                  [
+                    item.material && { label: "Material", value: item.material },
+                    item.size && { label: "Size", value: item.size },
+                    item.ageGuidance && { label: "Age Guide", value: item.ageGuidance },
+                    item.careInstructions && { label: "Care", value: item.careInstructions },
+                  ] as (false | { label: string; value: string })[]
+                )
+                  .filter((d): d is { label: string; value: string } => !!d)
+                  .map((d) => (
+                    <div key={d.label} className="flex flex-col gap-0.5">
+                      <p className="text-[10px] font-black text-tiki-brown/35 uppercase tracking-wide">{d.label}</p>
+                      <p className="text-xs font-semibold text-tiki-brown/65">{d.value}</p>
+                    </div>
+                  ))}
+              </div>
+            )}
+
+            {/* CTA */}
+            <ProductCta item={item} />
+          </div>
         </div>
       </div>
     </div>
