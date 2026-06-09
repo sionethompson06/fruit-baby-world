@@ -224,8 +224,8 @@ export default function StoriesPage() {
     <div className="flex flex-col">
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream py-16 px-4 text-center">
-        <div className="max-w-2xl mx-auto flex flex-col items-center gap-4">
+      <section className="bg-gradient-to-b from-pineapple-yellow/25 via-bg-cream to-bg-cream pt-6 pb-4 px-4 text-center">
+        <div className="max-w-2xl mx-auto flex flex-col items-center gap-2">
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <span className="title-charm title-charm-sparkle" aria-hidden="true">✨</span>
             <h1 className="brand-bubblegum-title brand-bubblegum-title--hero text-4xl sm:text-5xl leading-tight">
@@ -235,8 +235,8 @@ export default function StoriesPage() {
             </h1>
             <span className="title-charm title-charm-heart" aria-hidden="true">♥</span>
           </div>
-          <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-lg">
-            Illustrated adventures with heart-warming lessons — read, listen, and
+          <p className="text-tiki-brown/70 text-lg leading-relaxed max-w-xl">
+            Illustrated adventures with heart-warming lessons. Read, listen, and
             watch your favorite Pineapple Baby characters come to life.
           </p>
         </div>

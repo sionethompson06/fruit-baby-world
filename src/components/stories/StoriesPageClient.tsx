@@ -82,7 +82,7 @@ export default function StoriesPageClient({
     <>
       {/* Browse by Character — filter buttons */}
       {publicChars.length > 0 && (
-        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-10 pb-2">
+        <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 pt-4 pb-2">
           <div className="mb-4 flex items-center gap-3 flex-wrap">
             <h2 className="text-xl font-black text-tiki-brown">Browse by Character</h2>
             {selectedSlug && (
