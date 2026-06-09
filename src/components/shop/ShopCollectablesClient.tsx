@@ -238,7 +238,7 @@ function ProductModal({
         >
 
           {/* ─ Image hero — no overflow-hidden so image is never clipped ── */}
-          <div className="relative w-full min-h-[52vh] sm:min-h-[62vh] bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl flex items-center justify-center px-4 sm:px-6">
+          <div className="relative w-full min-h-[44vh] sm:min-h-[52vh] bg-gradient-to-br from-pineapple-yellow/10 via-bg-cream to-ube-purple/8 rounded-t-3xl flex items-center justify-center px-2">
             {/* Close button */}
             <button
               type="button"
@@ -255,7 +255,7 @@ function ProductModal({
                 key={displayImage.id}
                 src={displayImage.imageUrl}
                 alt={displayImage.altText ?? `${title} ${productLabel}`}
-                className="w-auto max-w-full max-h-[48vh] sm:max-h-[58vh] h-auto object-contain py-8 sm:py-10"
+                className="w-auto max-w-full max-h-[72vh] sm:max-h-[80vh] h-auto object-contain py-2"
               />
             ) : (
               <div className="flex flex-col items-center gap-3 py-10 sm:py-14">
