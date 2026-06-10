@@ -220,7 +220,7 @@ function normalizeSection(raw: unknown, fallback: ShopCollectablesSection): Shop
     productType,
     productLineName: typeof r.productLineName === "string" && r.productLineName.trim() ? r.productLineName.trim() : fallback.productLineName,
     conceptId:       typeof r.conceptId === "string" && r.conceptId ? r.conceptId : fallback.conceptId,
-    items: [...characterItems, ...categoryItems],
+    items: [...characterItems, ...categoryItems].sort((a, b) => a.sortOrder - b.sortOrder),
   };
 }
 
@@ -279,7 +279,7 @@ function normalizeExtraSection(raw: unknown): ShopCollectablesSection | null {
     })
     .filter((it): it is ShopCollectableItem => it !== null);
 
-  return { id, title, description, productType, productLineName, conceptId, items };
+  return { id, title, description, productType, productLineName, conceptId, items: items.sort((a, b) => a.sortOrder - b.sortOrder) };
 }
 
 export function normalizeShopCollectablesConfig(raw: unknown): ShopCollectablesConfig {
