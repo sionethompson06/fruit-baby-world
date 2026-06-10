@@ -264,6 +264,24 @@
       "spreadNumber": 12,
       "displayMode": "spread",
       "originalFilename": "14_spread_12_joy_spark_brings_back_the_song.png"
+    },
+    {
+      "id": "storybook-page-1781087067156",
+      "pageNumber": 15,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087066143.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087066143.png",
+      "mimeType": "image/png",
+      "altText": "Spread 13",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:24:27.156Z",
+      "updatedAt": "2026-06-10T10:24:27.156Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 13,
+      "displayMode": "spread",
+      "originalFilename": "15_spread_13_garden_of_locked_blossoms.png"
     }
   ],
   "review": {
@@ -275,5 +293,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:24:24.631Z"
+  "updatedAt": "2026-06-10T10:24:27.156Z"
 }
