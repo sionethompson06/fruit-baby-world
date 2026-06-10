@@ -351,6 +351,24 @@
       "spreadNumber": 9,
       "displayMode": "spread",
       "originalFilename": "11_spread_9_diamond_light_clear_breeze.png"
+    },
+    {
+      "id": "storybook-page-1781085595332",
+      "pageNumber": 20,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085594193.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085594193.png",
+      "mimeType": "image/png",
+      "altText": "Spread 10",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T09:59:55.332Z",
+      "updatedAt": "2026-06-10T09:59:55.332Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 10,
+      "displayMode": "spread",
+      "originalFilename": "12_spread_10_island_hears_again.png"
     }
   ],
   "review": {
@@ -362,5 +380,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T09:59:52.680Z"
+  "updatedAt": "2026-06-10T09:59:55.332Z"
 }
