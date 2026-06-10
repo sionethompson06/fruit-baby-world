@@ -261,6 +261,24 @@
       "layoutType": "single-page",
       "displayMode": "single",
       "originalFilename": "02_title_page_opening_summary___.png"
+    },
+    {
+      "id": "storybook-page-1781085580883",
+      "pageNumber": 15,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085579568.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085579568.png",
+      "mimeType": "image/png",
+      "altText": "Spread 5",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T09:59:40.883Z",
+      "updatedAt": "2026-06-10T09:59:40.883Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 5,
+      "displayMode": "spread",
+      "originalFilename": "07_spread_5_song_that_would_not_sing_joy_spark.png"
     }
   ],
   "review": {
@@ -272,5 +290,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T09:58:41.869Z"
+  "updatedAt": "2026-06-10T09:59:40.883Z"
 }
