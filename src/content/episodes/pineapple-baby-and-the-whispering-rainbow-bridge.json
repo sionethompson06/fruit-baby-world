@@ -11,7 +11,7 @@
     "Ube Baby",
     "Strawberry Baby"
   ],
-  "status": "draft",
+  "status": "coming-soon",
   "productionStatus": "storybook-draft",
   "sourceType": "admin-created-storybook",
   "storybookPages": [
@@ -485,9 +485,10 @@
     "approvedForSave": false
   },
   "publishing": {
-    "publicStatus": "not-published",
-    "readyForPublicSite": false
+    "publicStatus": "coming-soon",
+    "readyForPublicSite": false,
+    "comingSoonAt": "2026-06-10T11:01:02.894Z"
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:48:30.113Z"
+  "updatedAt": "2026-06-10T11:01:02.894Z"
 }
