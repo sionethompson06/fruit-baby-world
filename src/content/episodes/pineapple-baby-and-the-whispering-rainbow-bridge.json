@@ -461,6 +461,23 @@
       "layoutType": "single-page",
       "displayMode": "single",
       "originalFilename": "25_end_reflection_what_we_learned.png"
+    },
+    {
+      "id": "storybook-page-1781088498376",
+      "pageNumber": 26,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781088497051.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781088497051.png",
+      "mimeType": "image/png",
+      "altText": "Back Cover",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:48:18.376Z",
+      "updatedAt": "2026-06-10T10:48:18.376Z",
+      "pageRole": "back-cover",
+      "layoutType": "back-cover",
+      "displayMode": "single",
+      "originalFilename": "26_back_cover_rainbow_adventure_teamwork.png"
     }
   ],
   "review": {
@@ -472,5 +489,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:44:45.220Z"
+  "updatedAt": "2026-06-10T10:48:18.376Z"
 }
