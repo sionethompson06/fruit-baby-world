@@ -390,6 +390,24 @@
       "spreadNumber": 19,
       "displayMode": "spread",
       "originalFilename": "21_spread_19_diamond_light_restores_the_rainbow.png"
+    },
+    {
+      "id": "storybook-page-1781087834896",
+      "pageNumber": 22,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087833997.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087833997.png",
+      "mimeType": "image/png",
+      "altText": "Spread 20",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:37:14.896Z",
+      "updatedAt": "2026-06-10T10:37:14.896Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 20,
+      "displayMode": "spread",
+      "originalFilename": "23_spread_21_stronger_together.png"
     }
   ],
   "review": {
@@ -401,5 +419,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:37:12.389Z"
+  "updatedAt": "2026-06-10T10:37:14.896Z"
 }
