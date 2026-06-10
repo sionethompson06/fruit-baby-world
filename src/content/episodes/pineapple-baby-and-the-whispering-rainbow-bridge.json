@@ -14,7 +14,25 @@
   "status": "draft",
   "productionStatus": "storybook-draft",
   "sourceType": "admin-created-storybook",
-  "storybookPages": [],
+  "storybookPages": [
+    {
+      "id": "storybook-page-1781086623072",
+      "pageNumber": 1,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781086620773.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781086620773.png",
+      "mimeType": "image/png",
+      "altText": "Front Cover",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:17:03.072Z",
+      "updatedAt": "2026-06-10T10:17:03.072Z",
+      "pageRole": "front-cover",
+      "layoutType": "cover",
+      "displayMode": "single",
+      "originalFilename": "01_front_cover_whispering_rainbow_bridge.png"
+    }
+  ],
   "review": {
     "status": "draft",
     "approvedForSave": false
@@ -24,5 +42,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:14:25.773Z"
+  "updatedAt": "2026-06-10T10:17:03.072Z"
 }
