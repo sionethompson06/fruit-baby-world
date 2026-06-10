@@ -354,6 +354,24 @@
       "spreadNumber": 17,
       "displayMode": "spread",
       "originalFilename": "19_spread_17_crystal_of_missing_light.png"
+    },
+    {
+      "id": "storybook-page-1781087829725",
+      "pageNumber": 20,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087828649.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087828649.png",
+      "mimeType": "image/png",
+      "altText": "Spread 18",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:37:09.725Z",
+      "updatedAt": "2026-06-10T10:37:09.725Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 18,
+      "displayMode": "spread",
+      "originalFilename": "20_spread_18_every_friends_gift.png"
     }
   ],
   "review": {
@@ -365,5 +383,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:37:07.011Z"
+  "updatedAt": "2026-06-10T10:37:09.725Z"
 }
