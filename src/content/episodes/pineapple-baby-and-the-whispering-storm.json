@@ -297,6 +297,24 @@
       "spreadNumber": 6,
       "displayMode": "spread",
       "originalFilename": "08_spread_6_tikis_tangled_secret.png"
+    },
+    {
+      "id": "storybook-page-1781085586921",
+      "pageNumber": 17,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085585465.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085585465.png",
+      "mimeType": "image/png",
+      "altText": "Spread 7",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T09:59:46.921Z",
+      "updatedAt": "2026-06-10T09:59:46.921Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 7,
+      "displayMode": "spread",
+      "originalFilename": "09_spread_7_the_listening_circle.png"
     }
   ],
   "review": {
@@ -308,5 +326,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T09:59:43.957Z"
+  "updatedAt": "2026-06-10T09:59:46.921Z"
 }
