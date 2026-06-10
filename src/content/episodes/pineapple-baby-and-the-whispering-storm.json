@@ -29,6 +29,23 @@
       "layoutType": "cover",
       "displayMode": "single",
       "originalFilename": "01_front_cover_whispering_storm.png"
+    },
+    {
+      "id": "storybook-page-1781085286147",
+      "pageNumber": 2,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085285140.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085285140.png",
+      "mimeType": "image/png",
+      "altText": "Title Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T09:54:46.147Z",
+      "updatedAt": "2026-06-10T09:54:46.147Z",
+      "pageRole": "title-page",
+      "layoutType": "single-page",
+      "displayMode": "single",
+      "originalFilename": "02_title_page_opening_summary___.png"
     }
   ],
   "review": {
@@ -40,5 +57,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T09:53:41.279Z"
+  "updatedAt": "2026-06-10T09:54:46.147Z"
 }
