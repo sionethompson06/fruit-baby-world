@@ -84,6 +84,24 @@
       "spreadNumber": 2,
       "displayMode": "spread",
       "originalFilename": "04_spread_2_sleepy_sky.png"
+    },
+    {
+      "id": "storybook-page-1781087040082",
+      "pageNumber": 5,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087038721.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087038721.png",
+      "mimeType": "image/png",
+      "altText": "Spread 3",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:24:00.082Z",
+      "updatedAt": "2026-06-10T10:24:00.082Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 3,
+      "displayMode": "spread",
+      "originalFilename": "05_spread_3_hummingbirds_warning.png"
     }
   ],
   "review": {
@@ -95,5 +113,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:18:07.482Z"
+  "updatedAt": "2026-06-10T10:24:00.082Z"
 }
