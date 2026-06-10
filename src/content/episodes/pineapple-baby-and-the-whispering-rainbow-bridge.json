@@ -282,6 +282,24 @@
       "spreadNumber": 13,
       "displayMode": "spread",
       "originalFilename": "15_spread_13_garden_of_locked_blossoms.png"
+    },
+    {
+      "id": "storybook-page-1781087069795",
+      "pageNumber": 16,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087068738.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087068738.png",
+      "mimeType": "image/png",
+      "altText": "Spread 14",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:24:29.795Z",
+      "updatedAt": "2026-06-10T10:24:29.795Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 14,
+      "displayMode": "spread",
+      "originalFilename": "16_spread_14_heart_bloom_opens_the_garden.png"
     }
   ],
   "review": {
@@ -293,5 +311,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:24:27.156Z"
+  "updatedAt": "2026-06-10T10:24:29.795Z"
 }
