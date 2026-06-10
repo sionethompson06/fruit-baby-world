@@ -372,6 +372,24 @@
       "spreadNumber": 18,
       "displayMode": "spread",
       "originalFilename": "20_spread_18_every_friends_gift.png"
+    },
+    {
+      "id": "storybook-page-1781087832389",
+      "pageNumber": 21,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087831484.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087831484.png",
+      "mimeType": "image/png",
+      "altText": "Spread 19",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:37:12.389Z",
+      "updatedAt": "2026-06-10T10:37:12.389Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 19,
+      "displayMode": "spread",
+      "originalFilename": "21_spread_19_diamond_light_restores_the_rainbow.png"
     }
   ],
   "review": {
@@ -383,5 +401,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:37:09.725Z"
+  "updatedAt": "2026-06-10T10:37:12.389Z"
 }
