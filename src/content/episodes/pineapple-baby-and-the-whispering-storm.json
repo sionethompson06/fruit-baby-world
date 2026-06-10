@@ -9,7 +9,7 @@
     "Ube Baby",
     "Mango Baby"
   ],
-  "status": "draft",
+  "status": "coming-soon",
   "productionStatus": "storybook-draft",
   "sourceType": "admin-created-storybook",
   "storybookPages": [
@@ -428,9 +428,10 @@
     "approvedForSave": false
   },
   "publishing": {
-    "publicStatus": "not-published",
-    "readyForPublicSite": false
+    "publicStatus": "coming-soon",
+    "readyForPublicSite": false,
+    "comingSoonAt": "2026-06-10T10:01:50.336Z"
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T10:01:34.468Z"
+  "updatedAt": "2026-06-10T10:01:50.336Z"
 }
