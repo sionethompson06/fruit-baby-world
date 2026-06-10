@@ -571,7 +571,7 @@
           "imagePathname": "shop/collectables/collectable-cards/pineapple-baby-1781090898463.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 0,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -602,7 +602,7 @@
           "imagePathname": "shop/collectables/collectable-cards/ube-baby-1781090908525.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 1,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -633,7 +633,7 @@
           "imagePathname": "shop/collectables/collectable-cards/mango-baby-1781090919961.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 2,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -664,7 +664,7 @@
           "imagePathname": "shop/collectables/collectable-cards/kiwi-baby-1781090926366.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 3,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -695,7 +695,7 @@
           "imagePathname": "shop/collectables/collectable-cards/coconut-baby-1781090933039.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 4,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -726,7 +726,7 @@
           "imagePathname": "shop/collectables/collectable-cards/strawberry-baby-1781090940639.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 5,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -757,7 +757,7 @@
           "imagePathname": "shop/collectables/collectable-cards/dragonfruit-baby-1781090954181.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 6,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -788,7 +788,7 @@
           "imagePathname": "shop/collectables/collectable-cards/tiki-1781090965985.png",
           "statusLabel": "Harvest Coming Soon",
           "sortOrder": 7,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T11:28:02.158Z",
           "images": [
             {
@@ -813,5 +813,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-06-10T11:31:27.055Z"
+  "updatedAt": "2026-06-10T11:32:00.799Z"
 }
