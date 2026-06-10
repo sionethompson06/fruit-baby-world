@@ -156,6 +156,24 @@
       "spreadNumber": 6,
       "displayMode": "spread",
       "originalFilename": "08_spread_6_true_sight_reveals_the_way.png"
+    },
+    {
+      "id": "storybook-page-1781087051570",
+      "pageNumber": 9,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087050644.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087050644.png",
+      "mimeType": "image/png",
+      "altText": "Spread 7",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:24:11.570Z",
+      "updatedAt": "2026-06-10T10:24:11.570Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 7,
+      "displayMode": "spread",
+      "originalFilename": "09_spread_7_windy_crossing.png"
     }
   ],
   "review": {
@@ -167,5 +185,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:24:08.976Z"
+  "updatedAt": "2026-06-10T10:24:11.570Z"
 }
