@@ -871,9 +871,71 @@
           "priceLabel": "Coming Soon",
           "ctaLabel": "Harvest Coming Soon",
           "ctaMode": "coming-soon"
+        },
+        {
+          "id": "collectable-cards::option::collectable-card-pack-10",
+          "productScope": "category",
+          "productOptionSlug": "collectable-card-pack-10",
+          "productOptionName": "Collectable Card Pack (10)",
+          "productOptionDescription": "Card Pack",
+          "productType": "collectable-cards",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/collectable-cards/options/collectable-card-pack-10/1781135277712.png",
+          "imagePathname": "shop/collectables/collectable-cards/options/collectable-card-pack-10/1781135277712.png",
+          "statusLabel": "Coming Soon",
+          "sortOrder": 8,
+          "enabled": true,
+          "updatedAt": "2026-06-10T23:47:49.500Z",
+          "images": [
+            {
+              "id": "img-1781135277712-zm8jxm",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/collectable-cards/options/collectable-card-pack-10/1781135277712.png",
+              "imagePathname": "shop/collectables/collectable-cards/options/collectable-card-pack-10/1781135277712.png",
+              "originalFilename": "Cardpack and Box .png",
+              "altText": "Collectable Card Pack (10) product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-10T23:47:58.537Z",
+              "updatedAt": "2026-06-10T23:47:58.537Z"
+            }
+          ],
+          "primaryImageId": "img-1781135277712-zm8jxm",
+          "displayTitle": "Collectable Card Pack (10)",
+          "priceLabel": "Coming Soon",
+          "ctaMode": "coming-soon"
+        },
+        {
+          "id": "collectable-cards::option::collectable-card-box-36-packs",
+          "productScope": "category",
+          "productOptionSlug": "collectable-card-box-36-packs",
+          "productOptionName": "Collectable Card Box (36 packs)",
+          "productOptionDescription": "Collectable Card Box (36 Packs)",
+          "productType": "collectable-cards",
+          "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/collectable-cards/options/collectable-card-box-36-packs/1781135522004.png",
+          "imagePathname": "shop/collectables/collectable-cards/options/collectable-card-box-36-packs/1781135522004.png",
+          "statusLabel": "Coming Soon",
+          "sortOrder": 9,
+          "enabled": true,
+          "updatedAt": "2026-06-10T23:51:54.289Z",
+          "images": [
+            {
+              "id": "img-1781135522004-ynnb2t",
+              "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/collectable-cards/options/collectable-card-box-36-packs/1781135522004.png",
+              "imagePathname": "shop/collectables/collectable-cards/options/collectable-card-box-36-packs/1781135522004.png",
+              "originalFilename": "Cardpack and Box .png",
+              "altText": "Collectable Card Box (36 packs) product image",
+              "sortOrder": 0,
+              "isArchived": false,
+              "uploadedAt": "2026-06-10T23:52:03.582Z",
+              "updatedAt": "2026-06-10T23:52:03.582Z"
+            }
+          ],
+          "primaryImageId": "img-1781135522004-ynnb2t",
+          "displayTitle": "Collectable Card Box (36 packs)",
+          "priceLabel": "Coming Soon",
+          "ctaMode": "coming-soon"
         }
       ]
     }
   ],
-  "updatedAt": "2026-06-10T23:46:52.078Z"
+  "updatedAt": "2026-06-10T23:52:12.153Z"
 }
