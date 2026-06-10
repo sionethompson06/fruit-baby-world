@@ -426,6 +426,24 @@
       "spreadNumber": 21,
       "displayMode": "spread",
       "originalFilename": "22_spread_20_cloud_gardens_bloom.png"
+    },
+    {
+      "id": "storybook-page-1781087840677",
+      "pageNumber": 24,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087839518.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781087839518.png",
+      "mimeType": "image/png",
+      "altText": "Spread 22",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:37:20.677Z",
+      "updatedAt": "2026-06-10T10:37:20.677Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 22,
+      "displayMode": "spread",
+      "originalFilename": "24_spread_22_every_gift_shines.png"
     }
   ],
   "review": {
@@ -437,5 +455,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:37:17.821Z"
+  "updatedAt": "2026-06-10T10:37:20.677Z"
 }
