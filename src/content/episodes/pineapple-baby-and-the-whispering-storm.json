@@ -226,6 +226,24 @@
       "spreadNumber": 10,
       "displayMode": "spread",
       "originalFilename": "12_spread_10_island_hears_again.png"
+    },
+    {
+      "id": "storybook-page-1781085349709",
+      "pageNumber": 13,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085348687.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085348687.png",
+      "mimeType": "image/png",
+      "altText": "Spread 11",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T09:55:49.709Z",
+      "updatedAt": "2026-06-10T09:55:49.709Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 11,
+      "displayMode": "spread",
+      "originalFilename": "13_spread_11_new_bell_for_everyone.png"
     }
   ],
   "review": {
@@ -237,5 +255,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T09:55:46.789Z"
+  "updatedAt": "2026-06-10T09:55:49.709Z"
 }
