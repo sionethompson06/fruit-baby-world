@@ -105,7 +105,7 @@
           "imagePathname": "shop/collectables/plushy/options/plushy-collectables-mystery-box-single/1781133153751.png",
           "statusLabel": "Coming Soon",
           "sortOrder": 8,
-          "enabled": false,
+          "enabled": true,
           "updatedAt": "2026-06-10T23:11:44.655Z",
           "images": [
             {
@@ -844,5 +844,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-06-10T23:12:48.083Z"
+  "updatedAt": "2026-06-10T23:16:19.862Z"
 }
