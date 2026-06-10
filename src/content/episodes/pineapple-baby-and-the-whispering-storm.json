@@ -1,0 +1,26 @@
+{
+  "title": "Pineapple Baby and the Whispering Storm",
+  "slug": "pineapple-baby-and-the-whispering-storm",
+  "shortDescription": "When a strange whispering storm twists every message on Fruit Baby Island, friends begin misunderstanding one another. Pineapple Baby, Ube Baby, Mango Baby, Coconut Baby, and Tiki Trouble must climb Whispering Peak to rescue the trapped island breeze. But the storm’s secret reveals an important lesson: sometimes trying to help without listening can make things worse. Can the Fruit Babies calm the storm, free the breeze, and help Tiki learn that real helping begins with hearing others first?",
+  "featuredCharacters": [
+    "Coconut Baby",
+    "Pineapple Baby",
+    "Tiki Trouble",
+    "Ube Baby",
+    "Mango Baby"
+  ],
+  "status": "draft",
+  "productionStatus": "storybook-draft",
+  "sourceType": "admin-created-storybook",
+  "storybookPages": [],
+  "review": {
+    "status": "draft",
+    "approvedForSave": false
+  },
+  "publishing": {
+    "publicStatus": "not-published",
+    "readyForPublicSite": false
+  },
+  "createdAt": "2026-06-10T09:50:40.028Z",
+  "updatedAt": "2026-06-10T09:50:40.028Z"
+}
