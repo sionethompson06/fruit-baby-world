@@ -20,8 +20,15 @@ export type ShopCollectableImage = {
 
 export type ShopCollectableItem = {
   id: string;
-  characterSlug: string;
-  characterName: string;
+  /** undefined for category products (e.g. Mystery Box) */
+  characterSlug?: string;
+  /** undefined for category products */
+  characterName?: string;
+  /** "character" (default) or "category" for non-character product options */
+  productScope?: "character" | "category";
+  productOptionSlug?: string;
+  productOptionName?: string;
+  productOptionDescription?: string;
   productType: ShopCollectableProductType;
   imageUrl: string;
   imagePathname: string;

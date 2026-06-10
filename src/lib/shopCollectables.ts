@@ -126,8 +126,12 @@ function normalizeItem(raw: unknown, fallback: ShopCollectableItem): ShopCollect
 
   return {
     id:            typeof r.id === "string" ? r.id : fallback.id,
-    characterSlug: typeof r.characterSlug === "string" ? r.characterSlug : fallback.characterSlug,
-    characterName: typeof r.characterName === "string" ? r.characterName : fallback.characterName,
+    characterSlug: typeof r.characterSlug === "string" && r.characterSlug ? r.characterSlug : fallback.characterSlug,
+    characterName: typeof r.characterName === "string" && r.characterName ? r.characterName : fallback.characterName,
+    productScope: r.productScope === "category" ? "category" : fallback.productScope,
+    productOptionSlug: typeof r.productOptionSlug === "string" && r.productOptionSlug ? r.productOptionSlug : fallback.productOptionSlug,
+    productOptionName: typeof r.productOptionName === "string" && r.productOptionName.trim() ? r.productOptionName.trim() : fallback.productOptionName,
+    productOptionDescription: typeof r.productOptionDescription === "string" && r.productOptionDescription.trim() ? r.productOptionDescription.trim() : fallback.productOptionDescription,
     // Accept any non-empty string slug so dynamic product lines are preserved
     productType:   typeof r.productType === "string" && r.productType.trim() ? r.productType.trim() : fallback.productType,
     imageUrl:      typeof r.imageUrl === "string" ? r.imageUrl : "",
@@ -209,8 +213,31 @@ function normalizeExtraSection(raw: unknown): ShopCollectablesSection | null {
       if (typeof rawItem !== "object" || rawItem === null) return null;
       const ri = rawItem as Record<string, unknown>;
       const itemId = typeof ri.id === "string" && ri.id ? ri.id : null;
+      if (!itemId) return null;
+
+      const isCategory = ri.productScope === "category";
+
+      if (isCategory) {
+        const optionSlug = typeof ri.productOptionSlug === "string" && ri.productOptionSlug ? ri.productOptionSlug : null;
+        if (!optionSlug) return null;
+        const optionName = typeof ri.productOptionName === "string" && ri.productOptionName ? ri.productOptionName : optionSlug;
+        const fb: ShopCollectableItem = {
+          id: itemId,
+          productScope: "category",
+          productOptionSlug: optionSlug,
+          productOptionName: optionName,
+          productType,
+          imageUrl: "",
+          imagePathname: "",
+          statusLabel: "Coming Soon",
+          sortOrder: idx,
+          enabled: false,
+        };
+        return normalizeItem(rawItem, fb);
+      }
+
       const charSlug = typeof ri.characterSlug === "string" && ri.characterSlug ? ri.characterSlug : null;
-      if (!itemId || !charSlug) return null;
+      if (!charSlug) return null;
       const charName = typeof ri.characterName === "string" && ri.characterName ? ri.characterName : charSlug;
       const fb = defaultItem(itemId, charSlug, charName, productType, idx);
       return normalizeItem(rawItem, fb);

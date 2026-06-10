@@ -41,7 +41,8 @@ type UploadResult =
       imageUrl: string;
       pathname: string;
       image: ImageMetadata;
-      characterSlug: string;
+      characterSlug?: string;
+      productOptionSlug?: string;
       productType: string;
       mimeType: string;
       sizeBytes: number;
@@ -105,13 +106,28 @@ export async function POST(request: Request): Promise<Response> {
     );
   }
 
-  if (!validateSlug(body.characterSlug)) {
-    return Response.json(
-      { ok: false, status: "validation_error", message: "characterSlug is required and must be a valid slug." } satisfies UploadResult,
-      { status: 400 }
-    );
+  const isCategory = body.productScope === "category";
+
+  let characterSlug: string | undefined;
+  let productOptionSlug: string | undefined;
+
+  if (isCategory) {
+    if (!validateSlug(body.productOptionSlug)) {
+      return Response.json(
+        { ok: false, status: "validation_error", message: "productOptionSlug is required for category products and must be a valid slug." } satisfies UploadResult,
+        { status: 400 }
+      );
+    }
+    productOptionSlug = body.productOptionSlug as string;
+  } else {
+    if (!validateSlug(body.characterSlug)) {
+      return Response.json(
+        { ok: false, status: "validation_error", message: "characterSlug is required and must be a valid slug." } satisfies UploadResult,
+        { status: 400 }
+      );
+    }
+    characterSlug = body.characterSlug as string;
   }
-  const characterSlug = body.characterSlug as string;
 
   if (!validateSlug(body.productType)) {
     return Response.json(
@@ -163,7 +179,9 @@ export async function POST(request: Request): Promise<Response> {
     typeof body.originalFilename === "string" && body.originalFilename
       ? body.originalFilename
       : undefined;
-  const storagePath = `shop/collectables/${productType}/${characterSlug}-${timestamp}.${ext}`;
+  const storagePath = isCategory
+    ? `shop/collectables/${productType}/options/${productOptionSlug}/${timestamp}.${ext}`
+    : `shop/collectables/${productType}/${characterSlug}-${timestamp}.${ext}`;
 
   try {
     const blob = await put(storagePath, imageBuffer, {
@@ -191,6 +209,7 @@ export async function POST(request: Request): Promise<Response> {
           updatedAt: uploadedAt,
         } satisfies ImageMetadata,
         characterSlug,
+        productOptionSlug,
         productType,
         mimeType: mime,
         sizeBytes: imageBuffer.length,

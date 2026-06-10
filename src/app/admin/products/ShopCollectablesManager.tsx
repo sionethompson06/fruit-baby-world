@@ -433,7 +433,13 @@ function CollectableItemRow({
         <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.imageUrl} alt={`${item.characterName} ${item.productType}`} className="w-full h-full object-contain" />
+            <img
+              src={item.imageUrl}
+              alt={item.productScope === "category"
+                ? (item.productOptionName ?? item.productType)
+                : `${item.characterName ?? ""} ${item.productType}`.trim()}
+              className="w-full h-full object-contain"
+            />
           ) : (
             <span className="text-2xl opacity-20">🛍️</span>
           )}
@@ -441,7 +447,11 @@ function CollectableItemRow({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-sm font-black text-tiki-brown">{item.characterName}</p>
+            <p className="text-sm font-black text-tiki-brown">
+              {item.productScope === "category"
+                ? (item.productOptionName ?? item.displayTitle ?? "Product Option")
+                : (item.characterName ?? item.characterSlug ?? "Character")}
+            </p>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
               {item.productType}
             </span>
@@ -540,6 +550,17 @@ function CollectableItemRow({
   );
 }
 
+// Convert a display title to a stable URL/file-safe slug.
+function titleToProductSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 48);
+}
+
 // ─── Bulk edit helpers ────────────────────────────────────────────────────────
 
 type BulkEditForm = {
@@ -636,6 +657,7 @@ function CollectableSectionPanel({
   onUpdateItem,
   onToggleEnabled,
   onUpdateSection,
+  onAddProductOption,
 }: {
   section: ShopCollectablesSection;
   uploadStates: Record<string, ItemUploadState>;
@@ -647,6 +669,7 @@ function CollectableSectionPanel({
   onUpdateItem: (itemId: string, patch: Partial<ShopCollectableItem>) => void;
   onToggleEnabled: (itemId: string) => void;
   onUpdateSection: (patch: { title?: string; description?: string }) => void;
+  onAddProductOption: (opt: { name: string; slug: string; description?: string }) => void;
 }) {
   const emoji = sectionEmoji(section.productType);
 
@@ -664,6 +687,24 @@ function CollectableSectionPanel({
     const t = nameTitle.trim();
     if (t) onUpdateSection({ title: t, description: nameDescription });
     setIsEditingName(false);
+  }
+
+  // ── Add Product Option ────────────────────────────────────────────────────
+  const [isAddOptionOpen, setIsAddOptionOpen] = useState(false);
+  const [optionName, setOptionName] = useState("");
+  const [optionSlugOverride, setOptionSlugOverride] = useState("");
+  const [optionDescription, setOptionDescription] = useState("");
+  const derivedSlug = optionSlugOverride.trim() || titleToProductSlug(optionName);
+
+  function submitAddOption() {
+    const name = optionName.trim();
+    const slug = derivedSlug;
+    if (!name || !slug) return;
+    onAddProductOption({ name, slug, description: optionDescription.trim() || undefined });
+    setOptionName("");
+    setOptionSlugOverride("");
+    setOptionDescription("");
+    setIsAddOptionOpen(false);
   }
 
   // ── Bulk edit ──────────────────────────────────────────────────────────────
@@ -891,6 +932,76 @@ function CollectableSectionPanel({
         )}
       </div>
 
+      {/* ── Add Product Option ────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-tiki-brown/10 bg-tiki-brown/2 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setIsAddOptionOpen((p) => !p)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-tiki-brown/4 transition-colors"
+        >
+          <span className="flex items-center gap-2 text-[11px] font-black text-tiki-brown/60 uppercase tracking-wide">
+            <span>➕</span>
+            <span>Add Product Option</span>
+            <span className="text-[10px] font-semibold normal-case text-tiki-brown/40">
+              e.g. Mystery Box, Bundle Pack
+            </span>
+          </span>
+          <span className="text-[10px] text-tiki-brown/35">{isAddOptionOpen ? "▲ Close" : "▼ Open"}</span>
+        </button>
+
+        {isAddOptionOpen && (
+          <div className="px-4 pb-4 flex flex-col gap-3 border-t border-tiki-brown/8">
+            <p className="text-[10px] text-tiki-brown/50 pt-3 leading-snug">
+              Add a non-character product option to this section — such as a Mystery Box or Bundle.
+              It will appear in the public shop like a regular product card.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <AdminInput
+                label="Option Name *"
+                value={optionName}
+                placeholder="e.g. Mystery Box"
+                onChange={(v) => { setOptionName(v); setOptionSlugOverride(""); }}
+                className="col-span-2"
+              />
+              <AdminInput
+                label="Slug (auto)"
+                value={optionSlugOverride || derivedSlug}
+                placeholder={derivedSlug || "mystery-box"}
+                onChange={setOptionSlugOverride}
+              />
+              <AdminInput
+                label="Short Description"
+                value={optionDescription}
+                placeholder="What's inside is a surprise!"
+                onChange={setOptionDescription}
+              />
+            </div>
+            {derivedSlug && (
+              <p className="text-[10px] text-tiki-brown/35 font-mono">
+                ID will be: <span className="text-tiki-brown/55">{section.productType}::option::{derivedSlug}</span>
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={submitAddOption}
+                disabled={!optionName.trim() || !derivedSlug}
+                className="text-xs font-bold px-4 py-1.5 rounded-xl bg-ube-purple text-white hover:bg-ube-purple/85 transition-colors disabled:opacity-40"
+              >
+                Add Option
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsAddOptionOpen(false); setOptionName(""); setOptionSlugOverride(""); setOptionDescription(""); }}
+                className="text-xs font-semibold px-4 py-1.5 rounded-xl bg-tiki-brown/8 text-tiki-brown/60 hover:bg-tiki-brown/15 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* ── Item rows ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-2">
         {section.items.map((item) => (
@@ -924,17 +1035,6 @@ const CANONICAL_CHARACTERS: Array<{ slug: string; name: string }> = [
   { slug: "dragonfruit-baby", name: "Dragon Fruit Baby" },
   { slug: "tiki",             name: "Tiki Trouble" },
 ];
-
-// Convert a display title to a stable URL/file-safe slug.
-function titleToProductSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 48);
-}
 
 // ─── Main manager ─────────────────────────────────────────────────────────────
 
@@ -1031,6 +1131,44 @@ export default function ShopCollectablesManager({
     );
   }
 
+  function handleAddProductOption(
+    sectionId: string,
+    opt: { name: string; slug: string; description?: string }
+  ) {
+    const section = config.sections.find((s) => s.id === sectionId);
+    if (!section) return;
+    const productType = section.productType;
+    const itemId = `${productType}::option::${opt.slug}`;
+    // Prevent duplicate slugs
+    if (section.items.some((it) => it.id === itemId)) return;
+    const now = new Date().toISOString();
+    const newItem: ShopCollectableItem = {
+      id: itemId,
+      productScope: "category",
+      productOptionSlug: opt.slug,
+      productOptionName: opt.name,
+      productOptionDescription: opt.description,
+      productType,
+      imageUrl: "",
+      imagePathname: "",
+      statusLabel: "Coming Soon",
+      sortOrder: section.items.length,
+      enabled: false,
+      images: [],
+      displayTitle: opt.name,
+      priceLabel: "Coming Soon",
+      ctaMode: "coming-soon",
+      updatedAt: now,
+    };
+    setConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) =>
+        s.id === sectionId ? { ...s, items: [...s.items, newItem] } : s
+      ),
+    }));
+    setSaveStatus("idle");
+  }
+
   async function handleGalleryUpload(itemId: string, file: File) {
     const found = findItem(itemId);
     if (!found) return;
@@ -1047,8 +1185,10 @@ export default function ShopCollectablesManager({
           file: base64,
           mimeType: file.type,
           originalFilename: file.name,
-          characterSlug: found.item.characterSlug,
           productType: found.item.productType,
+          ...(found.item.productScope === "category"
+            ? { productScope: "category", productOptionSlug: found.item.productOptionSlug }
+            : { characterSlug: found.item.characterSlug }),
         }),
       });
 
@@ -1081,7 +1221,9 @@ export default function ShopCollectablesManager({
         imageUrl: data.image.imageUrl,
         imagePathname: data.image.imagePathname,
         originalFilename: data.image.originalFilename,
-        altText: `${currentItem.characterName} ${currentItem.productType} product image`,
+        altText: currentItem.productScope === "category"
+          ? `${currentItem.productOptionName ?? currentItem.productType} product image`
+          : `${currentItem.characterName ?? ""} ${currentItem.productType} product image`.trim(),
         sortOrder: currentImages.length,
         isArchived: false,
         uploadedAt: data.image.uploadedAt,
@@ -1326,6 +1468,7 @@ export default function ShopCollectablesManager({
           onUpdateItem={handleUpdateItem}
           onToggleEnabled={handleToggleEnabled}
           onUpdateSection={(patch) => handleUpdateSection(section.id, patch)}
+          onAddProductOption={(opt) => handleAddProductOption(section.id, opt)}
         />
       ))}
 

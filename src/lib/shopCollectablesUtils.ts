@@ -57,7 +57,7 @@ export function getCollectableGalleryImages(item: ShopCollectableItem): ShopColl
         id: `legacy-${item.id}`,
         imageUrl: item.imageUrl,
         imagePathname: item.imagePathname || undefined,
-        altText: `${item.characterName} ${item.productType}`,
+        altText: `${item.characterName ?? item.productOptionName ?? ""} ${item.productType}`.trim(),
         sortOrder: 0,
       },
     ];
@@ -101,7 +101,7 @@ export function getModalDefaultImage(item: ShopCollectableItem): ShopCollectable
         id: `legacy-${item.id}`,
         imageUrl: item.imageUrl,
         imagePathname: item.imagePathname || undefined,
-        altText: `${item.characterName} ${item.productType}`,
+        altText: `${item.characterName ?? item.productOptionName ?? ""} ${item.productType}`.trim(),
         sortOrder: 0,
       };
     }

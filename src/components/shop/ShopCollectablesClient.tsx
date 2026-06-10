@@ -50,8 +50,8 @@ const CHARACTER_GLOW: Record<string, string> = {
 };
 const FALLBACK_GLOW = "rgba(255,216,77,0.45)";
 
-function getCardGlow(characterSlug: string): string {
-  return CHARACTER_GLOW[characterSlug] ?? FALLBACK_GLOW;
+function getCardGlow(characterSlug?: string): string {
+  return (characterSlug ? CHARACTER_GLOW[characterSlug] : undefined) ?? FALLBACK_GLOW;
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ function CollectableCard({
 }) {
   const cardImageUrl = getCardImageUrl(item);
   const hoverImageUrl = getCardHoverImageUrl(item);
-  const displayTitle = item.displayTitle || item.characterName;
+  const displayTitle = item.displayTitle || item.productOptionName || item.characterName || "Product";
   const glowColor = getCardGlow(item.characterSlug);
 
   return (
@@ -197,8 +197,8 @@ function ProductModal({
   );
   const displayImage = selectedImage ?? galleryImages[0] ?? null;
 
-  const title = item.displayTitle || item.characterName;
-  const showSubtitle = item.displayTitle && item.displayTitle !== item.characterName;
+  const title = item.displayTitle || item.productOptionName || item.characterName || "Product";
+  const showSubtitle = !!(item.characterName && item.displayTitle && item.displayTitle !== item.characterName);
   const hasDetails = !!(item.material || item.size || item.ageGuidance || item.careInstructions);
 
   // Escape key
