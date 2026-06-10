@@ -402,6 +402,8 @@ function ProductDetailsEditor({
 
 function CollectableItemRow({
   item,
+  index,
+  total,
   uploadState,
   onGalleryUpload,
   onSetRole,
@@ -410,8 +412,12 @@ function CollectableItemRow({
   onUpdateAltText,
   onUpdateItem,
   onToggleEnabled,
+  onMoveUp,
+  onMoveDown,
 }: {
   item: ShopCollectableItem;
+  index: number;
+  total: number;
   uploadState: ItemUploadState;
   onGalleryUpload: (file: File) => void;
   onSetRole: (imageId: string, role: "primary" | "hover" | "click") => void;
@@ -420,6 +426,8 @@ function CollectableItemRow({
   onUpdateAltText: (imageId: string, altText: string) => void;
   onUpdateItem: (patch: Partial<ShopCollectableItem>) => void;
   onToggleEnabled: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeImages = getActiveImages(item);
@@ -427,10 +435,15 @@ function CollectableItemRow({
   const isUploading = uploadState.status === "uploading";
 
   return (
-    <div className="bg-white rounded-2xl border border-tiki-brown/10 p-4 flex flex-col gap-3">
+    <div className="bg-white rounded-2xl border border-tiki-brown/15 shadow-sm p-4 flex flex-col gap-3">
       {/* ── Row header ────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
+      <div className="flex items-center gap-2 flex-wrap">
+        {/* Order badge */}
+        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-tiki-brown/8 text-[10px] font-black text-tiki-brown/50 flex items-center justify-center select-none">
+          {index + 1}
+        </span>
+
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-tiki-brown/5 border border-tiki-brown/10 flex items-center justify-center">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -441,12 +454,12 @@ function CollectableItemRow({
               className="w-full h-full object-contain"
             />
           ) : (
-            <span className="text-2xl opacity-20">🛍️</span>
+            <span className="text-xl opacity-20">🛍️</span>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <p className="text-sm font-black text-tiki-brown">
               {item.productScope === "category"
                 ? (item.productOptionName ?? item.displayTitle ?? "Product Option")
@@ -455,6 +468,9 @@ function CollectableItemRow({
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pineapple-yellow/20 text-tiki-brown/70 capitalize">
               {item.productType}
             </span>
+            {item.productScope === "category" && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-blue/25 text-tiki-brown/65">Option</span>
+            )}
             {!item.enabled && (
               <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-tiki-brown/8 text-tiki-brown/45">Hidden</span>
             )}
@@ -462,13 +478,34 @@ function CollectableItemRow({
           <p className="text-xs text-tiki-brown/45 font-semibold mt-0.5">{item.statusLabel}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={onToggleEnabled}
-          className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/6 text-tiki-brown/55 hover:bg-tiki-brown/12 transition-colors flex-shrink-0"
-        >
-          {item.enabled ? "Hide" : "Show"}
-        </button>
+        {/* Reorder + visibility controls */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            type="button"
+            onClick={onMoveUp}
+            disabled={index === 0}
+            title="Move up"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold text-tiki-brown/55 bg-tiki-brown/6 hover:bg-tiki-brown/14 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            onClick={onMoveDown}
+            disabled={index === total - 1}
+            title="Move down"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold text-tiki-brown/55 bg-tiki-brown/6 hover:bg-tiki-brown/14 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            onClick={onToggleEnabled}
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-tiki-brown/6 text-tiki-brown/55 hover:bg-tiki-brown/12 transition-colors"
+          >
+            {item.enabled ? "Hide" : "Show"}
+          </button>
+        </div>
       </div>
 
       {/* ── Product Image Gallery ─────────────────────────────────────── */}
@@ -658,6 +695,7 @@ function CollectableSectionPanel({
   onToggleEnabled,
   onUpdateSection,
   onAddProductOption,
+  onMoveItem,
 }: {
   section: ShopCollectablesSection;
   uploadStates: Record<string, ItemUploadState>;
@@ -670,6 +708,7 @@ function CollectableSectionPanel({
   onToggleEnabled: (itemId: string) => void;
   onUpdateSection: (patch: { title?: string; description?: string }) => void;
   onAddProductOption: (opt: { name: string; slug: string; description?: string }) => void;
+  onMoveItem: (itemId: string, direction: "up" | "down") => void;
 }) {
   const emoji = sectionEmoji(section.productType);
 
@@ -732,7 +771,8 @@ function CollectableSectionPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="rounded-3xl border-2 border-tiki-brown/10 overflow-hidden">
+      <div className="flex flex-col gap-5 p-5">
 
       {/* ── Section header ─────────────────────────────────────────────── */}
       {isEditingName ? (
@@ -1003,11 +1043,16 @@ function CollectableSectionPanel({
       </div>
 
       {/* ── Item rows ──────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2">
-        {section.items.map((item) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-[10px] font-black text-tiki-brown/35 uppercase tracking-wide px-1">
+          Products — use ↑ ↓ to set shop display order
+        </p>
+        {section.items.map((item, idx) => (
           <CollectableItemRow
             key={item.id}
             item={item}
+            index={idx}
+            total={section.items.length}
             uploadState={uploadStates[item.id] ?? { status: "idle" }}
             onGalleryUpload={(file) => onGalleryUpload(item.id, file)}
             onSetRole={(imageId, role) => onSetRole(item.id, imageId, role)}
@@ -1016,8 +1061,12 @@ function CollectableSectionPanel({
             onUpdateAltText={(imageId, altText) => onUpdateAltText(item.id, imageId, altText)}
             onUpdateItem={(patch) => onUpdateItem(item.id, patch)}
             onToggleEnabled={() => onToggleEnabled(item.id)}
+            onMoveUp={() => onMoveItem(item.id, "up")}
+            onMoveDown={() => onMoveItem(item.id, "down")}
           />
         ))}
+      </div>
+
       </div>
     </div>
   );
@@ -1332,6 +1381,25 @@ export default function ShopCollectablesManager({
     setSaveStatus("idle");
   }
 
+  function handleMoveItem(sectionId: string, itemId: string, direction: "up" | "down") {
+    setConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => {
+        if (s.id !== sectionId) return s;
+        const items = [...s.items];
+        const idx = items.findIndex((it) => it.id === itemId);
+        if (idx < 0) return s;
+        const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= items.length) return s;
+        const newItems = [...items];
+        [newItems[idx], newItems[swapIdx]] = [newItems[swapIdx], newItems[idx]];
+        // Re-number sortOrder to match array position
+        return { ...s, items: newItems.map((it, i) => ({ ...it, sortOrder: i })) };
+      }),
+    }));
+    setSaveStatus("idle");
+  }
+
   async function handleSave() {
     setSaveStatus("saving");
     setSaveMessage("");
@@ -1455,22 +1523,25 @@ export default function ShopCollectablesManager({
 
       <hr className="border-tiki-brown/8" />
 
-      {config.sections.map((section) => (
-        <CollectableSectionPanel
-          key={section.id}
-          section={section}
-          uploadStates={uploadStates}
-          onGalleryUpload={handleGalleryUpload}
-          onSetRole={handleSetRole}
-          onClearRole={handleClearRole}
-          onArchiveImage={handleArchiveImage}
-          onUpdateAltText={handleUpdateAltText}
-          onUpdateItem={handleUpdateItem}
-          onToggleEnabled={handleToggleEnabled}
-          onUpdateSection={(patch) => handleUpdateSection(section.id, patch)}
-          onAddProductOption={(opt) => handleAddProductOption(section.id, opt)}
-        />
-      ))}
+      <div className="flex flex-col gap-8">
+        {config.sections.map((section) => (
+          <CollectableSectionPanel
+            key={section.id}
+            section={section}
+            uploadStates={uploadStates}
+            onGalleryUpload={handleGalleryUpload}
+            onSetRole={handleSetRole}
+            onClearRole={handleClearRole}
+            onArchiveImage={handleArchiveImage}
+            onUpdateAltText={handleUpdateAltText}
+            onUpdateItem={handleUpdateItem}
+            onToggleEnabled={handleToggleEnabled}
+            onUpdateSection={(patch) => handleUpdateSection(section.id, patch)}
+            onAddProductOption={(opt) => handleAddProductOption(section.id, opt)}
+            onMoveItem={(itemId, dir) => handleMoveItem(section.id, itemId, dir)}
+          />
+        ))}
+      </div>
 
       {config.sections.length === 0 && (
         <div className="rounded-2xl border border-dashed border-tiki-brown/15 px-6 py-10 text-center">
