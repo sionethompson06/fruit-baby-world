@@ -444,6 +444,23 @@
       "spreadNumber": 22,
       "displayMode": "spread",
       "originalFilename": "24_spread_22_every_gift_shines.png"
+    },
+    {
+      "id": "storybook-page-1781088285220",
+      "pageNumber": 25,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781088283853.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-rainbow-bridge/storybook-pages/page-1781088283853.png",
+      "mimeType": "image/png",
+      "altText": "End Page",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T10:44:45.220Z",
+      "updatedAt": "2026-06-10T10:44:45.220Z",
+      "pageRole": "end-page",
+      "layoutType": "single-page",
+      "displayMode": "single",
+      "originalFilename": "25_end_reflection_what_we_learned.png"
     }
   ],
   "review": {
@@ -455,5 +472,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T10:14:25.773Z",
-  "updatedAt": "2026-06-10T10:42:41.246Z"
+  "updatedAt": "2026-06-10T10:44:45.220Z"
 }
