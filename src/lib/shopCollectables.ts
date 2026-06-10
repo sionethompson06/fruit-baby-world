@@ -172,12 +172,47 @@ function normalizeSection(raw: unknown, fallback: ShopCollectablesSection): Shop
   const productType: ShopCollectableProductType =
     typeof r.productType === "string" && r.productType.trim() ? r.productType.trim() : fallback.productType;
   const rawItems = Array.isArray(r.items) ? r.items : [];
-  const items = fallback.items.map((fb) => {
+
+  // Merge canonical character items with their saved data
+  const fallbackIds = new Set(fallback.items.map((fb) => fb.id));
+  const characterItems = fallback.items.map((fb) => {
     const match = rawItems.find(
       (ri) => typeof ri === "object" && ri !== null && (ri as Record<string, unknown>).id === fb.id
     );
     return normalizeItem(match ?? {}, fb);
   });
+
+  // Preserve category product option items (non-canonical) added to built-in sections
+  const categoryItems: ShopCollectableItem[] = rawItems
+    .filter((ri) => {
+      if (typeof ri !== "object" || ri === null) return false;
+      const rid = (ri as Record<string, unknown>).id;
+      return typeof rid === "string" && !fallbackIds.has(rid);
+    })
+    .map((rawItem, idx) => {
+      const ri = rawItem as Record<string, unknown>;
+      const itemId = typeof ri.id === "string" && ri.id ? ri.id : null;
+      if (!itemId) return null;
+      if (ri.productScope !== "category") return null;
+      const optionSlug = typeof ri.productOptionSlug === "string" && ri.productOptionSlug ? ri.productOptionSlug : null;
+      if (!optionSlug) return null;
+      const optionName = typeof ri.productOptionName === "string" && ri.productOptionName ? ri.productOptionName : optionSlug;
+      const fb: ShopCollectableItem = {
+        id: itemId,
+        productScope: "category",
+        productOptionSlug: optionSlug,
+        productOptionName: optionName,
+        productType,
+        imageUrl: "",
+        imagePathname: "",
+        statusLabel: "Coming Soon",
+        sortOrder: characterItems.length + idx,
+        enabled: false,
+      };
+      return normalizeItem(rawItem, fb);
+    })
+    .filter((it): it is ShopCollectableItem => it !== null);
+
   return {
     id:              typeof r.id === "string" ? r.id : fallback.id,
     title:           typeof r.title === "string" && r.title.trim() ? r.title.trim() : fallback.title,
@@ -185,7 +220,7 @@ function normalizeSection(raw: unknown, fallback: ShopCollectablesSection): Shop
     productType,
     productLineName: typeof r.productLineName === "string" && r.productLineName.trim() ? r.productLineName.trim() : fallback.productLineName,
     conceptId:       typeof r.conceptId === "string" && r.conceptId ? r.conceptId : fallback.conceptId,
-    items,
+    items: [...characterItems, ...categoryItems],
   };
 }
 
