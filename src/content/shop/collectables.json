@@ -14,7 +14,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/pineapple-baby-1780022688275.png",
           "imagePathname": "shop/collectables/plushy/pineapple-baby-1780022688275.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 0,
+          "sortOrder": 1,
           "enabled": true
         },
         {
@@ -25,7 +25,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/ube-baby-1780022704245.png",
           "imagePathname": "shop/collectables/plushy/ube-baby-1780022704245.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 1,
+          "sortOrder": 2,
           "enabled": true
         },
         {
@@ -36,7 +36,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/mango-baby-1780022710582.png",
           "imagePathname": "shop/collectables/plushy/mango-baby-1780022710582.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 2,
+          "sortOrder": 3,
           "enabled": true
         },
         {
@@ -47,7 +47,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/kiwi-baby-1780022716697.png",
           "imagePathname": "shop/collectables/plushy/kiwi-baby-1780022716697.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 3,
+          "sortOrder": 4,
           "enabled": true
         },
         {
@@ -58,7 +58,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/coconut-baby-1780022724256.png",
           "imagePathname": "shop/collectables/plushy/coconut-baby-1780022724256.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 4,
+          "sortOrder": 5,
           "enabled": true
         },
         {
@@ -69,7 +69,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/strawberry-baby-1780022730326.png",
           "imagePathname": "shop/collectables/plushy/strawberry-baby-1780022730326.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 5,
+          "sortOrder": 6,
           "enabled": true
         },
         {
@@ -80,7 +80,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/dragonfruit-baby-1780022737081.png",
           "imagePathname": "shop/collectables/plushy/dragonfruit-baby-1780022737081.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 6,
+          "sortOrder": 7,
           "enabled": true
         },
         {
@@ -91,7 +91,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/tiki-1780022742266.png",
           "imagePathname": "shop/collectables/plushy/tiki-1780022742266.png",
           "statusLabel": "Harvest Coming Soon",
-          "sortOrder": 7,
+          "sortOrder": 8,
           "enabled": true
         },
         {
@@ -104,7 +104,7 @@
           "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/shop/collectables/plushy/options/plushy-collectables-mystery-box-single/1781133153751.png",
           "imagePathname": "shop/collectables/plushy/options/plushy-collectables-mystery-box-single/1781133153751.png",
           "statusLabel": "Coming Soon",
-          "sortOrder": 8,
+          "sortOrder": 0,
           "enabled": true,
           "updatedAt": "2026-06-10T23:11:44.655Z",
           "images": [
@@ -844,5 +844,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-06-10T23:16:19.862Z"
+  "updatedAt": "2026-06-10T23:40:02.519Z"
 }
