@@ -333,6 +333,24 @@
       "spreadNumber": 8,
       "displayMode": "spread",
       "originalFilename": "10_spread_8_trouble_trick_untangles_bell.png"
+    },
+    {
+      "id": "storybook-page-1781085592680",
+      "pageNumber": 19,
+      "imageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085591709.png",
+      "pathname": "episodes/pineapple-baby-and-the-whispering-storm/storybook-pages/page-1781085591709.png",
+      "mimeType": "image/png",
+      "altText": "Spread 9",
+      "status": "draft",
+      "visibility": "admin-only",
+      "sourceType": "admin-uploaded",
+      "createdAt": "2026-06-10T09:59:52.680Z",
+      "updatedAt": "2026-06-10T09:59:52.680Z",
+      "pageRole": "story-spread",
+      "layoutType": "two-page-spread",
+      "spreadNumber": 9,
+      "displayMode": "spread",
+      "originalFilename": "11_spread_9_diamond_light_clear_breeze.png"
     }
   ],
   "review": {
@@ -344,5 +362,5 @@
     "readyForPublicSite": false
   },
   "createdAt": "2026-06-10T09:50:40.028Z",
-  "updatedAt": "2026-06-10T09:59:49.597Z"
+  "updatedAt": "2026-06-10T09:59:52.680Z"
 }
