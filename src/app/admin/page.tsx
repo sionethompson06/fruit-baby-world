@@ -65,6 +65,15 @@ const primaryCards = [
     statusColor: "bg-tropical-green/20 text-tropical-green",
     href: "/admin/products",
   },
+  {
+    emoji: "🎬",
+    title: "Animated Stories",
+    description:
+      "Build animated story titles and upload ordered video clips.",
+    status: "Active",
+    statusColor: "bg-tropical-green/20 text-tropical-green",
+    href: "/admin/animated-stories",
+  },
 ];
 
 // ─── Recommended publishing workflow ──────────────────────────────────────────
@@ -109,6 +118,12 @@ const quickStart = [
     text: "Go to Products to manage shop collectables, upload product images, assign image roles, and edit product details.",
     href: "/admin/products",
     label: "Products",
+  },
+  {
+    icon: "🎬",
+    text: "Go to Animated Stories to create story titles and upload ordered video clips.",
+    href: "/admin/animated-stories",
+    label: "Animated Stories",
   },
 ];
 

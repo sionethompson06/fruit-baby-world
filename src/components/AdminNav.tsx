@@ -7,6 +7,7 @@ const primaryLinks = [
   { href: "/admin", label: "Dashboard", emoji: "🏠" },
   { href: "/admin/homepage", label: "Homepage", emoji: "🌟" },
   { href: "/admin/storybooks", label: "Storybooks", emoji: "📚" },
+  { href: "/admin/animated-stories", label: "Animated Stories", emoji: "🎬" },
   { href: "/admin/characters", label: "Characters", emoji: "🍍" },
   { href: "/admin/products", label: "Products", emoji: "🛍️" },
   { href: "/admin/media", label: "Media", emoji: "🎞️" },

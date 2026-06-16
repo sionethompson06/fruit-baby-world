@@ -23,6 +23,8 @@ const nextConfig: NextConfig = {
     "/": ["./src/content/site/**/*.json"],
     "/shop": ["./src/content/shop/**/*.json"],
     "/admin/products": ["./src/content/shop/**/*.json"],
+    "/admin/animated-stories": ["./src/content/animated-stories/**/*.json"],
+    "/admin/animated-stories/**": ["./src/content/animated-stories/**/*.json"],
   },
 };
 
