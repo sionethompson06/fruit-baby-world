@@ -91,18 +91,6 @@ function strArr(v: unknown): string[] {
   return [];
 }
 
-function formatCharName(slug: string): string {
-  const overrides: Record<string, string> = {
-    tiki: "Tiki Trouble",
-    "tiki-trouble": "Tiki Trouble",
-  };
-  if (overrides[slug]) return overrides[slug];
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 // ─── Layout primitives ────────────────────────────────────────────────────────
 
 function PublicSection({
@@ -130,18 +118,6 @@ function PublicSection({
   );
 }
 
-function LessonBubble({ lesson }: { lesson: string }) {
-  if (!lesson) return null;
-  return (
-    <div className="bg-pineapple-yellow/20 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
-      <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide mb-1">
-        Lesson
-      </p>
-      <p className="text-base font-bold text-tiki-brown leading-snug">{lesson}</p>
-    </div>
-  );
-}
-
 function CharBadge({ char }: { char: Character }) {
   const color = char.visualIdentity.primaryColors[0] ?? "#FFD84D";
   return (
@@ -151,107 +127,6 @@ function CharBadge({ char }: { char: Character }) {
     >
       {char.shortName}
     </span>
-  );
-}
-
-function CharNameBadge({ name }: { name: string }) {
-  return (
-    <span className="text-sm font-semibold px-3 py-1.5 rounded-full bg-ube-purple/10 text-ube-purple">
-      {formatCharName(name)}
-    </span>
-  );
-}
-
-// ─── Dialogue line ────────────────────────────────────────────────────────────
-
-function DialogueLine({ line }: { line: string }) {
-  const colonIdx = line.indexOf(":");
-  if (colonIdx > 0 && colonIdx < 40) {
-    const speaker = line.slice(0, colonIdx).trim();
-    const text = line.slice(colonIdx + 1).trim();
-    return (
-      <div className="flex flex-col gap-0.5">
-        <span className="text-xs font-bold text-ube-purple uppercase tracking-wide">
-          {speaker}
-        </span>
-        <p className="text-sm text-tiki-brown/80 leading-relaxed pl-3 border-l-2 border-ube-purple/20">
-          {text}
-        </p>
-      </div>
-    );
-  }
-  return (
-    <p className="text-sm text-tiki-brown/80 leading-relaxed italic">{line}</p>
-  );
-}
-
-// ─── Read Story scene block ───────────────────────────────────────────────────
-
-function SceneBlock({
-  scene,
-  index,
-  charMap,
-}: {
-  scene: Record<string, unknown>;
-  index: number;
-  charMap: Record<string, Character>;
-}) {
-  const num = scene.sceneNumber ?? index + 1;
-  const title = str(scene.title);
-  const summary = str(scene.summary);
-  const chars = strArr(scene.characters);
-  const dialogue = strArr(scene.dialogueDraft);
-  const emotionalBeat = str(scene.emotionalBeat);
-
-  return (
-    <div className="border border-tiki-brown/10 rounded-2xl overflow-hidden">
-      <div className="bg-gradient-to-r from-ube-purple/8 to-transparent px-5 py-3 flex items-center gap-3">
-        <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-ube-purple/15 text-ube-purple flex-shrink-0">
-          Scene {String(num)}
-        </span>
-        {title && (
-          <span className="text-sm font-bold text-tiki-brown">{title}</span>
-        )}
-      </div>
-
-      <div className="px-5 py-4 flex flex-col gap-4">
-        {summary && (
-          <p className="text-sm text-tiki-brown/75 leading-relaxed">{summary}</p>
-        )}
-
-        {chars.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {chars.map((id) => {
-              const c = charMap[id];
-              return c ? (
-                <CharBadge key={id} char={c} />
-              ) : (
-                <CharNameBadge key={id} name={id} />
-              );
-            })}
-          </div>
-        )}
-
-        {emotionalBeat && (
-          <p className="text-xs font-semibold text-tropical-green/80 italic">
-            {emotionalBeat}
-          </p>
-        )}
-
-        {dialogue.length > 0 && (
-          <div className="flex flex-col gap-3 bg-sky-blue/10 rounded-xl p-4">
-            <p className="text-xs font-bold text-tiki-brown/45 uppercase tracking-wide">
-              Read Along
-            </p>
-            <div className="flex flex-col gap-3">
-              {dialogue.map((line, i) => (
-                <DialogueLine key={i} line={line} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -321,17 +196,6 @@ function PublicAudioStoryPlayer({
           </span>
         </p>
       )}
-
-      {/* Cross-link to read-aloud text */}
-      <p className="text-xs text-tiki-brown/50 leading-relaxed">
-        Prefer reading?{" "}
-        <a
-          href="#read-aloud"
-          className="text-ube-purple font-semibold hover:text-ube-purple/70 transition-colors underline underline-offset-2"
-        >
-          Follow along below.
-        </a>
-      </p>
     </div>
   );
 }
@@ -378,113 +242,6 @@ function buildDiscussionPrompts(lesson: string): string[] {
     "What would you do if this happened to you?",
     "How can friends solve a problem kindly?",
   ];
-}
-
-// ─── Read-Aloud Mode helpers ──────────────────────────────────────────────────
-
-const READING_CUES = [
-  "Use a warm, slow voice for this scene.",
-  "Pause after each line to let the feelings land.",
-  "Try giving each character a slightly different voice.",
-  "Read this part gently — it's an emotional moment.",
-  "Make eye contact with your child after reading this scene.",
-  "Slow down here — this is the heart of the story.",
-  "Use a cheerful, hopeful tone for this scene.",
-  "Read with curiosity — let your child wonder along with you.",
-];
-
-const REFLECTION_QUESTIONS_BASE = [
-  "What do you think {character} was feeling in this part?",
-  "Has something like this ever happened to you?",
-  "What would you do if you were in this story?",
-  "Why do you think that moment was important?",
-  "How did the characters help each other here?",
-  "What do you think will happen next?",
-  "If you could talk to one of the characters, what would you say?",
-  "What feeling word fits this part of the story?",
-];
-
-function buildReadingCue(sceneIndex: number): string {
-  return READING_CUES[sceneIndex % READING_CUES.length];
-}
-
-function buildReflectionQuestion(sceneIndex: number, lesson: string): string {
-  const base = REFLECTION_QUESTIONS_BASE[sceneIndex % REFLECTION_QUESTIONS_BASE.length];
-  if (lesson && sceneIndex === REFLECTION_QUESTIONS_BASE.length - 1) {
-    return `Today's lesson is: "${lesson}" — what does that mean to you?`;
-  }
-  return base.replace("{character}", "one of the characters");
-}
-
-function deriveNarration(scene: Record<string, unknown>): string {
-  const summary = str(scene.summary);
-  if (summary) return summary;
-  const title = str(scene.title);
-  if (title) return `Scene: ${title}`;
-  return "The story continues…";
-}
-
-// ─── Read-Aloud components ────────────────────────────────────────────────────
-
-function ReadAloudSceneCard({
-  scene,
-  index,
-  lesson,
-}: {
-  scene: Record<string, unknown>;
-  index: number;
-  lesson: string;
-}) {
-  const sceneNumber = Number(scene.sceneNumber) || index + 1;
-  const title = str(scene.title);
-  const narration = deriveNarration(scene);
-  const dialogue = strArr(scene.dialogueDraft);
-  const readingCue = buildReadingCue(index);
-  const reflectionQ = buildReflectionQuestion(index, lesson);
-
-  return (
-    <div className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 flex flex-col gap-4">
-      {/* Scene header */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-ube-purple text-white text-xs font-black flex-shrink-0">
-          {sceneNumber}
-        </div>
-        {title && (
-          <h3 className="text-sm font-black text-tiki-brown leading-snug">{title}</h3>
-        )}
-      </div>
-
-      {/* Narration text */}
-      <p className="text-base text-tiki-brown/80 leading-relaxed font-medium">{narration}</p>
-
-      {/* First dialogue line as a read-along hint */}
-      {dialogue.length > 0 && (
-        <div className="flex items-start gap-2.5 bg-sky-blue/8 border border-sky-blue/20 rounded-2xl px-4 py-3">
-          <span className="text-base flex-shrink-0">💬</span>
-          <p className="text-sm text-tiki-brown/70 leading-relaxed italic">
-            {dialogue[0]}
-          </p>
-        </div>
-      )}
-
-      {/* Reading cue */}
-      <div className="flex items-start gap-2.5 bg-tropical-green/8 border border-tropical-green/20 rounded-2xl px-4 py-3">
-        <span className="text-base flex-shrink-0">🎙️</span>
-        <p className="text-sm font-semibold text-tiki-brown/65 leading-relaxed">{readingCue}</p>
-      </div>
-
-      {/* Reflection question */}
-      <div className="flex items-start gap-2.5 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-4 py-3">
-        <span className="text-base flex-shrink-0">🌟</span>
-        <div>
-          <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide mb-1">
-            Reflection
-          </p>
-          <p className="text-sm text-tiki-brown/80 leading-relaxed">{reflectionQ}</p>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 // ─── Animated clip card (public) ─────────────────────────────────────────────
@@ -837,52 +594,42 @@ export default async function StoryDetailPage({
               </div>
             )}
 
-            {/* Media badges + CTA buttons */}
+            {/* Audio callout + Read Storybook CTA */}
             {hasReaderContent ? (
               <div className={`flex flex-col gap-3 ${frontCoverUrl ? "" : "items-center"}`}>
-                {/* What's available — informational chips */}
-                <div className={`flex flex-wrap gap-2 ${frontCoverUrl ? "" : "justify-center"}`}>
-                  {storybookReaderPages.length > 0 && (
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/70 border border-tiki-brown/12 text-tiki-brown/65">
-                      📖 Storybook
-                    </span>
-                  )}
-                  {(narrationAudio || hasAnyPageAudio) && (
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-ube-purple/10 border border-ube-purple/15 text-ube-purple/80">
-                      🎧 Audio Available
-                    </span>
-                  )}
-                  {publicVideo && (
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-tropical-green/10 border border-tropical-green/20 text-tropical-green/80">
-                      🎬 Watch Cartoon
-                    </span>
-                  )}
-                </div>
-                {/* Action buttons */}
-                <div className={`flex flex-wrap gap-3 ${frontCoverUrl ? "" : "justify-center"}`}>
+                {/* Prominent audio callout */}
+                {(narrationAudio || hasAnyPageAudio) && (
+                  <div className={`flex items-center gap-3 bg-ube-purple/10 border border-ube-purple/20 rounded-2xl px-4 py-3 ${frontCoverUrl ? "self-start" : ""}`}>
+                    <span className="text-xl flex-shrink-0" aria-hidden="true">🎧</span>
+                    <div>
+                      <p className="text-xs font-black text-ube-purple leading-tight">Audio Available</p>
+                      <p className="text-xs text-tiki-brown/60 leading-snug mt-0.5">Read-aloud audio is included in the storybook reader.</p>
+                    </div>
+                  </div>
+                )}
+                {/* Primary CTA */}
+                <div className={`flex flex-col gap-1.5 ${frontCoverUrl ? "items-start" : "items-center"}`}>
                   <a
                     href="#open-reader"
-                    className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
+                    className="flex items-center gap-2 text-sm font-black px-6 py-3.5 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
                   >
                     <span aria-hidden>📖</span> Read Storybook
                   </a>
-                  {narrationAudio && !hasAnyPageAudio && (
-                    <a
-                      href="#listen-story"
-                      className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/30 text-ube-purple hover:bg-ube-purple/8 transition-colors"
-                    >
-                      <span aria-hidden>🎧</span> Listen &amp; Read
-                    </a>
-                  )}
-                  {publicVideo && (
-                    <a
-                      href="#watch-story"
-                      className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/8 transition-colors"
-                    >
-                      <span aria-hidden>🎬</span> Watch Cartoon
-                    </a>
-                  )}
+                  <p className="text-xs text-tiki-brown/50 leading-relaxed">
+                    {(narrationAudio || hasAnyPageAudio)
+                      ? "Open the reader to read or listen page by page."
+                      : "Open the storybook reader."}
+                  </p>
                 </div>
+                {/* Watch Cartoon secondary CTA */}
+                {publicVideo && (
+                  <a
+                    href="#watch-story"
+                    className={`flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/8 transition-colors ${frontCoverUrl ? "" : "self-center"}`}
+                  >
+                    <span aria-hidden>🎬</span> Watch Cartoon
+                  </a>
+                )}
               </div>
             ) : (
               <p className={`text-sm text-tiki-brown/50 italic ${frontCoverUrl ? "" : "text-center"}`}>
@@ -931,46 +678,6 @@ export default async function StoryDetailPage({
           ← Back to Stories
         </Link>
 
-        {/* ── Section navigation ── */}
-        <nav className="flex flex-wrap gap-2" aria-label="Page sections">
-          <a
-            href="#read-story"
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
-          >
-            📖 Story
-          </a>
-          {publicAudio && (
-            <a
-              href="#listen"
-              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tropical-green/10 border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/20 transition-colors"
-            >
-              🎧 Listen
-            </a>
-          )}
-          {publicVideo && (
-            <a
-              href="#watch-story"
-              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-tropical-green/10 border border-tropical-green/30 text-tropical-green hover:bg-tropical-green/20 transition-colors"
-            >
-              🎬 Watch Cartoon
-            </a>
-          )}
-          <a
-            href="#read-aloud"
-            className="text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-tiki-brown/15 text-tiki-brown/65 hover:text-tiki-brown hover:border-tiki-brown/30 transition-colors"
-          >
-            🎙️ Read-Aloud
-          </a>
-          {publicClips.length > 0 && (
-            <a
-              href="#animated-moments"
-              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-sky-blue/10 border border-sky-blue/30 text-sky-blue hover:bg-sky-blue/20 transition-colors"
-            >
-              🎬 Watch
-            </a>
-          )}
-        </nav>
-
         {/* ── Today's Lesson ── */}
         <div className="bg-pineapple-yellow/15 border border-pineapple-yellow/45 rounded-3xl px-6 py-5 flex flex-col gap-3">
           <p className="text-xs font-bold text-tiki-brown/50 uppercase tracking-wide">
@@ -1005,42 +712,6 @@ export default async function StoryDetailPage({
           </ul>
         </div>
 
-        {/* ══════════════════════════════════════════
-            READ STORY
-        ══════════════════════════════════════════ */}
-
-        {/* About This Story */}
-        <PublicSection title="About This Story" icon="📖" id="read-story">
-          {shortDesc && (
-            <p className="text-sm text-tiki-brown/75 leading-relaxed">{shortDesc}</p>
-          )}
-          {featuredChars.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">
-                Featuring
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {featuredChars.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/characters/${c.slug}`}
-                    className="flex items-center gap-2 px-4 py-2 rounded-2xl border border-tiki-brown/10 hover:border-tiki-brown/25 transition-colors"
-                    style={{ backgroundColor: `${c.visualIdentity.primaryColors[0]}18` }}
-                  >
-                    <span className="text-sm font-bold text-tiki-brown">{c.shortName}</span>
-                    <span className="text-xs text-tiki-brown/45">→</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-          {!shortDesc && featuredChars.length === 0 && (
-            <p className="text-sm text-tiki-brown/55 leading-relaxed">
-              A Pineapple Baby story for young readers.
-            </p>
-          )}
-        </PublicSection>
-
         {/* ── Full Final Video (public-ready only) ── */}
         {publicFinalVideo && (
           <PublicFinalVideoPlayer video={{ url: publicFinalVideo.url, mimeType: publicFinalVideo.mimeType, durationSeconds: publicFinalVideo.durationSeconds }} />
@@ -1049,28 +720,6 @@ export default async function StoryDetailPage({
         {/* ── Audio Story Player — public-ready audio only ── */}
         {publicAudio && (
           <PublicAudioStoryPlayer audio={publicAudio} title={title} />
-        )}
-
-        {/* Scene-by-scene story */}
-        {scenes.length > 0 && (
-          <PublicSection
-            title={`The Story — ${scenes.length} ${scenes.length === 1 ? "Scene" : "Scenes"}`}
-            icon="🎬"
-          >
-            <div className="flex flex-col gap-4">
-              {scenes.map((scene, i) => (
-                <SceneBlock key={i} scene={scene} index={i} charMap={charMap} />
-              ))}
-            </div>
-          </PublicSection>
-        )}
-
-        {scenes.length === 0 && (
-          <PublicSection title="Read-Along Dialogue" icon="💬">
-            <p className="text-sm text-tiki-brown/60 leading-relaxed">
-              Full dialogue version coming soon.
-            </p>
-          </PublicSection>
         )}
 
         {/* ══════════════════════════════════════════
@@ -1089,38 +738,6 @@ export default async function StoryDetailPage({
               immersiveOnly={true}
               pageAudioMap={hasAnyPageAudio ? publicPageAudioMap : undefined}
             />
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════
-            READY TO READ CTA — only shown when storybook pages are available
-        ══════════════════════════════════════════ */}
-
-        {storybookReaderPages.length > 0 && (
-          <div className="bg-gradient-to-br from-ube-purple/8 to-pineapple-yellow/12 rounded-3xl border border-ube-purple/15 px-6 sm:px-8 py-7 flex flex-col sm:flex-row items-center gap-5">
-            <div className="flex-1 flex flex-col gap-1.5 text-center sm:text-left">
-              <p className="text-base font-black text-tiki-brown">Ready to read?</p>
-              <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                Open the storybook and read one page at a time.
-                {(narrationAudio || hasAnyPageAudio) ? " Audio is available for this storybook." : ""}
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3 justify-center sm:justify-end flex-shrink-0">
-              <a
-                href="#open-reader"
-                className="flex items-center gap-2 text-sm font-black px-6 py-3 rounded-2xl bg-ube-purple text-white hover:bg-ube-purple/90 transition-colors shadow-md"
-              >
-                <span aria-hidden>📖</span> Read Storybook
-              </a>
-              {narrationAudio && !hasAnyPageAudio && (
-                <a
-                  href="#listen-story"
-                  className="flex items-center gap-2 text-sm font-black px-5 py-3 rounded-2xl bg-white border border-ube-purple/25 text-ube-purple hover:bg-ube-purple/8 transition-colors"
-                >
-                  <span aria-hidden>🎧</span> Listen &amp; Read
-                </a>
-              )}
-            </div>
           </div>
         )}
 
@@ -1144,110 +761,6 @@ export default async function StoryDetailPage({
               </div>
             </div>
             <StorybookVideoPlayer video={publicVideo} fallbackPosterUrl={frontCoverUrl} />
-          </div>
-        )}
-
-        {/* ══════════════════════════════════════════
-            READ-ALOUD STORY MODE
-        ══════════════════════════════════════════ */}
-
-        {scenes.length > 0 && (
-          <div
-            id="read-aloud"
-            className="bg-white rounded-3xl border border-tiki-brown/10 shadow-sm p-6 sm:p-8 flex flex-col gap-6"
-          >
-            {/* Section header */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-black text-tiki-brown flex items-center gap-2">
-                  <span>🎙️</span> Read-Aloud Mode
-                </h2>
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Read the story out loud with gentle pacing, expression, and reflection questions.
-                </p>
-              </div>
-              <span className="flex-shrink-0 text-xs font-bold text-tiki-brown/60 bg-pineapple-yellow/25 px-3 py-1 rounded-full">
-                {scenes.length} {scenes.length === 1 ? "scene" : "scenes"}
-              </span>
-            </div>
-
-            {/* Guide card */}
-            <div className="bg-pineapple-yellow/12 border border-pineapple-yellow/35 rounded-2xl p-5 flex flex-col gap-3">
-              <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide">
-                Reader&apos;s Guide
-              </p>
-              <dl className="flex flex-col gap-2">
-                <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
-                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Suggested reader</dt>
-                  <dd className="text-sm text-tiki-brown/75">Adult or older child reading aloud</dd>
-                </div>
-                <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
-                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Pacing</dt>
-                  <dd className="text-sm text-tiki-brown/75">Slow and expressive — pause between scenes</dd>
-                </div>
-                {lesson && (
-                  <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
-                    <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Focus skill</dt>
-                    <dd className="text-sm text-tiki-brown/75">{lesson}</dd>
-                  </div>
-                )}
-                <div className="grid grid-cols-[8rem_1fr] gap-2 items-baseline">
-                  <dt className="text-xs font-semibold text-tiki-brown/45 uppercase tracking-wide">Audio</dt>
-                  <dd className="text-sm text-tiki-brown/75">
-                    {publicAudio ? (
-                      <a href="#listen" className="text-ube-purple font-semibold hover:text-ube-purple/70 transition-colors">
-                        Audio available — listen above ↑
-                      </a>
-                    ) : (
-                      "Coming later — read together for now"
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Audio notice — adapt based on whether public audio exists */}
-            {publicAudio ? (
-              <div className="flex items-start gap-3 bg-tropical-green/8 border border-tropical-green/20 rounded-2xl px-5 py-4">
-                <span className="text-lg flex-shrink-0">🎧</span>
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Audio narration is available for this story.{" "}
-                  <a href="#listen" className="text-ube-purple font-semibold hover:text-ube-purple/70 transition-colors">
-                    Listen at the top of this page ↑
-                  </a>
-                </p>
-              </div>
-            ) : (
-              <div className="flex items-start gap-3 bg-sky-blue/8 border border-sky-blue/20 rounded-2xl px-5 py-4">
-                <span className="text-lg flex-shrink-0">🔇</span>
-                <p className="text-sm text-tiki-brown/60 leading-relaxed">
-                  Audio narration is not active yet. This read-aloud mode is designed for adults
-                  and children to read together.
-                </p>
-              </div>
-            )}
-
-            {/* Scene cards */}
-            <div className="flex flex-col gap-5">
-              {scenes.map((scene, i) => (
-                <ReadAloudSceneCard key={i} scene={scene} index={i} lesson={lesson} />
-              ))}
-            </div>
-
-            {/* Closing lesson reflection */}
-            {lesson && (
-              <div className="flex items-start gap-3 bg-pineapple-yellow/15 border border-pineapple-yellow/40 rounded-2xl px-5 py-4">
-                <span className="text-xl flex-shrink-0">💛</span>
-                <div>
-                  <p className="text-xs font-bold text-tiki-brown/55 uppercase tracking-wide mb-1">
-                    After the Story
-                  </p>
-                  <p className="text-sm text-tiki-brown/80 leading-relaxed">
-                    Today&apos;s lesson: {lesson}. Take a moment to talk about it together.
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
