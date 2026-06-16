@@ -212,7 +212,7 @@ export default function StoriesPage() {
         <section
           className="w-full py-12"
           style={{
-            backgroundImage: `linear-gradient(rgba(255, 248, 230, 0.80), rgba(255, 244, 215, 0.88)), url("/backgrounds/mango-grove.png")`,
+            backgroundImage: `linear-gradient(rgba(255, 248, 230, 0.80), rgba(255, 244, 215, 0.88)), url("/backgrounds/mango-grove.webp")`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",

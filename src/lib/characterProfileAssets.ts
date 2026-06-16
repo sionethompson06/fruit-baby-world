@@ -39,13 +39,13 @@ export const ENVIRONMENT_REFERENCE_TYPES = new Set([
 // Used only when image.profileSheet is absent or conflicted.
 
 const CANONICAL_PROFILE_SHEETS: Record<string, string> = {
-  "pineapple-baby": "/characters/pineapple-baby/Pineapple Profile.png",
-  "ube-baby": "/characters/ube-baby/Ube Profile.png",
-  "kiwi-baby": "/characters/kiwi-baby/Kiwi Profile.png",
-  "coconut-baby": "/characters/coconut-baby/Coconut Profile.png",
-  "mango-baby": "/characters/mango-baby/Mango Profile.png",
-  tiki: "/characters/tiki/Tiki Profile.png",
-  "tiki-trouble": "/characters/tiki/Tiki Profile.png",
+  "pineapple-baby": "/characters/pineapple-baby/Pineapple Profile.webp",
+  "ube-baby": "/characters/ube-baby/Ube Profile.webp",
+  "kiwi-baby": "/characters/kiwi-baby/Kiwi Profile.webp",
+  "coconut-baby": "/characters/coconut-baby/Coconut Profile.webp",
+  "mango-baby": "/characters/mango-baby/Mango Profile.webp",
+  tiki: "/characters/tiki/Tiki Profile.webp",
+  "tiki-trouble": "/characters/tiki/Tiki Profile.webp",
 };
 
 // ─── Reference asset shape ─────────────────────────────────────────────────────

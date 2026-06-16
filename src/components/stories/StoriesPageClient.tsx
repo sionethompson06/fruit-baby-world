@@ -14,19 +14,19 @@ import {
 // Individual character pose images — not profile sheets.
 // Add new slug → path entries here when new characters get individual image files.
 const CHAR_IMAGES: Record<string, string> = {
-  "pineapple-baby": "/characters/pineapple-baby/pineapple%20happy_smile_fun_playing.png",
-  "mango-baby": "/characters/mango-baby/mango%20happy_fun_enjoy_playing.png",
-  "kiwi-baby": "/characters/kiwi-baby/Kiwi%20playful_joyful_running_fun.png",
-  "coconut-baby": "/characters/coconut-baby/Coconut%20smile_happy_welcoming_cute.png",
-  "ube-baby": "/characters/ube-baby/ube%20happy_fun_listening.png",
-  "strawberry-baby": "/characters/strawberry-baby/strawberry%20waiving_hello_goodbye_happy.png",
+  "pineapple-baby": "/characters/pineapple-baby/pineapple%20happy_smile_fun_playing.webp",
+  "mango-baby": "/characters/mango-baby/mango%20happy_fun_enjoy_playing.webp",
+  "kiwi-baby": "/characters/kiwi-baby/Kiwi%20playful_joyful_running_fun.webp",
+  "coconut-baby": "/characters/coconut-baby/Coconut%20smile_happy_welcoming_cute.webp",
+  "ube-baby": "/characters/ube-baby/ube%20happy_fun_listening.webp",
+  "strawberry-baby": "/characters/strawberry-baby/strawberry%20waiving_hello_goodbye_happy.webp",
   "dragon-fruit-baby":
-    "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.png",
+    "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.webp",
   // dragonfruit-baby is the actual slug in the character JSON; aliases to same image
   "dragonfruit-baby":
-    "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.png",
-  tiki: "/characters/tiki/tiki%20laughing_funny_teasing_.png",
-  "tiki-trouble": "/characters/tiki/tiki%20laughing_funny_teasing_.png",
+    "/characters/dragon-fruit-baby/Dragon%20Fruit%20happy_welcome_joy_fun_.webp",
+  tiki: "/characters/tiki/tiki%20laughing_funny_teasing_.webp",
+  "tiki-trouble": "/characters/tiki/tiki%20laughing_funny_teasing_.webp",
 };
 
 export type EpisodeMediaInfo = {
@@ -163,7 +163,7 @@ export default function StoriesPageClient({
         className="w-full"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255, 248, 236, 0.82), rgba(255, 236, 238, 0.88)), url('/backgrounds/Heartberry_Hallow.png')",
+            "linear-gradient(rgba(255, 248, 236, 0.82), rgba(255, 236, 238, 0.88)), url('/backgrounds/Heartberry_Hallow.webp')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
