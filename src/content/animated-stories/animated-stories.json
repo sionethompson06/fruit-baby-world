@@ -5,8 +5,8 @@
       "id": "story-1781598170765-i71yu",
       "slug": "the-glowstone-adventure",
       "title": "The Glowstone Adventure",
-      "status": "draft",
-      "visibility": "hidden",
+      "status": "published",
+      "visibility": "public",
       "sortOrder": 0,
       "clips": [
         {
@@ -67,7 +67,7 @@
         }
       ],
       "createdAt": "2026-06-16T08:22:50.765Z",
-      "updatedAt": "2026-06-16T08:24:06.812Z"
+      "updatedAt": "2026-06-16T08:32:52.855Z"
     }
   ]
 }
