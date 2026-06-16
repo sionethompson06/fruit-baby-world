@@ -13,9 +13,9 @@
         "coconut-baby",
         "mango-baby",
         "ube-baby",
-        "tiki-trouble",
         "dragon-fruit-baby",
-        "strawberry-baby"
+        "strawberry-baby",
+        "tiki-trouble"
       ],
       "coverImageUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/card-images/1781639826364-chatgpt-image-jun-15-2026-08-29-12-pm-1.png",
       "coverImagePathname": "animated-stories/the-glowstone-adventure/card-images/1781639826364-chatgpt-image-jun-15-2026-08-29-12-pm-1.png",
@@ -80,7 +80,7 @@
         }
       ],
       "createdAt": "2026-06-16T08:22:50.765Z",
-      "updatedAt": "2026-06-16T19:57:07.389Z"
+      "updatedAt": "2026-06-16T20:03:13.168Z"
     }
   ]
 }
