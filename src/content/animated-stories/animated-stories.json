@@ -77,10 +77,94 @@
           "visibility": "public",
           "uploadedAt": "2026-06-16T08:24:06.812Z",
           "updatedAt": "2026-06-16T08:24:06.812Z"
+        },
+        {
+          "id": "clip-1781640586267-w0h64",
+          "title": "Glowstone-Quest-Video5",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781640583158-glowstone-quest-video5.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781640583158-glowstone-quest-video5.mp4",
+          "originalFilename": "Glowstone-Quest-Video5.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 11731341,
+          "sortOrder": 4,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T20:09:46.267Z",
+          "updatedAt": "2026-06-16T20:09:46.267Z"
+        },
+        {
+          "id": "clip-1781640607272-x0735",
+          "title": "Glowstone-Quest-Video6",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781640604448-glowstone-quest-video6.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781640604448-glowstone-quest-video6.mp4",
+          "originalFilename": "Glowstone-Quest-Video6.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 10382554,
+          "sortOrder": 5,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T20:10:07.272Z",
+          "updatedAt": "2026-06-16T20:10:07.272Z"
+        },
+        {
+          "id": "clip-1781640618087-pbu07",
+          "title": "Glowstone-Quest-Video7",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781640615094-glowstone-quest-video7.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781640615094-glowstone-quest-video7.mp4",
+          "originalFilename": "Glowstone-Quest-Video7.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 13754789,
+          "sortOrder": 6,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T20:10:18.087Z",
+          "updatedAt": "2026-06-16T20:10:18.087Z"
+        },
+        {
+          "id": "clip-1781640632258-gx4ga",
+          "title": "Glowstone-Quest-Video8",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781640629600-glowstone-quest-video8.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781640629600-glowstone-quest-video8.mp4",
+          "originalFilename": "Glowstone-Quest-Video8.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 10486890,
+          "sortOrder": 7,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T20:10:32.258Z",
+          "updatedAt": "2026-06-16T20:10:32.258Z"
+        },
+        {
+          "id": "clip-1781640653661-rniik",
+          "title": "Glowstone-Quest-Video9",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781640650549-glowstone-quest-video9.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781640650549-glowstone-quest-video9.mp4",
+          "originalFilename": "Glowstone-Quest-Video9.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 11386201,
+          "sortOrder": 8,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T20:10:53.661Z",
+          "updatedAt": "2026-06-16T20:10:53.661Z"
+        },
+        {
+          "id": "clip-1781640661267-6c2n3",
+          "title": "Glowstone-Quest-Video10",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781640658317-glowstone-quest-video10.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781640658317-glowstone-quest-video10.mp4",
+          "originalFilename": "Glowstone-Quest-Video10.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 14428231,
+          "sortOrder": 9,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T20:11:01.267Z",
+          "updatedAt": "2026-06-16T20:11:01.267Z"
         }
       ],
       "createdAt": "2026-06-16T08:22:50.765Z",
-      "updatedAt": "2026-06-16T20:03:13.168Z"
+      "updatedAt": "2026-06-16T20:11:01.267Z"
     }
   ]
 }
