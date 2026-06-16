@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { put } from "@vercel/blob/client";
 import type {
   AnimatedStoriesContent,
   AnimatedStory,
@@ -206,34 +207,78 @@ function AnimatedStoryPanel({
     setUploading(true);
     setUploadError("");
 
-    const fd = new FormData();
-    fd.append("file", uploadFile);
-    fd.append("storySlug", story.slug);
-    if (uploadTitle.trim()) fd.append("clipTitle", uploadTitle.trim());
-
+    // Step 1: Get a short-lived client token from the server.
+    // This tiny GET request goes through the proxy for auth — no file body.
+    let tokenData: { token: string; pathname: string };
     try {
-      const res = await fetch("/api/media/upload-animated-story-clip", {
-        method: "POST",
-        body: fd,
+      const params = new URLSearchParams({
+        filename: uploadFile.name,
+        contentType: uploadFile.type,
+        storySlug: story.slug,
       });
-      const data = (await res.json()) as {
+      const tokenRes = await fetch(
+        `/api/media/animated-story-clip-upload-token?${params}`
+      );
+      const json = (await tokenRes.json()) as {
         ok: boolean;
-        clip?: AnimatedStoryClip;
+        token?: string;
+        pathname?: string;
         message?: string;
       };
-      if (data.ok && data.clip) {
-        onClipAdded(data.clip);
-        setUploadFile(null);
-        setUploadTitle("");
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      } else {
-        setUploadError(data.message ?? "Upload failed.");
+      if (!json.ok || !json.token || !json.pathname) {
+        setUploadError(json.message ?? "Could not get upload token.");
+        setUploading(false);
+        return;
       }
+      tokenData = { token: json.token, pathname: json.pathname };
     } catch {
-      setUploadError("Network error during upload. Please try again.");
-    } finally {
+      setUploadError("Could not reach the server. Please try again.");
       setUploading(false);
+      return;
     }
+
+    // Step 2: Upload the file directly from the browser to Vercel Blob.
+    // Bypasses the serverless function entirely — no body size limit.
+    let blobUrl: string;
+    let blobPathname: string;
+    try {
+      const blob = await put(tokenData.pathname, uploadFile, {
+        access: "public",
+        token: tokenData.token,
+        contentType: uploadFile.type,
+        multipart: true,
+      });
+      blobUrl = blob.url;
+      blobPathname = blob.pathname;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      setUploadError(`Upload failed: ${msg}`);
+      setUploading(false);
+      return;
+    }
+
+    // Step 3: Build the clip record locally and notify parent.
+    const now = new Date().toISOString();
+    const clip: AnimatedStoryClip = {
+      id: `clip-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      title: uploadTitle.trim() || uploadFile.name.replace(/\.[^.]+$/, ""),
+      videoUrl: blobUrl,
+      pathname: blobPathname,
+      originalFilename: uploadFile.name,
+      mimeType: uploadFile.type,
+      sizeBytes: uploadFile.size,
+      sortOrder: 9999,
+      status: "approved",
+      visibility: "public",
+      uploadedAt: now,
+      updatedAt: now,
+    };
+
+    onClipAdded(clip);
+    setUploadFile(null);
+    setUploadTitle("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setUploading(false);
   }
 
   const hasClips = story.clips.length > 0;
