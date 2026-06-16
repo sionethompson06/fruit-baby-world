@@ -172,7 +172,7 @@ export default function StoriesPageClient({
         <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-10 flex flex-col gap-6">
           <div>
             <h2 className="text-2xl font-black text-tiki-brown mb-1">
-              {selectedSlug ? `${selectedName} Stories` : "Available Stories"}
+              {selectedSlug ? `${selectedName} Storybooks` : "Available Storybooks"}
             </h2>
             <p className="text-sm text-tiki-brown/60">
               {filteredEpisodes.length > 0

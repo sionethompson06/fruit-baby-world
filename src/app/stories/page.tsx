@@ -22,38 +22,6 @@ export const metadata: Metadata = {
     "Browse illustrated picture stories, audio adventures, and videos — all with heart-warming lessons from Pineapple Baby and friends.",
 };
 
-// ─── Coming Soon placeholder data ─────────────────────────────────────────────
-
-const COMING_SOON_CARDS = [
-  {
-    slug: "the-kindness-garden",
-    title: "The Kindness Garden",
-    emoji: "🌱",
-    description:
-      "Pineapple Baby discovers that small acts of kindness can bloom into something wonderful.",
-    characters: ["Pineapple Baby", "Coconut Baby"],
-    lesson: "Kindness grows when you share it.",
-  },
-  {
-    slug: "mangos-big-silly-day",
-    title: "Mango's Big Silly Day",
-    emoji: "🥭",
-    description:
-      "Mango Baby has a day full of wobbles, giggles, and friendly surprises.",
-    characters: ["Mango Baby", "Ube Baby"],
-    lesson: "It's okay to laugh at yourself.",
-  },
-  {
-    slug: "tikis-tiny-trick",
-    title: "Tiki's Tiny Trick",
-    emoji: "🌴",
-    description:
-      "Tiki Trouble tries a sneaky little trick — but things don't go quite as planned!",
-    characters: ["Tiki Trouble", "Kiwi Baby"],
-    lesson: "Honesty is always the better trick.",
-  },
-] as const;
-
 // ─── Episode media map ────────────────────────────────────────────────────────
 
 function buildEpisodeMediaMap(): Record<string, EpisodeMediaInfo> {
@@ -178,32 +146,18 @@ export default function StoriesPage() {
     ...savedEpisodes.filter((e) => !staticSlugs.has(e.slug)),
   ];
 
-  // Real coming-soon storybooks from the CMS
+  // Real coming-soon storybooks from the CMS only
   const realComingSoon = loadComingSoonSavedEpisodes();
-  const realComingSoonSlugs = new Set(realComingSoon.map((e) => e.slug));
-  // Merge real + hardcoded placeholders, real entries win by slug
-  const comingSoonCards = [
-    ...realComingSoon.map((e) => ({
-      slug: e.slug,
-      title: e.title,
-      emoji: null as string | null,
-      coverImageUrl: e.coverImageUrl,
-      description: e.shortDescription,
-      characters: e.featuredCharacters,
-      lesson: e.lesson,
-      isReal: true,
-    })),
-    ...COMING_SOON_CARDS.filter((c) => !realComingSoonSlugs.has(c.slug)).map((c) => ({
-      slug: c.slug,
-      title: c.title,
-      emoji: c.emoji as string,
-      coverImageUrl: null as string | null,
-      description: c.description,
-      characters: [...c.characters],
-      lesson: c.lesson,
-      isReal: false,
-    })),
-  ];
+  const comingSoonCards = realComingSoon.map((e) => ({
+    slug: e.slug,
+    title: e.title,
+    emoji: null as string | null,
+    coverImageUrl: e.coverImageUrl,
+    description: e.shortDescription,
+    characters: e.featuredCharacters,
+    lesson: e.lesson,
+    isReal: true,
+  }));
 
   let allChars: import("@/lib/content").Character[] = [];
   try {
