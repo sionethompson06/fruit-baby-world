@@ -1,4 +1,31 @@
 {
   "version": 1,
-  "stories": []
+  "stories": [
+    {
+      "id": "story-1781598170765-i71yu",
+      "slug": "the-glowstone-adventure",
+      "title": "The Glowstone Adventure",
+      "status": "draft",
+      "visibility": "hidden",
+      "sortOrder": 0,
+      "clips": [
+        {
+          "id": "clip-1781598186433-06uco",
+          "title": "Glowstone-Quest-Video1",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781598182641-glowstone-quest-video1.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781598182641-glowstone-quest-video1.mp4",
+          "originalFilename": "Glowstone-Quest-Video1.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 10858176,
+          "sortOrder": 0,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T08:23:06.433Z",
+          "updatedAt": "2026-06-16T08:23:06.433Z"
+        }
+      ],
+      "createdAt": "2026-06-16T08:22:50.765Z",
+      "updatedAt": "2026-06-16T08:23:06.433Z"
+    }
+  ]
 }
