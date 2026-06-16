@@ -45,8 +45,8 @@ export default async function AnimatedStoryPage({
     <div className="flex flex-col bg-bg-cream min-h-screen">
 
       {/* Hero */}
-      <section className="bg-gradient-to-b from-ube-purple/20 via-bg-cream to-bg-cream py-10 px-4">
-        <div className="max-w-2xl mx-auto flex flex-col gap-4">
+      <section className="bg-gradient-to-b from-ube-purple/20 via-bg-cream to-bg-cream py-8 px-4">
+        <div className="max-w-4xl mx-auto flex flex-col gap-3">
           <Link
             href="/stories"
             className="self-start inline-flex items-center gap-1.5 text-sm font-semibold text-ube-purple hover:text-ube-purple/70 transition-colors"
@@ -68,7 +68,7 @@ export default async function AnimatedStoryPage({
           </h1>
 
           {story.description && (
-            <p className="text-tiki-brown/65 text-base leading-relaxed max-w-xl">
+            <p className="text-tiki-brown/65 text-base leading-relaxed max-w-2xl">
               {story.description}
             </p>
           )}
@@ -76,7 +76,7 @@ export default async function AnimatedStoryPage({
       </section>
 
       {/* Viewer */}
-      <section className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-8">
+      <section className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6">
         <AnimatedStoryViewer story={story} clips={clips} />
       </section>
 
