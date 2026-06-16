@@ -22,10 +22,52 @@
           "visibility": "public",
           "uploadedAt": "2026-06-16T08:23:06.433Z",
           "updatedAt": "2026-06-16T08:23:06.433Z"
+        },
+        {
+          "id": "clip-1781598218272-lk6nt",
+          "title": "Glowstone-Quest-Video2",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781598215052-glowstone-quest-video2.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781598215052-glowstone-quest-video2.mp4",
+          "originalFilename": "Glowstone-Quest-Video2.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 11218032,
+          "sortOrder": 1,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T08:23:38.272Z",
+          "updatedAt": "2026-06-16T08:23:38.272Z"
+        },
+        {
+          "id": "clip-1781598233626-x071f",
+          "title": "Glowstone-Quest-Video3",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781598230173-glowstone-quest-video3.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781598230173-glowstone-quest-video3.mp4",
+          "originalFilename": "Glowstone-Quest-Video3.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 12129333,
+          "sortOrder": 2,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T08:23:53.626Z",
+          "updatedAt": "2026-06-16T08:23:53.626Z"
+        },
+        {
+          "id": "clip-1781598246812-uw7i9",
+          "title": "Glowstone-Quest-Video4",
+          "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/animated-stories/the-glowstone-adventure/clips/1781598243113-glowstone-quest-video4.mp4",
+          "pathname": "animated-stories/the-glowstone-adventure/clips/1781598243113-glowstone-quest-video4.mp4",
+          "originalFilename": "Glowstone-Quest-Video4.mp4",
+          "mimeType": "video/mp4",
+          "sizeBytes": 14385095,
+          "sortOrder": 3,
+          "status": "approved",
+          "visibility": "public",
+          "uploadedAt": "2026-06-16T08:24:06.812Z",
+          "updatedAt": "2026-06-16T08:24:06.812Z"
         }
       ],
       "createdAt": "2026-06-16T08:22:50.765Z",
-      "updatedAt": "2026-06-16T08:23:06.433Z"
+      "updatedAt": "2026-06-16T08:24:06.812Z"
     }
   ]
 }
