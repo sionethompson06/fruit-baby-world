@@ -251,8 +251,21 @@ function AnimatedStoryPanel({
       blobUrl = blob.url;
       blobPathname = blob.pathname;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Upload failed.";
-      setUploadError(`Upload failed: ${msg}`);
+      const raw = err instanceof Error ? err.message : "Upload failed.";
+      const isQuota =
+        raw.toLowerCase().includes("quota") ||
+        raw.toLowerCase().includes("storage quota") ||
+        raw.toLowerCase().includes("1gb") ||
+        raw.toLowerCase().includes("hobby plan");
+      if (isQuota) {
+        setUploadError(
+          "Storage quota exceeded (Vercel Hobby plan limit: 1 GB). " +
+          "To fix this: upgrade your Vercel project to the Pro plan at vercel.com, " +
+          "or delete unused blobs in the Vercel dashboard under Storage → Blob."
+        );
+      } else {
+        setUploadError(`Upload failed: ${raw}`);
+      }
       setUploading(false);
       return;
     }
