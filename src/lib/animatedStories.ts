@@ -221,8 +221,28 @@ export function getAnimatedStoryBySlug(slug: string): AnimatedStory | undefined 
   return getAnimatedStoriesContent().stories.find((s) => s.slug === slug);
 }
 
+export function getPublicAnimatedStoryClips(story: AnimatedStory): AnimatedStoryClip[] {
+  return sortAnimatedStoryClips(
+    story.clips.filter(
+      (c) =>
+        c.status === "approved" &&
+        c.visibility === "public" &&
+        Boolean(c.videoUrl)
+    )
+  );
+}
+
 export function getPublicAnimatedStories(): AnimatedStory[] {
   return getAnimatedStoriesContent().stories.filter(
-    (s) => s.status === "published" && s.visibility === "public"
+    (s) =>
+      s.status === "published" &&
+      s.visibility === "public" &&
+      s.clips.some(
+        (c) => c.status === "approved" && c.visibility === "public" && Boolean(c.videoUrl)
+      )
   );
+}
+
+export function getPublicAnimatedStoryBySlug(slug: string): AnimatedStory | undefined {
+  return getPublicAnimatedStories().find((s) => s.slug === slug);
 }

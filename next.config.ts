@@ -25,6 +25,8 @@ const nextConfig: NextConfig = {
     "/admin/products": ["./src/content/shop/**/*.json"],
     "/admin/animated-stories": ["./src/content/animated-stories/**/*.json"],
     "/admin/animated-stories/**": ["./src/content/animated-stories/**/*.json"],
+    "/stories/animated": ["./src/content/animated-stories/**/*.json"],
+    "/stories/animated/**": ["./src/content/animated-stories/**/*.json"],
   },
 };
 
