@@ -105,5 +105,7 @@ export const config = {
     "/api/github/save-cover-page-settings",
     "/api/media/upload-cover-video",
     "/api/media/cover-video-upload-token",
+    "/api/media/upload-animated-story-clip",
+    "/api/github/save-animated-stories",
   ],
 };
