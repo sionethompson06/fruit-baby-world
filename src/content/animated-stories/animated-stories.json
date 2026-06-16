@@ -7,6 +7,16 @@
       "title": "The Glowstone Adventure",
       "status": "published",
       "visibility": "public",
+      "characterSlugs": [
+        "pineapple-baby",
+        "kiwi-baby",
+        "coconut-baby",
+        "mango-baby",
+        "ube-baby",
+        "tiki-trouble",
+        "dragon-fruit-baby",
+        "strawberry-baby"
+      ],
       "sortOrder": 0,
       "clips": [
         {
@@ -67,7 +77,7 @@
         }
       ],
       "createdAt": "2026-06-16T08:22:50.765Z",
-      "updatedAt": "2026-06-16T08:32:52.855Z"
+      "updatedAt": "2026-06-16T19:38:33.232Z"
     }
   ]
 }
