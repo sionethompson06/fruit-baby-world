@@ -26,8 +26,13 @@ export type AnimatedStory = {
   description?: string;
   status: AnimatedStoryStatus;
   visibility: AnimatedStoryVisibility;
+  characterSlugs?: string[];
   coverImageUrl?: string;
+  coverImagePathname?: string;
+  coverImageOriginalFilename?: string;
   posterImageUrl?: string;
+  posterImagePathname?: string;
+  posterImageOriginalFilename?: string;
   sortOrder: number;
   clips: AnimatedStoryClip[];
   createdAt?: string;
@@ -38,3 +43,4 @@ export type AnimatedStoriesContent = {
   version: number;
   stories: AnimatedStory[];
 };
+

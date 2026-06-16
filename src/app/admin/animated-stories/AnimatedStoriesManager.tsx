@@ -12,6 +12,19 @@ import type {
   AnimatedStoryClipVisibility,
 } from "@/lib/animatedStoriesTypes";
 
+// ── Canonical characters ───────────────────────────────────────────────────────
+
+const CANONICAL_CHARACTERS = [
+  { slug: "pineapple-baby", label: "Pineapple Baby" },
+  { slug: "kiwi-baby", label: "Kiwi Baby" },
+  { slug: "coconut-baby", label: "Coconut Baby" },
+  { slug: "mango-baby", label: "Mango Baby" },
+  { slug: "ube-baby", label: "Ube Baby" },
+  { slug: "strawberry-baby", label: "Strawberry Baby" },
+  { slug: "dragon-fruit-baby", label: "Dragon Fruit Baby" },
+  { slug: "tiki-trouble", label: "Tiki Trouble" },
+] as const;
+
 // ── Utilities ──────────────────────────────────────────────────────────────────
 
 function slugify(title: string): string {
@@ -193,6 +206,52 @@ function AnimatedStoryPanel({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [cardImageFile, setCardImageFile] = useState<File | null>(null);
+  const [cardImageUploading, setCardImageUploading] = useState(false);
+  const [cardImageError, setCardImageError] = useState("");
+  const cardImageInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleCardImageUpload() {
+    if (!cardImageFile) return;
+    if (!story.slug) {
+      setCardImageError("Add a slug to this story before uploading a card image.");
+      return;
+    }
+    setCardImageUploading(true);
+    setCardImageError("");
+    const formData = new FormData();
+    formData.append("file", cardImageFile);
+    formData.append("storySlug", story.slug);
+    try {
+      const res = await fetch("/api/media/upload-animated-story-card-image", {
+        method: "POST",
+        body: formData,
+      });
+      const json = (await res.json()) as {
+        ok: boolean;
+        imageUrl?: string;
+        pathname?: string;
+        originalFilename?: string;
+        message?: string;
+      };
+      if (!json.ok || !json.imageUrl) {
+        setCardImageError(json.message ?? "Upload failed.");
+      } else {
+        onUpdate({
+          coverImageUrl: json.imageUrl,
+          coverImagePathname: json.pathname,
+          coverImageOriginalFilename: json.originalFilename,
+        });
+        setCardImageFile(null);
+        if (cardImageInputRef.current) cardImageInputRef.current.value = "";
+      }
+    } catch {
+      setCardImageError("Network error. Please try again.");
+    } finally {
+      setCardImageUploading(false);
+    }
+  }
 
   async function handleUpload() {
     if (!uploadFile) {
@@ -444,6 +503,116 @@ function AnimatedStoryPanel({
               }
               className="w-20 text-sm border border-tiki-brown/20 rounded-lg px-3 py-1.5 text-tiki-brown/70 focus:outline-none focus:border-ube-purple/50"
             />
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-dashed border-tiki-brown/15" />
+
+        {/* Characters in this Animated Story */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h3 className="font-black text-sm text-tiki-brown">
+              Characters in this Animated Story
+            </h3>
+            <p className="text-xs text-tiki-brown/50">
+              Selected characters connect this animated story to Browse by Character on the public Stories page.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {CANONICAL_CHARACTERS.map((char) => {
+              const isSelected = (story.characterSlugs ?? []).includes(char.slug);
+              return (
+                <button
+                  key={char.slug}
+                  type="button"
+                  onClick={() => {
+                    const current = story.characterSlugs ?? [];
+                    const next = isSelected
+                      ? current.filter((s) => s !== char.slug)
+                      : [...current, char.slug];
+                    onUpdate({ characterSlugs: next });
+                  }}
+                  className={`text-sm font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                    isSelected
+                      ? "bg-ube-purple/15 border-ube-purple/30 text-ube-purple"
+                      : "bg-white border-tiki-brown/15 text-tiki-brown/60 hover:border-tiki-brown/30 hover:text-tiki-brown"
+                  }`}
+                >
+                  {isSelected ? "✓ " : ""}{char.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-dashed border-tiki-brown/15" />
+
+        {/* Public Card Image */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h3 className="font-black text-sm text-tiki-brown">Public Card Image</h3>
+            <p className="text-xs text-tiki-brown/50">
+              This image appears on the public Stories page card for this animated story.
+            </p>
+          </div>
+
+          {/* Current image preview */}
+          {story.coverImageUrl && (
+            <div className="flex items-start gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={story.coverImageUrl}
+                alt="Card image preview"
+                className="w-24 rounded-xl border border-tiki-brown/15 object-cover aspect-video"
+              />
+              <div className="flex flex-col gap-1 min-w-0">
+                <p className="text-xs font-semibold text-tropical-green">✓ Image uploaded</p>
+                {story.coverImageOriginalFilename && (
+                  <p className="text-xs text-tiki-brown/40 truncate">{story.coverImageOriginalFilename}</p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onUpdate({ coverImageUrl: undefined, coverImagePathname: undefined, coverImageOriginalFilename: undefined })}
+                  className="self-start text-xs text-warm-coral/70 hover:text-warm-coral transition-colors font-semibold"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Upload form */}
+          <div className="bg-tropical-green/5 rounded-2xl p-4 flex flex-col gap-3">
+            <input
+              ref={cardImageInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(e) => {
+                setCardImageFile(e.target.files?.[0] ?? null);
+                setCardImageError("");
+              }}
+              className="text-sm text-tiki-brown/70 file:mr-3 file:text-xs file:font-bold file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-tropical-green/15 file:text-tropical-green hover:file:bg-tropical-green/22 file:cursor-pointer"
+            />
+            {cardImageError && (
+              <p className="text-xs text-red-500 font-semibold">{cardImageError}</p>
+            )}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleCardImageUpload}
+                disabled={cardImageUploading || !cardImageFile || !hasSlug}
+                className="text-sm font-bold px-4 py-2 rounded-xl bg-tropical-green text-white hover:bg-tropical-green/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {cardImageUploading ? "Uploading…" : "Upload Card Image"}
+              </button>
+              {!hasSlug && (
+                <p className="text-xs text-warm-coral/70 font-semibold">
+                  Add a slug before uploading.
+                </p>
+              )}
+            </div>
           </div>
         </div>
 

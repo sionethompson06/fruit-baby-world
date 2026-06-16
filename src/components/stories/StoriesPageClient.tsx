@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import type { Episode, Character } from "@/lib/content";
+import type { AnimatedStory } from "@/lib/animatedStoriesTypes";
 import StoryCard from "@/components/StoryCard";
 import {
   storyFeaturesCharacter,
   getCharacterStoryCounts,
+  normalizeCharacterSlug,
 } from "@/lib/storyCharacterFilters";
 
 // Individual character pose images — not profile sheets.
@@ -42,6 +45,7 @@ type Props = {
   characterMap: Record<string, Character>;
   mediaMap: Record<string, EpisodeMediaInfo>;
   publicChars: Character[];
+  publicAnimatedStories: AnimatedStory[];
 };
 
 export default function StoriesPageClient({
@@ -49,6 +53,7 @@ export default function StoriesPageClient({
   characterMap,
   mediaMap,
   publicChars,
+  publicAnimatedStories,
 }: Props) {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
@@ -63,6 +68,19 @@ export default function StoriesPageClient({
         ? episodes.filter((e) => storyFeaturesCharacter(e, selectedSlug))
         : episodes,
     [episodes, selectedSlug]
+  );
+
+  const filteredAnimatedStories = useMemo(
+    () =>
+      selectedSlug
+        ? publicAnimatedStories.filter((s) =>
+            (s.characterSlugs ?? []).some(
+              (cs) =>
+                normalizeCharacterSlug(cs) === normalizeCharacterSlug(selectedSlug)
+            )
+          )
+        : publicAnimatedStories,
+    [publicAnimatedStories, selectedSlug]
   );
 
   const selectedChar = selectedSlug
@@ -219,6 +237,64 @@ export default function StoriesPageClient({
           )}
         </section>
       </div>
+
+      {/* Animated Stories — filtered by selected character */}
+      {filteredAnimatedStories.length > 0 && (
+        <section className="w-full py-12 bg-gradient-to-b from-bg-cream via-ube-purple/5 to-bg-cream">
+          <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-2xl font-black text-tiki-brown">🎬 Animated Stories</h2>
+              <p className="text-sm text-tiki-brown/60">Watch Pineapple Baby and friends in action.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAnimatedStories.map((story) => {
+                const cardImage = story.coverImageUrl ?? story.posterImageUrl;
+                const clipCount = (story.clips ?? []).filter(
+                  (c) => c.status === "approved" && c.visibility === "public" && Boolean(c.videoUrl)
+                ).length;
+                return (
+                  <Link
+                    key={story.slug}
+                    href={`/stories/animated/${story.slug}`}
+                    className="group rounded-3xl overflow-hidden flex flex-col bg-white border border-tiki-brown/10 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all cursor-pointer"
+                  >
+                    <div className="relative w-full aspect-video overflow-hidden bg-gradient-to-br from-ube-purple/20 via-sky-blue/10 to-tropical-green/10 flex items-center justify-center">
+                      {cardImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={cardImage}
+                          alt={story.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-6xl select-none opacity-60">🎬</span>
+                      )}
+                      <span className="absolute top-3 right-3 text-xs font-bold px-2.5 py-1 rounded-full bg-black/50 text-white backdrop-blur-sm">
+                        {clipCount} {clipCount === 1 ? "clip" : "clips"}
+                      </span>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                        <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                          <span className="text-2xl ml-1">▶</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-4 pt-3 pb-4 flex flex-col gap-1">
+                      <h3 className="text-sm font-black text-tiki-brown leading-tight line-clamp-2">
+                        {story.title}
+                      </h3>
+                      {story.description && (
+                        <p className="text-xs text-tiki-brown/55 leading-relaxed line-clamp-2">
+                          {story.description}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 }

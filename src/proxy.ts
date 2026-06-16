@@ -106,6 +106,7 @@ export const config = {
     "/api/media/upload-cover-video",
     "/api/media/cover-video-upload-token",
     "/api/media/animated-story-clip-upload-token",
+    "/api/media/upload-animated-story-card-image",
     "/api/github/save-animated-stories",
   ],
 };

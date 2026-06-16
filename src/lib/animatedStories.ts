@@ -123,6 +123,19 @@ export function normalizeAnimatedStory(
   const rawClips = Array.isArray(r.clips) ? r.clips : [];
   const clips = rawClips.map((c, idx) => normalizeAnimatedStoryClip(c, { sortOrder: idx }));
 
+  // Normalize characterSlugs to unique, safe, non-empty slugs
+  const rawCharSlugs = Array.isArray(r.characterSlugs) ? r.characterSlugs : [];
+  const characterSlugs = [
+    ...new Set(
+      rawCharSlugs
+        .filter((s): s is string => typeof s === "string" && Boolean(s.trim()))
+        .map((s) =>
+          s.trim().toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")
+        )
+        .filter(Boolean)
+    ),
+  ];
+
   return {
     id,
     slug,
@@ -130,8 +143,13 @@ export function normalizeAnimatedStory(
     ...(description !== undefined ? { description } : {}),
     status,
     visibility,
+    ...(characterSlugs.length > 0 ? { characterSlugs } : {}),
     ...(typeof r.coverImageUrl === "string" ? { coverImageUrl: r.coverImageUrl } : {}),
+    ...(typeof r.coverImagePathname === "string" ? { coverImagePathname: r.coverImagePathname } : {}),
+    ...(typeof r.coverImageOriginalFilename === "string" ? { coverImageOriginalFilename: r.coverImageOriginalFilename } : {}),
     ...(typeof r.posterImageUrl === "string" ? { posterImageUrl: r.posterImageUrl } : {}),
+    ...(typeof r.posterImagePathname === "string" ? { posterImagePathname: r.posterImagePathname } : {}),
+    ...(typeof r.posterImageOriginalFilename === "string" ? { posterImageOriginalFilename: r.posterImageOriginalFilename } : {}),
     sortOrder,
     clips: sortAnimatedStoryClips(clips),
     ...(typeof r.createdAt === "string" ? { createdAt: r.createdAt } : {}),
