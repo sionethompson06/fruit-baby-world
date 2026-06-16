@@ -11,6 +11,8 @@
 const SLUG_ALIASES: Record<string, string> = {
   "dragonfruit-baby": "dragon-fruit-baby",
   "dragonfruit": "dragon-fruit-baby",
+  // tiki-trouble (used in admin/animated stories) and tiki (character JSON slug) are the same character
+  "tiki-trouble": "tiki",
 };
 
 export function normalizeCharacterSlug(value: string): string {
