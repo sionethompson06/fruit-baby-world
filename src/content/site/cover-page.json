@@ -130,7 +130,20 @@
       "sortOrder": 8,
       "uploadedAt": "2026-06-02T09:37:37.723Z",
       "updatedAt": "2026-06-02T09:37:37.723Z"
+    },
+    {
+      "id": "1781662427675-yqmvzk",
+      "title": "news-video-sighting ",
+      "videoUrl": "https://fmtt8brwe3snre76.public.blob.vercel-storage.com/cover-page/videos/1781662424880-news-video-sighting.mp4",
+      "pathname": "cover-page/videos/1781662424880-news-video-sighting.mp4",
+      "originalFilename": "news-video-sighting .mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 6308859,
+      "isActive": true,
+      "sortOrder": 8,
+      "uploadedAt": "2026-06-17T02:13:47.675Z",
+      "updatedAt": "2026-06-17T02:13:47.675Z"
     }
   ],
-  "updatedAt": "2026-06-09T02:07:11.593Z"
+  "updatedAt": "2026-06-17T02:13:51.205Z"
 }
